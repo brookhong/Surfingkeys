@@ -1,0 +1,58 @@
+{
+    "manifest_version": 2,
+    "name": "Surfingkeys",
+    "short_name": "Map your keys for web surfing",
+    "version": "0.0.1",
+    "description": "Expand your browser with javascript and keyboard.",
+    "icons": {
+        "128": "icons/128.png",
+        "48": "icons/48.png",
+        "16": "icons/16.png"
+    },
+    "commands": {
+        "restartext": {
+            "description": "Restart this extenstion."
+        }
+    },
+    "browser_action": {
+        "default_icon": {
+            "16": "icons/16.png",
+            "48": "icons/48.png"
+        },
+        "default_title": "Surfingkeys",
+        "default_popup": "pages/popup.html"
+    },
+    "author": "brook hong",
+    "permissions": [
+        "<all_urls>",
+        "tabs",
+        "history",
+        "bookmarks",
+        "storage",
+        "sessions",
+        "downloads",
+        "topSites",
+        "downloads.shelf",
+        "clipboardRead",
+        "clipboardWrite"
+    ],
+    "background": {
+        "persistant": false,
+        "scripts": [
+            "background.js"
+        ]
+    },
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": [
+            "trie.js",
+            "jquery.min.js",
+            "content_scripts.js"
+        ],
+        "css": ["content_scripts.css"],
+        "run_at": "document_start",
+        "all_frames": true
+    }],
+    "content_security_policy": "script-src 'unsafe-eval'; object-src 'self';",
+    "options_page": "pages/options.html"
+}

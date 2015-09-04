@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Surfingkeys Settings</title>
+        <link rel="stylesheet" href="../content_scripts.css">
+        <script src="../jquery.min.js"></script>
+        <script src="../trie.js"></script>
+        <script src="../content_scripts.js"></script>
+        <style>
+#mappings {
+    width: 100%;
+    border: none;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+}
+#save_container {
+    float: right;
+}
+#save_container>a {
+    padding-right: 8px;
+    border-right: 1px solid #000;
+}
+        </style>
+    </head>
+    <body>
+        <textarea id="mappings"></textarea>
+        <div id="save_container">
+            <a href="https://github.com/brookhong/Surfingkeys/issues">Report issues</a>
+            <a href="https://github.com/brookhong/Surfingkeys#edit-your-own-settings">How to add my own settings?</a>
+            <input id="save_button" value="Save" type="button">
+            <input id="reset_button" value="Reset" type="button">
+        </div>
+        <script src="options.js"></script>
+    </body>
+</html>
