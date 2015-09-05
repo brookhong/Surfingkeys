@@ -28,7 +28,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 
 ## Quick start
 
-After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/category/extensions?hl=en-US), open a site you'd like. Then press `u` or `Ctrl-i` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
+After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc), open a site you'd like. Then press `u` or `Ctrl-i` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
 
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 

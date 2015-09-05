@@ -44,6 +44,10 @@ function getNearestWord(text, offset) {
             return pattern.test(fn.apply($(this), fn_a));
         });
     };
+    $.expr[':'].css = function(elem, pos, match) {
+        var sel = match[3].split('=');
+        return $(elem).css(sel[0]) == sel[1];
+    }
 })(jQuery);
 
 String.prototype.format = function() {
@@ -85,7 +89,7 @@ function getScrollableElement(defval, minHeight, minRatio) {
         if (window.innerHeight < document.body.scrollHeight) {
             current = document.body;
         } else {
-            if (defval) {
+            if (defval && $(defval).is(':visible')) {
                 current = defval;
             } else {
                 var nodeIterator = document.createNodeIterator(
@@ -102,6 +106,27 @@ function getScrollableElement(defval, minHeight, minRatio) {
         }
     }
     return current;
+}
+
+function removeChild(elements) {
+    var cleaned = [];
+    for (var i = 0; i < elements.length; i++) {
+        var elm = elements[i];
+        var parents = cleaned.filter(function(e) {
+            return e.contains(elm);
+        });
+        if (parents.length === 0) {
+            for (var j = 0; j < cleaned.length; j++) {
+                if (!cleaned[j].deleted && elm.contains(cleaned[j])) {
+                    cleaned[j].deleted = true;
+                }
+            }
+            cleaned.push(elm);
+        }
+    }
+    return cleaned.filter(function(e) {
+        return !e.deleted;
+    });
 }
 
 (function() {
@@ -359,6 +384,7 @@ Hints.create = function(cssSelector, onHintKey) {
     elements = elements.filter(function(i) {
         return this !== null;
     });
+    elements = $(removeChild(elements));
     if (elements.length > 0) {
         var hintsHolder = $('<div id=surfingkeys_Hints/>').appendTo(Normal.ui_container);
         var hintLabels = Hints.genLabels(elements.length);
@@ -767,7 +793,7 @@ Normal = {
     'miniQuery': {}
 };
 Normal.scroll = function(type, repeats) {
-    var scrollNode = getScrollableElement(Normal.scrollNode, 100, 1.2) || Normal.scrollNode;
+    var scrollNode = getScrollableElement(Normal.scrollNode, 100, 1.2);
     Normal.scrollNode = scrollNode;
     if (!scrollNode) {
         return;
@@ -831,20 +857,22 @@ Normal.rotateFrame = (function() {
             }
         });
         _imp = function() {
-            var win, frames = $("iframe");
+            var frames = $("iframe:visible");
             if (_imp.current === frames.length) {
-                win = window;
                 _imp.current = 0;
                 document.body.scrollTop = 0;
                 document.body.scrollLeft = 0;
+                window.focus();
             } else {
-                win = frames[_imp.current].contentWindow;
-                var b = frames[_imp.current].getBoundingClientRect();
-                document.body.scrollTop = b.top;
-                document.body.scrollLeft = b.left;
+                var win = frames[_imp.current].contentWindow;
+                if (win.Normal && win.Visual) {
+                    var b = frames[_imp.current].getBoundingClientRect();
+                    document.body.scrollTop = b.top;
+                    document.body.scrollLeft = b.left;
+                    win.focus();
+                }
                 _imp.current++;
             }
-            win.focus();
         }
         _imp.current = 0;
     } else {

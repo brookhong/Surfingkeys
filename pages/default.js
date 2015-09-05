@@ -8,8 +8,8 @@ mapkey('h', 'Scroll left', 'Normal.scroll("left")');
 mapkey('l', 'Scroll right', 'Normal.scroll("right")');
 mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
-mapkey('f', 'Open a link', 'Hints.create("a", Hints.dispatchMouseClick)');
-mapkey('i', 'Go to edit box', 'Hints.create("input[type=text], textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
+mapkey('f', 'Open a link', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible", Hints.dispatchMouseClick)');
+mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
@@ -40,6 +40,7 @@ mapkey(']]', 'Click on the next link on current page', function() {
     }
 });
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
+mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar(SearchEngine, "b")');
 mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar(SearchEngine, "g")');
 mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar(SearchEngine, "w")');
