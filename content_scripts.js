@@ -857,7 +857,7 @@ Normal.scroll = function(type, repeats) {
             break;
     }
 };
-Normal.rotateFrame = (function() {
+Normal.rotateFrame = function() {
     var _imp;
     if (window === top) {
         port.postMessage({
@@ -870,23 +870,24 @@ Normal.rotateFrame = (function() {
             }
         });
         _imp = function() {
-            var frames = $("iframe:visible");
-            if (_imp.current === frames.length) {
+            if (_imp.current === _imp.frames.length) {
                 _imp.current = 0;
                 document.body.scrollTop = 0;
                 document.body.scrollLeft = 0;
                 window.focus();
             } else {
-                var win = frames[_imp.current].contentWindow;
-                if (win.Normal && win.Visual) {
-                    var b = frames[_imp.current].getBoundingClientRect();
+                var win = _imp.frames[_imp.current].contentWindow;
+                if (win.surfingkeys === win.location.href) {
+                    var b = _imp.frames[_imp.current].getBoundingClientRect();
                     document.body.scrollTop = b.top;
                     document.body.scrollLeft = b.left;
                     win.focus();
                 }
                 _imp.current++;
             }
+            Normal.updateStatusBar();
         }
+        _imp.frames = $("iframe:visible");
         _imp.current = 0;
     } else {
         _imp = function() {
@@ -902,7 +903,7 @@ Normal.rotateFrame = (function() {
         };
     }
     return _imp;
-})();
+};
 Normal.isBlacklisted = function() {
     return settings.blacklist[window.location.origin] || settings.blacklist['.*'];
 };
@@ -959,7 +960,8 @@ Normal.init = function() {
     return !blacklisted && Normal.ui_container;
 };
 Normal.updateStatusBar = function() {
-    var status = [Visual.status[Visual.state], Find.status].filter(function(e) {
+    var frame = Normal.rotateFrame.frames.length ? "Frame: " + Normal.rotateFrame.current : "";
+    var status = [Visual.status[Visual.state], Find.status, frame].filter(function(e) {
         return e !== ""
     });
     var msg = status.join(' | ');
@@ -1402,23 +1404,36 @@ Visual.update = function(event) {
     return updated;
 };
 
-window.addEventListener('keydown', function(event) {
-    if (Normal.init()) {
-        if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
-            if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
-                event.stopImmediatePropagation();
-                event.preventDefault();
-                Normal.stopKeyupPropagation = true;
+function initEventListener() {
+    window.addEventListener('keydown', function(event) {
+        if (Normal.init()) {
+            if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
+                if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
+                    event.stopImmediatePropagation();
+                    event.preventDefault();
+                    Normal.stopKeyupPropagation = true;
+                }
+            }
+            if (event.keyCode === 27) {
+                document.activeElement.blur();
             }
         }
-        if (event.keyCode === 27) {
-            document.activeElement.blur();
+    }, true);
+    window.addEventListener('keyup', function(event) {
+        if (Normal.stopKeyupPropagation) {
+            event.stopImmediatePropagation();
+            Normal.stopKeyupPropagation = false;
         }
+    }, true);
+    window.surfingkeys = window.location.href;
+}
+
+if (window === top) {
+    initEventListener();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    Normal.rotateFrame = Normal.rotateFrame();
+    if (window !== top) {
+        setTimeout(initEventListener, 300);
     }
-}, true);
-window.addEventListener('keyup', function(event) {
-    if (Normal.stopKeyupPropagation) {
-        event.stopImmediatePropagation();
-        Normal.stopKeyupPropagation = false;
-    }
-}, true);
+});

@@ -69,3 +69,43 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
+
+mapkey('sz', 'Get SZZS', function() {
+    httpRequest({
+        'url': 'http://hq.sinajs.cn/list=sh000001'
+    }, function(res) {
+        eval(res);
+        Normal.popup(hq_str_sh000001.split(',')[3]);
+    });
+});
+addSearchAliasX('a', 'amazon wiki', 'https://w.amazon.com/index.php/Special:Search?fulltext=Search&search=');
+addSearchAliasX('1', 'phonetool', 'https://phonetool.amazon.com/search?query=');
+addSearchAliasX('2', 'list-archive', 'https://is.amazon.com/search/list_archive?q=');
+addSearchAliasX('3', 'omni-grok', 'https://omni-grok.amazon.com/search?q=');
+
+addMiniQuery('w', 'iciba', 'http://www.iciba.com/', function(response) {
+    OmnibarUtils.html($(response).find('#dict_main').html());
+});
+addMiniQuery('s', 'shanbay', 'https://api.shanbay.com/bdc/search/?word=', function(response) {
+    var res = eval("a=" + response);
+    OmnibarUtils.html(res.data.definition);
+});
+$(document).dblclick(function(event) {
+    var sel = window.getSelection().toString();
+    if (sel && sel.length) {
+        // http://dict-co.iciba.com/api/dictionary.php?w=hello&key=E9E58402D44342EFB0B1ABC41E86BF8E&type=json
+        httpRequest({
+            'url': 'https://api.shanbay.com/bdc/search/?word=' + sel
+        }, function(res) {
+            var res = eval("a=" + res);
+            var b = window.getSelection().getRangeAt(0).getBoundingClientRect();
+            var pos = [b.top - 18 + window.pageYOffset, b.left + b.width / 2 - 12 + window.pageXOffset];
+            Normal.bubble({
+                top: pos[0],
+                left: pos[1]
+            }, res.data.definition || res.msg);
+        });
+    }
+}).click(function() {
+    Normal._bubble.hide();
+});
