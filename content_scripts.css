@@ -144,7 +144,6 @@
 #surfingkeys_Hints >div {
     position: absolute;
     display: block;
-    z-index: 2147483640;
     font-size: 10pt;
     font-weight: bold;
     padding: 0px 2px 0px 2px;

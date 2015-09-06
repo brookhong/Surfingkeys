@@ -37,6 +37,16 @@ function getNearestWord(text, offset) {
     return ret;
 }
 
+function getZIndex(node) {
+    var z = 0;
+    do {
+        var i = parseInt(getComputedStyle(node).getPropertyValue('z-index'));
+        z += isNaN(i) ? 0 : i;
+        node = node.parentNode;
+    } while (node && node !== document.body && node !== document);
+    return z;
+}
+
 (function($) {
     $.fn.regex = function(pattern, fn, fn_a) {
         var fn = fn || $.fn.text;
@@ -389,8 +399,10 @@ Hints.create = function(cssSelector, onHintKey) {
         var hintsHolder = $('<div id=surfingkeys_Hints/>').appendTo(Normal.ui_container);
         var hintLabels = Hints.genLabels(elements.length);
         elements.each(function(i) {
-            var pos = $(this).offset();
+            var pos = $(this).offset(),
+                z = getZIndex(this);
             var link = $('<div/>').css('top', pos.top).css('left', pos.left + $(this).width() / 2)
+                .css('z-index', z + 1)
                 .data('label', hintLabels[i])
                 .data('link', this)
                 .data('onhint', onHintKey)
@@ -400,7 +412,7 @@ Hints.create = function(cssSelector, onHintKey) {
     }
 };
 Hints.dispatchMouseClick = function(element, event) {
-    if (element.localName === 'textarea' || (element.localName === 'input' && /^(text|password|email|search)$/i.test(element.type)) || element.hasAttribute('contenteditable')) {
+    if (element.localName === 'textarea' || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)) || element.hasAttribute('contenteditable')) {
         element.focus();
     } else {
         if (event && event.shiftKey && element.href) {
@@ -752,6 +764,7 @@ function addMiniQuery(alias, prompt, url, listResult) {
 }
 
 function tabOpenLink(url) {
+    url = /^\w+:\/\/\w+/i.test(url) ? url : 'https://www.google.com/search?q=' + url;
     RUNTIME("openLink", {
         tab: {
             tabbed: true
