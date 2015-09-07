@@ -1,4 +1,4 @@
-port.handlers['settings'] = function(msg) {
+port.handlers['getSettings'] = function(msg) {
     $('#mappings').val(msg.settings);
 };
 port.postMessage({

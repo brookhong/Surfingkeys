@@ -492,8 +492,9 @@ OmnibarUtils.listUrl = function(urls) {
     var results = $("<ul/>");
     urls.forEach(function(b) {
         if (b.hasOwnProperty('url')) {
+            var type = b.hasOwnProperty('lastVisitTime') ? "☼" : "☆";
             b.title = (b.title && b.title !== "") ? b.title : b.url;
-            var li = $('<li/>').html('<div class="title">{0}</div>'.format(b.title));
+            var li = $('<li/>').html('<div class="title">{1} {0}</div>'.format(b.title, type));
             $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
             li.appendTo(results);
         }
@@ -525,10 +526,44 @@ OpenBookmarks.onInput = function() {
         'action': 'getBookmarks',
         'query': $(this).val()
     });
-    port.handlers['bookmarks'] = OpenBookmarks.onMessage;
 };
-OpenBookmarks.onMessage = function(response) {
+port.handlers['getBookmarks'] = function(response) {
     OmnibarUtils.listUrl(response.bookmarks);
+};
+
+OpenBookmarkFolders = {
+    'prompt': 'bookmark folder≫'
+};
+OpenBookmarkFolders.onEnter = function() {
+    var folder_id = $('#surfingkeys_omnibarSearchResult li.focused').data('folder_id');
+    if (folder_id) {
+        port.postMessage({
+            'action': 'getBookmarksInFolder',
+            'folder_id': folder_id
+        });
+    } else {
+        OmnibarUtils.openFocused();
+    }
+};
+port.handlers['getBookmarksInFolder'] = function(response) {
+    OmnibarUtils.listUrl(response.bookmarks);
+};
+OpenBookmarkFolders.onInput = function() {
+    port.postMessage({
+        'action': 'getBookmarkFolders',
+        'query': $(this).val()
+    });
+};
+port.handlers['getBookmarkFolders'] = function(response) {
+    var results = $("<ul/>");
+    response.bookmarkFolders.forEach(function(b) {
+        var li = $('<li/>').html(b.title).data('folder_id', b.id);
+        li.appendTo(results);
+    });
+    results.find('li:first').addClass('focused');
+    Normal.omnibar.data('focusedItem', 0);
+    $('#surfingkeys_omnibarSearchResult').html("");
+    results.appendTo('#surfingkeys_omnibarSearchResult');
 };
 
 OpenHistory = {
@@ -544,9 +579,8 @@ OpenHistory.onInput = function() {
             'text': $(this).val()
         }
     });
-    port.handlers['history'] = OpenHistory.onMessage;
 };
-OpenHistory.onMessage = function(response) {
+port.handlers['getHistory'] = function(response) {
     OmnibarUtils.listUrl(response.history);
 };
 
@@ -559,9 +593,8 @@ OpenURLs.onInput = function() {
         'action': 'getURLs',
         'query': $(this).val()
     });
-    port.handlers['urls'] = OpenURLs.onMessage;
 };
-OpenURLs.onMessage = function(response) {
+port.handlers['getURLs'] = function(response) {
     OmnibarUtils.listUrl(response.urls);
 };
 
@@ -899,7 +932,7 @@ Normal.rotateFrame = function() {
                 'action': 'getTopOrigin'
             })
         }, 300);
-        port.handlers['topOrigin'] = function(response) {
+        port.handlers['getTopOrigin'] = function(response) {
             _imp.topOrigin = response.topOrigin;
         };
     }

@@ -90,15 +90,34 @@ Service.duplicateTab = function(message, sender, sendResponse) {
 Service.getBookmarks = function(message, sender, sendResponse) {
     chrome.bookmarks.search(message.query, function(tree) {
         sendResponse({
-            type: 'bookmarks',
+            type: message.action,
             bookmarks: tree
+        });
+    });
+};
+Service.getBookmarkFolders = function(message, sender, sendResponse) {
+    chrome.bookmarks.search(message.query, function(tree) {
+        var folders = tree.filter(function(b) {
+            return !b.hasOwnProperty('url');
+        });
+        sendResponse({
+            type: message.action,
+            bookmarkFolders: folders
+        });
+    });
+};
+Service.getBookmarksInFolder = function(message, sender, sendResponse) {
+    chrome.bookmarks.getSubTree(message.folder_id, function(tree) {
+        sendResponse({
+            type: message.action,
+            bookmarks: tree[0].children
         });
     });
 };
 Service.getHistory = function(message, sender, sendResponse) {
     chrome.history.search(message.query, function(tree) {
         sendResponse({
-            type: 'history',
+            type: message.action,
             history: tree
         });
     });
@@ -112,7 +131,7 @@ Service.getURLs = function(message, sender, sendResponse) {
         var history = tree;
         chrome.bookmarks.search(message.query, function(tree) {
             sendResponse({
-                type: 'urls',
+                type: message.action,
                 urls: tree.concat(history)
             });
         });
@@ -140,7 +159,7 @@ Service.viewSource = function(message, sender, sendResponse) {
 };
 Service.getSettings = function(message, sender, sendResponse) {
     sendResponse({
-        type: 'settings',
+        type: message.action,
         settings: Service.settings
     });
 };
@@ -170,7 +189,7 @@ Service.request = function(message, sender, sendResponse) {
     var s = request(message.method, message.url);
     s.then(function(res) {
         sendResponse({
-            type: 'request',
+            type: message.action,
             id: message.id,
             text: res
         });
@@ -181,7 +200,7 @@ Service.setTopOrigin = function(message, sender, sendResponse) {
 };
 Service.getTopOrigin = function(message, sender, sendResponse) {
     sendResponse({
-        type: 'topOrigin',
+        type: message.action,
         topOrigin: (sender.tab ? Service.topOrigins[sender.tab.id] : "NONE")
     });
 };
