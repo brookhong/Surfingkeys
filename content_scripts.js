@@ -165,27 +165,27 @@ function removeChild(elements) {
             40: "down"
         },
         keyIdentifierCorrectionMap: {
-            "U+00C0": ["`", "~"],
-            "U+0030": ["0", ")"],
-            "U+0031": ["1", "!"],
-            "U+0032": ["2", "@"],
-            "U+0033": ["3", "#"],
-            "U+0034": ["4", "$"],
-            "U+0035": ["5", "%"],
-            "U+0036": ["6", "^"],
-            "U+0037": ["7", "&"],
-            "U+0038": ["8", "*"],
-            "U+0039": ["9", "("],
-            "U+00BD": ["-", "_"],
-            "U+00BB": ["=", "+"],
-            "U+00DB": ["[", "{"],
-            "U+00DD": ["]", "}"],
-            "U+00DC": ["\\", "|"],
-            "U+00BA": [";", ":"],
-            "U+00DE": ["'", "\""],
-            "U+00BC": [",", "<"],
-            "U+00BE": [".", ">"],
-            "U+00BF": ["/", "?"]
+            "U+00C0": ["U+0060", "U+007E"],
+            "U+0030": ["U+0030", "U+0029"],
+            "U+0031": ["U+0031", "U+0021"],
+            "U+0032": ["U+0032", "U+0040"],
+            "U+0033": ["U+0033", "U+0023"],
+            "U+0034": ["U+0034", "U+0024"],
+            "U+0035": ["U+0035", "U+0025"],
+            "U+0036": ["U+0036", "U+005E"],
+            "U+0037": ["U+0037", "U+0026"],
+            "U+0038": ["U+0038", "U+002A"],
+            "U+0039": ["U+0039", "U+0028"],
+            "U+00BD": ["U+002D", "U+005F"],
+            "U+00BB": ["U+003D", "U+002B"],
+            "U+00DB": ["U+005B", "U+007B"],
+            "U+00DD": ["U+005D", "U+007D"],
+            "U+00DC": ["U+005C", "U+007C"],
+            "U+00BA": ["U+003B", "U+003A"],
+            "U+00DE": ["U+0027", "U+0022"],
+            "U+00BC": ["U+002C", "U+003C"],
+            "U+00BE": ["U+002E", "U+003E"],
+            "U+00BF": ["U+002F", "U+003F"]
         },
         init: function() {
             if (navigator.userAgent.indexOf("Mac") !== -1) {
@@ -210,12 +210,11 @@ function removeChild(elements) {
             keyIdentifier = event.keyIdentifier;
             if ((this.platform === "Windows" || this.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
                 correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
-                character = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
-            } else {
-                unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
-                character = String.fromCharCode(parseInt(unicodeKeyInHex));
-                character = event.shiftKey ? character : character.toLowerCase();
+                keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
             }
+            unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
+            character = String.fromCharCode(parseInt(unicodeKeyInHex));
+            character = event.shiftKey ? character : character.toLowerCase();
             if (event.ctrlKey) {
                 character = 'c-' + character;
             }
@@ -895,9 +894,11 @@ Normal.rotateFrame = function() {
                 'action': 'rotateFrame'
             }, _imp.topOrigin);
         };
-        port.postMessage({
-            'action': 'getTopOrigin'
-        });
+        setTimeout(function() {
+            port.postMessage({
+                'action': 'getTopOrigin'
+            })
+        }, 300);
         port.handlers['topOrigin'] = function(response) {
             _imp.topOrigin = response.topOrigin;
         };
@@ -946,7 +947,8 @@ Normal.init = function() {
                 event.preventDefault();
             } else if (event.keyCode === 8 && Normal.collapseAlias()) {
                 event.preventDefault();
-            } else if (event.keyCode === 9 && Normal.rotateResult(event.shiftKey)) {
+            } else if (event.keyCode === 9) {
+                Normal.rotateResult(event.shiftKey);
                 event.preventDefault();
             }
         }).on('input', function() {
@@ -960,7 +962,7 @@ Normal.init = function() {
     return !blacklisted && Normal.ui_container;
 };
 Normal.updateStatusBar = function() {
-    var frame = Normal.rotateFrame.frames.length ? "Frame: " + Normal.rotateFrame.current : "";
+    var frame = (Normal.rotateFrame.frames && Normal.rotateFrame.frames.length) ? "Frame: " + Normal.rotateFrame.current : "";
     var status = [Visual.status[Visual.state], Find.status, frame].filter(function(e) {
         return e !== ""
     });
@@ -1080,23 +1082,27 @@ Normal.rotateResult = function(backward) {
     var total = $('#surfingkeys_omnibarSearchResult li').length;
     if (total > 0) {
         var focused = Normal.omnibar.data('focusedItem');
-        var next = (backward ? (focused - 1) : (focused + 1)) % total;
+        var next = (backward ? (focused + total) : (focused + total + 2)) % (total + 1);
         if (focused === undefined) {
             focused = 0;
             next = 0;
         }
         $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(focused)).removeClass('focused');
-        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
-        var start = $('#surfingkeys_omnibarSearchResult').position().top;
-        var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
-        var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
-        if (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end) {
-            var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
-            $('#surfingkeys_omnibarSearchResult').animate({
-                scrollTop: pos
-            }, 100);
+        if (next === total) {
+            Normal.omnibar.removeData('focusedItem');
+        } else {
+            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
+            var start = $('#surfingkeys_omnibarSearchResult').position().top;
+            var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
+            var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
+            if (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end) {
+                var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
+                $('#surfingkeys_omnibarSearchResult').animate({
+                    scrollTop: pos
+                }, 100);
+            }
+            Normal.omnibar.data('focusedItem', next);
         }
-        Normal.omnibar.data('focusedItem', next);
         eaten = true;
     }
     return eaten;
