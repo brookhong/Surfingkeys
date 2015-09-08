@@ -125,7 +125,7 @@ function removeChild(elements) {
         var parents = cleaned.filter(function(e) {
             return e.contains(elm);
         });
-        if (parents.length === 0) {
+        if (parents.length === 0 || parents[0].querySelectorAll('*').length > 100) {
             for (var j = 0; j < cleaned.length; j++) {
                 if (!cleaned[j].deleted && elm.contains(cleaned[j])) {
                     cleaned[j].deleted = true;
@@ -154,6 +154,7 @@ function removeChild(elements) {
             ctrlKey: 17,
             f1: 112,
             f12: 123,
+            comma: 188,
             tab: 9,
             downArrow: 40,
             upArrow: 38
@@ -431,10 +432,10 @@ Hints.update = function(event) {
     var updated = false;
     var hints = $('#surfingkeys_Hints').find('>div');
     if (hints.length > 0) {
-        if (event.keyCode === 27) {
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             Hints.hide();
         } else {
-            if (event.keyCode === 8) {
+            if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 Hints.prefix = Hints.prefix.substr(0, Hints.prefix.length - 1);
                 updated = true;
             } else {
@@ -476,38 +477,62 @@ Hints.hide = function() {
 
 OmnibarUtils = {};
 OmnibarUtils.openFocused = function() {
-    var url = $('#surfingkeys_omnibarSearchResult li.focused>div.url').data('url');
-    if (url && url.length) {
-        RUNTIME("openLink", {
-            tab: {
-                tabbed: !/^javascript:/.test(url)
-            },
-            url: url,
-            repeats: 1
+    var ret = false,
+        folder_id = $('#surfingkeys_omnibarSearchResult li.focused').data('folder_id');
+    if (folder_id) {
+        this.inFolder.push({'folder_id': this.level, 'focusedItem': Normal.omnibar.data('focusedItem')});
+        this.level = folder_id;
+        port.postMessage({
+            'action': 'getBookmarksInFolder',
+            'folder_id': folder_id
         });
+    } else {
+        var url = $('#surfingkeys_omnibarSearchResult li.focused>div.url').data('url');
+        if (url && url.length) {
+            RUNTIME("openLink", {
+                tab: {
+                    tabbed: !/^javascript:/.test(url)
+                },
+                url: url,
+                repeats: 1
+            });
+        }
+        ret = true;
     }
-    return true;
+    return ret;
 };
-OmnibarUtils.listUrl = function(urls) {
+port.handlers['getBookmarksInFolder'] = function(response) {
+    OmnibarUtils.listBookmark(response.bookmarks);
+};
+OmnibarUtils.listResults = function(items, renderItem) {
     var results = $("<ul/>");
-    urls.forEach(function(b) {
+    items.forEach(function(b) {
+        renderItem(b).appendTo(results);
+    });
+    var fi = Normal.omnibar.data('focusedItem') || 0;
+    results.find('li:nth({0})'.format(fi)).addClass('focused');
+    Normal.omnibar.data('focusedItem', fi);
+    $('#surfingkeys_omnibarSearchResult').html("");
+    results.appendTo('#surfingkeys_omnibarSearchResult');
+};
+OmnibarUtils.listBookmark = function(items) {
+    OmnibarUtils.listResults(items, function(b) {
+        var li = $('<li/>');
         if (b.hasOwnProperty('url')) {
             var type = b.hasOwnProperty('lastVisitTime') ? "☼" : "☆";
             b.title = (b.title && b.title !== "") ? b.title : b.url;
-            var li = $('<li/>').html('<div class="title">{1} {0}</div>'.format(b.title, type));
+            li.html('<div class="title">{1} {0}</div>'.format(b.title, type));
             $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
-            li.appendTo(results);
+        } else {
+            li.html('<div class="title">▷ {0}</div>'.format(b.title)).data('folder_id', b.id);
         }
+        return li;
     });
-    results.find('li:first').addClass('focused');
-    Normal.omnibar.data('focusedItem', 0);
-    $('#surfingkeys_omnibarSearchResult').html("");
-    results.appendTo('#surfingkeys_omnibarSearchResult');
 };
 OmnibarUtils.listWords = function(words) {
     var results = $("<ul/>");
     words.forEach(function(w) {
-        var li = $('<li/>').html(w);
+        var li = $('<li/>').html("⌕ " + w).data('query', w);
         li.appendTo(results);
     });
     $('#surfingkeys_omnibarSearchResult').html("");
@@ -518,9 +543,49 @@ OmnibarUtils.html = function(content) {
 };
 
 OpenBookmarks = {
-    'prompt': 'bookmark≫'
+    'prompt': 'bookmark≫',
+    'inFolder': [],
+    'folderOnly': false,
+    'onClose': function() {
+        OpenBookmarks.inFolder = [];
+    }
 };
-OpenBookmarks.onEnter = OmnibarUtils.openFocused.bind(this);
+OmnibarUtils.onFolderUp = function(handler, message) {
+    var fl = handler.inFolder.pop();
+    if (fl.folder_id) {
+        handler.level = fl.folder_id;
+        port.postMessage({
+            'action': 'getBookmarksInFolder',
+            'folder_id': fl.folder_id
+        });
+    } else {
+        delete handler.level;
+        port.postMessage(message);
+    }
+    Normal.omnibar.data('focusedItem', fl.focusedItem);
+    eaten = true;
+};
+OpenBookmarks.onEnter = OmnibarUtils.openFocused.bind(OpenBookmarks);
+OpenBookmarks.onKeydown = function(event) {
+    var eaten = false;
+    if (event.keyCode === KeyboardUtils.keyCodes.comma) {
+        OpenBookmarks.folderOnly = !OpenBookmarks.folderOnly;
+        OpenBookmarks.prompt = OpenBookmarks.folderOnly ? "bookmark folder≫" : "bookmark≫";
+        $('#surfingkeys_omnibarSearchArea>span').html(OpenBookmarks.prompt)
+        port.postMessage({
+            'action': 'getBookmarks',
+            'query': $(this).val()
+        });
+        eaten = true;
+    } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && OpenBookmarks.inFolder.length) {
+        OmnibarUtils.onFolderUp(OpenBookmarks, {
+            'action': 'getBookmarks',
+            'query': $(this).val()
+        });
+        eaten = true;
+    }
+    return eaten;
+};
 OpenBookmarks.onInput = function() {
     port.postMessage({
         'action': 'getBookmarks',
@@ -528,74 +593,62 @@ OpenBookmarks.onInput = function() {
     });
 };
 port.handlers['getBookmarks'] = function(response) {
-    OmnibarUtils.listUrl(response.bookmarks);
-};
-
-OpenBookmarkFolders = {
-    'prompt': 'bookmark folder≫'
-};
-OpenBookmarkFolders.onEnter = function() {
-    var folder_id = $('#surfingkeys_omnibarSearchResult li.focused').data('folder_id');
-    if (folder_id) {
-        port.postMessage({
-            'action': 'getBookmarksInFolder',
-            'folder_id': folder_id
+    var items = response.bookmarks;
+    if (OpenBookmarks.folderOnly) {
+        items = response.bookmarks.filter(function(b) {
+            return !b.hasOwnProperty('url');
         });
-    } else {
-        OmnibarUtils.openFocused();
     }
-};
-port.handlers['getBookmarksInFolder'] = function(response) {
-    OmnibarUtils.listUrl(response.bookmarks);
-};
-OpenBookmarkFolders.onInput = function() {
-    port.postMessage({
-        'action': 'getBookmarkFolders',
-        'query': $(this).val()
-    });
-};
-port.handlers['getBookmarkFolders'] = function(response) {
-    var results = $("<ul/>");
-    response.bookmarkFolders.forEach(function(b) {
-        var li = $('<li/>').html(b.title).data('folder_id', b.id);
-        li.appendTo(results);
-    });
-    results.find('li:first').addClass('focused');
-    Normal.omnibar.data('focusedItem', 0);
-    $('#surfingkeys_omnibarSearchResult').html("");
-    results.appendTo('#surfingkeys_omnibarSearchResult');
+    OmnibarUtils.listBookmark(items);
 };
 
 OpenHistory = {
     'prompt': 'history≫'
 };
-OpenHistory.onEnter = OmnibarUtils.openFocused.bind(this);
+OpenHistory.onEnter = OmnibarUtils.openFocused.bind(OpenHistory);
 OpenHistory.onInput = function() {
     port.postMessage({
         'action': 'getHistory',
         'query': {
             startTime: 0,
-            maxResults: 2147483647,
+            maxResults: settings.maxResults,
             'text': $(this).val()
         }
     });
 };
 port.handlers['getHistory'] = function(response) {
-    OmnibarUtils.listUrl(response.history);
+    OmnibarUtils.listBookmark(response.history);
 };
 
 OpenURLs = {
-    'prompt': '≫'
+    'prompt': '≫',
+    'inFolder': [],
+    'onClose': function() {
+        OpenURLs.inFolder = [];
+    }
 };
-OpenURLs.onEnter = OmnibarUtils.openFocused.bind(this);
+OpenURLs.onEnter = OmnibarUtils.openFocused.bind(OpenURLs);
+OpenURLs.onKeydown = function(event) {
+    var eaten = false;
+    if (event.keyCode === KeyboardUtils.keyCodes.backspace && OpenURLs.inFolder.length) {
+        OmnibarUtils.onFolderUp(OpenURLs, {
+            'action': 'getURLs',
+            'maxResults': settings.maxResults,
+            'query': $(this).val()
+        });
+        eaten = true;
+    }
+    return eaten;
+};
 OpenURLs.onInput = function() {
     port.postMessage({
         'action': 'getURLs',
+        'maxResults': settings.maxResults,
         'query': $(this).val()
     });
 };
 port.handlers['getURLs'] = function(response) {
-    OmnibarUtils.listUrl(response.urls);
+    OmnibarUtils.listBookmark(response.urls);
 };
 
 Find = {
@@ -651,10 +704,10 @@ Find.onInput = function() {
     }
 };
 Find.onKeydown = function(event) {
-    if (event.keyCode === 27) {
+    if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
         Normal.statusBar.find('input.find').val("")
         Normal.statusBar.find('span:nth(0)').hide();
-    } else if (event.keyCode === 13) {
+    } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
         if (Find.matches.length) {
             var query = Normal.statusBar.find('input.find').val();
             if (query !== Find.history[0]) {
@@ -669,22 +722,13 @@ Find.onKeydown = function(event) {
                 Normal.updateStatusBar();
             }, 0);
         }
-    } else if (event.keyCode === 38) {
-        if (Find.historyInc < Find.history.length) {
-            var query = Find.history[Find.historyInc++];
-            Normal.statusBar.find('input.find').val(query);
-            Visual.hideCursor();
-            Find.clear();
-            Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
-        }
-    } else if (event.keyCode === 40) {
-        if (Find.historyInc > 0) {
-            var query = Find.history[--Find.historyInc];
-            Normal.statusBar.find('input.find').val(query);
-            Visual.hideCursor();
-            Find.clear();
-            Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
-        }
+    } else if (event.keyCode === KeyboardUtils.keyCode.upArrow || event.keyCode === KeyboardUtils.keyCode.downArrow) {
+        Find.historyInc = (event.keyCode === KeyboardUtils.keyCode.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + Find.history.length - 1);
+        Find.historyInc = Find.historyInc % Find.history.length;
+        Normal.statusBar.find('input.find').val(Find.history[Find.historyInc]);
+        Visual.hideCursor();
+        Find.clear();
+        Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
     }
 };
 Find.highlight = function(pattern) {
@@ -714,15 +758,16 @@ Find.clear = function() {
     Find.status = "";
 };
 
-SearchEngine = {};
-SearchEngine.reset = function() {
-    SearchEngine.prompt = undefined;
-    SearchEngine.url = undefined;
-    SearchEngine.suggestionURL = undefined;
-    SearchEngine.listSuggestion = undefined;
+SearchEngine = {
+    'onClose': function() {
+        SearchEngine.prompt = undefined;
+        SearchEngine.url = undefined;
+        SearchEngine.suggestionURL = undefined;
+        SearchEngine.listSuggestion = undefined;
+    }
 };
 SearchEngine.onEnter = function() {
-    var suggestion = $('#surfingkeys_omnibarSearchResult li.focused').html();
+    var suggestion = $('#surfingkeys_omnibarSearchResult li.focused').data('query');
     var url = SearchEngine.url + (suggestion || $('#surfingkeys_omnibarSearchArea>input').val());
     tabOpenLink(url);
     return true;
@@ -749,7 +794,8 @@ MiniQuery.onEnter = function() {
 };
 
 var settings = {
-    'blacklist': {}
+    'blacklist': {},
+    'maxResults': 500
 };
 
 function initSettings() {
@@ -970,17 +1016,23 @@ Normal.init = function() {
             Normal.omnibar.find('input')[0].focus();
         });
         Normal.omnibar.find('input').on('keydown', function(event) {
-            if (event.keyCode === 27) {
+            if (Normal.omnibar.handler.onKeydown) {
+                if (Normal.omnibar.handler.onKeydown.call(this, event)) {
+                    event.stopImmediatePropagation();
+                    event.preventDefault();
+                }
+            }
+            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
                 Normal.closeOmnibar();
-            } else if (event.keyCode === 13) {
+            } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 if (Normal.omnibar.handler.onEnter()) {
                     Normal.closeOmnibar();
                 }
-            } else if (event.keyCode === 32 && Normal.expandAlias($(this).val())) {
+            } else if (event.keyCode === KeyboardUtils.keyCodes.space && Normal.expandAlias($(this).val())) {
                 event.preventDefault();
-            } else if (event.keyCode === 8 && Normal.collapseAlias()) {
+            } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && Normal.collapseAlias()) {
                 event.preventDefault();
-            } else if (event.keyCode === 9) {
+            } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
                 Normal.rotateResult(event.shiftKey);
                 event.preventDefault();
             }
@@ -1220,7 +1272,8 @@ Normal.closeOmnibar = function() {
         Normal.omnibar.find('input').val('');
         $('#surfingkeys_omnibarSearchResult').html("");
         Normal.omnibar.lastHandler = null;
-        SearchEngine.reset();
+        Normal.omnibar.handler.onClose && Normal.omnibar.handler.onClose();
+        Normal.omnibar.handler = null;
         updated = true;
     }
     return updated;
@@ -1397,7 +1450,7 @@ Visual.finish = function(event) {
 Visual.update = function(event) {
     var updated = false;
     if (Visual.state) {
-        if (event.keyCode === 27) {
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             if (Visual.state > 1) {
                 Visual.cursor.remove();
                 Visual.selection.collapse(Visual.selection.anchorNode, Visual.selection.anchorOffset);
@@ -1453,7 +1506,7 @@ function initEventListener() {
                     Normal.stopKeyupPropagation = true;
                 }
             }
-            if (event.keyCode === 27) {
+            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
                 document.activeElement.blur();
             }
         }

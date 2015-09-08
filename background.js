@@ -95,17 +95,6 @@ Service.getBookmarks = function(message, sender, sendResponse) {
         });
     });
 };
-Service.getBookmarkFolders = function(message, sender, sendResponse) {
-    chrome.bookmarks.search(message.query, function(tree) {
-        var folders = tree.filter(function(b) {
-            return !b.hasOwnProperty('url');
-        });
-        sendResponse({
-            type: message.action,
-            bookmarkFolders: folders
-        });
-    });
-};
 Service.getBookmarksInFolder = function(message, sender, sendResponse) {
     chrome.bookmarks.getSubTree(message.folder_id, function(tree) {
         sendResponse({
@@ -123,18 +112,26 @@ Service.getHistory = function(message, sender, sendResponse) {
     });
 };
 Service.getURLs = function(message, sender, sendResponse) {
-    chrome.history.search({
-        'text': message.query,
-        startTime: 0,
-        maxResults: 2147483647
-    }, function(tree) {
-        var history = tree;
-        chrome.bookmarks.search(message.query, function(tree) {
+    chrome.bookmarks.search(message.query, function(tree) {
+        var bookmarks = tree;
+        var vacancy = message.maxResults - bookmarks.length;
+        if (vacancy > 0) {
+            chrome.history.search({
+                'text': message.query,
+                startTime: 0,
+                maxResults: vacancy
+            }, function(tree) {
+                sendResponse({
+                    type: message.action,
+                    urls: tree.concat(bookmarks)
+                });
+            });
+        } else {
             sendResponse({
                 type: message.action,
-                urls: tree.concat(history)
+                urls: bookmarks
             });
-        });
+        }
     });
 };
 Service.openLink = function(message, sender, sendResponse) {

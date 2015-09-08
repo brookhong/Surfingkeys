@@ -18,7 +18,6 @@ mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', 'Open an URLs', 'Normal.openOmnibar(OpenURLs)');
 mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(OpenBookmarks)');
-mapkey('of', 'Open a bookmark folder', 'Normal.openOmnibar(OpenBookmarkFolders)');
 mapkey('oh', 'Open URL from history', 'Normal.openOmnibar(OpenHistory)');
 mapkey('v', 'Toggle visual mode', 'Visual.toggle()');
 mapkey('/', 'Find in current page', 'Find.open()');
