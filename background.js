@@ -88,20 +88,36 @@ Service.duplicateTab = function(message, sender, sendResponse) {
     }
 };
 Service.getBookmarks = function(message, sender, sendResponse) {
-    chrome.bookmarks.search(message.query, function(tree) {
-        sendResponse({
-            type: message.action,
-            bookmarks: tree
+    if (message.parentId) {
+        chrome.bookmarks.getSubTree(message.parentId, function(tree) {
+            var bookmarks = tree[0].children;
+            if (message.query && message.query.length) {
+                bookmarks = bookmarks.filter(function(b) {
+                    return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
+                });
+            }
+            sendResponse({
+                type: message.action,
+                bookmarks: bookmarks
+            });
         });
-    });
-};
-Service.getBookmarksInFolder = function(message, sender, sendResponse) {
-    chrome.bookmarks.getSubTree(message.folder_id, function(tree) {
-        sendResponse({
-            type: message.action,
-            bookmarks: tree[0].children
-        });
-    });
+    } else {
+        if (message.query && message.query.length) {
+            chrome.bookmarks.search(message.query, function(tree) {
+                sendResponse({
+                    type: message.action,
+                    bookmarks: tree
+                });
+            });
+        } else {
+            chrome.bookmarks.getTree(function(tree) {
+                sendResponse({
+                    type: message.action,
+                    bookmarks: tree[0].children
+                });
+            });
+        }
+    }
 };
 Service.getHistory = function(message, sender, sendResponse) {
     chrome.history.search(message.query, function(tree) {
