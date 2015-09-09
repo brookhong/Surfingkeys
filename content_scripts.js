@@ -481,7 +481,11 @@ OmnibarUtils.openFocused = function() {
         focusedItem = $('#surfingkeys_omnibarSearchResult li.focused');
     var folderId = focusedItem.data('folderId');
     if (folderId) {
-        this.inFolder.push({'prompt': this.prompt, 'folderId': this.folderId, 'focusedItem': Normal.omnibar.data('focusedItem')});
+        this.inFolder.push({
+            'prompt': this.prompt,
+            'folderId': this.folderId,
+            'focusedItem': Normal.omnibar.data('focusedItem')
+        });
         this.prompt = focusedItem.data('folder_name') + "≫";
         $('#surfingkeys_omnibarSearchArea>span').html(this.prompt)
         $('#surfingkeys_omnibarSearchArea>input').val('');
@@ -612,6 +616,7 @@ port.handlers['getBookmarks'] = function(response) {
         });
     }
     OmnibarUtils.listBookmark(items, true);
+    Normal.omnibar.scrollIntoView();
 };
 
 OpenHistory = {
@@ -1005,6 +1010,17 @@ Normal.init = function() {
         Normal.omnibar = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
         Normal.omnibar.lastHandler = null;
         Normal.omnibar.appendTo(Normal.ui_container);
+        Normal.omnibar.scrollIntoView = function() {
+            var start = $('#surfingkeys_omnibarSearchResult').position().top;
+            var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
+            var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
+            if (pos && (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end)) {
+                var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
+                $('#surfingkeys_omnibarSearchResult').animate({
+                    scrollTop: pos
+                }, 100);
+            }
+        };
         Normal.usage = $('<div id=surfingkeys_Usage/>').hide();
         Normal.usage.appendTo(Normal.ui_container);
         Normal.renderUsage();
@@ -1165,24 +1181,16 @@ Normal.rotateResult = function(backward) {
         var focused = Normal.omnibar.data('focusedItem');
         var next = (backward ? (focused + total) : (focused + total + 2)) % (total + 1);
         if (focused === undefined) {
-            focused = 0;
-            next = 0;
+            focused = backward ? (total - 1) : 0;
+            next = focused;
         }
         $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(focused)).removeClass('focused');
         if (next === total) {
             Normal.omnibar.removeData('focusedItem');
         } else {
             $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
-            var start = $('#surfingkeys_omnibarSearchResult').position().top;
-            var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
-            var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
-            if (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end) {
-                var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
-                $('#surfingkeys_omnibarSearchResult').animate({
-                    scrollTop: pos
-                }, 100);
-            }
             Normal.omnibar.data('focusedItem', next);
+            Normal.omnibar.scrollIntoView();
         }
         eaten = true;
     }
