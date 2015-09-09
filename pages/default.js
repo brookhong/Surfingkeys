@@ -8,7 +8,7 @@ mapkey('h', 'Scroll left', 'Normal.scroll("left")');
 mapkey('l', 'Scroll right', 'Normal.scroll("right")');
 mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
-mapkey('f', 'Open a link', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible", Hints.dispatchMouseClick)');
+mapkey('f', 'Open a link', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
 mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');

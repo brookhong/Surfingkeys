@@ -516,7 +516,7 @@ OmnibarUtils.listResults = function(items, renderItem) {
     $('#surfingkeys_omnibarSearchResult').html("");
     results.appendTo('#surfingkeys_omnibarSearchResult');
 };
-OmnibarUtils.listBookmark = function(items) {
+OmnibarUtils.listBookmark = function(items, showFolder) {
     OmnibarUtils.listResults(items, function(b) {
         var li = $('<li/>');
         if (b.hasOwnProperty('url')) {
@@ -524,7 +524,7 @@ OmnibarUtils.listBookmark = function(items) {
             b.title = (b.title && b.title !== "") ? b.title : b.url;
             li.html('<div class="title">{1} {0}</div>'.format(b.title, type));
             $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
-        } else {
+        } else if (showFolder) {
             li.html('<div class="title">▷ {0}</div>'.format(b.title)).data('folder_name', b.title).data('folderId', b.id);
         }
         return li;
@@ -547,10 +547,16 @@ OpenBookmarks = {
     'prompt': 'bookmark≫',
     'inFolder': [],
     'folderOnly': false,
+    'onOpen': function() {
+        port.postMessage({
+            'action': 'getBookmarks'
+        });
+    },
     'onClose': function() {
         OpenBookmarks.inFolder = [];
         OpenBookmarks.prompt = "bookmark≫";
         delete OpenBookmarks.folderId;
+        Normal.omnibar.removeData('focusedItem');
     }
 };
 OmnibarUtils.onFolderUp = function(handler, message) {
@@ -605,7 +611,7 @@ port.handlers['getBookmarks'] = function(response) {
             return !b.hasOwnProperty('url');
         });
     }
-    OmnibarUtils.listBookmark(items);
+    OmnibarUtils.listBookmark(items, true);
 };
 
 OpenHistory = {
@@ -623,40 +629,22 @@ OpenHistory.onInput = function() {
     });
 };
 port.handlers['getHistory'] = function(response) {
-    OmnibarUtils.listBookmark(response.history);
+    OmnibarUtils.listBookmark(response.history, false);
 };
 
 OpenURLs = {
-    'prompt': '≫',
-    'inFolder': [],
-    'onClose': function() {
-        OpenURLs.inFolder = [];
-        OpenURLs.prompt = "≫";
-        delete OpenURLs.folderId;
-    }
+    'prompt': '≫'
 };
 OpenURLs.onEnter = OmnibarUtils.openFocused.bind(OpenURLs);
-OpenURLs.onKeydown = function(event) {
-    var eaten = false;
-    if (event.keyCode === KeyboardUtils.keyCodes.backspace && OpenURLs.inFolder.length && !$(this).val().length) {
-        OmnibarUtils.onFolderUp(OpenURLs, {
-            'action': 'getURLs',
-            'maxResults': settings.maxResults
-        });
-        eaten = true;
-    }
-    return eaten;
-};
 OpenURLs.onInput = function() {
     port.postMessage({
         'action': 'getURLs',
         'maxResults': settings.maxResults,
-        'parentId': OpenURLs.folderId,
         'query': $(this).val()
     });
 };
 port.handlers['getURLs'] = function(response) {
-    OmnibarUtils.listBookmark(response.urls);
+    OmnibarUtils.listBookmark(response.urls, false);
 };
 
 Find = {
@@ -1271,6 +1259,7 @@ Normal.openOmnibar = function(handler, type) {
         }
         Normal.omnibar.handler = handler;
         $('#surfingkeys_omnibarSearchArea>span').html(handler.prompt)
+        Normal.omnibar.handler.onOpen && Normal.omnibar.handler.onOpen();
     }
 };
 Normal.closeOmnibar = function() {
