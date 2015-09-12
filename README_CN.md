@@ -13,7 +13,9 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
         alert('a well-known phrase uttered by characters in the 1996 film Jerry Maguire');
     });
 
-[配置参考](#edit-your-own-settings).
+[配置参考](#配置参考).
+
+[演示](http://video.weibo.com/show?fid=1034:09ef299edbed112e9c0a66a18ffb3463)
 
 ## 哪些功能是Surfingkeys不同于其他插件的？
 * 所有配置都用javascript描述，易于修改添加自己的按键。
@@ -60,8 +62,58 @@ Surfingkeys目前只有两种模式。
 
 从使用Firefox时起，我就必装的一个插件。无论Firefox还是Chrome，我用的插件都是通过右键菜单来实现的。Surfingkeys则通过按键来实现。默认情况下，当你在normal mode下按`sg`，Surfingkeys会打开google搜索选中文本，如果没有文字被选中，则搜索系统剪贴板里面的文字。在visual mode下，它只会搜索选中文本。
 
-`sg`里面的`g`是个别名，用于google，还有其他一些内置的别名，如`b`是百度的别名。这样当你按`sb`的时候就是使用百度来搜索选中文本。参考[Add search alias to omnibar](#add-search-alias-to-omnibar)来添加你自己的搜索别名，尤其那些用于公司内部的搜索。
+`sg`里面的`g`是个别名，用于google，还有其他一些内置的别名，如`b`是百度的别名。这样当你按`sb`的时候就是使用百度来搜索选中文本。参考[在搜索栏里添加搜索别名](#在搜索栏里添加搜索别名)来添加你自己的搜索别名，尤其那些用于公司内部的搜索。
 
+## 配置参考
+
+### 添加一个按键映射
+
+    mapkey(keystroke, help_string, action_code)
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**keystroke**                   | 触发某个操作的按键|
+|**help_string**                 | 帮助描述，会自动出现在`u`打开的帮助小窗里。|
+|**action_code**                 | 一段Javascript代码，或者一个Javascript函数。|
+
+    vmapkey(keystroke, help_string, action_code)
+
+用于visual mode
+
+### 在搜索栏里添加搜索别名
+
+    addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**alias**                                   | 一个以上字符，用作搜索别名。当你在搜索栏里输入它之后，再按空格键，会切换到对应的搜索引擎。|
+|**prompt**                                  | 提示符，说明当前所用搜索引擎。|
+|**search_url**                              | 搜索引擎搜索地址。|
+|**suggestion_url[可选]**                    | 搜索自动完成URL，如果提供的话，搜索栏会列出相关关键字。|
+|**callback_to_parse_suggestion[可选]**      | 解析suggestion_url返回的内容，列出相关关键字。|
+
+    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion);
+
+这是一个扩展版本，除了往搜索栏里添加搜索别名，还会创建一个按键映射，由`search_leader_key`加上`alias`组成，对应的操作就是搜索选中文本。比如，下面这行，
+
+    addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=', 'o');
+
+就相当于
+
+    addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
+    mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+    vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+
+### 搜索栏辅助函数
+
+    OmnibarUtils.listWords(<array of words>)
+    OmnibarUtils.html(<any html snippets>)
+
+### 添加一个迷你查询
+
+迷你查询很像一个搜索引擎，不同的是，它把查询结果直接在小窗里显示出来，而不是打开一个新页。
+
+    addMiniQuery(alias, prompt, search_url, callback_to_display_result);
 
 ## License
 

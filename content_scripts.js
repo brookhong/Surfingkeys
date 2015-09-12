@@ -1364,11 +1364,15 @@ Visual.toggle = function() {
             break;
         case 2:
             Visual.hideCursor();
+            Normal.ui_container.css('-webkit-user-select', '');
+            Normal.ui_container.find('*').css('-webkit-user-select', '');
             Visual.selection.collapse(Visual.selection.focusNode, Visual.selection.focusOffset);
             break;
         default:
             var pos = Visual.getStartPos();
             Visual.selection.setPosition(pos[0], pos[1]);
+            Normal.ui_container.css('-webkit-user-select', 'none');
+            Normal.ui_container.find('*').css('-webkit-user-select', 'none');
             Visual.showCursor();
             break;
     }
@@ -1396,21 +1400,27 @@ Visual.hideCursor = function() {
     return lastPos;
 }
 Visual.showCursor = function() {
-    var node = null;
-    if (Visual.selection.focusNode.nodeType === Node.TEXT_NODE) {
-        node = Visual.selection.focusNode;
-    } else if (Visual.selection.focusNode.firstChild && Visual.selection.focusNode.firstChild.nodeType === Node.TEXT_NODE) {
-        node = Visual.selection.focusNode.firstChild;
-    } else {
-        var nodes = Visual.getTextNodes(Visual.selection.focusNode, /./);
-        if (nodes.length) {
-            node = nodes[0];
+    var ret = false;
+    // https://developer.mozilla.org/en-US/docs/Web/API/Selection
+    // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
+    var pn = Visual.selection.focusNode.parentNode;
+    if ($(pn).is(':visible')) {
+        if (Visual.selection.focusNode.nodeType === Node.TEXT_NODE) {
+            var node = Visual.selection.focusNode;
+            var pos = node.splitText(Visual.selection.focusOffset);
+            node.parentNode.insertBefore(Visual.cursor, pos);
+        } else {
+            Visual.selection.focusNode.insertBefore(Visual.cursor, Visual.selection.focusNode.childNodes[Visual.selection.focusOffset]);
         }
+        Visual.cursor.style.display = 'initial';
+        var cr = Visual.cursor.getBoundingClientRect();
+        if (cr.width === 0 || cr.height === 0) {
+            Visual.cursor.style.display = 'inline-block';
+        }
+        var bcr = pn.getBoundingClientRect();
+        ret = bcr.width >= 4 && bcr.height >= 8;
     }
-    if (node) {
-        var pos = node.splitText(Visual.selection.focusOffset);
-        node.parentNode.insertBefore(Visual.cursor, pos);
-    }
+    return ret;
 };
 Visual.select = function(found) {
     if (Visual.selection.anchorNode && Visual.state === 2) {
@@ -1436,7 +1446,7 @@ Visual.getTextNodes = function(root, pattern) {
     return nodes;
 };
 Visual.scrollIntoView = function() {
-    var ff = Visual.selection.focusNode.parentNode;
+    var ff = Visual.cursor;
     var front = $(ff).offset();
     if (front.top < document.body.scrollTop || (front.top + $(ff).height()) > (document.body.scrollTop + window.innerHeight) || front.left < document.body.scrollLeft || (front.left + $(ff).width()) > (document.body.scrollLeft + window.innerWidth)) {
         window.scrollTo($(ff).offset().left, $(ff).offset().top - window.innerHeight / 2);
@@ -1482,13 +1492,27 @@ Visual.update = function(event) {
                     var sel = Visual.map_node.meta[0].annotation.split(" ");
                     var alter = (Visual.state === 2) ? "extend" : "move";
                     Visual.hideCursor();
-                    var lastPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
-                    Visual.selection.modify(alter, sel[0], sel[1]);
-                    if (lastPos[0] === Visual.selection.focusNode && lastPos[1] === Visual.selection.focusOffset) {
-                        Visual.selection.modify(alter, sel[0], "word");
+                    var lastPos = [Visual.selection.focusNode, Visual.selection.focusOffset],
+                        cursorShowed = false,
+                        prevPos;
+                    do {
+                        prevPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
+                        Visual.selection.modify(alter, sel[0], sel[1]);
+                        if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
+                            Visual.selection.modify(alter, sel[0], "word");
+                        }
+                        if (Visual.showCursor()) {
+                            cursorShowed = true;
+                            break;
+                        } else if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
+                            break;
+                        }
+                    } while (1);
+                    if (!cursorShowed) {
+                        Visual.selection.setPosition(lastPos[0], lastPos[1]);
+                        Visual.showCursor();
                     }
                     Visual.scrollIntoView();
-                    Visual.showCursor();
                 }
                 Visual.finish();
                 updated = true;

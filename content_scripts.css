@@ -7,7 +7,6 @@
     display: block;
 }
 #surfingkeys_popover {
-    -webkit-user-select: none;
     background-color: #000;
     padding: 0.5rem;
     position: fixed;
@@ -24,9 +23,6 @@
     bottom: 0px;
     right: -2rem;
     z-index: 2147483646;
-}
-#surfingkeys_status * {
-    -webkit-user-select: none;
 }
 #surfingkeys_status {
     z-index: 2147483646;
@@ -157,7 +153,6 @@ surfingkeys_mark {
     background-color: #ff0;
 }
 surfingkeys_cursor {
-    -webkit-user-select: none;
     background-color: #000;
     padding: 8px 4px;
 }
