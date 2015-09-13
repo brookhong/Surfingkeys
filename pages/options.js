@@ -1,5 +1,5 @@
 port.handlers['getSettings'] = function(msg) {
-    $('#mappings').val(msg.settings);
+    $('#mappings').val(msg.settings.snippets);
 };
 port.postMessage({
     'action': 'getSettings'
@@ -22,7 +22,7 @@ $('#save_button').click(function() {
         applySettings(settingsCode);
         chrome.runtime.sendMessage({
             action: 'updateSettings',
-            settings: $('#mappings').val()
+            settings: {snippets: $('#mappings').val()}
         });
         Normal.popup('Settings saved', 300);
     } catch (e) {

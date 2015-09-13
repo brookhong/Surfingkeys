@@ -156,6 +156,13 @@ surfingkeys_cursor {
     background-color: #000;
     padding: 8px 4px;
 }
+.surfingkeys_focusnode {
+    fill: #f00;
+    font-size: 18pt;
+    font-weight: 900;
+    background-color: #000;
+    border: solid 2px #000;
+}
 div.surfingkeys_bubble {
     position: absolute;
     padding: 9px;

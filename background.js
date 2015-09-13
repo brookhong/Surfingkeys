@@ -26,12 +26,16 @@ function request(method, url) {
     });
 }
 chrome.storage.local.get('surfingkeys_settings', function(data) {
-    if (data.surfingkeys_settings) {
+    if (data.surfingkeys_settings && typeof(data.surfingkeys_settings) === "object") {
         Service.settings = data.surfingkeys_settings;
     } else {
+        Service.settings = {
+            'blacklist': {},
+            'marks': {}
+        };
         var s = request('get', chrome.extension.getURL('/pages/default.js'));
         s.then(function(resp) {
-            Service.settings = resp;
+            Service.settings.snippets = resp;
         });
     }
 });
@@ -181,10 +185,12 @@ Service.editSettings = function(message, sender, sendResponse) {
     Service.openLink(message, sender, sendResponse);
 };
 Service.updateSettings = function(message, sender, sendResponse) {
+    for (var sd in message.settings) {
+        Service.settings[sd] = message.settings[sd];
+    }
     chrome.storage.local.set({
-        surfingkeys_settings: message.settings
+        surfingkeys_settings: Service.settings
     });
-    Service.settings = message.settings;
     Service.activePorts.forEach(function(port) {
         port.postMessage({
             type: 'settingsUpdated',

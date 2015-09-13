@@ -23,6 +23,8 @@ mapkey('v', 'Toggle visual mode', 'Visual.toggle()');
 mapkey('/', 'Find in current page', 'Find.open()');
 mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', 'Restore closed tab', 'RUNTIME("openLast")');
+mapkey('m', 'Add current URL to vim-like marks', Normal.addVIMark, 1);
+mapkey("'", 'Jump to vim-like mark', Normal.jumpVIMark, 1);
 mapkey('n', 'Next found text', 'Find.next(false)');
 mapkey('N', 'Previous found text', 'Find.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
@@ -53,6 +55,7 @@ mapkey('gk', 'Open Chrome Cookies', 'tabOpenLink("chrome://settings/cookies")');
 mapkey('ge', 'Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
 mapkey('gn', 'Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
 mapkey('gs', 'View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');
+mapkey('gu', 'Go up one path in the URL', 'window.location.href = getParentURL()');
 mapkey('se', 'Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('si', 'Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {

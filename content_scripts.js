@@ -37,6 +37,15 @@ function getNearestWord(text, offset) {
     return ret;
 }
 
+function getParentURL() {
+    var url = location.href;
+    if (location.pathname.length > 1) {
+        url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
+        url = url.substr(0, url.lastIndexOf('/'));
+    }
+    return url;
+}
+
 function getZIndex(node) {
     var z = 0;
     do {
@@ -257,13 +266,16 @@ function removeChild(elements) {
 
 }).call(this);
 
-var settings_delimiter = "\n// surfingkeys adds above\n";
 
-function applySettings(code) {
-    var theInstructions = code;
+function applySettings(resp) {
+    Normal.mappings = new Trie('', Trie.SORT_NONE);
+    Visual.initMappings();
+    var theInstructions = resp.snippets;
     var F = new Function(theInstructions);
     F();
-    settings.snippets = code.replace(new RegExp(".*" + settings_delimiter, ''), '');
+    settings.snippets = resp.snippets;
+    settings.blacklist = resp.blacklist;
+    settings.marks = resp.marks;
     if (window === top) {
         RUNTIME('setSurfingkeysIcon', {
             status: Normal.isBlacklisted()
@@ -278,7 +290,6 @@ var port = chrome.runtime.connect({
 port.handlers = {
     'connected': function(response) {
         extension_id = response.extension_id;
-        initSettings();
         applySettings(response.settings);
         Normal.init();
     },
@@ -288,7 +299,6 @@ port.handlers = {
         f(response.text);
     },
     'settingsUpdated': function(response) {
-        initSettings();
         applySettings(response.settings);
         Normal.renderUsage();
     }
@@ -315,9 +325,10 @@ chrome.runtime.onMessage.addListener(function(msg, sender, response) {
             } else {
                 settings.blacklist[msg.origin] = 1;
             }
-            var news = "settings.blacklist = {0};{1}{2}".format(JSON.stringify(settings.blacklist), settings_delimiter, settings.snippets);
             RUNTIME('updateSettings', {
-                settings: news
+                settings: {
+                    blacklist: settings.blacklist
+                }
             });
             response({
                 "all": settings.blacklist.hasOwnProperty('.*'),
@@ -401,7 +412,7 @@ Hints.create = function(cssSelector, onHintKey) {
         elements.each(function(i) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
-            var link = $('<div/>').css('top', pos.top).css('left', pos.left + $(this).width() / 2)
+            var link = $('<div/>').css('top', pos.top).css('left', pos.left)
                 .css('z-index', z + 1)
                 .data('label', hintLabels[i])
                 .data('link', this)
@@ -409,6 +420,17 @@ Hints.create = function(cssSelector, onHintKey) {
                 .html(hintLabels[i]);
             hintsHolder.append(link);
         });
+        var hints = $('#surfingkeys_Hints').find('>div');
+        var bcr = hints[0].getBoundingClientRect();
+        for (var i = 1; i < hints.length; i++) {
+            var h = hints[i];
+            var tcr = h.getBoundingClientRect();
+            if(tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
+                var top = $(h).offset().top + $(h).height();
+                $(h).css('top', top);
+            }
+            bcr = h.getBoundingClientRect();
+        }
     }
 };
 Hints.dispatchMouseClick = function(element, event) {
@@ -723,8 +745,8 @@ Find.onKeydown = function(event) {
                 Normal.updateStatusBar();
             }, 0);
         }
-    } else if (event.keyCode === KeyboardUtils.keyCode.upArrow || event.keyCode === KeyboardUtils.keyCode.downArrow) {
-        Find.historyInc = (event.keyCode === KeyboardUtils.keyCode.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + Find.history.length - 1);
+    } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
+        Find.historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + Find.history.length - 1);
         Find.historyInc = Find.historyInc % Find.history.length;
         Normal.statusBar.find('input.find').val(Find.history[Find.historyInc]);
         Visual.hideCursor();
@@ -795,20 +817,14 @@ MiniQuery.onEnter = function() {
 };
 
 var settings = {
-    'blacklist': {},
     'maxResults': 500
 };
 
-function initSettings() {
-    Normal.mappings = new Trie('', Trie.SORT_NONE);
-    settings.blacklist = {};
-    Visual.initMappings();
-}
-
-function mapkey(keys, annotation, jscode) {
+function mapkey(keys, annotation, jscode, extra_chars) {
     Normal.mappings.add(keys, {
         code: jscode,
-        annotation: annotation
+        annotation: annotation,
+        extra_chars: extra_chars
     });
 }
 
@@ -1234,20 +1250,33 @@ Normal.update = function(event) {
             break;
         default:
             var key = KeyboardUtils.getKeyChar(event);
-            Normal.map_node = Normal.map_node.find(key);
-            if (Normal.map_node === null) {
-                Normal.finish();
-            } else if (Normal.map_node.meta.length) {
-                if (typeof(Normal.map_node.meta[0].code) === 'function') {
-                    Normal.map_node.meta[0].code();
-                } else if (typeof(Normal.map_node.meta[0].code) === 'string') {
-                    eval(Normal.map_node.meta[0].code);
-                }
+            if (Normal.pendingMap) {
+                Normal.pendingMap(key);
+                Normal.pendingMap = null;
                 Normal.finish();
                 updated = true;
             } else {
-                Normal.showKeystroke(key);
-                updated = true;
+                Normal.map_node = Normal.map_node.find(key);
+                if (Normal.map_node === null) {
+                    Normal.finish();
+                } else if (Normal.map_node.meta.length) {
+                    if (typeof(Normal.map_node.meta[0].code) === 'function') {
+                        if (Normal.map_node.meta[0].extra_chars) {
+                            Normal.pendingMap = Normal.map_node.meta[0].code;
+                            Normal.showKeystroke(key);
+                        } else {
+                            Normal.map_node.meta[0].code();
+                            Normal.finish();
+                        }
+                    } else if (typeof(Normal.map_node.meta[0].code) === 'string') {
+                        eval(Normal.map_node.meta[0].code);
+                        Normal.finish();
+                    }
+                    updated = true;
+                } else {
+                    Normal.showKeystroke(key);
+                    updated = true;
+                }
             }
             break;
     }
@@ -1282,6 +1311,17 @@ Normal.closeOmnibar = function() {
         updated = true;
     }
     return updated;
+};
+Normal.addVIMark = function(mark) {
+    settings.marks[mark] = window.location.href;
+    RUNTIME('updateSettings', {
+        settings: {
+            marks: settings.marks
+        }
+    });
+};
+Normal.jumpVIMark = function(mark) {
+    window.location.href = settings.marks[mark];
 };
 
 Visual = {
@@ -1393,6 +1433,10 @@ Visual.star = function() {
 };
 Visual.hideCursor = function() {
     var lastPos = Visual.cursor.parentNode;
+    if (!$(Visual.cursor).is(':visible')) {
+        $(Visual.selection.focusNode.parentNode).attr('class', $(Visual.cursor).data('parentClass'));
+        $(Visual.cursor).removeData('parentClass');
+    }
     Visual.cursor.remove();
     if (lastPos) {
         lastPos.normalize();
@@ -1401,10 +1445,9 @@ Visual.hideCursor = function() {
 }
 Visual.showCursor = function() {
     var ret = false;
-    // https://developer.mozilla.org/en-US/docs/Web/API/Selection
-    // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-    var pn = Visual.selection.focusNode.parentNode;
-    if ($(pn).is(':visible')) {
+    if ($(Visual.selection.focusNode).is(':visible') || $(Visual.selection.focusNode.parentNode).is(':visible')) {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Selection
+        // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
         if (Visual.selection.focusNode.nodeType === Node.TEXT_NODE) {
             var node = Visual.selection.focusNode;
             var pos = node.splitText(Visual.selection.focusOffset);
@@ -1417,8 +1460,10 @@ Visual.showCursor = function() {
         if (cr.width === 0 || cr.height === 0) {
             Visual.cursor.style.display = 'inline-block';
         }
-        var bcr = pn.getBoundingClientRect();
-        ret = bcr.width >= 4 && bcr.height >= 8;
+        if (!$(Visual.cursor).is(':visible')) {
+            $(Visual.cursor).data('parentClass', $(Visual.selection.focusNode.parentNode).attr('class'));
+            $(Visual.selection.focusNode.parentNode).attr('class', 'surfingkeys_focusnode');
+        }
     }
     return ret;
 };
@@ -1492,26 +1537,12 @@ Visual.update = function(event) {
                     var sel = Visual.map_node.meta[0].annotation.split(" ");
                     var alter = (Visual.state === 2) ? "extend" : "move";
                     Visual.hideCursor();
-                    var lastPos = [Visual.selection.focusNode, Visual.selection.focusOffset],
-                        cursorShowed = false,
-                        prevPos;
-                    do {
-                        prevPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
-                        Visual.selection.modify(alter, sel[0], sel[1]);
-                        if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
-                            Visual.selection.modify(alter, sel[0], "word");
-                        }
-                        if (Visual.showCursor()) {
-                            cursorShowed = true;
-                            break;
-                        } else if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
-                            break;
-                        }
-                    } while (1);
-                    if (!cursorShowed) {
-                        Visual.selection.setPosition(lastPos[0], lastPos[1]);
-                        Visual.showCursor();
+                    var prevPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
+                    Visual.selection.modify(alter, sel[0], sel[1]);
+                    if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
+                        Visual.selection.modify(alter, sel[0], "word");
                     }
+                    Visual.showCursor();
                     Visual.scrollIntoView();
                 }
                 Visual.finish();
