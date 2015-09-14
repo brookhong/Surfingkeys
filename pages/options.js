@@ -1,13 +1,7 @@
-port.handlers['getSettings'] = function(msg) {
-    $('#mappings').val(msg.settings.snippets);
-};
-port.postMessage({
-    'action': 'getSettings'
-});
-
-window.setTimeout(function() {
+$(document).on("surfingkeys:connected", function() {
+    $('#mappings').val(settings.snippets);
     $('#mappings').height($(window).height() - $('#save_container').height() * 3);
-}, 100);
+});
 
 $('#reset_button').click(function() {
     $.get(chrome.extension.getURL('/pages/default.js'), function(data) {
@@ -19,10 +13,16 @@ $('#reset_button').click(function() {
 $('#save_button').click(function() {
     var settingsCode = $('#mappings').val();
     try {
-        applySettings(settingsCode);
+        applySettings({
+            snippets: settingsCode,
+            blacklist: settings.blacklist,
+            marks: settings.marks
+        });
         chrome.runtime.sendMessage({
             action: 'updateSettings',
-            settings: {snippets: $('#mappings').val()}
+            settings: {
+                snippets: $('#mappings').val()
+            }
         });
         Normal.popup('Settings saved', 300);
     } catch (e) {

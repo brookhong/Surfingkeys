@@ -20,10 +20,10 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 ## Which features make Surfingkeys more usable for me than others?
 * All settings are set up within a javascript file, which makes it easy to create mapping to user customized function.
 * A large cursor in visual mode, which makes visual mode better.
-* My favorite feature -- search selected with, which works both in normal mode and visual mode.
+* My favorite feature -- search selected with, which works in both normal mode and visual mode.
 * Help messages are automatically generated for mappings.
-* `*` to search word under curson in visual mode.
-* Scroll actions like page up/down (`e` `d`) work for not only top window both also scrollable DIV.
+* `*` to search word under cursor in visual mode.
+* Scroll actions like page up/down (`e` `d`) work for not only top window but also scrollable DIV.
 * `w` to switch frames if there is.
 
 ## Quick start
@@ -38,11 +38,11 @@ Surfingkeys now have only two modes.
 
 ### Normal mode, the default mode.
 
-All mappings added with `mapkey` works in this mdoe.
+All mappings added with `mapkey` works in this mode.
 
 ### Visual mode, the mode for text selection, and actions on the selected text.
 
-All mappings added with `vmapkey` works in this mdoe, with some built-in mappings like those in VIM - `j` `k` `h` `l` `b` `w``0` `$` etc.
+All mappings added with `vmapkey` works in this mode, with some built-in mappings like those in VIM - `j` `k` `h` `l` `b` `w``0` `$` etc.
 
 Press `v` to toggle visual mode. You'll see an indicator at bottom of current page - `Caret` or `Range`, and a large cursor on page. The cursor is made large for visibility, as sometimes it's not easy for human to locate a normal cursor on a web page.
 
@@ -66,6 +66,20 @@ Now here is a small practice,
 My favorite feature from when I was using Firefox. For both Firefox and Chrome, the extensions make it through context menu. Surfingkeys makes it through key mappings. By default, when you press `sg` in normal mode, it will search selected text with google, if there is none selected, it will search text from system clipboard with google. In visual mode, it will search selected text with google.
 
 The `g` in `sg` is a search alias for google, there are some other built-in search aliases -- like `w` for bing. So press `sw` to search selected with bing. Refer to [Add search alias to omnibar](#add-search-alias-to-omnibar) to add your own search alias, especially those search engines for company inside.
+
+## Vim-like marks
+
+You can create vim-like marks by pressing `m`, followed by a word character(0-9, A-Z, a-z), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
+
+In this way, the created mark always points to current URL. You can also create vim-like marks from the bookmarks. Try following steps:
+
+1. press `b` to open bookmarks.
+1. type something to locate the URL you'd like to create vim-like mark for.
+1. press Ctrl, plus a mark name, such as `f`.
+
+Then afterwards `'f` will open that URL directly.
+
+This is very useful for those pages you access very frequently. `om` to check out all the vim-like marks you have created.
 
 ## Edit your own settings
 
@@ -91,8 +105,8 @@ mapkey in visual mode
 |:---------------| :-----|
 |**alias**                                   | one or several chars, used as search alias. When you input the string and press `space` in omnibar, it will switch to the related search engine.|
 |**prompt**                                  | a string to tell you which search engine will be used for following search|
-|**search_url**                              | the URL for the search engin|
-|**suggestion_url[optional]**                | omnibar will list out search suggestions from the engine, if you provide suggestion_url and callback_to_parse_suggestio|
+|**search_url**                              | the URL for the search engine|
+|**suggestion_url[optional]**                | omnibar will list out search suggestions from the engine, if you provide suggestion_url and callback_to_parse_suggestion|
 |**callback_to_parse_suggestion[optional]**  | works with suggestion_url to provide search suggestion|
 
     addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion);

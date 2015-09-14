@@ -50,7 +50,7 @@ function getZIndex(node) {
     var z = 0;
     do {
         var i = parseInt(getComputedStyle(node).getPropertyValue('z-index'));
-        z += isNaN(i) ? 0 : i;
+        z += (isNaN(i) || i < 0) ? 0 : i;
         node = node.parentNode;
     } while (node && node !== document.body && node !== document);
     return z;
@@ -246,6 +246,9 @@ function removeChild(elements) {
         isEscape: function(event) {
             return (event.keyCode === this.keyCodes.ESC) || (event.ctrlKey && this.getKeyChar(event) === '[');
         },
+        isWordChar: function(event) {
+            return (event.keyCode < 123 && event.keyCode >= 97 || event.keyCode < 91 && event.keyCode >= 65 || event.keyCode < 58 && event.keyCode >= 48);
+        },
         isPrintable: function(event) {
             var keyChar;
             if (event.metaKey || event.ctrlKey || event.altKey) {
@@ -292,6 +295,7 @@ port.handlers = {
         extension_id = response.extension_id;
         applySettings(response.settings);
         Normal.init();
+        $(document).trigger("surfingkeys:connected");
     },
     'request': function(response) {
         var f = httpRequest.success[response.id];
@@ -403,7 +407,7 @@ Hints.create = function(cssSelector, onHintKey) {
         return ret;
     });
     elements = elements.filter(function(i) {
-        return this !== null;
+        return this !== null && this.nodeName !== "TD";
     });
     elements = $(removeChild(elements));
     if (elements.length > 0) {
@@ -425,7 +429,7 @@ Hints.create = function(cssSelector, onHintKey) {
         for (var i = 1; i < hints.length; i++) {
             var h = hints[i];
             var tcr = h.getBoundingClientRect();
-            if(tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
+            if (tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
                 var top = $(h).offset().top + $(h).height();
                 $(h).css('top', top);
             }
@@ -546,7 +550,7 @@ OmnibarUtils.listBookmark = function(items, showFolder) {
     OmnibarUtils.listResults(items, function(b) {
         var li = $('<li/>');
         if (b.hasOwnProperty('url')) {
-            var type = b.hasOwnProperty('lastVisitTime') ? "☼" : "☆";
+            var type = b.type || (b.hasOwnProperty('lastVisitTime') ? "☼" : "☆");
             b.title = (b.title && b.title !== "") ? b.title : b.url;
             li.html('<div class="title">{1} {0}</div>'.format(b.title, type));
             $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
@@ -620,6 +624,14 @@ OpenBookmarks.onKeydown = function(event) {
             'action': 'getBookmarks'
         });
         eaten = true;
+    } else if (event.ctrlKey && KeyboardUtils.isWordChar(event)) {
+        var focusedURL = $('#surfingkeys_omnibarSearchResult li.focused>div.url');
+        if (focusedURL.length) {
+            var mark_char = String.fromCharCode(event.keyCode);
+            mark_char = event.shiftKey ? mark_char : mark_char.toLowerCase();
+            Normal.addVIMark(mark_char, focusedURL.data('url'));
+            eaten = true;
+        }
     }
     return eaten;
 };
@@ -673,6 +685,26 @@ OpenURLs.onInput = function() {
 port.handlers['getURLs'] = function(response) {
     OmnibarUtils.listBookmark(response.urls, false);
 };
+
+OpenVIMarks = {
+    'prompt': 'VIMarks≫',
+    'onOpen': function() {
+        var query = $('#surfingkeys_omnibarSearchArea>input').val();
+        var urls = [];
+        for (var m in settings.marks) {
+            if (query === "" || settings.marks[m].indexOf(query) !== -1) {
+                urls.push({
+                    'title': m,
+                    'type': '♡',
+                    'url': settings.marks[m]
+                });
+            }
+        }
+        OmnibarUtils.listBookmark(urls, false);
+    }
+};
+OpenVIMarks.onEnter = OmnibarUtils.openFocused.bind(OpenVIMarks);
+OpenVIMarks.onInput = OpenVIMarks.onOpen;
 
 Find = {
     'caseSensitive': false,
@@ -1240,6 +1272,7 @@ Normal.hideKeystroke = function() {
 };
 Normal.finish = function(event) {
     Normal.map_node = Normal.mappings;
+    Normal.pendingMap = null;
     return Normal.hideKeystroke();
 };
 Normal.update = function(event) {
@@ -1248,11 +1281,13 @@ Normal.update = function(event) {
         case 27:
             updated = Normal.hideUsage() || Normal.closeOmnibar() || Normal.finish();
             break;
+        case KeyboardUtils.keyCodes.ctrlKey:
+        case KeyboardUtils.keyCodes.shiftKey:
+            break;
         default:
             var key = KeyboardUtils.getKeyChar(event);
             if (Normal.pendingMap) {
                 Normal.pendingMap(key);
-                Normal.pendingMap = null;
                 Normal.finish();
                 updated = true;
             } else {
@@ -1312,16 +1347,22 @@ Normal.closeOmnibar = function() {
     }
     return updated;
 };
-Normal.addVIMark = function(mark) {
-    settings.marks[mark] = window.location.href;
+Normal.addVIMark = function(mark, url) {
+    url = url || window.location.href;
+    settings.marks[mark] = url;
     RUNTIME('updateSettings', {
         settings: {
             marks: settings.marks
         }
     });
+    Normal.popup("Mark '{0}' added for: {1}.".format(mark, url));
 };
 Normal.jumpVIMark = function(mark) {
-    window.location.href = settings.marks[mark];
+    if (settings.marks.hasOwnProperty(mark)) {
+        window.location.href = settings.marks[mark];
+    } else {
+        Normal.popup("No mark '{0}' defined.".format(mark));
+    }
 };
 
 Visual = {
@@ -1352,14 +1393,14 @@ Visual.initMappings = function() {
 Visual.init = function() {
     Visual.map_node = Visual.mappings;
     Visual.selection = document.getSelection();
-    document.onselectionchange = function() {
+    document.addEventListener('click', function(event) {
         switch (Visual.selection.type) {
             case "None":
                 Visual.hideCursor();
                 Visual.state = 0;
                 break;
             case "Caret":
-                if (Visual.auto || Visual.state) {
+                if (Visual.state) {
                     Visual.hideCursor();
                     if (Visual.state === 0) {
                         Visual.state = 1;
@@ -1368,7 +1409,7 @@ Visual.init = function() {
                 }
                 break;
             case "Range":
-                if (Visual.auto || Visual.state) {
+                if (Visual.state) {
                     Visual.hideCursor();
                     Visual.state = 2;
                     Visual.showCursor();
@@ -1376,7 +1417,7 @@ Visual.init = function() {
                 break;
         }
         Normal.updateStatusBar();
-    };
+    });
 };
 Visual.getStartPos = function() {
     var node = null,
@@ -1433,7 +1474,7 @@ Visual.star = function() {
 };
 Visual.hideCursor = function() {
     var lastPos = Visual.cursor.parentNode;
-    if (!$(Visual.cursor).is(':visible')) {
+    if (Visual.selection.focusNode && Visual.selection.focusNode.parentNode && !$(Visual.cursor).is(':visible')) {
         $(Visual.selection.focusNode.parentNode).attr('class', $(Visual.cursor).data('parentClass'));
         $(Visual.cursor).removeData('parentClass');
     }

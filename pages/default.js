@@ -19,6 +19,7 @@ mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', 'Open an URLs', 'Normal.openOmnibar(OpenURLs)');
 mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(OpenBookmarks)');
 mapkey('oh', 'Open URL from history', 'Normal.openOmnibar(OpenHistory)');
+mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar(OpenVIMarks)');
 mapkey('v', 'Toggle visual mode', 'Visual.toggle()');
 mapkey('/', 'Find in current page', 'Find.open()');
 mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
