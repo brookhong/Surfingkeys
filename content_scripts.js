@@ -270,15 +270,14 @@ function removeChild(elements) {
 }).call(this);
 
 
+var settings;
 function applySettings(resp) {
     Normal.mappings = new Trie('', Trie.SORT_NONE);
     Visual.initMappings();
     var theInstructions = resp.snippets;
     var F = new Function(theInstructions);
     F();
-    settings.snippets = resp.snippets;
-    settings.blacklist = resp.blacklist;
-    settings.marks = resp.marks;
+    settings = resp;
     if (window === top) {
         RUNTIME('setSurfingkeysIcon', {
             status: Normal.isBlacklisted()
@@ -287,10 +286,7 @@ function applySettings(resp) {
 }
 
 var extension_id;
-var port = chrome.runtime.connect({
-    name: 'main'
-});
-port.handlers = {
+var port_handlers = {
     'connected': function(response) {
         extension_id = response.extension_id;
         applySettings(response.settings);
@@ -307,13 +303,20 @@ port.handlers = {
         Normal.renderUsage();
     }
 };
-port.onMessage.addListener(function(response) {
-    if (port.handlers[response.type]) {
-        port.handlers[response.type](response);
-    } else {
-        console.log("[unexpected port message] " + JSON.stringify(response))
-    }
-});
+function initPort() {
+    var _port = chrome.runtime.connect({
+        name: 'main'
+    });
+    _port.onMessage.addListener(function(response) {
+        if (port_handlers[response.type]) {
+            port_handlers[response.type](response);
+        } else {
+            console.log("[unexpected port message] " + JSON.stringify(response))
+        }
+    });
+    return _port;
+}
+var port = initPort();
 
 chrome.runtime.onMessage.addListener(function(msg, sender, response) {
     if (msg.from === 'browser_action') {
@@ -642,7 +645,7 @@ OpenBookmarks.onInput = function() {
         'query': $(this).val()
     });
 };
-port.handlers['getBookmarks'] = function(response) {
+port_handlers['getBookmarks'] = function(response) {
     var items = response.bookmarks;
     if (OpenBookmarks.folderOnly) {
         items = items.filter(function(b) {
@@ -667,7 +670,7 @@ OpenHistory.onInput = function() {
         }
     });
 };
-port.handlers['getHistory'] = function(response) {
+port_handlers['getHistory'] = function(response) {
     OmnibarUtils.listBookmark(response.history, false);
 };
 
@@ -682,7 +685,7 @@ OpenURLs.onInput = function() {
         'query': $(this).val()
     });
 };
-port.handlers['getURLs'] = function(response) {
+port_handlers['getURLs'] = function(response) {
     OmnibarUtils.listBookmark(response.urls, false);
 };
 
@@ -846,10 +849,6 @@ MiniQuery.onEnter = function() {
         }, MiniQuery.listResult);
     }
     return false;
-};
-
-var settings = {
-    'maxResults': 500
 };
 
 function mapkey(keys, annotation, jscode, extra_chars) {
@@ -1027,7 +1026,7 @@ Normal.rotateFrame = function() {
                 'action': 'getTopOrigin'
             })
         }, 300);
-        port.handlers['getTopOrigin'] = function(response) {
+        port_handlers['getTopOrigin'] = function(response) {
             _imp.topOrigin = response.topOrigin;
         };
     }
@@ -1037,6 +1036,13 @@ Normal.isBlacklisted = function() {
     return settings.blacklist[window.location.origin] || settings.blacklist['.*'];
 };
 Normal.init = function() {
+    if (!settings) {
+        port = initPort();
+        port_handlers['getSettings'] = port_handlers['settingsUpdated'];
+        port.postMessage({
+            'action': 'getSettings'
+        });
+    }
     var blacklisted = Normal.isBlacklisted();
     if (!blacklisted && !Normal.ui_container) {
         Normal.map_node = Normal.mappings;
@@ -1509,11 +1515,13 @@ Visual.showCursor = function() {
     return ret;
 };
 Visual.select = function(found) {
+    Visual.hideCursor();
     if (Visual.selection.anchorNode && Visual.state === 2) {
         Visual.selection.extend(found.firstChild, 0);
     } else {
         Visual.selection.setPosition(found.firstChild, 0);
     }
+    Visual.showCursor();
 };
 Visual.getTextNodes = function(root, pattern) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];

@@ -1,6 +1,15 @@
 $(document).on("surfingkeys:connected", function() {
     $('#mappings').val(settings.snippets);
+    $('#storage').val(settings.storage);
     $('#mappings').height($(window).height() - $('#save_container').height() * 3);
+});
+
+$('#storage').change(function(){
+    var storage = $(this).val();
+    chrome.runtime.sendMessage({
+        action: 'changeSettingsStorage',
+        storage: storage
+    });
 });
 
 $('#reset_button').click(function() {

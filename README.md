@@ -2,7 +2,7 @@
 
 Surfingkeys is another Chrome extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
-There are several Chrome extensions that provides similar functionalities. I used [philc/vimium](https://github.com/philc/vimium) for almost one year, then I switched to [1995eaton/chromium-vim](https://github.com/1995eaton/chromium-vim) half a year ago.
+There are several Chrome extensions that provides similar functionalities. I used [philc/vimium](https://github.com/philc/vimium) for almost one year, then I switched to [1995eaton/chromium-vim](https://github.com/1995eaton/chromium-vim) for half a year.
 
 Both are great extensions. What makes me create another wheel, is that I found so many changes that need to be done when I tried to add some functionalities to meet my own requirements. For example, some functions that I originally used some other extensions for,
 

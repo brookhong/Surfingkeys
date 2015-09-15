@@ -8,6 +8,14 @@ chrome.commands.onCommand.addListener(function(command) {
     }
 });
 
+var initialSettings = {
+    'maxResults': 500,
+    'blacklist': {},
+    'marks': {},
+    'version': chrome.runtime.getManifest().version,
+    'storage': 'local'
+};
+
 var Service = {
     'activePorts': [],
     'topOrigins': {},
@@ -25,18 +33,27 @@ function request(method, url) {
         xhr.send();
     });
 }
-chrome.storage.local.get('surfingkeys_settings', function(data) {
-    if (data.surfingkeys_settings && typeof(data.surfingkeys_settings) === "object") {
-        Service.settings = data.surfingkeys_settings;
-    } else {
-        Service.settings = {
-            'blacklist': {},
-            'marks': {}
-        };
+chrome.storage.local.get(null, function(data) {
+    if (!data.version || data.version !== initialSettings.version) {
+        chrome.storage.local.clear();
+        chrome.storage.sync.clear();
+        Service.settings = JSON.parse(JSON.stringify(initialSettings));
         var s = request('get', chrome.extension.getURL('/pages/default.js'));
         s.then(function(resp) {
             Service.settings.snippets = resp;
         });
+    } else {
+        Service.settings = data;
+        if (data.storage === 'sync') {
+            chrome.storage.sync.get(null, function(data) {
+                if (chrome.runtime.lastError) {
+                    console.log(chrome.runtime.lastError);
+                } else {
+                    Service.settings = data;
+                    Service.settings.storage = "sync";
+                }
+            });
+        }
     }
 });
 Service.nextTab = function(message, sender, sendResponse) {
@@ -188,15 +205,31 @@ Service.updateSettings = function(message, sender, sendResponse) {
     for (var sd in message.settings) {
         Service.settings[sd] = message.settings[sd];
     }
-    chrome.storage.local.set({
-        surfingkeys_settings: Service.settings
-    });
+    chrome.storage.local.set(Service.settings);
+    if (Service.settings.storage === 'sync') {
+        chrome.storage.sync.set(Service.settings, function() {
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError);
+            }
+        });
+    }
     Service.activePorts.forEach(function(port) {
         port.postMessage({
             type: 'settingsUpdated',
             settings: Service.settings
         });
     });
+};
+Service.changeSettingsStorage = function(message, sender, sendResponse) {
+    Service.settings.storage = message.storage;
+    chrome.storage.local.set(Service.settings);
+    if (Service.settings.storage === 'sync') {
+        chrome.storage.sync.set(Service.settings, function() {
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError);
+            }
+        });
+    }
 };
 Service.setSurfingkeysIcon = function(message, sender, sendResponse) {
     chrome.browserAction.setIcon({

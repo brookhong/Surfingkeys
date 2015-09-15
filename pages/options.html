@@ -24,6 +24,11 @@
         </style>
     </head>
     <body>
+        <label for="storage">Where to store your settings:</label>
+        <select id="storage" name="storage">
+            <option value="local" selected="selected">chrome.storage.local</option>
+            <option value="sync">chrome.storage.sync</option>
+        </select>
         <textarea id="mappings"></textarea>
         <div id="save_container">
             <a href="https://github.com/brookhong/Surfingkeys/issues">Report issues</a>
