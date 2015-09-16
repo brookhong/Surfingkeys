@@ -99,32 +99,20 @@ function initSmoothScroll(elm) {
     };
 }
 
-function getScrollableElement(defval, minHeight, minRatio) {
-    var current = document.activeElement || document.body;
-    while (current !== document.body && (current.scrollHeight / current.offsetHeight < minRatio || current.offsetHeight < minHeight)) {
-        current = current.parentNode;
+function getScrollableElements(minHeight, minRatio) {
+    var nodes = [];
+    if (window.innerHeight < document.body.scrollHeight) {
+        nodes.push(document.body);
     }
-    if (current === document.body) {
-        if (window.innerHeight < document.body.scrollHeight) {
-            current = document.body;
-        } else {
-            if (defval && $(defval).is(':visible')) {
-                current = defval;
-            } else {
-                var nodeIterator = document.createNodeIterator(
-                    document.body,
-                    NodeFilter.SHOW_ELEMENT, {
-                        acceptNode: function(node) {
-                            return (node.scrollHeight / node.offsetHeight >= minRatio && node.offsetHeight > minHeight) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                        }
-                    });
-                var nodes = [];
-                for (var node; node = nodeIterator.nextNode(); nodes.push(node));
-                current = (nodes.length) ? nodes[0] : null;
+    var nodeIterator = document.createNodeIterator(
+        document.body,
+        NodeFilter.SHOW_ELEMENT, {
+            acceptNode: function(node) {
+                return (node !== document.body && node.scrollHeight / node.offsetHeight >= minRatio && node.offsetHeight > minHeight) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
             }
-        }
-    }
-    return current;
+        });
+    for (var node; node = nodeIterator.nextNode(); nodes.push(node));
+    return nodes;
 }
 
 function removeChild(elements) {
@@ -198,7 +186,7 @@ function removeChild(elements) {
             "U+00BF": ["U+002F", "U+003F"]
         },
         init: function() {
-            if (navigator.userAgent.indexOf("Mac") !== -1) {
+            if (navigator.platform.indexOf("Mac") !== -1) {
                 return this.platform = "Mac";
             } else if (navigator.userAgent.indexOf("Linux") !== -1) {
                 return this.platform = "Linux";
@@ -271,6 +259,7 @@ function removeChild(elements) {
 
 
 var settings;
+
 function applySettings(resp) {
     Normal.mappings = new Trie('', Trie.SORT_NONE);
     Visual.initMappings();
@@ -303,6 +292,7 @@ var port_handlers = {
         Normal.renderUsage();
     }
 };
+
 function initPort() {
     var _port = chrome.runtime.connect({
         name: 'main'
@@ -929,14 +919,21 @@ Normal = {
     'stepSize': 70,
     'scrollNode': null,
     'searchAliases': {},
+    'scrollIndex': 0,
     'miniQuery': {}
 };
+Normal.changeScrollTarget = function() {
+    Normal.scrollNodes = getScrollableElements(100, 1.2);
+    Normal.scrollIndex = (Normal.scrollIndex + 1) % Normal.scrollNodes.length;
+}
 Normal.scroll = function(type, repeats) {
-    var scrollNode = getScrollableElement(Normal.scrollNode, 100, 1.2);
-    Normal.scrollNode = scrollNode;
-    if (!scrollNode) {
+    if (!Normal.scrollNodes) {
+        Normal.scrollNodes = getScrollableElements(100, 1.2);
+    }
+    if (Normal.scrollNodes.length === 0) {
         return;
     }
+    var scrollNode = Normal.scrollNodes[Normal.scrollIndex];
     if (!scrollNode.smoothScrollBy) {
         initSmoothScroll(scrollNode);
     }
