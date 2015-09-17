@@ -195,3 +195,9 @@ div.surfingkeys_arrowdown_inner {
     border-top: 10px solid #ffd;
     background: transparent;
 }
+div.surfingkeys_frame {
+    position: absolute;
+    border: 4px solid #C38A22;
+    box-sizing: border-box;
+    z-index: 2147483646;
+}

@@ -400,7 +400,7 @@ Hints.create = function(cssSelector, onHintKey) {
         return ret;
     });
     elements = elements.filter(function(i) {
-        return this !== null && this.nodeName !== "TD";
+        return this !== null;
     });
     elements = $(removeChild(elements));
     if (elements.length > 0) {
@@ -437,6 +437,9 @@ Hints.dispatchMouseClick = function(element, event) {
         if (event && event.shiftKey && element.href) {
             tabOpenLink(element.href);
         } else {
+            var realTargets = $(element).find('a:visible');
+            realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
+            element = realTargets.length ? realTargets[0] : element;
             var events = ['mouseover', 'mousedown', 'mouseup', 'click'];
             events.forEach(function(eventName) {
                 var event = document.createEvent('MouseEvents');
@@ -924,7 +927,12 @@ Normal = {
 };
 Normal.changeScrollTarget = function() {
     Normal.scrollNodes = getScrollableElements(100, 1.2);
-    Normal.scrollIndex = (Normal.scrollIndex + 1) % Normal.scrollNodes.length;
+    if (Normal.scrollNodes.length > 0) {
+        Normal.scrollIndex = (Normal.scrollIndex + 1) % Normal.scrollNodes.length;
+        var sn = Normal.scrollNodes[Normal.scrollIndex];
+        Normal.highlightElement(sn);
+        sn.scrollIntoView();
+    }
 }
 Normal.scroll = function(type, repeats) {
     if (!Normal.scrollNodes) {
@@ -1052,6 +1060,7 @@ Normal.init = function() {
         Normal.keystroke.appendTo(Normal.ui_container);
         Normal.popover = $('<div id=surfingkeys_popover/>');
         Normal.popover.appendTo(Normal.ui_container);
+        Normal.frameElement = $("<div class=surfingkeys_frame>");
         Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
         Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
@@ -1145,6 +1154,13 @@ Normal.bubble = function(pos, msg) {
     }
     Normal._bubble.find('div.surfingkeys_arrow').css('left', left[1]);
     Normal._bubble.css('top', pos.top - h - 12).css('left', left[0]);
+};
+Normal.highlightElement = function(elm) {
+    var pos = $(elm).offset();
+    Normal.frameElement.css('top', pos.top).css('left', pos.left).css('width', $(elm).width()).css('height', $(elm).height()).appendTo('body');
+    setTimeout(function() {
+        Normal.frameElement.remove();
+    }, 200);
 };
 Normal.renderMappings = function(mappings) {
     var tb = $('<table/>'),
@@ -1603,24 +1619,28 @@ Visual.update = function(event) {
 };
 
 function initEventListener() {
+    window.stopEventPropagation = function(e, stopKeyUp) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        window.stopKeyupPropagation = stopKeyUp;
+    };
     window.addEventListener('keydown', function(event) {
         if (Normal.init()) {
             if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
                 if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
-                    event.stopImmediatePropagation();
-                    event.preventDefault();
-                    Normal.stopKeyupPropagation = true;
+                    window.stopEventPropagation(event, true);
                 }
             }
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            if (event.keyCode === KeyboardUtils.keyCodes.ESC && ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.nodeName) !== -1) {
                 document.activeElement.blur();
+                window.stopEventPropagation(event, true);
             }
         }
     }, true);
     window.addEventListener('keyup', function(event) {
-        if (Normal.stopKeyupPropagation) {
+        if (window.stopKeyupPropagation) {
             event.stopImmediatePropagation();
-            Normal.stopKeyupPropagation = false;
+            window.stopKeyupPropagation = false;
         }
     }, true);
     window.surfingkeys = window.location.href;
