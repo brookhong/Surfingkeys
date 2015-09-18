@@ -27,7 +27,6 @@ chrome.tabs.query({
     activeTab = tabs[0];
     chrome.tabs.sendMessage(
         activeTab.id, {
-            from: 'browser_action',
             subject: 'getBlacklist'
         },
         onSurfingkeysStatus);

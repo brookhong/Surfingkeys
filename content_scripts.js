@@ -308,33 +308,43 @@ function initPort() {
 }
 var port = initPort();
 
-chrome.runtime.onMessage.addListener(function(msg, sender, response) {
-    if (msg.from === 'browser_action') {
-        if (msg.subject === 'getBlacklist') {
-            response({
-                "all": settings.blacklist.hasOwnProperty('.*'),
-                "this": settings.blacklist.hasOwnProperty(window.location.origin),
-                "origin": window.location.origin
-            });
-        } else if (msg.subject === 'toggleBlacklist') {
-            if (settings.blacklist.hasOwnProperty(msg.origin)) {
-                delete settings.blacklist[msg.origin];
-            } else {
-                settings.blacklist[msg.origin] = 1;
-            }
-            RUNTIME('updateSettings', {
-                settings: {
-                    blacklist: settings.blacklist
-                }
-            });
-            response({
-                "all": settings.blacklist.hasOwnProperty('.*'),
-                "this": settings.blacklist.hasOwnProperty(window.location.origin),
-                "origin": window.location.origin
-            });
+var runtime_handlers = {
+    'getBlacklist': function(msg, sender, response) {
+        response({
+            "all": settings.blacklist.hasOwnProperty('.*'),
+            "this": settings.blacklist.hasOwnProperty(window.location.origin),
+            "origin": window.location.origin
+        });
+    },
+    'toggleBlacklist': function(msg, sender, response) {
+        if (settings.blacklist.hasOwnProperty(msg.origin)) {
+            delete settings.blacklist[msg.origin];
         } else {
-            console.log("[unexpected runtime message] " + JSON.stringify(msg))
+            settings.blacklist[msg.origin] = 1;
         }
+        RUNTIME('updateSettings', {
+            settings: {
+                blacklist: settings.blacklist
+            }
+        });
+        response({
+            "all": settings.blacklist.hasOwnProperty('.*'),
+            "this": settings.blacklist.hasOwnProperty(window.location.origin),
+            "origin": window.location.origin
+        });
+    },
+    'focusFrame': function(msg, sender, response) {
+        if (msg.frameId === window.frameId) {
+            window.focus();
+            Normal.highlightDocument();
+        }
+    },
+};
+chrome.runtime.onMessage.addListener(function(msg, sender, response) {
+    if (runtime_handlers[msg.subject]) {
+        runtime_handlers[msg.subject](msg, sender, response);
+    } else {
+        console.log("[unexpected runtime message] " + JSON.stringify(msg))
     }
 });
 
@@ -989,53 +999,7 @@ Normal.scroll = function(type, repeats) {
     }
 };
 Normal.rotateFrame = function() {
-    var _imp;
-    if (window === top) {
-        port.postMessage({
-            'action': 'setTopOrigin',
-            'topOrigin': window.location.origin
-        });
-        window.addEventListener('message', function(event) {
-            if (typeof(event.data) === 'object' && 'action' in event.data && event.data.action === 'rotateFrame') {
-                Normal.rotateFrame();
-            }
-        });
-        _imp = function() {
-            if (_imp.current === _imp.frames.length) {
-                _imp.current = 0;
-                document.body.scrollTop = 0;
-                document.body.scrollLeft = 0;
-                window.focus();
-            } else {
-                var win = _imp.frames[_imp.current].contentWindow;
-                if (win.surfingkeys === win.location.href) {
-                    var b = _imp.frames[_imp.current].getBoundingClientRect();
-                    document.body.scrollTop = b.top;
-                    document.body.scrollLeft = b.left;
-                    win.focus();
-                }
-                _imp.current++;
-            }
-            Normal.updateStatusBar();
-        }
-        _imp.frames = $("iframe:visible");
-        _imp.current = 0;
-    } else {
-        _imp = function() {
-            top.postMessage({
-                'action': 'rotateFrame'
-            }, _imp.topOrigin);
-        };
-        setTimeout(function() {
-            port.postMessage({
-                'action': 'getTopOrigin'
-            })
-        }, 300);
-        port_handlers['getTopOrigin'] = function(response) {
-            _imp.topOrigin = response.topOrigin;
-        };
-    }
-    return _imp;
+    RUNTIME('nextFrame');
 };
 Normal.isBlacklisted = function() {
     return settings.blacklist[window.location.origin] || settings.blacklist['.*'];
@@ -1119,8 +1083,7 @@ Normal.init = function() {
     return !blacklisted && Normal.ui_container;
 };
 Normal.updateStatusBar = function() {
-    var frame = (Normal.rotateFrame.frames && Normal.rotateFrame.frames.length) ? "Frame: " + Normal.rotateFrame.current : "";
-    var status = [Visual.status[Visual.state], Find.status, frame].filter(function(e) {
+    var status = [Visual.status[Visual.state], Find.status].filter(function(e) {
         return e !== ""
     });
     var msg = status.join(' | ');
@@ -1158,6 +1121,13 @@ Normal.bubble = function(pos, msg) {
 Normal.highlightElement = function(elm) {
     var pos = $(elm).offset();
     Normal.frameElement.css('top', pos.top).css('left', pos.left).css('width', $(elm).width()).css('height', $(elm).height()).appendTo('body');
+    setTimeout(function() {
+        Normal.frameElement.remove();
+    }, 200);
+};
+Normal.highlightDocument = function() {
+    document.body.scrollIntoView();
+    Normal.frameElement.css('top', window.scrollY).css('left', window.scrollX).css('width', window.innerWidth).css('height', window.innerHeight).appendTo('body');
     setTimeout(function() {
         Normal.frameElement.remove();
     }, 200);
@@ -1625,7 +1595,7 @@ function initEventListener() {
         window.stopKeyupPropagation = stopKeyUp;
     };
     window.addEventListener('keydown', function(event) {
-        if (Normal.init()) {
+        if (!Normal.ui_container[0].contains(event.target) && Normal.init()) {
             if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
                 if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
                     window.stopEventPropagation(event, true);
@@ -1650,7 +1620,12 @@ if (window === top) {
     initEventListener();
 }
 document.addEventListener('DOMContentLoaded', function() {
-    Normal.rotateFrame = Normal.rotateFrame();
+    if (!window.frameId && window.innerHeight * window.innerWidth > 1000 && $(document.body).find(':visible').length) {
+        window.frameId = generateQuickGuid();
+        RUNTIME('registerFrame', {
+            frameId: window.frameId
+        });
+    }
     if (window !== top) {
         setTimeout(initEventListener, 300);
     }

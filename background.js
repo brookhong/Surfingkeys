@@ -18,7 +18,7 @@ var initialSettings = {
 
 var Service = {
     'activePorts': [],
-    'topOrigins': {},
+    'frames': {},
     'settings': ""
 };
 
@@ -247,14 +247,21 @@ Service.request = function(message, sender, sendResponse) {
         });
     });
 };
-Service.setTopOrigin = function(message, sender, sendResponse) {
-    Service.topOrigins[sender.tab.id] = message.topOrigin;
-};
-Service.getTopOrigin = function(message, sender, sendResponse) {
-    sendResponse({
-        type: message.action,
-        topOrigin: (sender.tab ? Service.topOrigins[sender.tab.id] : "NONE")
+Service.nextFrame = function(message, sender, sendResponse) {
+    var tid = sender.tab.id;
+    var frameData = Service.frames[tid];
+    frameData[0] = (frameData[0] + 1) % frameData[1].length;
+    chrome.tabs.sendMessage(tid, {
+        subject: "focusFrame",
+        frameId: frameData[1][frameData[0]]
     });
+};
+Service.registerFrame = function(message, sender, sendResponse) {
+    var tid = sender.tab.id;
+    if (!Service.frames.hasOwnProperty(tid)) {
+        Service.frames[tid] = [0, []];
+    }
+    Service.frames[tid][1].push(message.frameId);
 };
 
 function handleMessage(_message, _sender, _sendResponse, _port) {
@@ -285,4 +292,13 @@ chrome.extension.onConnect.addListener(function(port) {
             }
         }
     });
+});
+
+chrome.tabs.onRemoved.addListener(function(tabId) {
+    delete Service.frames[tabId];
+});
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    if (changeInfo.status === "loading") {
+        delete Service.frames[tabId];
+    }
 });
