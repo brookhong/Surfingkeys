@@ -249,12 +249,14 @@ Service.request = function(message, sender, sendResponse) {
 };
 Service.nextFrame = function(message, sender, sendResponse) {
     var tid = sender.tab.id;
-    var frameData = Service.frames[tid];
-    frameData[0] = (frameData[0] + 1) % frameData[1].length;
-    chrome.tabs.sendMessage(tid, {
-        subject: "focusFrame",
-        frameId: frameData[1][frameData[0]]
-    });
+    if (Service.frames.hasOwnProperty(tid)) {
+        var frameData = Service.frames[tid];
+        frameData[0] = (frameData[0] + 1) % frameData[1].length;
+        chrome.tabs.sendMessage(tid, {
+            subject: "focusFrame",
+            frameId: frameData[1][frameData[0]]
+        });
+    }
 };
 Service.registerFrame = function(message, sender, sendResponse) {
     var tid = sender.tab.id;
@@ -262,6 +264,9 @@ Service.registerFrame = function(message, sender, sendResponse) {
         Service.frames[tid] = [0, []];
     }
     Service.frames[tid][1].push(message.frameId);
+};
+Service.unRegisterFrame = function(message, sender, sendResponse) {
+    unRegisterFrame(sender.tab.id);
 };
 
 function handleMessage(_message, _sender, _sendResponse, _port) {
@@ -294,11 +299,14 @@ chrome.extension.onConnect.addListener(function(port) {
     });
 });
 
-chrome.tabs.onRemoved.addListener(function(tabId) {
-    delete Service.frames[tabId];
-});
+function unRegisterFrame(tabId) {
+    if (Service.frames.hasOwnProperty(tabId)) {
+        delete Service.frames[tabId];
+    }
+}
+chrome.tabs.onRemoved.addListener(unRegisterFrame);
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === "loading") {
-        delete Service.frames[tabId];
+        unRegisterFrame(tabId);
     }
 });

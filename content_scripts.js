@@ -1618,6 +1618,9 @@ function initEventListener() {
 
 if (window === top) {
     initEventListener();
+    window.addEventListener("unload", function(event) {
+        RUNTIME('unRegisterFrame');
+    });
 }
 document.addEventListener('DOMContentLoaded', function() {
     if (!window.frameId && window.innerHeight * window.innerWidth > 1000 && $(document.body).find(':visible').length) {
