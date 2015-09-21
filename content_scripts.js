@@ -1025,6 +1025,7 @@ Normal.init = function() {
         Normal.popover = $('<div id=surfingkeys_popover/>');
         Normal.popover.appendTo(Normal.ui_container);
         Normal.frameElement = $("<div class=surfingkeys_frame>");
+        Normal._tabs = $("<div class=surfingkeys_tabs>").appendTo(Normal.ui_container).hide();
         Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
         Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
@@ -1099,7 +1100,9 @@ Normal.popup = function(msg, linger_time) {
         }, 300);
         Normal.popover.delay(linger_time || 1000).animate({
             "top": "-3rem"
-        }, 300);
+        }, 300, function() {
+            Normal.popover.html("");
+        });
     }
 };
 Normal.bubble = function(pos, msg) {
@@ -1160,13 +1163,30 @@ Normal.showUsage = function() {
         $('#surfingkeys_Usage').show();
     }
 };
-Normal.hideUsage = function() {
+Normal.hide = function(elm) {
     var updated = false;
-    if (Normal.usage.is(':visible')) {
-        Normal.usage.hide();
+    if (elm.is(':visible')) {
+        elm.hide();
         updated = true;
     }
     return updated;
+};
+port_handlers['getTabs'] = function(response) {
+    Normal._tabs.html("");
+    Normal._tabs.trie = new Trie('', Trie.SORT_NONE);
+    var hintLabels = Hints.genLabels(response.tabs.length);
+    var items = response.tabs.forEach(function(t, i) {
+        var tab = $("<div class=surfingkeys_tab>");
+        Normal._tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
+        tab.html("<div class=surfingkeys_tab_hint>{2}</div><div class=surfingkeys_tab_title>{0}</div><div class=surfingkeys_tab_url>{1}</div>".format(t.title, t.url, hintLabels[i]));
+        Normal._tabs.append(tab);
+    })
+    Normal._tabs.show();
+};
+Normal.chooseTab = function() {
+    port.postMessage({
+        'action': 'getTabs'
+    });
 };
 Normal.getContentFromClipboard = function() {
     var result = '';
@@ -1243,7 +1263,7 @@ Normal.showKeystroke = function(msg) {
         if (Normal.keystroke.css('right') !== '0') {
             Normal.keystroke.animate({
                 'right': 0
-            }, 300, function() {});
+            }, 300);
         }
     }
 };
@@ -1268,14 +1288,26 @@ Normal.update = function(event) {
     var updated = false;
     switch (event.keyCode) {
         case 27:
-            updated = Normal.hideUsage() || Normal.closeOmnibar() || Normal.finish();
+            updated = Normal.hide(Normal._tabs) || Normal.hide(Normal.usage) || Normal.closeOmnibar() || Normal.finish();
             break;
         case KeyboardUtils.keyCodes.ctrlKey:
         case KeyboardUtils.keyCodes.shiftKey:
             break;
         default:
             var key = KeyboardUtils.getKeyChar(event);
-            if (Normal.pendingMap) {
+            if (Normal._tabs.is(':visible')) {
+                Normal._tabs.trie = Normal._tabs.trie.find(key);
+                if (!Normal._tabs.trie) {
+                    Normal.hide(Normal._tabs);
+                    Normal._tabs.trie = null;
+                } else if (Normal._tabs.trie.meta.length) {
+                    RUNTIME('focusTab', {
+                        tab_id: Normal._tabs.trie.meta[0]
+                    });
+                    Normal.hide(Normal._tabs);
+                    Normal._tabs.trie = null;
+                }
+            } else if (Normal.pendingMap) {
                 Normal.pendingMap(key);
                 Normal.finish();
                 updated = true;
@@ -1309,7 +1341,7 @@ Normal.update = function(event) {
 Normal.openOmnibar = function(handler, type) {
     if (Normal.omnibar) {
         Normal.omnibar.show();
-        Normal.hideUsage();
+        Normal.hide(Normal.usage);
         Normal.omnibar.find('input')[0].focus();
         if (handler === SearchEngine && Normal.searchAliases.hasOwnProperty(type)) {
             $.extend(SearchEngine, Normal.searchAliases[type]);
@@ -1352,6 +1384,16 @@ Normal.jumpVIMark = function(mark) {
     } else {
         Normal.popup("No mark '{0}' defined.".format(mark));
     }
+};
+Normal.resetSettings = function() {
+    RUNTIME("resetSettings");
+    Normal.popup("Settings reset.");
+};
+Normal.insertJS = function(url) {
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.src = url;
+    document.lastElementChild.appendChild(s);
 };
 
 Visual = {

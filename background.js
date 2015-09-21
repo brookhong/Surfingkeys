@@ -34,7 +34,7 @@ function request(method, url) {
     });
 }
 chrome.storage.local.get(null, function(data) {
-    if (!data.version || data.version !== initialSettings.version) {
+    if (!data.version) {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
         Service.settings = JSON.parse(JSON.stringify(initialSettings));
@@ -56,12 +56,54 @@ chrome.storage.local.get(null, function(data) {
         }
     }
 });
+Service._updateSettings = function() {
+    chrome.storage.local.set(Service.settings);
+    if (Service.settings.storage === 'sync') {
+        chrome.storage.sync.set(Service.settings, function() {
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError);
+            }
+        });
+    }
+    Service.activePorts.forEach(function(port) {
+        port.postMessage({
+            type: 'settingsUpdated',
+            settings: Service.settings
+        });
+    });
+}
+Service.loadSettingsFromUrl = function(url) {
+    var s = request('get', url);
+    s.then(function(resp) {
+        Service.settings.snippets = resp;
+        Service._updateSettings();
+    });
+};
+Service.resetSettings = function(message, sender, sendResponse) {
+    Service.loadSettingsFromUrl(chrome.extension.getURL('/pages/default.js'));
+};
+Service.getTabs = function(message, sender, sendResponse) {
+    var tab = sender.tab;
+    chrome.tabs.query({
+        windowId: tab.windowId
+    }, function(tabs) {
+        sendResponse({
+            type: message.action,
+            tabs: tabs
+        });
+    });
+};
+Service.focusTab = function(message, sender, sendResponse) {
+    chrome.tabs.update(message.tab_id, {
+        active: true
+    });
+};
 Service.nextTab = function(message, sender, sendResponse) {
     var tab = sender.tab;
     chrome.tabs.query({
         windowId: tab.windowId
     }, function(tabs) {
-        return chrome.tabs.update(tabs[(((tab.index + 1) % tabs.length) + tabs.length) % tabs.length].id, {
+        chrome.tabs.update(tabs[(((tab.index + 1) % tabs.length) + tabs.length) % tabs.length].id, {
             active: true
         });
     });
@@ -205,20 +247,7 @@ Service.updateSettings = function(message, sender, sendResponse) {
     for (var sd in message.settings) {
         Service.settings[sd] = message.settings[sd];
     }
-    chrome.storage.local.set(Service.settings);
-    if (Service.settings.storage === 'sync') {
-        chrome.storage.sync.set(Service.settings, function() {
-            if (chrome.runtime.lastError) {
-                console.log(chrome.runtime.lastError);
-            }
-        });
-    }
-    Service.activePorts.forEach(function(port) {
-        port.postMessage({
-            type: 'settingsUpdated',
-            settings: Service.settings
-        });
-    });
+    Service._updateSettings();
 };
 Service.changeSettingsStorage = function(message, sender, sendResponse) {
     Service.settings.storage = message.storage;
