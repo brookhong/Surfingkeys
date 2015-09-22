@@ -203,31 +203,43 @@ div.surfingkeys_frame {
 }
 div.surfingkeys_tabs {
     position: fixed;
-    width: 80%;
-    top: 10%;
-    left: 10%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: transparent;
+    z-index: 9999999999999;
+}
+div.surfingkeys_tabs_fg {
+    position: fixed;
     z-index: 2147483646;
+}
+div.surfingkeys_tabs_bg {
+    position: fixed;
+    z-index: 2147483640;
+    background-color: #eee;
+    opacity: 0.8;
 }
 div.surfingkeys_tab {
     display: inline-block;
-    clear: both;
-    width: 30%;
-    border: 1px solid #777;
     border-radius: 3px;
-    padding: 4px;
-    margin: 4px;
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#021C3C), color-stop(100%,#1477F1));
+    padding: 10px 20px;
+    margin: 5px;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1477F1), color-stop(100%,#021C3C));
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
 }
 div.surfingkeys_tab_title {
+    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     font-weight: bold;
+    padding-bottom: 5px;
 }
 div.surfingkeys_tab_url {
+    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    color: #777;
 }
 div.surfingkeys_tab_hint {
     display: inline-block;

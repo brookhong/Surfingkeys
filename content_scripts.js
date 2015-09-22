@@ -1025,7 +1025,7 @@ Normal.init = function() {
         Normal.popover = $('<div id=surfingkeys_popover/>');
         Normal.popover.appendTo(Normal.ui_container);
         Normal.frameElement = $("<div class=surfingkeys_frame>");
-        Normal._tabs = $("<div class=surfingkeys_tabs>").appendTo(Normal.ui_container).hide();
+        Normal._tabs = $("<div class=surfingkeys_tabs><div class=surfingkeys_tabs_fg></div><div class=surfingkeys_tabs_bg></div></div>").appendTo(Normal.ui_container).hide();
         Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
         Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
@@ -1172,16 +1172,23 @@ Normal.hide = function(elm) {
     return updated;
 };
 port_handlers['getTabs'] = function(response) {
-    Normal._tabs.html("");
+    var tabs_fg = Normal._tabs.find('div.surfingkeys_tabs_fg');
+    tabs_fg.html("");
     Normal._tabs.trie = new Trie('', Trie.SORT_NONE);
     var hintLabels = Hints.genLabels(response.tabs.length);
     var items = response.tabs.forEach(function(t, i) {
         var tab = $("<div class=surfingkeys_tab>");
         Normal._tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
-        tab.html("<div class=surfingkeys_tab_hint>{2}</div><div class=surfingkeys_tab_title>{0}</div><div class=surfingkeys_tab_url>{1}</div>".format(t.title, t.url, hintLabels[i]));
-        Normal._tabs.append(tab);
+        tab.html("<div class=surfingkeys_tab_hint>{0}</div><div class=surfingkeys_tab_title>{1}</div>".format(hintLabels[i], t.title));
+        tab.data('url', t.url);
+        tabs_fg.append(tab);
     })
     Normal._tabs.show();
+    tabs_fg.find('div.surfingkeys_tab').each(function() {
+        $(this).css('width', $(this).width() + 10);
+        $(this).append($("<div class=surfingkeys_tab_url>{0}</div>".format($(this).data('url'))));
+    });
+    Normal._tabs.find('div.surfingkeys_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
 };
 Normal.chooseTab = function() {
     port.postMessage({
@@ -1307,6 +1314,7 @@ Normal.update = function(event) {
                     Normal.hide(Normal._tabs);
                     Normal._tabs.trie = null;
                 }
+                updated = true;
             } else if (Normal.pendingMap) {
                 Normal.pendingMap(key);
                 Normal.finish();
