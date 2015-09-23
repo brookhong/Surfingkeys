@@ -737,16 +737,15 @@ Find.initFocus = function() {
 Find.next = function(backward) {
     if (Find.matches.length) {
         Find.focused = (backward ? (Find.matches.length + Find.focused - 1) : (Find.focused + 1)) % Find.matches.length;
-        var ff = Find.matches[Find.focused];
-        window.scrollTo($(ff).offset().left - window.innerWidth / 2, $(ff).offset().top - window.innerHeight / 2);
         Find.status = Find.focused + 1 + ' / ' + Find.matches.length;
+        Visual.select(Find.matches[Find.focused]);
         Normal.updateStatusBar();
-        Visual.select(ff);
     } else if (Find.history.length) {
         Visual.state = 1;
         var query = Find.history[0];
         Visual.hideCursor();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
+        Visual.select(Find.matches[Find.focused]);
     }
 };
 Find.open = function() {
@@ -778,8 +777,8 @@ Find.onKeydown = function(event) {
                 Normal.statusBar.find('input.find').val("")
                 Normal.statusBar.find('span:nth(0)').hide();
                 document.activeElement.blur();
-                Visual.select(Find.matches[Find.focused]);
                 Visual.state = 1;
+                Visual.select(Find.matches[Find.focused]);
                 Normal.updateStatusBar();
             }, 0);
         }
@@ -1176,8 +1175,9 @@ port_handlers['getTabs'] = function(response) {
     tabs_fg.html("");
     Normal._tabs.trie = new Trie('', Trie.SORT_NONE);
     var hintLabels = Hints.genLabels(response.tabs.length);
+    var tabstr = "<div class=surfingkeys_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
     var items = response.tabs.forEach(function(t, i) {
-        var tab = $("<div class=surfingkeys_tab>");
+        var tab = $(tabstr);
         Normal._tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
         tab.html("<div class=surfingkeys_tab_hint>{0}</div><div class=surfingkeys_tab_title>{1}</div>".format(hintLabels[i], t.title));
         tab.data('url', t.url);
@@ -1555,6 +1555,7 @@ Visual.select = function(found) {
         Visual.selection.setPosition(found.firstChild, 0);
     }
     Visual.showCursor();
+    Visual.scrollIntoView();
 };
 Visual.getTextNodes = function(root, pattern) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
