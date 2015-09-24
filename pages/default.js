@@ -66,15 +66,15 @@ mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("http://a
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response);
-    OmnibarUtils.listWords(res[1]);
+    Omnibar.listWords(res[1]);
 });
 addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=eval&wd=', function(response) {
     var res = eval(response);
-    OmnibarUtils.listWords(res.s);
+    Omnibar.listWords(res.s);
 });
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
     var res = eval(response);
-    OmnibarUtils.listWords(res[1]);
+    Omnibar.listWords(res[1]);
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');

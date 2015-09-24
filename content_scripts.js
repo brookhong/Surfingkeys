@@ -507,8 +507,120 @@ Hints.hide = function() {
     Hints.prefix = "";
 };
 
-OmnibarUtils = {};
-OmnibarUtils.openFocused = function() {
+Omnibar = {
+    focusedItem: 0,
+    searchAliases: {},
+    miniQuery: {},
+};
+Omnibar.init = function(container) {
+    Omnibar.ui = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input prehandle="omnibar" type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
+    Omnibar.ui.appendTo(container);
+    Omnibar.ui.on('click', function(event) {
+        Omnibar.ui.find('input')[0].focus();
+    });
+    Omnibar.ui.find('input').on('input', function() {
+        Omnibar.handler.onInput.call(this);
+    });
+    Omnibar.lastHandler = null;
+};
+Omnibar.onKeydown = function(event) {
+    if (Omnibar.handler.onKeydown) {
+        Omnibar.handler.onKeydown.call(event.target, event);
+    }
+    if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        Omnibar.close();
+    } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
+        Omnibar.handler.onEnter() && Omnibar.close();
+    } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
+        Omnibar.expandAlias($(event.target).val()) && event.preventDefault();
+    } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
+        Omnibar.collapseAlias() && event.preventDefault();
+    } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
+        Omnibar.rotateResult(event.shiftKey);
+        event.preventDefault();
+    }
+    return true;
+};
+Omnibar.scrollIntoView = function() {
+    var start = $('#surfingkeys_omnibarSearchResult').position().top;
+    var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
+    var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
+    if (pos && (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end)) {
+        var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
+        $('#surfingkeys_omnibarSearchResult').animate({
+            scrollTop: pos
+        }, 100);
+    }
+};
+Omnibar.expandAlias = function(alias) {
+    var eaten = false;
+    if (!Omnibar.lastHandler && alias.length && Omnibar.searchAliases.hasOwnProperty(alias)) {
+        Omnibar.lastHandler = Omnibar.handler;
+        Omnibar.handler = SearchEngine;
+        $.extend(SearchEngine, Omnibar.searchAliases[alias]);
+        $('#surfingkeys_omnibarSearchResult').html("");
+        $('#surfingkeys_omnibarSearchArea>span').html(Omnibar.handler.prompt)
+        $('#surfingkeys_omnibarSearchArea>input').val('');
+        eaten = true;
+    }
+    return eaten;
+};
+Omnibar.collapseAlias = function() {
+    var eaten = false;
+    if (Omnibar.lastHandler && Omnibar.handler !== Omnibar.lastHandler && $('#surfingkeys_omnibarSearchArea>input').val() === "") {
+        Omnibar.handler = Omnibar.lastHandler;
+        Omnibar.lastHandler = null;
+        $('#surfingkeys_omnibarSearchArea>span').html(Omnibar.handler.prompt)
+        eaten = true;
+    }
+    return eaten;
+};
+Omnibar.rotateResult = function(backward) {
+    var total = $('#surfingkeys_omnibarSearchResult li').length;
+    if (total > 0) {
+        var focused = Omnibar.focusedItem;
+        var next = (backward ? (focused + total) : (focused + total + 2)) % (total + 1);
+        if (focused === undefined) {
+            focused = backward ? (total - 1) : 0;
+            next = focused;
+        }
+        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(focused)).removeClass('focused');
+        if (next === total) {
+            Omnibar.focusedItem = 0;
+        } else {
+            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
+            Omnibar.focusedItem = next;
+            Omnibar.scrollIntoView();
+        }
+    }
+};
+Omnibar.open = function(handler, type) {
+    Omnibar.ui.find('input')[0].focus();
+    if (handler === SearchEngine && Omnibar.searchAliases.hasOwnProperty(type)) {
+        $.extend(SearchEngine, Omnibar.searchAliases[type]);
+        Omnibar.lastHandler = SearchEngine;
+    } else if (handler === MiniQuery && Omnibar.miniQuery.hasOwnProperty(type)) {
+        $.extend(MiniQuery, Omnibar.miniQuery[type]);
+        Omnibar.lastHandler = MiniQuery;
+    }
+    Omnibar.handler = handler;
+    $('#surfingkeys_omnibarSearchArea>span').html(handler.prompt)
+    Omnibar.handler.onOpen && Omnibar.handler.onOpen();
+};
+Omnibar.close = function() {
+    var updated = false;
+    if (Omnibar.ui.is(':visible')) {
+        Omnibar.ui.hide();
+        Omnibar.ui.find('input').val('');
+        $('#surfingkeys_omnibarSearchResult').html("");
+        Omnibar.lastHandler = null;
+        Omnibar.handler.onClose && Omnibar.handler.onClose();
+        Omnibar.handler = null;
+        updated = true;
+    }
+    return updated;
+};
+Omnibar.openFocused = function() {
     var ret = false,
         focusedItem = $('#surfingkeys_omnibarSearchResult li.focused');
     var folderId = focusedItem.data('folderId');
@@ -516,7 +628,7 @@ OmnibarUtils.openFocused = function() {
         this.inFolder.push({
             'prompt': this.prompt,
             'folderId': this.folderId,
-            'focusedItem': Normal.omnibar.data('focusedItem')
+            'focusedItem': Omnibar.focusedItem
         });
         this.prompt = focusedItem.data('folder_name') + "≫";
         $('#surfingkeys_omnibarSearchArea>span').html(this.prompt)
@@ -541,19 +653,19 @@ OmnibarUtils.openFocused = function() {
     }
     return ret;
 };
-OmnibarUtils.listResults = function(items, renderItem) {
+Omnibar.listResults = function(items, renderItem) {
     var results = $("<ul/>");
     items.forEach(function(b) {
         renderItem(b).appendTo(results);
     });
-    var fi = Normal.omnibar.data('focusedItem') || 0;
+    var fi = Omnibar.focusedItem || 0;
     results.find('li:nth({0})'.format(fi)).addClass('focused');
-    Normal.omnibar.data('focusedItem', fi);
+    Omnibar.focusedItem = fi;
     $('#surfingkeys_omnibarSearchResult').html("");
     results.appendTo('#surfingkeys_omnibarSearchResult');
 };
-OmnibarUtils.listBookmark = function(items, showFolder) {
-    OmnibarUtils.listResults(items, function(b) {
+Omnibar.listBookmark = function(items, showFolder) {
+    Omnibar.listResults(items, function(b) {
         var li = $('<li/>');
         if (b.hasOwnProperty('url')) {
             var type = b.type || (b.hasOwnProperty('lastVisitTime') ? "☼" : "☆");
@@ -566,7 +678,7 @@ OmnibarUtils.listBookmark = function(items, showFolder) {
         return li;
     });
 };
-OmnibarUtils.listWords = function(words) {
+Omnibar.listWords = function(words) {
     var results = $("<ul/>");
     words.forEach(function(w) {
         var li = $('<li/>').html("⌕ " + w).data('query', w);
@@ -575,7 +687,7 @@ OmnibarUtils.listWords = function(words) {
     $('#surfingkeys_omnibarSearchResult').html("");
     results.appendTo('#surfingkeys_omnibarSearchResult');
 };
-OmnibarUtils.html = function(content) {
+Omnibar.html = function(content) {
     $('#surfingkeys_omnibarSearchResult').html(content);
 };
 
@@ -592,10 +704,10 @@ OpenBookmarks = {
         OpenBookmarks.inFolder = [];
         OpenBookmarks.prompt = "bookmark≫";
         delete OpenBookmarks.folderId;
-        Normal.omnibar.removeData('focusedItem');
+        Omnibar.focusedItem = 0;
     }
 };
-OmnibarUtils.onFolderUp = function(handler, message) {
+Omnibar.onFolderUp = function(handler, message) {
     var fl = handler.inFolder.pop();
     if (fl.folderId) {
         handler.folderId = fl.folderId;
@@ -609,10 +721,10 @@ OmnibarUtils.onFolderUp = function(handler, message) {
     }
     handler.prompt = fl.prompt;
     $('#surfingkeys_omnibarSearchArea>span').html(handler.prompt)
-    Normal.omnibar.data('focusedItem', fl.focusedItem);
+    Omnibar.focusedItem = fl.focusedItem;
     eaten = true;
 };
-OpenBookmarks.onEnter = OmnibarUtils.openFocused.bind(OpenBookmarks);
+OpenBookmarks.onEnter = Omnibar.openFocused.bind(OpenBookmarks);
 OpenBookmarks.onKeydown = function(event) {
     var eaten = false;
     if (event.keyCode === KeyboardUtils.keyCodes.comma) {
@@ -626,7 +738,7 @@ OpenBookmarks.onKeydown = function(event) {
         });
         eaten = true;
     } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && OpenBookmarks.inFolder.length && !$(this).val().length) {
-        OmnibarUtils.onFolderUp(OpenBookmarks, {
+        Omnibar.onFolderUp(OpenBookmarks, {
             'action': 'getBookmarks'
         });
         eaten = true;
@@ -655,14 +767,14 @@ port_handlers['getBookmarks'] = function(response) {
             return !b.hasOwnProperty('url');
         });
     }
-    OmnibarUtils.listBookmark(items, true);
-    Normal.omnibar.scrollIntoView();
+    Omnibar.listBookmark(items, true);
+    Omnibar.scrollIntoView();
 };
 
 OpenHistory = {
     'prompt': 'history≫'
 };
-OpenHistory.onEnter = OmnibarUtils.openFocused.bind(OpenHistory);
+OpenHistory.onEnter = Omnibar.openFocused.bind(OpenHistory);
 OpenHistory.onInput = function() {
     port.postMessage({
         'action': 'getHistory',
@@ -674,13 +786,13 @@ OpenHistory.onInput = function() {
     });
 };
 port_handlers['getHistory'] = function(response) {
-    OmnibarUtils.listBookmark(response.history, false);
+    Omnibar.listBookmark(response.history, false);
 };
 
 OpenURLs = {
     'prompt': '≫'
 };
-OpenURLs.onEnter = OmnibarUtils.openFocused.bind(OpenURLs);
+OpenURLs.onEnter = Omnibar.openFocused.bind(OpenURLs);
 OpenURLs.onInput = function() {
     port.postMessage({
         'action': 'getURLs',
@@ -689,7 +801,7 @@ OpenURLs.onInput = function() {
     });
 };
 port_handlers['getURLs'] = function(response) {
-    OmnibarUtils.listBookmark(response.urls, false);
+    Omnibar.listBookmark(response.urls, false);
 };
 
 OpenVIMarks = {
@@ -706,10 +818,10 @@ OpenVIMarks = {
                 });
             }
         }
-        OmnibarUtils.listBookmark(urls, false);
+        Omnibar.listBookmark(urls, false);
     }
 };
-OpenVIMarks.onEnter = OmnibarUtils.openFocused.bind(OpenVIMarks);
+OpenVIMarks.onEnter = Omnibar.openFocused.bind(OpenVIMarks);
 OpenVIMarks.onInput = OpenVIMarks.onOpen;
 
 Find = {
@@ -790,6 +902,7 @@ Find.onKeydown = function(event) {
         Find.clear();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
     }
+    return true;
 };
 Find.highlight = function(pattern) {
     Visual.getTextNodes(document.body, pattern).forEach(function(node) {
@@ -834,7 +947,7 @@ SearchEngine.onEnter = function() {
 };
 SearchEngine.onInput = function() {
     if (SearchEngine.suggestionURL) {
-        Normal.omnibar.removeData('focusedItem');
+        Omnibar.focusedItem = 0;
         httpRequest({
             'url': SearchEngine.suggestionURL + $(this).val()
         }, SearchEngine.listSuggestion);
@@ -869,7 +982,7 @@ function vmapkey(keys, annotation, jscode) {
 }
 
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
-    Normal.searchAliases[alias] = {
+    Omnibar.searchAliases[alias] = {
         'prompt': prompt + "≫",
         'url': url,
         'suggestionURL': suggestionURL,
@@ -884,7 +997,7 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
 }
 
 function addMiniQuery(alias, prompt, url, listResult) {
-    Normal.miniQuery[alias] = {
+    Omnibar.miniQuery[alias] = {
         'prompt': prompt + "≫",
         'url': url,
         'listResult': listResult
@@ -930,9 +1043,7 @@ Normal = {
     'mappings': null,
     'stepSize': 70,
     'scrollNode': null,
-    'searchAliases': {},
     'scrollIndex': 0,
-    'miniQuery': {}
 };
 Normal.changeScrollTarget = function() {
     Normal.scrollNodes = getScrollableElements(100, 1.2);
@@ -1028,53 +1139,17 @@ Normal.init = function() {
         Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
         Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
-        Normal.statusBar = $('<div id=surfingkeys_status/>').html("<span style='display: none'>/<input class='find'/></span><span/>").hide();
+        Normal.statusBar = $('<div id=surfingkeys_status/>').html("<span style='display: none'>/<input prehandle='statusBar' class='find'/></span><span/>").hide();
         Normal.statusBar.appendTo(Normal.ui_container);
-        Normal.statusBar.find('input.find').on('keydown', Find.onKeydown).on('input', Find.onInput);
-        Normal.omnibar = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
-        Normal.omnibar.lastHandler = null;
-        Normal.omnibar.appendTo(Normal.ui_container);
-        Normal.omnibar.scrollIntoView = function() {
-            var start = $('#surfingkeys_omnibarSearchResult').position().top;
-            var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
-            var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
-            if (pos && (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end)) {
-                var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
-                $('#surfingkeys_omnibarSearchResult').animate({
-                    scrollTop: pos
-                }, 100);
-            }
-        };
+        Normal.statusBar.find('input.find').on('input', Find.onInput);
         Normal.usage = $('<div id=surfingkeys_Usage/>').hide();
         Normal.usage.appendTo(Normal.ui_container);
         Normal.renderUsage();
-        Normal.omnibar.on('click', function(event) {
-            Normal.omnibar.find('input')[0].focus();
-        });
-        Normal.omnibar.find('input').on('keydown', function(event) {
-            if (Normal.omnibar.handler.onKeydown) {
-                if (Normal.omnibar.handler.onKeydown.call(this, event)) {
-                    event.stopImmediatePropagation();
-                    event.preventDefault();
-                }
-            }
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-                Normal.closeOmnibar();
-            } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-                if (Normal.omnibar.handler.onEnter()) {
-                    Normal.closeOmnibar();
-                }
-            } else if (event.keyCode === KeyboardUtils.keyCodes.space && Normal.expandAlias($(this).val())) {
-                event.preventDefault();
-            } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && Normal.collapseAlias()) {
-                event.preventDefault();
-            } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
-                Normal.rotateResult(event.shiftKey);
-                event.preventDefault();
-            }
-        }).on('input', function() {
-            Normal.omnibar.handler.onInput.call(this);
-        });
+        Normal.keydownHandlers = {
+            'omnibar': Omnibar.onKeydown,
+            'statusBar': Find.onKeydown
+        };
+        Omnibar.init(Normal.ui_container);
         Visual.init();
     }
     if ($(document).find(Normal.ui_container).length === 0 && Normal.ui_container) {
@@ -1148,27 +1223,37 @@ Normal.renderMappings = function(mappings) {
     return tb;
 };
 Normal.renderUsage = function() {
-    $('#surfingkeys_Usage').html("");
-    Normal.renderMappings(Normal.mappings).appendTo('#surfingkeys_Usage');
-    var moreHelp = $("<p style='float:right; width:100%; text-align:right'>").html("<a href='#' style='color:#0095dd'>Show Mappings in Visual mode</a> | <a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo('#surfingkeys_Usage');
+    Normal.usage.html("");
+    Normal.renderMappings(Normal.mappings).appendTo(Normal.usage);
+    var moreHelp = $("<p style='float:right; width:100%; text-align:right'>").html("<a href='#' style='color:#0095dd'>Show Mappings in Visual mode</a> | <a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(Normal.usage);
     moreHelp.find('a:nth(0)').on('click', function() {
         $('#surfingkeys_Usage .surfingkeys_VisualUsage').toggle();
     });
-    Normal.renderMappings(Visual.mappings).attr('class', 'surfingkeys_VisualUsage').appendTo('#surfingkeys_Usage').hide();
+    Normal.renderMappings(Visual.mappings).attr('class', 'surfingkeys_VisualUsage').appendTo(Normal.usage).hide();
 };
 Normal.showUsage = function() {
     if (Normal.usage) {
-        Normal.closeOmnibar();
-        $('#surfingkeys_Usage').show();
+        Normal.hide();
+        Normal.show(Normal.usage);
     }
 };
-Normal.hide = function(elm) {
+Normal.openOmnibar = function(handler, type) {
+    Normal.hide();
+    Normal.show(Omnibar.ui);
+    Omnibar.open(handler, type);
+};
+Normal.hide = function() {
     var updated = false;
-    if (elm.is(':visible')) {
-        elm.hide();
+    if (Normal._display && Normal._display.is(':visible')) {
+        Normal._display.hide();
+        Normal._display.close && Normal._display.close();
         updated = true;
     }
     return updated;
+};
+Normal.show = function(toDisplay) {
+    Normal._display = toDisplay;
+    Normal._display.show();
 };
 port_handlers['getTabs'] = function(response) {
     var tabs_fg = Normal._tabs.find('div.surfingkeys_tabs_fg');
@@ -1183,7 +1268,7 @@ port_handlers['getTabs'] = function(response) {
         tab.data('url', t.url);
         tabs_fg.append(tab);
     })
-    Normal._tabs.show();
+    Normal.show(Normal._tabs);
     tabs_fg.find('div.surfingkeys_tab').each(function() {
         $(this).css('width', $(this).width() + 10);
         $(this).append($("<div class=surfingkeys_tab_url>{0}</div>".format($(this).data('url'))));
@@ -1191,6 +1276,7 @@ port_handlers['getTabs'] = function(response) {
     Normal._tabs.find('div.surfingkeys_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
 };
 Normal.chooseTab = function() {
+    Normal.hide();
     port.postMessage({
         'action': 'getTabs'
     });
@@ -1213,52 +1299,6 @@ Normal.writeClipboard = function(text) {
     document.execCommand('copy');
     clipboard_holder.value = '';
     clipboard_holder.blur();
-};
-Normal.expandAlias = function(alias) {
-    var eaten = false;
-    if (!Normal.omnibar.lastHandler && alias.length && Normal.searchAliases.hasOwnProperty(alias)) {
-        Normal.omnibar.lastHandler = Normal.omnibar.handler;
-        Normal.omnibar.handler = SearchEngine;
-        $.extend(SearchEngine, Normal.searchAliases[alias]);
-        $('#surfingkeys_omnibarSearchResult').html("");
-        $('#surfingkeys_omnibarSearchArea>span').html(Normal.omnibar.handler.prompt)
-        $('#surfingkeys_omnibarSearchArea>input').val('');
-        eaten = true;
-    }
-    return eaten;
-};
-Normal.collapseAlias = function() {
-    var eaten = false;
-    if (Normal.omnibar.lastHandler && Normal.omnibar.handler !== Normal.omnibar.lastHandler && $('#surfingkeys_omnibarSearchArea>input').val() === "") {
-        Normal.omnibar.handler = Normal.omnibar.lastHandler;
-        Normal.omnibar.lastHandler = null;
-        $('#surfingkeys_omnibarSearchArea>span').html(Normal.omnibar.handler.prompt)
-        SearchEngine.reset();
-        eaten = true;
-    }
-    return eaten;
-};
-Normal.rotateResult = function(backward) {
-    var eaten = false;
-    var total = $('#surfingkeys_omnibarSearchResult li').length;
-    if (total > 0) {
-        var focused = Normal.omnibar.data('focusedItem');
-        var next = (backward ? (focused + total) : (focused + total + 2)) % (total + 1);
-        if (focused === undefined) {
-            focused = backward ? (total - 1) : 0;
-            next = focused;
-        }
-        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(focused)).removeClass('focused');
-        if (next === total) {
-            Normal.omnibar.removeData('focusedItem');
-        } else {
-            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
-            Normal.omnibar.data('focusedItem', next);
-            Normal.omnibar.scrollIntoView();
-        }
-        eaten = true;
-    }
-    return eaten;
 };
 Normal.showKeystroke = function(msg) {
     if (Normal.keystroke) {
@@ -1295,7 +1335,7 @@ Normal.update = function(event) {
     var updated = false;
     switch (event.keyCode) {
         case 27:
-            updated = Normal.hide(Normal._tabs) || Normal.hide(Normal.usage) || Normal.closeOmnibar() || Normal.finish();
+            updated = Normal.hide() || Normal.finish();
             break;
         case KeyboardUtils.keyCodes.ctrlKey:
         case KeyboardUtils.keyCodes.shiftKey:
@@ -1305,13 +1345,13 @@ Normal.update = function(event) {
             if (Normal._tabs.is(':visible')) {
                 Normal._tabs.trie = Normal._tabs.trie.find(key);
                 if (!Normal._tabs.trie) {
-                    Normal.hide(Normal._tabs);
+                    Normal.hide();
                     Normal._tabs.trie = null;
                 } else if (Normal._tabs.trie.meta.length) {
                     RUNTIME('focusTab', {
                         tab_id: Normal._tabs.trie.meta[0]
                     });
-                    Normal.hide(Normal._tabs);
+                    Normal.hide();
                     Normal._tabs.trie = null;
                 }
                 updated = true;
@@ -1343,36 +1383,6 @@ Normal.update = function(event) {
                 }
             }
             break;
-    }
-    return updated;
-};
-Normal.openOmnibar = function(handler, type) {
-    if (Normal.omnibar) {
-        Normal.omnibar.show();
-        Normal.hide(Normal.usage);
-        Normal.omnibar.find('input')[0].focus();
-        if (handler === SearchEngine && Normal.searchAliases.hasOwnProperty(type)) {
-            $.extend(SearchEngine, Normal.searchAliases[type]);
-            Normal.omnibar.lastHandler = SearchEngine;
-        } else if (handler === MiniQuery && Normal.miniQuery.hasOwnProperty(type)) {
-            $.extend(MiniQuery, Normal.miniQuery[type]);
-            Normal.omnibar.lastHandler = MiniQuery;
-        }
-        Normal.omnibar.handler = handler;
-        $('#surfingkeys_omnibarSearchArea>span').html(handler.prompt)
-        Normal.omnibar.handler.onOpen && Normal.omnibar.handler.onOpen();
-    }
-};
-Normal.closeOmnibar = function() {
-    var updated = false;
-    if (Normal.omnibar.is(':visible')) {
-        Normal.omnibar.hide();
-        Normal.omnibar.find('input').val('');
-        $('#surfingkeys_omnibarSearchResult').html("");
-        Normal.omnibar.lastHandler = null;
-        Normal.omnibar.handler.onClose && Normal.omnibar.handler.onClose();
-        Normal.omnibar.handler = null;
-        updated = true;
     }
     return updated;
 };
@@ -1646,7 +1656,12 @@ function initEventListener() {
         window.stopKeyupPropagation = stopKeyUp;
     };
     window.addEventListener('keydown', function(event) {
-        if (!Normal.ui_container[0].contains(event.target) && Normal.init()) {
+        if (Normal.ui_container[0].contains(event.target)) {
+            var handler = Normal.keydownHandlers[$(event.target).attr('prehandle')];
+            if (handler && handler(event)) {
+                event.stopImmediatePropagation();
+            }
+        } else if (Normal.init()) {
             if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
                 if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
                     window.stopEventPropagation(event, true);
