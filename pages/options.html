@@ -21,6 +21,9 @@
     padding-right: 8px;
     border-right: 1px solid #000;
 }
+.nextLabelInLine {
+    padding-left: 40px;
+}
         </style>
     </head>
     <body>
@@ -29,6 +32,8 @@
             <option value="local" selected="selected">chrome.storage.local</option>
             <option value="sync">chrome.storage.sync</option>
         </select>
+        <label for="localPath" class='nextLabelInLine'>Load settings from local path:</label>
+        <input type="text" value="" id="localPath" name="localPath" size=36>
         <textarea id="mappings"></textarea>
         <div id="save_container">
             <a href="https://github.com/brookhong/Surfingkeys/issues">Report issues</a>

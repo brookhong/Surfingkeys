@@ -420,7 +420,7 @@ Hints.create = function(cssSelector, onHintKey) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
             var link = $('<div/>').css('top', pos.top).css('left', pos.left)
-                .css('z-index', z + 1)
+                .css('z-index', z + 2)
                 .data('label', hintLabels[i])
                 .data('link', this)
                 .data('onhint', onHintKey)
@@ -578,18 +578,11 @@ Omnibar.collapseAlias = function() {
 Omnibar.rotateResult = function(backward) {
     var total = $('#surfingkeys_omnibarSearchResult li').length;
     if (total > 0) {
-        var focused = Omnibar.focusedItem;
-        var next = (backward ? (focused + total) : (focused + total + 2)) % (total + 1);
-        if (focused === undefined) {
-            focused = backward ? (total - 1) : 0;
-            next = focused;
-        }
-        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(focused)).removeClass('focused');
-        if (next === total) {
-            Omnibar.focusedItem = 0;
-        } else {
-            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(next)).addClass('focused');
-            Omnibar.focusedItem = next;
+        var lastFocused = Omnibar.focusedItem;
+        Omnibar.focusedItem = (backward ? (lastFocused + total) : (lastFocused + total + 2)) % (total + 1);
+        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(lastFocused)).removeClass('focused');
+        if (Omnibar.focusedItem < total) {
+            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(Omnibar.focusedItem)).addClass('focused');
             Omnibar.scrollIntoView();
         }
     }
@@ -686,6 +679,7 @@ Omnibar.listWords = function(words) {
     });
     $('#surfingkeys_omnibarSearchResult').html("");
     results.appendTo('#surfingkeys_omnibarSearchResult');
+    Omnibar.focusedItem = words.length;
 };
 Omnibar.html = function(content) {
     $('#surfingkeys_omnibarSearchResult').html(content);
@@ -947,7 +941,6 @@ SearchEngine.onEnter = function() {
 };
 SearchEngine.onInput = function() {
     if (SearchEngine.suggestionURL) {
-        Omnibar.focusedItem = 0;
         httpRequest({
             'url': SearchEngine.suggestionURL + $(this).val()
         }, SearchEngine.listSuggestion);
@@ -1427,6 +1420,7 @@ Visual.initMappings = function() {
     vmapkey("j", "forward line");
     vmapkey("k", "backward line");
     vmapkey("w", "forward word");
+    vmapkey("e", "forward word");
     vmapkey("b", "backward word");
     vmapkey(")", "forward sentence");
     vmapkey("(", "backward sentence");
@@ -1523,10 +1517,6 @@ Visual.star = function() {
 };
 Visual.hideCursor = function() {
     var lastPos = Visual.cursor.parentNode;
-    if (Visual.selection.focusNode && Visual.selection.focusNode.parentNode && !$(Visual.cursor).is(':visible')) {
-        $(Visual.selection.focusNode.parentNode).attr('class', $(Visual.cursor).data('parentClass'));
-        $(Visual.cursor).removeData('parentClass');
-    }
     Visual.cursor.remove();
     if (lastPos) {
         lastPos.normalize();
@@ -1549,10 +1539,6 @@ Visual.showCursor = function() {
         var cr = Visual.cursor.getBoundingClientRect();
         if (cr.width === 0 || cr.height === 0) {
             Visual.cursor.style.display = 'inline-block';
-        }
-        if (!$(Visual.cursor).is(':visible')) {
-            $(Visual.cursor).data('parentClass', $(Visual.selection.focusNode.parentNode).attr('class'));
-            $(Visual.selection.focusNode.parentNode).attr('class', 'surfingkeys_focusnode');
         }
     }
     return ret;

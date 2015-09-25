@@ -9,17 +9,20 @@ chrome.commands.onCommand.addListener(function(command) {
 });
 
 var initialSettings = {
-    'maxResults': 500,
-    'blacklist': {},
-    'marks': {},
-    'version': chrome.runtime.getManifest().version,
-    'storage': 'local'
+    maxResults: 500,
+    blacklist: {},
+    marks: {},
+    version: chrome.runtime.getManifest().version,
+    storage: 'local'
 };
 
 var Service = {
-    'activePorts': [],
-    'frames': {},
-    'settings': ""
+    activePorts: [],
+    frames: {},
+    tabHistory: [],
+    tabHistoryIndex: 0,
+    historyTabAction: false,
+    settings: ""
 };
 
 function request(method, url) {
@@ -80,7 +83,7 @@ Service.loadSettingsFromUrl = function(url) {
     });
 };
 Service.resetSettings = function(message, sender, sendResponse) {
-    Service.loadSettingsFromUrl(chrome.extension.getURL('/pages/default.js'));
+    Service.loadSettingsFromUrl(Service.settings.localPath || chrome.extension.getURL('/pages/default.js'));
 };
 Service.getTabs = function(message, sender, sendResponse) {
     var tab = sender.tab;
@@ -97,6 +100,21 @@ Service.focusTab = function(message, sender, sendResponse) {
     chrome.tabs.update(message.tab_id, {
         active: true
     });
+};
+Service.historyTab = function(message, sender, sendResponse) {
+    if (Service.tabHistory.length > 0) {
+        Service.historyTabAction = true;
+        Service.tabHistoryIndex += message.backward ? 1 : -1;
+        if (Service.tabHistoryIndex < 0) {
+            Service.tabHistoryIndex = 0;
+        } else if (Service.tabHistoryIndex == Service.tabHistory.length) {
+            Service.tabHistoryIndex = Service.tabHistory.length - 1;
+        }
+        var tab_id = Service.tabHistory[Service.tabHistoryIndex];
+        chrome.tabs.update(tab_id, {
+            active: true
+        });
+    }
 };
 Service.nextTab = function(message, sender, sendResponse) {
     var tab = sender.tab;
@@ -331,6 +349,10 @@ chrome.extension.onConnect.addListener(function(port) {
 function unRegisterFrame(tabId) {
     if (Service.frames.hasOwnProperty(tabId)) {
         delete Service.frames[tabId];
+        Service.tabHistory = Service.tabHistory.filter(function(e){
+            return e !== tabId;
+        });
+        Service.tabHistoryIndex = 0;
     }
 }
 chrome.tabs.onRemoved.addListener(unRegisterFrame);
@@ -338,4 +360,13 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === "loading") {
         unRegisterFrame(tabId);
     }
+});
+chrome.tabs.onActivated.addListener(function(activeInfo) {
+    if (!Service.historyTabAction && Service.frames.hasOwnProperty(activeInfo.tabId)) {
+        if (Service.tabHistory.length > 10) {
+            Service.tabHistory.shift();
+        }
+        Service.tabHistory.push(activeInfo.tabId);
+    }
+    Service.historyTabAction = false;
 });

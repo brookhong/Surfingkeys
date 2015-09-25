@@ -15,6 +15,8 @@ mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
+mapkey('B', 'Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
+mapkey('F', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
 mapkey('S', 'Go back in history', 'history.go(-1)');
 mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
@@ -44,6 +46,7 @@ mapkey(']]', 'Click on the next link on current page', function() {
         Hints.dispatchMouseClick(next[0]);
     }
 });
+mapkey('ys', "Copy current page's source", 'Normal.writeClipboard(document.documentElement.outerHTML)');
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar(SearchEngine, "b")');
