@@ -513,14 +513,16 @@ Omnibar = {
     miniQuery: {},
 };
 Omnibar.init = function(container) {
-    Omnibar.ui = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input prehandle="omnibar" type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
+    Omnibar.ui = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input id=surfingkeys_omnibar_input type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
     Omnibar.ui.appendTo(container);
+    Omnibar.input = Omnibar.ui.find('input');
     Omnibar.ui.on('click', function(event) {
-        Omnibar.ui.find('input')[0].focus();
+        Omnibar.input[0].focus();
     });
-    Omnibar.ui.find('input').on('input', function() {
+    Omnibar.input.on('input', function() {
         Omnibar.handler.onInput.call(this);
     });
+    Normal.registerKeydownHandler(Omnibar.input[0].id, Omnibar.onKeydown);
     Omnibar.lastHandler = null;
 };
 Omnibar.onKeydown = function(event) {
@@ -588,7 +590,7 @@ Omnibar.rotateResult = function(backward) {
     }
 };
 Omnibar.open = function(handler, type) {
-    Omnibar.ui.find('input')[0].focus();
+    Omnibar.input[0].focus();
     if (handler === SearchEngine && Omnibar.searchAliases.hasOwnProperty(type)) {
         $.extend(SearchEngine, Omnibar.searchAliases[type]);
         Omnibar.lastHandler = SearchEngine;
@@ -604,7 +606,7 @@ Omnibar.close = function() {
     var updated = false;
     if (Omnibar.ui.is(':visible')) {
         Omnibar.ui.hide();
-        Omnibar.ui.find('input').val('');
+        Omnibar.input.val('');
         $('#surfingkeys_omnibarSearchResult').html("");
         Omnibar.lastHandler = null;
         Omnibar.handler.onClose && Omnibar.handler.onClose();
@@ -818,13 +820,36 @@ OpenVIMarks = {
 OpenVIMarks.onEnter = Omnibar.openFocused.bind(OpenVIMarks);
 OpenVIMarks.onInput = OpenVIMarks.onOpen;
 
+StatusBar = {};
+StatusBar.init = function(container) {
+    StatusBar.ui = $('<div id=surfingkeys_status/>').html("<span/><span/><span/><span/>").hide();
+    StatusBar.ui.appendTo(container);
+};
+StatusBar.show = function(n, content) {
+    var span = StatusBar.ui.find('span');
+    $(span[n]).html("").append(content);
+    var lastSpan = -1;
+    for (var i = 0; i < span.length; i++) {
+        if ($(span[i]).html().length) {
+            lastSpan = i;
+            $(span[i]).css('padding', '0px 8px');
+            $(span[i]).css('border-right', '1px solid #999');
+        } else {
+            $(span[i]).css('padding', '');
+            $(span[i]).css('border-right', '');
+        }
+    }
+    $(span[lastSpan]).css('border-right', '');
+    StatusBar.ui.css('display', lastSpan === -1 ? 'none' : 'block');
+};
+
 Find = {
-    'caseSensitive': false,
-    'status': '',
-    'matches': [],
-    'history': [],
-    'mark_template': $('<surfingkeys_mark>')[0],
-    'prompt': '/'
+    caseSensitive: false,
+    status: '',
+    matches: [],
+    history: [],
+    mark_template: $('<surfingkeys_mark>')[0],
+    input: $('<input id="surfingkeys_find"/>')
 };
 Find.initFocus = function() {
     if (Find.matches.length) {
@@ -833,8 +858,7 @@ Find.initFocus = function() {
             var br = Find.matches[i].getBoundingClientRect();
             if (br.top > 0 && br.left > 0) {
                 Find.focused = i;
-                Find.status = Find.focused + 1 + ' / ' + Find.matches.length;
-                Normal.updateStatusBar();
+                StatusBar.show(3, Find.focused + 1 + ' / ' + Find.matches.length);
                 break;
             }
         }
@@ -843,11 +867,11 @@ Find.initFocus = function() {
 Find.next = function(backward) {
     if (Find.matches.length) {
         Find.focused = (backward ? (Find.matches.length + Find.focused - 1) : (Find.focused + 1)) % Find.matches.length;
-        Find.status = Find.focused + 1 + ' / ' + Find.matches.length;
         Visual.select(Find.matches[Find.focused]);
-        Normal.updateStatusBar();
+        StatusBar.show(3, Find.focused + 1 + ' / ' + Find.matches.length);
     } else if (Find.history.length) {
         Visual.state = 1;
+        StatusBar.show(2, Visual.status[Visual.state]);
         var query = Find.history[0];
         Visual.hideCursor();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
@@ -855,43 +879,46 @@ Find.next = function(backward) {
     }
 };
 Find.open = function() {
-    Visual.state = 1;
     Find.historyInc = 0;
-    Normal.statusBar.find('span:nth(0)').show();
-    Normal.statusBar.show();
-    Normal.statusBar.find('input.find')[0].focus();
+    StatusBar.show(0, "/");
+    StatusBar.show(1, Find.input);
+    Find.input.on('input', function() {
+        Visual.hideCursor();
+        Find.clear();
+        var query = $(this).val();
+        if (query.length > 2 && query !== '.*') {
+            Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
+        }
+    });
+    Normal.registerKeydownHandler(Find.input[0].id, Find.onKeydown);
+    Find.input.focus();
 };
-Find.onInput = function() {
-    Visual.hideCursor();
-    Find.clear();
-    var query = $(this).val();
-    if (query.length > 2 && query !== '.*') {
-        Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
-    }
+Find.close = function() {
+    Find.input.val('');
+    StatusBar.show(0, '');
+    StatusBar.show(1, '');
 };
 Find.onKeydown = function(event) {
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-        Normal.statusBar.find('input.find').val("")
-        Normal.statusBar.find('span:nth(0)').hide();
+        Find.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
         if (Find.matches.length) {
-            var query = Normal.statusBar.find('input.find').val();
+            var query = Find.input.val();
             if (query !== Find.history[0]) {
                 Find.history.unshift(query);
             }
             setTimeout(function() {
-                Normal.statusBar.find('input.find').val("")
-                Normal.statusBar.find('span:nth(0)').hide();
+                Find.close();
                 document.activeElement.blur();
                 Visual.state = 1;
                 Visual.select(Find.matches[Find.focused]);
-                Normal.updateStatusBar();
+                StatusBar.show(2, Visual.status[Visual.state]);
             }, 0);
         }
     } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
         Find.historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + Find.history.length - 1);
         Find.historyInc = Find.historyInc % Find.history.length;
-        Normal.statusBar.find('input.find').val(Find.history[Find.historyInc]);
+        Find.input.val(Find.history[Find.historyInc]);
         Visual.hideCursor();
         Find.clear();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
@@ -922,7 +949,6 @@ Find.clear = function() {
         }
     }
     Find.matches = [];
-    Find.status = "";
 };
 
 SearchEngine = {
@@ -1033,10 +1059,11 @@ httpRequest = (function() {
 })();
 
 Normal = {
-    'mappings': null,
-    'stepSize': 70,
-    'scrollNode': null,
-    'scrollIndex': 0,
+    mappings: null,
+    stepSize: 70,
+    scrollNode: null,
+    scrollIndex: 0,
+    keydownHandlers: {},
 };
 Normal.changeScrollTarget = function() {
     Normal.scrollNodes = getScrollableElements(100, 1.2);
@@ -1132,16 +1159,10 @@ Normal.init = function() {
         Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
         Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
-        Normal.statusBar = $('<div id=surfingkeys_status/>').html("<span style='display: none'>/<input prehandle='statusBar' class='find'/></span><span/>").hide();
-        Normal.statusBar.appendTo(Normal.ui_container);
-        Normal.statusBar.find('input.find').on('input', Find.onInput);
         Normal.usage = $('<div id=surfingkeys_Usage/>').hide();
         Normal.usage.appendTo(Normal.ui_container);
         Normal.renderUsage();
-        Normal.keydownHandlers = {
-            'omnibar': Omnibar.onKeydown,
-            'statusBar': Find.onKeydown
-        };
+        StatusBar.init(Normal.ui_container);
         Omnibar.init(Normal.ui_container);
         Visual.init();
     }
@@ -1150,13 +1171,8 @@ Normal.init = function() {
     }
     return !blacklisted && Normal.ui_container;
 };
-Normal.updateStatusBar = function() {
-    var status = [Visual.status[Visual.state], Find.status].filter(function(e) {
-        return e !== ""
-    });
-    var msg = status.join(' | ');
-    Normal.statusBar.find('span:nth(1)').html(msg);
-    Normal.statusBar.css('display', (msg.length) ? 'block' : 'none');
+Normal.registerKeydownHandler = function(elm, handler) {
+    Normal.keydownHandlers[elm] = handler;
 };
 Normal.popup = function(msg, linger_time) {
     if (Normal.init() && msg) {
@@ -1459,7 +1475,7 @@ Visual.init = function() {
                 }
                 break;
         }
-        Normal.updateStatusBar();
+        StatusBar.show(2, Visual.status[Visual.state]);
     });
 };
 Visual.getStartPos = function() {
@@ -1501,7 +1517,7 @@ Visual.toggle = function() {
             break;
     }
     Visual.state = (Visual.state + 1) % 3;
-    Normal.updateStatusBar();
+    StatusBar.show(2, Visual.status[Visual.state]);
 };
 Visual.star = function() {
     if (Visual.selection.focusNode && Visual.selection.focusNode.nodeValue) {
@@ -1597,9 +1613,10 @@ Visual.update = function(event) {
             } else {
                 Visual.hideCursor();
                 Find.clear();
+                StatusBar.show(3, '');
             }
             Visual.state--;
-            Normal.updateStatusBar();
+            StatusBar.show(2, Visual.status[Visual.state]);
             updated = true;
         } else {
             var key = KeyboardUtils.getKeyChar(event);
@@ -1642,20 +1659,22 @@ function initEventListener() {
         window.stopKeyupPropagation = stopKeyUp;
     };
     window.addEventListener('keydown', function(event) {
-        if (Normal.ui_container[0].contains(event.target)) {
-            var handler = Normal.keydownHandlers[$(event.target).attr('prehandle')];
-            if (handler && handler(event)) {
-                event.stopImmediatePropagation();
-            }
-        } else if (Normal.init()) {
-            if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
-                if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
+        if (Normal.init()) {
+            if (Normal.ui_container[0].contains(event.target)) {
+                var handler = Normal.keydownHandlers[event.target.id];
+                if (handler && handler(event)) {
+                    event.stopImmediatePropagation();
+                }
+            } else {
+                if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
+                    if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
+                        window.stopEventPropagation(event, true);
+                    }
+                }
+                if (event.keyCode === KeyboardUtils.keyCodes.ESC && ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.nodeName) !== -1) {
+                    document.activeElement.blur();
                     window.stopEventPropagation(event, true);
                 }
-            }
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC && ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.nodeName) !== -1) {
-                document.activeElement.blur();
-                window.stopEventPropagation(event, true);
             }
         }
     }, true);

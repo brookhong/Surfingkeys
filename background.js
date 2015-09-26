@@ -88,7 +88,6 @@ Service.resetSettings = function(message, sender, sendResponse) {
 Service.getTabs = function(message, sender, sendResponse) {
     var tab = sender.tab;
     chrome.tabs.query({
-        windowId: tab.windowId
     }, function(tabs) {
         sendResponse({
             type: message.action,

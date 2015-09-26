@@ -35,12 +35,6 @@
     border: 1px solid #777;
     font-size: 12px;
 }
-#surfingkeys_status .find {
-    width: 8rem;
-    padding-left: 4px;
-    margin-right: 4px;
-    border-right: 1px solid #999;
-}
 #surfingkeys_omnibar, #surfingkeys_Usage {
     overflow: auto;
     display: block;
