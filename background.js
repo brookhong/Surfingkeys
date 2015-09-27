@@ -37,7 +37,7 @@ function request(method, url) {
     });
 }
 chrome.storage.local.get(null, function(data) {
-    if (!data.version) {
+    if (!data.version || data.version !== initialSettings.version) {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
         Service.settings = JSON.parse(JSON.stringify(initialSettings));
