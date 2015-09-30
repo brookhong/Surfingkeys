@@ -119,8 +119,8 @@ Surfingkeys目前只有两种模式。
 
 ### 搜索栏辅助函数
 
-    OmnibarUtils.listWords(<array of words>)
-    OmnibarUtils.html(<any html snippets>)
+    Omnibar.listWords(<array of words>)
+    Omnibar.html(<any html snippets>)
 
 ### 添加一个迷你查询
 

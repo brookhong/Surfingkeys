@@ -123,8 +123,8 @@ works like
 
 ### Omnibar helpers
 
-    OmnibarUtils.listWords(<array of words>)
-    OmnibarUtils.html(<any html snippets>)
+    Omnibar.listWords(<array of words>)
+    Omnibar.html(<any html snippets>)
 
 ### Add a mini query
 

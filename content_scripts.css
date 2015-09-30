@@ -25,6 +25,7 @@
     z-index: 2147483646;
 }
 #surfingkeys_status {
+    display: none;
     z-index: 2147483646;
     left: 60%;
     background-color: #000;
@@ -37,7 +38,7 @@
 }
 #surfingkeys_omnibar, #surfingkeys_Usage {
     overflow: auto;
-    display: block;
+    display: none;
     position: fixed;
     width: 80%;
     max-height: 80%;
@@ -51,6 +52,10 @@
 }
 #surfingkeys_Usage {
     padding: 1rem;
+}
+#surfingkeys_Usage * {
+    background: #000;
+    font-size: 10pt;
 }
 .surfingkeys_css_reset table {
     display: table;
@@ -127,6 +132,7 @@
     color: #fff;
     font-size: 16px;
     font-weight: bold;
+    text-align: left;
 }
 #surfingkeys_omnibarSearchResult li div.url {
     color: #aaa;
@@ -146,11 +152,12 @@
 surfingkeys_mark {
     background-color: #ff0;
 }
-surfingkeys_cursor {
+div.surfingkeys_cursor {
     background-color: #000;
     padding: 8px 4px;
 }
 div.surfingkeys_bubble {
+    display: none;
     position: absolute;
     padding: 9px;
     border: 1px solid #999;
@@ -189,6 +196,7 @@ div.surfingkeys_frame {
     z-index: 2147483646;
 }
 div.surfingkeys_tabs {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;

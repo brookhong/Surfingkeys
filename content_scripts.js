@@ -513,7 +513,7 @@ Omnibar = {
     miniQuery: {},
 };
 Omnibar.init = function(container) {
-    Omnibar.ui = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input id=surfingkeys_omnibar_input type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>').hide();
+    Omnibar.ui = $('<div id=surfingkeys_omnibar/>').html('<div id="surfingkeys_omnibarSearchArea"><span></span><input id=surfingkeys_omnibar_input type="text" /></div><div id="surfingkeys_omnibarSearchResult"></div>');
     Omnibar.ui.appendTo(container);
     Omnibar.input = Omnibar.ui.find('input');
     Omnibar.ui.on('click', function(event) {
@@ -527,7 +527,7 @@ Omnibar.init = function(container) {
 };
 Omnibar.onKeydown = function(event) {
     if (Omnibar.handler.onKeydown) {
-        Omnibar.handler.onKeydown.call(event.target, event);
+        Omnibar.handler.onKeydown.call(event.target, event) && event.preventDefault();
     }
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
         Omnibar.close();
@@ -635,14 +635,18 @@ Omnibar.openFocused = function() {
         });
     } else {
         var url = focusedItem.find('div.url').data('url');
-        if (url && url.length) {
-            RUNTIME("openLink", {
-                tab: {
-                    tabbed: !/^javascript:/.test(url)
-                },
-                url: url,
-                repeats: 1
-            });
+        if (/^javascript:/.test(url)) {
+            window.location.href = url;
+        } else {
+            if (url && url.length) {
+                RUNTIME("openLink", {
+                    tab: {
+                        tabbed: true
+                    },
+                    url: url,
+                    repeats: 1
+                });
+            }
         }
         ret = true;
     }
@@ -822,7 +826,7 @@ OpenVIMarks.onInput = OpenVIMarks.onOpen;
 
 StatusBar = {};
 StatusBar.init = function(container) {
-    StatusBar.ui = $('<div id=surfingkeys_status/>').html("<span/><span/><span/><span/>").hide();
+    StatusBar.ui = $('<div id=surfingkeys_status/>').html("<span/><span/><span/><span/>");
     StatusBar.ui.appendTo(container);
 };
 StatusBar.show = function(n, content) {
@@ -899,6 +903,7 @@ Find.close = function() {
     StatusBar.show(1, '');
 };
 Find.onKeydown = function(event) {
+    var eaten = true;
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
         Find.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
@@ -922,8 +927,10 @@ Find.onKeydown = function(event) {
         Visual.hideCursor();
         Find.clear();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
+    } else {
+        eaten = false;
     }
-    return true;
+    return eaten;
 };
 Find.highlight = function(pattern) {
     Visual.getTextNodes(document.body, pattern).forEach(function(node) {
@@ -1144,8 +1151,9 @@ Normal.init = function() {
     }
     var blacklisted = Normal.isBlacklisted();
     if (!blacklisted && !Normal.ui_container) {
+        $(document).find('div.surfingkeys_css_reset').remove();
         Normal.map_node = Normal.mappings;
-        Normal.ui_container = $('<div id={0}_container class=surfingkeys_css_reset/>'.format(extension_id)).css('z-index', 999);
+        Normal.ui_container = $('<div class=surfingkeys_css_reset/>').css('z-index', 999);
         document.lastElementChild.appendChild(Normal.ui_container[0]);
         Normal.clipboard_holder = $('<textarea/>').attr('surfingkeys', 1).css('position', 'fixed').css('z-index', '-999')
             .css('top', '0').css('left', '0').css('opacity', '0');
@@ -1155,18 +1163,15 @@ Normal.init = function() {
         Normal.popover = $('<div id=surfingkeys_popover/>');
         Normal.popover.appendTo(Normal.ui_container);
         Normal.frameElement = $("<div class=surfingkeys_frame>");
-        Normal._tabs = $("<div class=surfingkeys_tabs><div class=surfingkeys_tabs_fg></div><div class=surfingkeys_tabs_bg></div></div>").appendTo(Normal.ui_container).hide();
-        Normal.ttt = $("<div style='position:absolute;z-index:2147483647;padding: 8px 4px; background-color:#000'>").appendTo(Normal.ui_container).hide();
-        Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container).hide();
+        Normal._tabs = $("<div class=surfingkeys_tabs><div class=surfingkeys_tabs_fg></div><div class=surfingkeys_tabs_bg></div></div>").appendTo(Normal.ui_container);
+        Normal._bubble = $("<div class=surfingkeys_bubble>").html("<div class=surfingkeys_bubble_content></div>").appendTo(Normal.ui_container);
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
-        Normal.usage = $('<div id=surfingkeys_Usage/>').hide();
+        Normal.usage = $('<div id=surfingkeys_Usage/>');
         Normal.usage.appendTo(Normal.ui_container);
         Normal.renderUsage();
         StatusBar.init(Normal.ui_container);
         Omnibar.init(Normal.ui_container);
         Visual.init();
-    }
-    if ($(document).find(Normal.ui_container).length === 0 && Normal.ui_container) {
         document.lastElementChild.appendChild(Normal.ui_container[0]);
     }
     return !blacklisted && Normal.ui_container;
@@ -1424,10 +1429,10 @@ Normal.insertJS = function(url) {
 };
 
 Visual = {
-    'state': 0,
-    'auto': false,
-    'status': ['', 'Caret', 'Range'],
-    'cursor': $('<surfingkeys_cursor></surfingkeys_cursor')[0],
+    state: 0,
+    auto: false,
+    status: ['', 'Caret', 'Range'],
+    cursor: $('<div class="surfingkeys_cursor"/>')[0],
 };
 Visual.initMappings = function() {
     Visual.mappings = new Trie('', Trie.SORT_NONE);
@@ -1481,7 +1486,7 @@ Visual.init = function() {
 Visual.getStartPos = function() {
     var node = null,
         offset = 0;
-    if (Visual.selection.anchorNode && Visual.selection.anchorNode.parentNode && Visual.selection.anchorNode.parentNode.localName !== "surfingkeys_cursor") {
+    if (Visual.selection.anchorNode && Visual.selection.anchorNode.parentNode && Visual.selection.anchorNode.parentNode.className !== "surfingkeys_cursor") {
         var top = $(Visual.selection.anchorNode.parentNode).offset().top;
         if (top > document.body.scrollTop && top < document.body.scrollTop + window.innerHeight) {
             node = Visual.selection.anchorNode;
