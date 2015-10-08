@@ -11,12 +11,20 @@ mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
 mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 mapkey('f', 'Open a link', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
+mapkey('F', 'Open a link in new tab', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick, {tabbed: true})');
+mapkey('gf', 'Open a link in non-active new tab', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
+mapkey('zz', 'Click on the previous link on current page', function() {
+    var foldup = $('a[action-type=feed_list_media_toSmall]');
+    if (foldup.length > 0) {
+        Hints.dispatchMouseClick(foldup[0]);
+    }
+});
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
 mapkey('B', 'Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
-mapkey('F', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
+mapkey('gF', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
 mapkey('S', 'Go back in history', 'history.go(-1)');
 mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');

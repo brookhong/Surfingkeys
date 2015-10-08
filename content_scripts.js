@@ -387,7 +387,11 @@ Hints.genLabels = function(M) {
     }
     return codes;
 };
-Hints.create = function(cssSelector, onHintKey) {
+Hints.create = function(cssSelector, onHintKey, attrs) {
+    attrs = $.extend({active: true, tabbed: false}, attrs || {});
+    for (var attr in attrs) {
+        Hints[attr] = attrs[attr];
+    }
     $('#surfingkeys_Hints').remove();
     var elements = $(document).find(cssSelector).map(function(i) {
         var elm = this;
@@ -444,8 +448,15 @@ Hints.dispatchMouseClick = function(element, event) {
     if (element.localName === 'textarea' || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)) || element.hasAttribute('contenteditable')) {
         element.focus();
     } else {
-        if (event && event.shiftKey && element.href) {
-            tabOpenLink(element.href);
+        if (element.href) {
+            RUNTIME("openLink", {
+                tab: {
+                    tabbed: Hints.tabbed,
+                    active: Hints.active
+                },
+                url: element.href,
+                repeats: 1
+            });
         } else {
             var realTargets = $(element).find('a:visible');
             realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
