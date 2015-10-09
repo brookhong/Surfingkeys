@@ -15,12 +15,6 @@ mapkey('F', 'Open a link in new tab', 'Hints.create("a:visible, *:visible:css(cu
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create("a:visible, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
-mapkey('zz', 'Click on the previous link on current page', function() {
-    var foldup = $('a[action-type=feed_list_media_toSmall]');
-    if (foldup.length > 0) {
-        Hints.dispatchMouseClick(foldup[0]);
-    }
-});
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
 mapkey('B', 'Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
@@ -62,6 +56,7 @@ mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar(SearchEngine, "g")'
 mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar(SearchEngine, "w")');
 mapkey('on', 'Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
 mapkey('gb', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
+mapkey('gj', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://chrome/settings/contentExceptions#javascript")');
 mapkey('gc', 'Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
 mapkey('gd', 'Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
 mapkey('gh', 'Open Chrome History', 'tabOpenLink("chrome://history/")');
@@ -73,7 +68,7 @@ mapkey('gu', 'Go up one path in the URL', 'window.location.href = getParentURL()
 mapkey('se', 'Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('sr', 'Reset Settings', 'Normal.resetSettings()');
 mapkey('si', 'Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
-mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js")');
+mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response);

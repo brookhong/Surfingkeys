@@ -95,7 +95,22 @@ function initSmoothScroll(elm) {
             elm.scrollLeft = easeFn(timestamp - start, x0, x, d);
             elm.scrollTop = easeFn(timestamp - start, y0, y, d);
         }
-        window.requestAnimationFrame(step);
+
+        function holdStep(timestamp) {
+            elm.scrollLeft = elm.scrollLeft + x / 4;
+            elm.scrollTop = elm.scrollTop + y / 4;
+            if (window.surfingkeysHold === 2) {
+                window.requestAnimationFrame(holdStep);
+            }
+        }
+
+        if (window.surfingkeysHold === 0) {
+            window.requestAnimationFrame(step);
+            window.surfingkeysHold ++;
+        } else if (window.surfingkeysHold === 1){
+            window.requestAnimationFrame(holdStep);
+            window.surfingkeysHold ++;
+        }
     };
 }
 
@@ -359,8 +374,9 @@ RUNTIME = function(action, args) {
 }
 
 Hints = {
-    'prefix': "",
-    'characters': 'asdfgqwertzxcvb'
+    prefix: "",
+    clicks: ['data-ga-click', 'onclick'],
+    characters: 'asdfgqwertzxcvb'
 };
 Hints.genLabels = function(M) {
     if (M <= Hints.characters.length) {
@@ -444,11 +460,25 @@ Hints.create = function(cssSelector, onHintKey, attrs) {
         }
     }
 };
+Hints.isPureLink = function(element) {
+    var pureLink = true;
+    if (!element.hasAttribute('href') || element.getAttribute('href') === '#' || /^javascript:/.test(element.href)) {
+        pureLink = false;
+    } else {
+        for (var i = 0; i < Hints.clicks.length; i++) {
+            if (element.hasAttribute(Hints.clicks[i])) {
+                pureLink = false;
+                break;
+            }
+        }
+    }
+    return pureLink;
+};
 Hints.dispatchMouseClick = function(element, event) {
     if (element.localName === 'textarea' || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)) || element.hasAttribute('contenteditable')) {
         element.focus();
     } else {
-        if (element.href) {
+        if (Hints.isPureLink(element)) {
             RUNTIME("openLink", {
                 tab: {
                     tabbed: Hints.tabbed,
@@ -1694,7 +1724,9 @@ function initEventListener() {
             }
         }
     }, true);
+    window.surfingkeysHold = 0;
     window.addEventListener('keyup', function(event) {
+        window.surfingkeysHold = 0;
         if (window.stopKeyupPropagation) {
             event.stopImmediatePropagation();
             window.stopKeyupPropagation = false;

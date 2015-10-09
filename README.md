@@ -32,6 +32,19 @@ After you install the extension from [Chrome Web Store](https://chrome.google.co
 
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 
+* `u` to show help
+![help](https://cloud.githubusercontent.com/assets/288207/10328829/d3db179a-6ceb-11e5-8faf-73761584eeee.png)
+* `b` to browse/search bookmarks
+![bookmark](https://cloud.githubusercontent.com/assets/288207/10328828/d3ac1fd0-6ceb-11e5-8e9c-7c0d35a195a1.png)
+* `/` to find in current page
+![find](https://cloud.githubusercontent.com/assets/288207/10328836/e4fa4960-6ceb-11e5-80bb-4339ef0db0c5.png)
+* `f` to follow links
+![follow](https://cloud.githubusercontent.com/assets/288207/10328833/e32d85a2-6ceb-11e5-8614-3f8a804cb2f2.png)
+* `v` to toggle visual mode
+![visual](https://cloud.githubusercontent.com/assets/288207/10328835/e4df6c6c-6ceb-11e5-8ed7-17fd29070207.png)
+* `<space>` to switch tabs
+![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
+
 ## Surfingkeys modes
 
 Surfingkeys now have only two modes.
