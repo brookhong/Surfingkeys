@@ -78,38 +78,42 @@ String.prototype.format = function() {
     return formatted;
 };
 
+var easeFn = function(t, b, c, d) {
+    // t: current time, b: begInnIng value, c: change In value, d: duration
+    return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
+};
+
 function initSmoothScroll(elm) {
     elm.smoothScrollBy = function(x, y, d) {
-        var x0 = elm.scrollLeft,
-            y0 = elm.scrollTop,
-            start = window.performance.now();
-        var easeFn = function(t, b, c, d) {
-            // t: current time, b: begInnIng value, c: change In value, d: duration
-            return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
-        };
-
-        function step(timestamp) {
-            if ((timestamp - start) < d) {
-                window.requestAnimationFrame(step);
-            }
-            elm.scrollLeft = easeFn(timestamp - start, x0, x, d);
-            elm.scrollTop = easeFn(timestamp - start, y0, y, d);
-        }
-
-        function holdStep(timestamp) {
-            elm.scrollLeft = elm.scrollLeft + x / 4;
-            elm.scrollTop = elm.scrollTop + y / 4;
-            if (window.surfingkeysHold === 2) {
-                window.requestAnimationFrame(holdStep);
-            }
-        }
-
         if (window.surfingkeysHold === 0) {
+            var x0 = elm.scrollLeft,
+                y0 = elm.scrollTop,
+                start = window.performance.now();
+
+            function step(timestamp) {
+                elm.scrollLeft = easeFn(timestamp - start, x0, x, d);
+                elm.scrollTop = easeFn(timestamp - start, y0, y, d);
+                if (window.surfingkeysHold !== 2 && (timestamp - start) < d) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    elm.scrollLeft = x0 + x;
+                    elm.scrollTop = y0 + y;
+                }
+            }
+
             window.requestAnimationFrame(step);
-            window.surfingkeysHold ++;
-        } else if (window.surfingkeysHold === 1){
+            window.surfingkeysHold++;
+        } else if (window.surfingkeysHold === 1) {
+            function holdStep(timestamp) {
+                elm.scrollLeft = elm.scrollLeft + x / 4;
+                elm.scrollTop = elm.scrollTop + y / 4;
+                if (window.surfingkeysHold === 2) {
+                    window.requestAnimationFrame(holdStep);
+                }
+            }
+
             window.requestAnimationFrame(holdStep);
-            window.surfingkeysHold ++;
+            window.surfingkeysHold++;
         }
     };
 }
@@ -404,7 +408,10 @@ Hints.genLabels = function(M) {
     return codes;
 };
 Hints.create = function(cssSelector, onHintKey, attrs) {
-    attrs = $.extend({active: true, tabbed: false}, attrs || {});
+    attrs = $.extend({
+        active: true,
+        tabbed: false
+    }, attrs || {});
     for (var attr in attrs) {
         Hints[attr] = attrs[attr];
     }
@@ -997,6 +1004,7 @@ Find.clear = function() {
         }
     }
     Find.matches = [];
+    StatusBar.show(3, '');
 };
 
 SearchEngine = {
@@ -1191,7 +1199,10 @@ Normal.init = function() {
         });
     }
     var blacklisted = Normal.isBlacklisted();
-    if (!blacklisted && !Normal.ui_container) {
+    if (document.designMode === 'on') {
+        $(document).find('div.surfingkeys_css_reset').remove();
+        Normal.ui_container = null;
+    } else if (!blacklisted && !Normal.ui_container) {
         $(document).find('div.surfingkeys_css_reset').remove();
         Normal.map_node = Normal.mappings;
         Normal.ui_container = $('<div class=surfingkeys_css_reset/>').css('z-index', 999);
@@ -1659,7 +1670,6 @@ Visual.update = function(event) {
             } else {
                 Visual.hideCursor();
                 Find.clear();
-                StatusBar.show(3, '');
             }
             Visual.state--;
             StatusBar.show(2, Visual.status[Visual.state]);
