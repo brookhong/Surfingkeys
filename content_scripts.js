@@ -66,7 +66,12 @@ function getZIndex(node) {
     $.expr[':'].css = function(elem, pos, match) {
         var sel = match[3].split('=');
         return $(elem).css(sel[0]) == sel[1];
-    }
+    };
+    $.fn.topInView = function() {
+        return this.filter(function() {
+            return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
+        });
+    };
 })(jQuery);
 
 String.prototype.format = function() {
@@ -1043,6 +1048,7 @@ MiniQuery.onEnter = function() {
 
 function mapkey(keys, annotation, jscode, extra_chars, domain) {
     if (!domain || domain.test(window.location.origin)) {
+        Normal.mappings.remove(keys);
         Normal.mappings.add(keys, {
             code: jscode,
             annotation: annotation,
@@ -1051,11 +1057,15 @@ function mapkey(keys, annotation, jscode, extra_chars, domain) {
     }
 }
 
-function vmapkey(keys, annotation, jscode) {
-    Visual.mappings.add(keys, {
-        code: jscode,
-        annotation: annotation
-    });
+function vmapkey(keys, annotation, jscode, extra_chars, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        Visual.mappings.remove(keys);
+        Visual.mappings.add(keys, {
+            code: jscode,
+            annotation: annotation,
+            extra_chars: extra_chars
+        });
+    }
 }
 
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
@@ -1095,7 +1105,16 @@ function tabOpenLink(url) {
 function searchSelectedWith(se) {
     var query = window.getSelection().toString() || Normal.getContentFromClipboard();
     tabOpenLink(se + encodeURI(query));
-};
+}
+
+function clickOn(links) {
+    if (typeof(links) === 'string') {
+        links = $(links);
+    }
+    if (links.length > 0) {
+        Hints.dispatchMouseClick(links[0]);
+    }
+}
 
 function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);

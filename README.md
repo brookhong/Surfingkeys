@@ -113,9 +113,9 @@ Just an example to map one keystroke to different functions on different sites,
     mapkey('zz', 'Choose a tab', 'Normal.chooseTab()', 0, /github\.com/i);
     mapkey('zz', 'Show usage', 'Normal.showUsage()', 0, /google\.com/i);
 
-    vmapkey(keystroke, help_string, action_code)
-
 mapkey in visual mode
+
+    vmapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
 
 ### Add search alias to omnibar
 
