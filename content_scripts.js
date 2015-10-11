@@ -1041,12 +1041,14 @@ MiniQuery.onEnter = function() {
     return false;
 };
 
-function mapkey(keys, annotation, jscode, extra_chars) {
-    Normal.mappings.add(keys, {
-        code: jscode,
-        annotation: annotation,
-        extra_chars: extra_chars
-    });
+function mapkey(keys, annotation, jscode, extra_chars, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        Normal.mappings.add(keys, {
+            code: jscode,
+            annotation: annotation,
+            extra_chars: extra_chars
+        });
+    }
 }
 
 function vmapkey(keys, annotation, jscode) {

@@ -98,13 +98,20 @@ This is very useful for those pages you access very frequently. `om` to check ou
 
 ### Map a keystroke to some action
 
-    mapkey(keystroke, help_string, action_code)
+    mapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
 
 | parameter  | explanation |
 |:---------------| :-----|
-|**keystroke**                   | any keystroke to trigger the action|
-|**help_string**                 | a help message to describe the action, which will displayed in help opened by `u`.|
-|**action_code**                 | action code can be a snippet of Javascript code or a Javascript function.|
+|**keystroke**                   | string, any keystroke to trigger the action|
+|**help_string**                 | string, a help message to describe the action, which will displayed in help opened by `u`.|
+|**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function.|
+|**expect_char**                 | boolean[optional], whether the next key input is used as parameter of action_code, please see `m` or `'` for example.|
+|**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com.|
+
+Just an example to map one keystroke to different functions on different sites,
+
+    mapkey('zz', 'Choose a tab', 'Normal.chooseTab()', 0, /github\.com/i);
+    mapkey('zz', 'Show usage', 'Normal.showUsage()', 0, /google\.com/i);
 
     vmapkey(keystroke, help_string, action_code)
 
