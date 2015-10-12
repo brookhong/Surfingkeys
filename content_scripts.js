@@ -298,11 +298,19 @@ function applySettings(resp) {
     }
 }
 
+function _applySettings(resp) {
+    try {
+        applySettings(resp);
+    } catch (e) {
+        RUNTIME("resetSettings", {useDefault: true});
+    }
+}
+
 var extension_id;
 var port_handlers = {
     'connected': function(response) {
         extension_id = response.extension_id;
-        applySettings(response.settings);
+        _applySettings(response.settings);
         Normal.init();
         $(document).trigger("surfingkeys:connected");
     },
@@ -312,7 +320,7 @@ var port_handlers = {
         f(response.text);
     },
     'settingsUpdated': function(response) {
-        applySettings(response.settings);
+        _applySettings(response.settings);
         Normal.renderUsage();
     }
 };
@@ -1108,12 +1116,18 @@ function searchSelectedWith(se) {
 }
 
 function clickOn(links) {
+    var ret = false;
     if (typeof(links) === 'string') {
         links = $(links);
     }
-    if (links.length > 0) {
-        Hints.dispatchMouseClick(links[0]);
+    if (links.length && links.length > 0) {
+        links = links[0];
     }
+    if (links.nodeType === Node.ELEMENT_NODE) {
+        Hints.dispatchMouseClick(links);
+        ret = true;
+    }
+    return ret;
 }
 
 function generateQuickGuid() {

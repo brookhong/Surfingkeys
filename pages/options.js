@@ -3,20 +3,22 @@ $(document).on("surfingkeys:connected", function() {
     $('#storage').val(settings.storage);
     $('#localPath').val(settings.localPath);
     $('#mappings').height($(window).height() - $('#save_container').height() * 3);
+    var old_handler = port_handlers['settingsUpdated'];
+    port_handlers['settingsUpdated'] = function(resp) {
+        old_handler(resp);
+        $('#mappings').val(settings.snippets);
+        $('#storage').val(settings.storage);
+        $('#localPath').val(settings.localPath);
+    };
 });
 
 $('#storage').change(function(){
     var storage = $(this).val();
-    chrome.runtime.sendMessage({
-        action: 'changeSettingsStorage',
-        storage: storage
-    });
+    RUNTIME("changeSettingsStorage", {storage: storage});
 });
 
 $('#reset_button').click(function() {
-    $.get(chrome.extension.getURL('/pages/default.js'), function(data) {
-        $('#mappings').val(data);
-    });
+    RUNTIME("resetSettings", {useDefault: true});
     Normal.popup('Settings reset', 300);
 });
 
@@ -33,20 +35,19 @@ function getURIPath(fn) {
 
 $('#save_button').click(function() {
     var settingsCode = $('#mappings').val();
+    var localPath = getURIPath($('#localPath').val());
     try {
-        applySettings({
-            snippets: settingsCode,
-            blacklist: settings.blacklist,
-            marks: settings.marks
-        });
-        chrome.runtime.sendMessage({
-            action: 'updateSettings',
-            settings: {
-                snippets: $('#mappings').val(),
-                localPath: getURIPath($('#localPath').val())
-            }
-        });
-        Normal.popup('Settings saved', 300);
+        if (localPath !== settings.localPath) {
+            RUNTIME("loadSettingsFromUrl", {url: localPath});
+            Normal.popup('Loading settings from ' + localPath, 300);
+        } else {
+            applySettings({
+                snippets: settingsCode,
+                blacklist: settings.blacklist,
+                marks: settings.marks
+            });
+            Normal.popup('Settings saved', 300);
+        }
     } catch (e) {
         Normal.popup(e.toString(), 3000);
     }

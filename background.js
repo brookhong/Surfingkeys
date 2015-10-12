@@ -24,6 +24,7 @@ var Service = {
     historyTabAction: false,
     settings: ""
 };
+var defaultSettingsURL = chrome.extension.getURL('/pages/default.js');
 
 function request(method, url) {
     return new Promise(function(acc, rej) {
@@ -41,7 +42,7 @@ chrome.storage.local.get(null, function(data) {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
         Service.settings = JSON.parse(JSON.stringify(initialSettings));
-        var s = request('get', chrome.extension.getURL('/pages/default.js'));
+        var s = request('get', defaultSettingsURL);
         s.then(function(resp) {
             Service.settings.snippets = resp;
         });
@@ -75,15 +76,24 @@ Service._updateSettings = function() {
         });
     });
 }
-Service.loadSettingsFromUrl = function(url) {
+Service._loadSettingsFromUrl = function(url) {
     var s = request('get', url);
     s.then(function(resp) {
+        if (url !== defaultSettingsURL) {
+            Service.settings.localPath = url;
+        }
         Service.settings.snippets = resp;
         Service._updateSettings();
     });
 };
 Service.resetSettings = function(message, sender, sendResponse) {
-    Service.loadSettingsFromUrl(Service.settings.localPath || chrome.extension.getURL('/pages/default.js'));
+    if (message.useDefault) {
+        delete Service.settings.localPath;
+    }
+    Service._loadSettingsFromUrl(Service.settings.localPath || defaultSettingsURL);
+};
+Service.loadSettingsFromUrl = function(message, sender, sendResponse) {
+    Service._loadSettingsFromUrl(message.url);
 };
 Service.getTabs = function(message, sender, sendResponse) {
     var tab = sender.tab;
