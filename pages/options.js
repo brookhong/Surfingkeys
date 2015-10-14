@@ -23,7 +23,7 @@ $('#reset_button').click(function() {
 });
 
 function getURIPath(fn) {
-    if (fn.indexOf('file:///') === -1) {
+    if (!/^\w+:\/\/\w+/i.test(fn) && fn.indexOf('file:///') === -1) {
         fn = fn.replace(/\\/g, '/');
         if (fn[0] === '/') {
             fn = fn.substr(1);
@@ -41,10 +41,11 @@ $('#save_button').click(function() {
             RUNTIME("loadSettingsFromUrl", {url: localPath});
             Normal.popup('Loading settings from ' + localPath, 300);
         } else {
-            applySettings({
-                snippets: settingsCode,
-                blacklist: settings.blacklist,
-                marks: settings.marks
+            RUNTIME('updateSettings', {
+                settings: {
+                    snippets: $('#mappings').val(),
+                    localPath: getURIPath($('#localPath').val())
+                }
             });
             Normal.popup('Settings saved', 300);
         }
