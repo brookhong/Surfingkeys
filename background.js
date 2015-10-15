@@ -38,7 +38,7 @@ function request(method, url) {
     });
 }
 chrome.storage.local.get(null, function(data) {
-    if (!data.version || data.version !== initialSettings.version) {
+    if (!data.version) {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
         Service.settings = JSON.parse(JSON.stringify(initialSettings));
@@ -58,6 +58,7 @@ chrome.storage.local.get(null, function(data) {
                 }
             });
         }
+        Service.settings.needUpdate = (data.version !== initialSettings.version);
     }
 });
 Service._updateSettings = function() {
@@ -87,8 +88,10 @@ Service._loadSettingsFromUrl = function(url) {
     });
 };
 Service.resetSettings = function(message, sender, sendResponse) {
-    if (message.useDefault) {
+    if (message.useDefault || Service.settings.needUpdate) {
         delete Service.settings.localPath;
+        Service.settings.version = initialSettings.version;
+        Service.settings.needUpdate = false;
     }
     Service._loadSettingsFromUrl(Service.settings.localPath || defaultSettingsURL);
 };
