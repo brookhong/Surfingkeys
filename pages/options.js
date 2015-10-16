@@ -3,11 +3,14 @@ function renderSettings() {
     $('#storage').val(settings.storage);
     $('#localPath').val(settings.localPath);
     if (settings.needUpdate) {
-        $('.warning').html("Your settings is behind of the default settings, please back up your settings and click reset, then update your own settings.").show();
+        $('.warning').show();
     } else {
         $('.warning').hide();
     }
-    $('#mappings').height($(window).height() - $('#save_container').outerHeight() * 5 - $('.warning').outerHeight());
+    var h = $(window).height() - $('#save_container').outerHeight() * 5 - $('.warning').outerHeight();
+    $('#defaultMappings').height(h);
+    $('#mappings').height(h);
+    $('#mappings').css('width', '100%');
 }
 $(document).on("surfingkeys:connected", function() {
     renderSettings();
@@ -28,8 +31,18 @@ $('#reset_button').click(function() {
     Normal.popup('Settings reset', 300);
 });
 
-$('.infoPointer').click(function(event) {
+$('.infoPointer').click(function() {
     $('#' + $(this).attr('for')).toggle();
+});
+
+$('#showDefaultSettings').click(function() {
+    $.ajax({
+        url: chrome.extension.getURL('/pages/default.js'),
+        type: 'GET'
+    }).done(function(response) {
+        $('#defaultMappings').html(response).css('width', '48%').css('display', 'inline-block');
+        $('#mappings').css('width', '48%');
+    });
 });
 
 function getURIPath(fn) {

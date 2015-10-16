@@ -10,6 +10,7 @@ chrome.commands.onCommand.addListener(function(command) {
 
 var initialSettings = {
     maxResults: 500,
+    tabsThreshold: 9,
     blacklist: {},
     marks: {},
     version: chrome.runtime.getManifest().version,
@@ -102,8 +103,14 @@ Service.getTabs = function(message, sender, sendResponse) {
     var tab = sender.tab;
     chrome.tabs.query({
     }, function(tabs) {
+        if (message.query && message.query.length) {
+            tabs = tabs.filter(function(b) {
+                return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
+            });
+        }
         sendResponse({
             type: message.action,
+            id: message.id,
             tabs: tabs
         });
     });
@@ -191,6 +198,7 @@ Service.getBookmarks = function(message, sender, sendResponse) {
             }
             sendResponse({
                 type: message.action,
+                id: message.id,
                 bookmarks: bookmarks
             });
         });
@@ -199,6 +207,7 @@ Service.getBookmarks = function(message, sender, sendResponse) {
             chrome.bookmarks.search(message.query, function(tree) {
                 sendResponse({
                     type: message.action,
+                    id: message.id,
                     bookmarks: tree
                 });
             });
@@ -206,6 +215,7 @@ Service.getBookmarks = function(message, sender, sendResponse) {
             chrome.bookmarks.getTree(function(tree) {
                 sendResponse({
                     type: message.action,
+                    id: message.id,
                     bookmarks: tree[0].children
                 });
             });
@@ -216,6 +226,7 @@ Service.getHistory = function(message, sender, sendResponse) {
     chrome.history.search(message.query, function(tree) {
         sendResponse({
             type: message.action,
+            id: message.id,
             history: tree
         });
     });
@@ -232,12 +243,14 @@ Service.getURLs = function(message, sender, sendResponse) {
             }, function(tree) {
                 sendResponse({
                     type: message.action,
+                    id: message.id,
                     urls: tree.concat(bookmarks)
                 });
             });
         } else {
             sendResponse({
                 type: message.action,
+                id: message.id,
                 urls: bookmarks
             });
         }
@@ -277,6 +290,8 @@ Service.updateSettings = function(message, sender, sendResponse) {
     for (var sd in message.settings) {
         Service.settings[sd] = message.settings[sd];
     }
+    Service.settings.version = initialSettings.version;
+    Service.settings.needUpdate = false;
     Service._updateSettings();
 };
 Service.changeSettingsStorage = function(message, sender, sendResponse) {
@@ -313,6 +328,7 @@ Service.nextFrame = function(message, sender, sendResponse) {
         frameData[0] = (frameData[0] + 1) % frameData[1].length;
         chrome.tabs.sendMessage(tid, {
             subject: "focusFrame",
+            target: 'content_runtime',
             frameId: frameData[1][frameData[0]]
         });
     }
@@ -329,12 +345,14 @@ Service.unRegisterFrame = function(message, sender, sendResponse) {
 };
 
 function handleMessage(_message, _sender, _sendResponse, _port) {
-    if (Service.hasOwnProperty(_message.action)) {
-        _message.repeats = _message.repeats || 1;
-        Service[_message.action](_message, _sender, _sendResponse);
-    } else {
-        var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
-        console.log(type + JSON.stringify(_message))
+    if (_message.target !== 'content_runtime') {
+        if (Service.hasOwnProperty(_message.action)) {
+            _message.repeats = _message.repeats || 1;
+            Service[_message.action](_message, _sender, _sendResponse);
+        } else {
+            var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
+            console.log(type + JSON.stringify(_message))
+        }
     }
 }
 chrome.runtime.onMessage.addListener(handleMessage);

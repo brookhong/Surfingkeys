@@ -46,8 +46,8 @@
         "matches": ["<all_urls>"],
         "match_about_blank": true,
         "js": [
-            "trie.js",
-            "jquery.min.js",
+            "libs/trie.js",
+            "libs/jquery.min.js",
             "content_scripts.js"
         ],
         "css": ["content_scripts.css"],

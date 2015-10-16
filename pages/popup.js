@@ -13,7 +13,7 @@ function onSurfingkeysStatus(status) {
 function toggleBlacklist(origin) {
     chrome.tabs.sendMessage(
         activeTab.id, {
-            from: 'browser_action',
+            target: 'content_runtime',
             origin: origin,
             subject: 'toggleBlacklist'
         },
@@ -27,6 +27,7 @@ chrome.tabs.query({
     activeTab = tabs[0];
     chrome.tabs.sendMessage(
         activeTab.id, {
+            target: 'content_runtime',
             subject: 'getBlacklist'
         },
         onSurfingkeysStatus);

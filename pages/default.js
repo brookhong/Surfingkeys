@@ -39,10 +39,10 @@ mapkey('N', 'Previous found text', 'Find.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
 mapkey('p', 'Open selected link or link from clipboard', 'tabOpenLink(window.getSelection().toString() || Normal.getContentFromClipboard())');
 mapkey('[[', 'Click on the previous link on current page', function() {
-    clickOn($('a').regex(/((上页|上一页|prev(ious)?)+)/i));
+    clickOn($('a').regex(/((<<|prev(ious)?)+)/i));
 });
 mapkey(']]', 'Click on the next link on current page', function() {
-    clickOn($('a').regex(/((下页|下一页|next)+)/i));
+    clickOn($('a').regex(/((>>|next)+)/i));
 });
 mapkey('ys', "Copy current page's source", 'Normal.writeClipboard(document.documentElement.outerHTML)');
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');

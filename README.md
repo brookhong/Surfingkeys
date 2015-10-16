@@ -94,6 +94,24 @@ Then afterwards `'f` will open that URL directly.
 
 This is very useful for those pages you access very frequently. `om` to check out all the vim-like marks you have created.
 
+## Switch tabs
+
+By default, pressing `<space>` will show all opened tabs in an overlay, then pressing the hint char, will switch to the related tab.
+
+![tabs_overlay](https://cloud.githubusercontent.com/assets/288207/10544636/245447f6-7457-11e5-8372-62b8f6337158.png)
+
+There is `settings.tabsThreshold` here. When total of opened tabs exceeds `settings.tabsThreshold`(default as 9), omnibar will be used for choosing tabs.
+
+![tabs_omnibar](https://cloud.githubusercontent.com/assets/288207/10544630/1fbdd02c-7457-11e5-823c-14411311c315.png)
+
+If you prefer to use omnibar always, add below line to your settings:
+
+    settings.tabsThreshold = 0;
+
+or change the mapkey:
+
+    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
+
 ## Edit your own settings
 
 ### Map a keystroke to some action

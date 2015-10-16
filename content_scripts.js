@@ -285,12 +285,12 @@ function removeChild(elements) {
 var settings;
 
 function applySettings(resp) {
+    settings = resp;
     Normal.mappings = new Trie('', Trie.SORT_NONE);
     Visual.initMappings();
     var theInstructions = resp.snippets;
     var F = new Function(theInstructions);
     F();
-    settings = resp;
     if (window === top) {
         RUNTIME('setSurfingkeysIcon', {
             status: Normal.isBlacklisted()
@@ -302,6 +302,7 @@ function _applySettings(resp) {
     try {
         applySettings(resp);
     } catch (e) {
+        console.log(e);
         RUNTIME("resetSettings", {useDefault: true});
     }
 }
@@ -314,11 +315,6 @@ var port_handlers = {
         Normal.init();
         $(document).trigger("surfingkeys:connected");
     },
-    'request': function(response) {
-        var f = httpRequest.success[response.id];
-        delete httpRequest.success[response.id];
-        f(response.text);
-    },
     'settingsUpdated': function(response) {
         _applySettings(response.settings);
         Normal.renderUsage();
@@ -330,7 +326,11 @@ function initPort() {
         name: 'main'
     });
     _port.onMessage.addListener(function(response) {
-        if (port_handlers[response.type]) {
+        if (portRequest.success[response.id]) {
+            var f = portRequest.success[response.id];
+            delete portRequest.success[response.id];
+            f(response);
+        } else if (port_handlers[response.type]) {
             port_handlers[response.type](response);
         } else {
             console.log("[unexpected port message] " + JSON.stringify(response))
@@ -373,10 +373,12 @@ var runtime_handlers = {
     },
 };
 chrome.runtime.onMessage.addListener(function(msg, sender, response) {
-    if (runtime_handlers[msg.subject]) {
-        runtime_handlers[msg.subject](msg, sender, response);
-    } else {
-        console.log("[unexpected runtime message] " + JSON.stringify(msg))
+    if (msg.target === 'content_runtime') {
+        if (runtime_handlers[msg.subject]) {
+            runtime_handlers[msg.subject](msg, sender, response);
+        } else {
+            console.log("[unexpected runtime message] " + JSON.stringify(msg))
+        }
     }
 });
 
@@ -865,6 +867,36 @@ port_handlers['getURLs'] = function(response) {
     Omnibar.listBookmark(response.urls, false);
 };
 
+OpenTabs = {
+    prompt: 'tabs≫'
+};
+OpenTabs.onEnter = function() {
+    var focusedItem = $('#surfingkeys_omnibarSearchResult li.focused');
+    RUNTIME('focusTab', {
+        tab_id: focusedItem.data('tabId')
+    });
+    return true;
+};
+OpenTabs.list = function(query) {
+    portRequest({
+        'action': 'getTabs',
+        'query': query
+    }, function(response) {
+        Omnibar.listResults(response.tabs, function(b) {
+            var li = $('<li/>').data('tabId', b.id);
+            li.html('<div class="title">▤ {0}</div>'.format(b.title));
+            $('<div class="url">').html(b.url).appendTo(li);
+            return li;
+        });
+    });
+};
+OpenTabs.onOpen = function() {
+    OpenTabs.list('');
+};
+OpenTabs.onInput = function() {
+    OpenTabs.list($(this).val());
+};
+
 OpenVIMarks = {
     'prompt': 'VIMarks≫',
     'onOpen': function() {
@@ -1134,20 +1166,23 @@ function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-httpRequest = (function() {
+portRequest = (function() {
     var _imp = function(args, success) {
-        var request_id = generateQuickGuid();
-        port.postMessage({
-            'action': 'request',
-            'method': args.method || 'get',
-            'id': request_id,
-            'url': args.url
-        });
-        _imp.success[request_id] = success;
+        args.id = generateQuickGuid();
+        port.postMessage(args);
+        _imp.success[args.id] = success;
     }
     _imp.success = {};
     return _imp;
 })();
+
+httpRequest = function(args, success) {
+    portRequest({
+        'action': 'request',
+        'method': args.method || 'get',
+        'url': args.url
+    }, success);
+};
 
 Normal = {
     mappings: null,
@@ -1357,24 +1392,28 @@ Normal.show = function(toDisplay) {
     Normal._display.show();
 };
 port_handlers['getTabs'] = function(response) {
-    var tabs_fg = Normal._tabs.find('div.surfingkeys_tabs_fg');
-    tabs_fg.html("");
-    Normal._tabs.trie = new Trie('', Trie.SORT_NONE);
-    var hintLabels = Hints.genLabels(response.tabs.length);
-    var tabstr = "<div class=surfingkeys_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
-    var items = response.tabs.forEach(function(t, i) {
-        var tab = $(tabstr);
-        Normal._tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
-        tab.html("<div class=surfingkeys_tab_hint>{0}</div><div class=surfingkeys_tab_title>{1}</div>".format(hintLabels[i], t.title));
-        tab.data('url', t.url);
-        tabs_fg.append(tab);
-    })
-    Normal.show(Normal._tabs);
-    tabs_fg.find('div.surfingkeys_tab').each(function() {
-        $(this).css('width', $(this).width() + 10);
-        $(this).append($("<div class=surfingkeys_tab_url>{0}</div>".format($(this).data('url'))));
-    });
-    Normal._tabs.find('div.surfingkeys_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
+    if (response.tabs.length > settings.tabsThreshold) {
+        Normal.openOmnibar(OpenTabs);
+    } else {
+        var tabs_fg = Normal._tabs.find('div.surfingkeys_tabs_fg');
+        tabs_fg.html("");
+        Normal._tabs.trie = new Trie('', Trie.SORT_NONE);
+        var hintLabels = Hints.genLabels(response.tabs.length);
+        var tabstr = "<div class=surfingkeys_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
+        var items = response.tabs.forEach(function(t, i) {
+            var tab = $(tabstr);
+            Normal._tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
+            tab.html("<div class=surfingkeys_tab_hint>{0}</div><div class=surfingkeys_tab_title>{1}</div>".format(hintLabels[i], t.title));
+            tab.data('url', t.url);
+            tabs_fg.append(tab);
+        })
+        Normal.show(Normal._tabs);
+        tabs_fg.find('div.surfingkeys_tab').each(function() {
+            $(this).css('width', $(this).width() + 10);
+            $(this).append($("<div class=surfingkeys_tab_url>{0}</div>".format($(this).data('url'))));
+        });
+        Normal._tabs.find('div.surfingkeys_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
+    }
 };
 Normal.chooseTab = function() {
     Normal.hide();
