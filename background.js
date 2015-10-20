@@ -123,10 +123,10 @@ Service.focusTab = function(message, sender, sendResponse) {
 Service.historyTab = function(message, sender, sendResponse) {
     if (Service.tabHistory.length > 0) {
         Service.historyTabAction = true;
-        Service.tabHistoryIndex += message.backward ? 1 : -1;
+        Service.tabHistoryIndex += message.backward ? -1 : 1;
         if (Service.tabHistoryIndex < 0) {
             Service.tabHistoryIndex = 0;
-        } else if (Service.tabHistoryIndex == Service.tabHistory.length) {
+        } else if (Service.tabHistoryIndex >= Service.tabHistory.length) {
             Service.tabHistoryIndex = Service.tabHistory.length - 1;
         }
         var tab_id = Service.tabHistory[Service.tabHistoryIndex];
@@ -379,23 +379,29 @@ chrome.extension.onConnect.addListener(function(port) {
 function unRegisterFrame(tabId) {
     if (Service.frames.hasOwnProperty(tabId)) {
         delete Service.frames[tabId];
-        Service.tabHistory = Service.tabHistory.filter(function(e){
-            return e !== tabId;
-        });
-        Service.tabHistoryIndex = 0;
     }
 }
-chrome.tabs.onRemoved.addListener(unRegisterFrame);
+function removeTab(tabId) {
+    unRegisterFrame(tabId);
+    Service.tabHistory = Service.tabHistory.filter(function(e){
+        return e !== tabId;
+    });
+}
+chrome.tabs.onRemoved.addListener(removeTab);
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === "loading") {
         unRegisterFrame(tabId);
     }
 });
 chrome.tabs.onActivated.addListener(function(activeInfo) {
-    if (!Service.historyTabAction && Service.frames.hasOwnProperty(activeInfo.tabId)) {
+    if (!Service.historyTabAction && activeInfo.tabId != Service.tabHistory[Service.tabHistory.length - 1]) {
         if (Service.tabHistory.length > 10) {
             Service.tabHistory.shift();
         }
+        if (Service.tabHistoryIndex != Service.tabHistory.length - 1) {
+            Service.tabHistory.splice(Service.tabHistoryIndex + 1, Service.tabHistory.length - 1);
+        }
+        if (Service.tabHistoryIndex++ > 9) Service.tabHistoryIndex = 9;
         Service.tabHistory.push(activeInfo.tabId);
     }
     Service.historyTabAction = false;
