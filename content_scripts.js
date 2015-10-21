@@ -1117,10 +1117,19 @@ function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
     };
 }
 
-function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion) {
+function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     mapkey((search_leader_key || 's') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
     vmapkey((search_leader_key || 's') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
+    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+}
+
+function walkPageUrl(step) {
+    var numbers = window.location.href.match(/^(.*\/[^\/\d]*)(\d+)$/);
+    if (numbers.length === 3) {
+        window.location.href = numbers[1] + (parseInt(numbers[2]) + step);
+    }
 }
 
 function addMiniQuery(alias, prompt, url, listResult) {
@@ -1142,8 +1151,11 @@ function tabOpenLink(url) {
     });
 }
 
-function searchSelectedWith(se) {
+function searchSelectedWith(se, onlyThisSite) {
     var query = window.getSelection().toString() || Normal.getContentFromClipboard();
+    if (onlyThisSite) {
+        query += " site:" + window.location.hostname;
+    }
     tabOpenLink(se + encodeURI(query));
 }
 

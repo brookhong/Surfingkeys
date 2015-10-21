@@ -39,10 +39,10 @@ mapkey('N', 'Previous found text', 'Find.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
 mapkey('p', 'Open selected link or link from clipboard', 'tabOpenLink(window.getSelection().toString() || Normal.getContentFromClipboard())');
 mapkey('[[', 'Click on the previous link on current page', function() {
-    clickOn($('a').regex(/((<<|prev(ious)?)+)/i));
+    walkPageUrl(-1) || clickOn($('a').regex(/((<<|prev(ious)?)+)/i));
 });
 mapkey(']]', 'Click on the next link on current page', function() {
-    clickOn($('a').regex(/((>>|next)+)/i));
+    walkPageUrl(1) || clickOn($('a').regex(/((>>|next)+)/i));
 });
 mapkey('ys', "Copy current page's source", 'Normal.writeClipboard(document.documentElement.outerHTML)');
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
@@ -67,15 +67,15 @@ mapkey('si', 'Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
-    var res = eval(response);
+    var res = eval(response.text);
     Omnibar.listWords(res[1]);
 });
 addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=eval&wd=', function(response) {
-    var res = eval(response);
+    var res = eval(response.text);
     Omnibar.listWords(res.s);
 });
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
-    var res = eval(response);
+    var res = eval(response.text);
     Omnibar.listWords(res[1]);
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');

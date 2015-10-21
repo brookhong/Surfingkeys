@@ -80,6 +80,8 @@ My favorite feature from when I was using Firefox. For both Firefox and Chrome, 
 
 The `g` in `sg` is a search alias for google, there are some other built-in search aliases -- like `w` for bing. So press `sw` to search selected with bing. Refer to [Add search alias to omnibar](#add-search-alias-to-omnibar) to add your own search alias, especially those search engines for company inside.
 
+Besides that, there is a `sog`, to search selected text only in this site with google. For `sog`, `s` is the search_leader_key, `o` is the only_this_site_key, `g` is the search alias.
+
 ## Vim-like marks
 
 You can create vim-like marks by pressing `m`, followed by a word character(0-9, A-Z, a-z), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
@@ -104,13 +106,14 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 ![tabs_omnibar](https://cloud.githubusercontent.com/assets/288207/10544630/1fbdd02c-7457-11e5-823c-14411311c315.png)
 
-If you prefer to use omnibar always, add below line to your settings:
+If you prefer to use omnibar always, use below mapping:
+
+    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
+
+which works same as:
 
     settings.tabsThreshold = 0;
 
-or change the mapkey:
-
-    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
 
 ## Edit your own settings
 
@@ -147,7 +150,12 @@ mapkey in visual mode
 |**suggestion_url[optional]**                | omnibar will list out search suggestions from the engine, if you provide suggestion_url and callback_to_parse_suggestion|
 |**callback_to_parse_suggestion[optional]**  | works with suggestion_url to provide search suggestion|
 
-    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion);
+    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key);
+
+| parameter  | explanation |
+|:---------------| :-----|
+|**search_leader_key**                                   | one or several chars, used as search leader key, in case of that you would not like to use the default key `s`.|
+|**only_this_site_key**                                  | one or several chars, used as only-this-site-key, in case of that you would not like to use the default key `o`.|
 
 This version will create a mapping to search selected text with `search_url` on pressing `search_leader_key` followed by `alias`, except that it adds search alias to omnibar as the normal version. For example, below line
 

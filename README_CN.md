@@ -31,6 +31,19 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 
 试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
 
+* `u` 显示帮助
+![help](https://cloud.githubusercontent.com/assets/288207/10328829/d3db179a-6ceb-11e5-8faf-73761584eeee.png)
+* `b` 浏览/搜索收藏夹
+![bookmark](https://cloud.githubusercontent.com/assets/288207/10328828/d3ac1fd0-6ceb-11e5-8e9c-7c0d35a195a1.png)
+* `/` 在当前页查找
+![find](https://cloud.githubusercontent.com/assets/288207/10328836/e4fa4960-6ceb-11e5-80bb-4339ef0db0c5.png)
+* `f` 拨号打开链接
+![follow](https://cloud.githubusercontent.com/assets/288207/10328833/e32d85a2-6ceb-11e5-8614-3f8a804cb2f2.png)
+* `v` 切换文本选择模式
+![visual](https://cloud.githubusercontent.com/assets/288207/10328835/e4df6c6c-6ceb-11e5-8ed7-17fd29070207.png)
+* `<space>` 切换标签页
+![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
+
 ## Surfingkeys支持的模式
 
 Surfingkeys目前只有两种模式。
@@ -64,6 +77,8 @@ Surfingkeys目前只有两种模式。
 
 `sg`里面的`g`是个别名，用于google，还有其他一些内置的别名，如`b`是百度的别名。这样当你按`sb`的时候就是使用百度来搜索选中文本。参考[在搜索栏里添加搜索别名](#在搜索栏里添加搜索别名)来添加你自己的搜索别名，尤其那些用于公司内部的搜索。
 
+此外，还有`sog`可以使用google在本站搜索选中文本。在这个`sog`里面，`s`是search_leader_key，`o`是only_this_site_key，`g`是搜索别名。
+
 ## 类vim标示
 
 简单说，vim中的marks就是按`m`，然后跟一个字符（0-9，A-Z，a-z），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
@@ -77,21 +92,47 @@ Surfingkeys目前只有两种模式。
 之后，按`'f`就可以直接打开该网址来。
 
 这个功能对那些你需要经常访问对网址很有用，两个键直达。`om`可以查看你已创建的标示。
+
+## 切换标签页
+
+默认情况下，按空格会显示所有已打开标签页，然后按相应的提示键可以切到该标签页。
+
+![tabs_overlay](https://cloud.githubusercontent.com/assets/288207/10544636/245447f6-7457-11e5-8372-62b8f6337158.png)
+
+这里有个设置`settings.tabsThreshold`，当然打开的标签页总数超过它时，再按空格就会使用搜索栏来选择标签。
+
+![tabs_omnibar](https://cloud.githubusercontent.com/assets/288207/10544630/1fbdd02c-7457-11e5-823c-14411311c315.png)
+
+如果你希望一直用搜索栏来选择标签页，可使用如下设置:
+
+    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
+
+效果相当于：
+
+    settings.tabsThreshold = 0;
+
 ## 配置参考
 
 ### 添加一个按键映射
 
-    mapkey(keystroke, help_string, action_code)
+    mapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
 
 | 参数  | 含义 |
 |:---------------| :-----|
-|**keystroke**                   | 触发某个操作的按键|
-|**help_string**                 | 帮助描述，会自动出现在`u`打开的帮助小窗里。|
-|**action_code**                 | 一段Javascript代码，或者一个Javascript函数。|
+|**keystroke**                   | 字符串，触发某个操作的按键|
+|**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
+|**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。|
+|**expect_char**                 | 布尔值[可选], 下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
+|**domain_pattern**              | 正则表达式[可选], 表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
 
-    vmapkey(keystroke, help_string, action_code)
+一个示例，在不同网站上映射相同的按键到不同的操作：
 
-用于visual mode
+    mapkey('zz', 'Choose a tab', 'Normal.chooseTab()', 0, /github\.com/i);
+    mapkey('zz', 'Show usage', 'Normal.showUsage()', 0, /google\.com/i);
+
+可视化模式下的mapkey
+
+    vmapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
 
 ### 在搜索栏里添加搜索别名
 
@@ -105,7 +146,12 @@ Surfingkeys目前只有两种模式。
 |**suggestion_url[可选]**                    | 搜索自动完成URL，如果提供的话，搜索栏会列出相关关键字。|
 |**callback_to_parse_suggestion[可选]**      | 解析suggestion_url返回的内容，列出相关关键字。|
 
-    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion);
+    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key);
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**search_leader_key**                                   | 一个以上字符，如果你不想使用默认的`s`键。|
+|**only_this_site_key**                                  | 一个以上字符，如果你不想使用默认的`o`键。|
 
 这是一个扩展版本，除了往搜索栏里添加搜索别名，还会创建一个按键映射，由`search_leader_key`加上`alias`组成，对应的操作就是搜索选中文本。比如，下面这行，
 
