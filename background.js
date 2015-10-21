@@ -401,8 +401,8 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
         if (Service.tabHistoryIndex != Service.tabHistory.length - 1) {
             Service.tabHistory.splice(Service.tabHistoryIndex + 1, Service.tabHistory.length - 1);
         }
-        if (Service.tabHistoryIndex++ > 9) Service.tabHistoryIndex = 9;
         Service.tabHistory.push(activeInfo.tabId);
+        Service.tabHistoryIndex = Service.tabHistory.length -1;
     }
     Service.historyTabAction = false;
 });

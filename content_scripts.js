@@ -287,6 +287,7 @@ var settings;
 function applySettings(resp) {
     settings = resp;
     Normal.mappings = new Trie('', Trie.SORT_NONE);
+    Normal.map_node = Normal.mappings;
     Visual.initMappings();
     var theInstructions = resp.snippets;
     var F = new Function(theInstructions);
@@ -1286,7 +1287,6 @@ Normal.init = function() {
         Normal.ui_container = null;
     } else if (!blacklisted && !Normal.ui_container) {
         $(document).find('div.surfingkeys_css_reset').remove();
-        Normal.map_node = Normal.mappings;
         Normal.ui_container = $('<div class=surfingkeys_css_reset/>').css('z-index', 999);
         document.lastElementChild.appendChild(Normal.ui_container[0]);
         Normal.clipboard_holder = $('<textarea/>').attr('surfingkeys', 1).css('position', 'fixed').css('z-index', '-999')
@@ -1591,9 +1591,9 @@ Visual.initMappings = function() {
     vmapkey("gg", "backward documentboundary");
     vmapkey("y", "Copy selected text", "Visual.yank()");
     vmapkey("*", "Search word under the cursor", "Visual.star()");
+    Visual.map_node = Visual.mappings;
 };
 Visual.init = function() {
-    Visual.map_node = Visual.mappings;
     Visual.selection = document.getSelection();
     document.addEventListener('click', function(event) {
         switch (Visual.selection.type) {
