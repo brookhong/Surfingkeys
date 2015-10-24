@@ -1,13 +1,10 @@
 function renderSettings() {
-    $('#mappings').val(settings.snippets);
+    if (settings.snippets.length) {
+        $('#mappings').val(settings.snippets);
+    }
     $('#storage').val(settings.storage);
     $('#localPath').val(settings.localPath);
-    if (settings.needUpdate) {
-        $('.warning').show();
-    } else {
-        $('.warning').hide();
-    }
-    var h = $(window).height() - $('#save_container').outerHeight() * 5 - $('.warning').outerHeight();
+    var h = $(window).height() - $('#save_container').outerHeight() * 4;
     $('#defaultMappings').height(h);
     $('#mappings').height(h);
     $('#mappings').css('width', '100%');
@@ -36,13 +33,18 @@ $('.infoPointer').click(function() {
 });
 
 $('#showDefaultSettings').click(function() {
-    $.ajax({
-        url: chrome.extension.getURL('/pages/default.js'),
-        type: 'GET'
-    }).done(function(response) {
-        $('#defaultMappings').html(response).css('width', '48%').css('display', 'inline-block');
-        $('#mappings').css('width', '48%');
-    });
+    if ($('#defaultMappings').is(':visible')) {
+        $('#defaultMappings').hide();
+        $('#mappings').css('width', '100%');
+    } else {
+        $.ajax({
+            url: chrome.extension.getURL('/pages/default.js'),
+            type: 'GET'
+        }).done(function(response) {
+            $('#defaultMappings').html(response).css('width', '50%').css('display', 'inline-block');
+            $('#mappings').css('width', '50%');
+        });
+    }
 });
 
 function getURIPath(fn) {

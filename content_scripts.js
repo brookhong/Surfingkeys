@@ -285,26 +285,21 @@ function removeChild(elements) {
 var settings;
 
 function applySettings(resp) {
-    settings = resp;
-    Normal.mappings = new Trie('', Trie.SORT_NONE);
-    Normal.map_node = Normal.mappings;
-    Visual.initMappings();
-    var theInstructions = resp.snippets;
-    var F = new Function(theInstructions);
-    F();
-    if (window === top) {
-        RUNTIME('setSurfingkeysIcon', {
-            status: Normal.isBlacklisted()
-        });
-    }
-}
-
-function _applySettings(resp) {
     try {
-        applySettings(resp);
+        settings = resp;
+        var theInstructions = resp.snippets;
+        var F = new Function(theInstructions);
+        F();
+        if (window === top) {
+            RUNTIME('setSurfingkeysIcon', {
+                status: Normal.isBlacklisted()
+            });
+        }
     } catch (e) {
         console.log(e);
-        RUNTIME("resetSettings", {useDefault: true});
+        RUNTIME("resetSettings", {
+            useDefault: true
+        });
     }
 }
 
@@ -312,12 +307,12 @@ var extension_id;
 var port_handlers = {
     'connected': function(response) {
         extension_id = response.extension_id;
-        _applySettings(response.settings);
+        applySettings(response.settings);
         Normal.init();
         $(document).trigger("surfingkeys:connected");
     },
     'settingsUpdated': function(response) {
-        _applySettings(response.settings);
+        applySettings(response.settings);
         Normal.renderUsage();
     }
 };
@@ -487,6 +482,8 @@ Hints.isPureLink = function(element) {
     var pureLink = true;
     if (!element.hasAttribute('href') || element.getAttribute('href') === '#' || /^javascript:/.test(element.href)) {
         pureLink = false;
+    } else if (element.hasAttribute('href') && element.href !== window.location.href) {
+        pureLink = true;
     } else {
         for (var i = 0; i < Hints.clicks.length; i++) {
             if (element.hasAttribute(Hints.clicks[i])) {
@@ -967,13 +964,15 @@ Find.next = function(backward) {
         Find.focused = (backward ? (Find.matches.length + Find.focused - 1) : (Find.focused + 1)) % Find.matches.length;
         Visual.select(Find.matches[Find.focused]);
         StatusBar.show(3, Find.focused + 1 + ' / ' + Find.matches.length);
-    } else if (Find.history.length) {
-        Visual.state = 1;
-        StatusBar.show(2, Visual.status[Visual.state]);
-        var query = Find.history[0];
-        Visual.hideCursor();
+    } else if (settings.findHistory.length) {
+        var query = settings.findHistory[0];
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
-        Visual.select(Find.matches[Find.focused]);
+        if (Find.matches.length) {
+            Visual.state = 1;
+            StatusBar.show(2, Visual.status[Visual.state]);
+            Visual.hideCursor();
+            Visual.select(Find.matches[Find.focused]);
+        }
     }
 };
 Find.open = function() {
@@ -1003,8 +1002,16 @@ Find.onKeydown = function(event) {
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
         if (Find.matches.length) {
             var query = Find.input.val();
-            if (query !== Find.history[0]) {
-                Find.history.unshift(query);
+            if (query !== settings.findHistory[0]) {
+                settings.findHistory.unshift(query);
+                if (settings.findHistory.length > 50) {
+                    settings.findHistory.pop();
+                }
+                RUNTIME('updateSettings', {
+                    settings: {
+                        findHistory: settings.findHistory
+                    }
+                });
             }
             setTimeout(function() {
                 Find.close();
@@ -1015,12 +1022,15 @@ Find.onKeydown = function(event) {
             }, 0);
         }
     } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
-        Find.historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + Find.history.length - 1);
-        Find.historyInc = Find.historyInc % Find.history.length;
-        Find.input.val(Find.history[Find.historyInc]);
-        Visual.hideCursor();
-        Find.clear();
-        Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
+        if (settings.findHistory.length) {
+            Find.historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (Find.historyInc + 1) : (Find.historyInc + settings.findHistory.length - 1);
+            Find.historyInc = Find.historyInc % settings.findHistory.length;
+            var query = settings.findHistory[Find.historyInc];
+            Find.input.val(settings.findHistory[Find.historyInc]);
+            Visual.hideCursor();
+            Find.clear();
+            Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
+        }
     } else {
         eaten = false;
     }
@@ -1087,10 +1097,13 @@ MiniQuery.onEnter = function() {
     return false;
 };
 
-function mapkey(keys, annotation, jscode, extra_chars, domain) {
+function _mapkey(mode, keys, annotation, jscode, extra_chars, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        Normal.mappings.remove(keys);
-        Normal.mappings.add(keys, {
+        mode.mappings.remove(keys);
+        if (typeof(jscode) === 'string' && jscode !== "") {
+            jscode = new Function(jscode);
+        }
+        mode.mappings.add(keys, {
             code: jscode,
             annotation: annotation,
             extra_chars: extra_chars
@@ -1098,14 +1111,32 @@ function mapkey(keys, annotation, jscode, extra_chars, domain) {
     }
 }
 
+function mapkey(keys, annotation, jscode, extra_chars, domain) {
+    _mapkey(Normal, keys, annotation, jscode, extra_chars, domain);
+}
+
 function vmapkey(keys, annotation, jscode, extra_chars, domain) {
+    _mapkey(Visual, keys, annotation, jscode, extra_chars, domain);
+}
+
+function map(new_keystroke, old_keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        Visual.mappings.remove(keys);
-        Visual.mappings.add(keys, {
-            code: jscode,
-            annotation: annotation,
-            extra_chars: extra_chars
-        });
+        var old_map = Normal.mappings.find(old_keystroke);
+        if (old_map) {
+            var meta = old_map.meta[0];
+            Normal.mappings.remove(old_keystroke);
+            Normal.mappings.add(new_keystroke, {
+                code: meta.code,
+                annotation: meta.annotation,
+                extra_chars: meta.extra_chars
+            });
+        }
+    }
+}
+
+function unmap(keystroke, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        Normal.mappings.remove(keystroke);
     }
 }
 
@@ -1197,6 +1228,40 @@ httpRequest = function(args, success) {
     }, success);
 };
 
+function _handleMapKey(mode, key) {
+    var ret = 0;
+    // 0: no mapping action found
+    // 1: mapping action found, but not handled
+    // 2: mapping action found and handled
+    if (mode.pendingMap) {
+        mode.pendingMap(key);
+        mode.finish();
+        ret = 2;
+    } else {
+        mode.map_node = mode.map_node.find(key);
+        if (mode.map_node === null) {
+            mode.finish();
+            ret = 0;
+        } else {
+            ret = 1;
+            if (mode.map_node.meta.length) {
+                var code = mode.map_node.meta[0].code;
+                if (typeof(code) === 'function') {
+                    if (mode.map_node.meta[0].extra_chars) {
+                        mode.pendingMap = code;
+                        Normal.showKeystroke(key);
+                    } else {
+                        code();
+                        mode.finish();
+                    }
+                    ret = 2;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
 Normal = {
     mappings: null,
     stepSize: 70,
@@ -1204,6 +1269,8 @@ Normal = {
     scrollIndex: 0,
     keydownHandlers: {},
 };
+Normal.mappings = new Trie('', Trie.SORT_NONE);
+Normal.map_node = Normal.mappings;
 Normal.changeScrollTarget = function() {
     Normal.scrollNodes = getScrollableElements(100, 1.2);
     if (Normal.scrollNodes.length > 0) {
@@ -1302,10 +1369,10 @@ Normal.init = function() {
         $("<div class=surfingkeys_arrow>").html("<div class=surfingkeys_arrowdown></div><div class=surfingkeys_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(Normal._bubble);
         Normal.usage = $('<div id=surfingkeys_Usage/>');
         Normal.usage.appendTo(Normal.ui_container);
+        Visual.init();
         Normal.renderUsage();
         StatusBar.init(Normal.ui_container);
         Omnibar.init(Normal.ui_container);
-        Visual.init();
         document.lastElementChild.appendChild(Normal.ui_container[0]);
     }
     return !blacklisted && Normal.ui_container;
@@ -1343,12 +1410,12 @@ Normal.bubble = function(pos, msg) {
     Normal._bubble.find('div.surfingkeys_arrow').css('left', left[1]);
     Normal._bubble.css('top', pos.top - h - 12).css('left', left[0]);
 };
-Normal.highlightElement = function(elm) {
+Normal.highlightElement = function(elm, lapse) {
     var pos = $(elm).offset();
     Normal.frameElement.css('top', pos.top).css('left', pos.left).css('width', $(elm).width()).css('height', $(elm).height()).appendTo('body');
     setTimeout(function() {
         Normal.frameElement.remove();
-    }, 200);
+    }, lapse || 200);
 };
 Normal.highlightDocument = function() {
     document.body.scrollIntoView();
@@ -1507,29 +1574,11 @@ Normal.update = function(event) {
                     Normal._tabs.trie = null;
                 }
                 updated = true;
-            } else if (Normal.pendingMap) {
-                Normal.pendingMap(key);
-                Normal.finish();
-                updated = true;
             } else {
-                Normal.map_node = Normal.map_node.find(key);
-                if (Normal.map_node === null) {
-                    Normal.finish();
-                } else if (Normal.map_node.meta.length) {
-                    if (typeof(Normal.map_node.meta[0].code) === 'function') {
-                        if (Normal.map_node.meta[0].extra_chars) {
-                            Normal.pendingMap = Normal.map_node.meta[0].code;
-                            Normal.showKeystroke(key);
-                        } else {
-                            Normal.map_node.meta[0].code();
-                            Normal.finish();
-                        }
-                    } else if (typeof(Normal.map_node.meta[0].code) === 'string') {
-                        eval(Normal.map_node.meta[0].code);
-                        Normal.finish();
-                    }
+                var treatment = _handleMapKey(Normal, key);
+                if (treatment === 2) {
                     updated = true;
-                } else {
+                } else if (treatment === 1) {
                     Normal.showKeystroke(key);
                     updated = true;
                 }
@@ -1570,10 +1619,12 @@ Visual = {
     state: 0,
     auto: false,
     status: ['', 'Caret', 'Range'],
+    focus: null,
     cursor: $('<div class="surfingkeys_cursor"/>')[0],
 };
+Visual.mappings = new Trie('', Trie.SORT_NONE);
+Visual.map_node = Visual.mappings;
 Visual.initMappings = function() {
-    Visual.mappings = new Trie('', Trie.SORT_NONE);
     vmapkey("l", "forward character");
     vmapkey("h", "backward character");
     vmapkey("j", "forward line");
@@ -1591,11 +1642,12 @@ Visual.initMappings = function() {
     vmapkey("gg", "backward documentboundary");
     vmapkey("y", "Copy selected text", "Visual.yank()");
     vmapkey("*", "Search word under the cursor", "Visual.star()");
-    Visual.map_node = Visual.mappings;
 };
 Visual.init = function() {
+    Visual.initMappings();
     Visual.selection = document.getSelection();
     document.addEventListener('click', function(event) {
+        Visual.focus = event.target;
         switch (Visual.selection.type) {
             case "None":
                 Visual.hideCursor();
@@ -1620,6 +1672,10 @@ Visual.init = function() {
         }
         StatusBar.show(2, Visual.status[Visual.state]);
     });
+};
+Visual.expand = function() {
+    Visual.focus = Visual.focus.parentElement;
+    Normal.highlightElement(Visual.focus, 1000);
 };
 Visual.getStartPos = function() {
     var node = null,
@@ -1762,16 +1818,11 @@ Visual.update = function(event) {
             updated = true;
         } else {
             var key = KeyboardUtils.getKeyChar(event);
-            Visual.map_node = Visual.map_node.find(key);
-            if (Visual.map_node === null) {
-                Visual.finish();
-            } else if (Visual.map_node.meta.length) {
-                var code = Visual.map_node.meta[0].code;
-                if (typeof(code) === 'function') {
-                    code();
-                } else if (typeof(code) === 'string' && code !== "") {
-                    eval(code);
-                } else {
+            var treatment = _handleMapKey(Visual, key);
+            if (treatment === 2) {
+                updated = true;
+            } else if (treatment === 1) {
+                if (Visual.map_node.meta.length) {
                     var sel = Visual.map_node.meta[0].annotation.split(" ");
                     var alter = (Visual.state === 2) ? "extend" : "move";
                     Visual.hideCursor();
@@ -1782,11 +1833,10 @@ Visual.update = function(event) {
                     }
                     Visual.showCursor();
                     Visual.scrollIntoView();
+                    Visual.finish();
+                } else {
+                    Normal.showKeystroke(key);
                 }
-                Visual.finish();
-                updated = true;
-            } else {
-                Normal.showKeystroke(key);
                 updated = true;
             }
         }

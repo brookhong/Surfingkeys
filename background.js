@@ -8,24 +8,24 @@ chrome.commands.onCommand.addListener(function(command) {
     }
 });
 
-var initialSettings = {
-    maxResults: 500,
-    tabsThreshold: 9,
-    blacklist: {},
-    marks: {},
-    version: chrome.runtime.getManifest().version,
-    storage: 'local'
-};
-
 var Service = {
     activePorts: [],
     frames: {},
     tabHistory: [],
     tabHistoryIndex: 0,
     historyTabAction: false,
-    settings: ""
 };
-var defaultSettingsURL = chrome.extension.getURL('/pages/default.js');
+
+Service.settings = {
+    maxResults: 500,
+    tabsThreshold: 9,
+    blacklist: {},
+    marks: {},
+    findHistory: [],
+    version: chrome.runtime.getManifest().version,
+    snippets: "",
+    storage: 'local'
+};
 
 function request(method, url) {
     return new Promise(function(acc, rej) {
@@ -38,28 +38,29 @@ function request(method, url) {
         xhr.send();
     });
 }
+function extendSettings(ss) {
+    for (var k in ss) {
+        Service.settings[k] = ss[k];
+    }
+}
 chrome.storage.local.get(null, function(data) {
-    if (!data.version) {
-        chrome.storage.local.clear();
-        chrome.storage.sync.clear();
-        Service.settings = JSON.parse(JSON.stringify(initialSettings));
-        var s = request('get', defaultSettingsURL);
-        s.then(function(resp) {
-            Service.settings.snippets = resp;
-        });
+    if (!data.version || parseFloat(data.version) < 0.11) {
+        if (JSON.stringify(data) !== '{}') {
+            chrome.storage.local.clear();
+            chrome.storage.sync.clear();
+        }
     } else {
-        Service.settings = data;
+        extendSettings(data);
         if (data.storage === 'sync') {
             chrome.storage.sync.get(null, function(data) {
                 if (chrome.runtime.lastError) {
                     console.log(chrome.runtime.lastError);
                 } else {
-                    Service.settings = data;
+                    extendSettings(data);
                     Service.settings.storage = "sync";
                 }
             });
         }
-        Service.settings.needUpdate = (data.version !== initialSettings.version);
     }
 });
 Service._updateSettings = function() {
@@ -81,20 +82,22 @@ Service._updateSettings = function() {
 Service._loadSettingsFromUrl = function(url) {
     var s = request('get', url);
     s.then(function(resp) {
-        if (url !== defaultSettingsURL) {
-            Service.settings.localPath = url;
-        }
+        Service.settings.localPath = url;
         Service.settings.snippets = resp;
         Service._updateSettings();
     });
 };
 Service.resetSettings = function(message, sender, sendResponse) {
-    if (message.useDefault || Service.settings.needUpdate) {
+    if (message.useDefault) {
         delete Service.settings.localPath;
-        Service.settings.version = initialSettings.version;
-        Service.settings.needUpdate = false;
+        Service.settings.snippets = "";
+        Service._updateSettings();
+    } else if (Service.settings.localPath) {
+        Service._loadSettingsFromUrl(Service.settings.localPath);
+    } else {
+        Service.settings.snippets = "";
+        Service._updateSettings();
     }
-    Service._loadSettingsFromUrl(Service.settings.localPath || defaultSettingsURL);
 };
 Service.loadSettingsFromUrl = function(message, sender, sendResponse) {
     Service._loadSettingsFromUrl(message.url);
@@ -287,11 +290,7 @@ Service.editSettings = function(message, sender, sendResponse) {
     Service.openLink(message, sender, sendResponse);
 };
 Service.updateSettings = function(message, sender, sendResponse) {
-    for (var sd in message.settings) {
-        Service.settings[sd] = message.settings[sd];
-    }
-    Service.settings.version = initialSettings.version;
-    Service.settings.needUpdate = false;
+    extendSettings(message.settings);
     Service._updateSettings();
 };
 Service.changeSettingsStorage = function(message, sender, sendResponse) {

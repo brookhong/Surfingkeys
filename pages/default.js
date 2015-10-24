@@ -11,7 +11,7 @@ mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
 mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
-Hints.pointers = "a:visible, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])";
+Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])";
 mapkey('f', 'Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick)');
 mapkey('F', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
