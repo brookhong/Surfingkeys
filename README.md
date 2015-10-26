@@ -138,6 +138,26 @@ mapkey in visual mode
 
     vmapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
 
+### map a keystroke to another
+
+    map(new_keystroke, old_keystroke, [domain_pattern])
+
+| parameter  | explanation |
+|:---------------| :-----|
+|**new_keystroke**               | string, the new keystroke that will be used.|
+|**old_keystroke**               | string, the existing keystroke that will be replaced, which means pressing it will not trigger any action.|
+|**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this mapping works.|
+
+### remove a keystroke mapping
+
+    unmap(keystroke, [domain_pattern])
+
+| parameter  | explanation |
+|:---------------| :-----|
+|**keystroke**                   | string, the existing keystroke that will be removed.|
+|**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this settings works.|
+
+
 ### Add search alias to omnibar
 
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);

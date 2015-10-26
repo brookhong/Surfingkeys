@@ -1116,6 +1116,7 @@ function mapkey(keys, annotation, jscode, extra_chars, domain) {
 }
 
 function vmapkey(keys, annotation, jscode, extra_chars, domain) {
+    jscode = jscode || Visual.modifySelection;
     _mapkey(Visual, keys, annotation, jscode, extra_chars, domain);
 }
 
@@ -1159,7 +1160,7 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
 
 function walkPageUrl(step) {
     var numbers = window.location.href.match(/^(.*\/[^\/\d]*)(\d+)$/);
-    if (numbers.length === 3) {
+    if (numbers && numbers.length === 3) {
         window.location.href = numbers[1] + (parseInt(numbers[2]) + step);
     }
 }
@@ -1229,21 +1230,19 @@ httpRequest = function(args, success) {
 };
 
 function _handleMapKey(mode, key) {
-    var ret = 0;
-    // 0: no mapping action found
-    // 1: mapping action found, but not handled
-    // 2: mapping action found and handled
+    var ret = false;
     if (mode.pendingMap) {
-        mode.pendingMap(key);
-        mode.finish();
-        ret = 2;
+        setTimeout(function() {
+            mode.pendingMap(key);
+            mode.finish();
+        }, 0);
+        ret = true;
     } else {
         mode.map_node = mode.map_node.find(key);
         if (mode.map_node === null) {
             mode.finish();
-            ret = 0;
+            ret = false;
         } else {
-            ret = 1;
             if (mode.map_node.meta.length) {
                 var code = mode.map_node.meta[0].code;
                 if (typeof(code) === 'function') {
@@ -1251,12 +1250,16 @@ function _handleMapKey(mode, key) {
                         mode.pendingMap = code;
                         Normal.showKeystroke(key);
                     } else {
-                        code();
-                        mode.finish();
+                        setTimeout(function() {
+                            code();
+                            mode.finish();
+                        }, 0);
                     }
-                    ret = 2;
                 }
+            } else {
+                Normal.showKeystroke(key);
             }
+            ret = true;
         }
     }
     return ret;
@@ -1575,13 +1578,7 @@ Normal.update = function(event) {
                 }
                 updated = true;
             } else {
-                var treatment = _handleMapKey(Normal, key);
-                if (treatment === 2) {
-                    updated = true;
-                } else if (treatment === 1) {
-                    Normal.showKeystroke(key);
-                    updated = true;
-                }
+                updated = _handleMapKey(Normal, key);
             }
             break;
     }
@@ -1801,6 +1798,19 @@ Visual.finish = function(event) {
     Visual.map_node = Visual.mappings;
     return Normal.hideKeystroke();
 };
+Visual.modifySelection = function() {
+    var sel = Visual.map_node.meta[0].annotation.split(" ");
+    var alter = (Visual.state === 2) ? "extend" : "move";
+    Visual.hideCursor();
+    var prevPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
+    Visual.selection.modify(alter, sel[0], sel[1]);
+    if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
+        Visual.selection.modify(alter, sel[0], "word");
+    }
+    Visual.showCursor();
+    Visual.scrollIntoView();
+    Visual.finish();
+};
 Visual.update = function(event) {
     var updated = false;
     if (Visual.state) {
@@ -1818,27 +1828,7 @@ Visual.update = function(event) {
             updated = true;
         } else {
             var key = KeyboardUtils.getKeyChar(event);
-            var treatment = _handleMapKey(Visual, key);
-            if (treatment === 2) {
-                updated = true;
-            } else if (treatment === 1) {
-                if (Visual.map_node.meta.length) {
-                    var sel = Visual.map_node.meta[0].annotation.split(" ");
-                    var alter = (Visual.state === 2) ? "extend" : "move";
-                    Visual.hideCursor();
-                    var prevPos = [Visual.selection.focusNode, Visual.selection.focusOffset];
-                    Visual.selection.modify(alter, sel[0], sel[1]);
-                    if (prevPos[0] === Visual.selection.focusNode && prevPos[1] === Visual.selection.focusOffset) {
-                        Visual.selection.modify(alter, sel[0], "word");
-                    }
-                    Visual.showCursor();
-                    Visual.scrollIntoView();
-                    Visual.finish();
-                } else {
-                    Normal.showKeystroke(key);
-                }
-                updated = true;
-            }
+            updated = _handleMapKey(Visual, key);
         }
     }
     return updated;

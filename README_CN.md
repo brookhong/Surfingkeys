@@ -122,8 +122,8 @@ Surfingkeys目前只有两种模式。
 |**keystroke**                   | 字符串，触发某个操作的按键|
 |**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
 |**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。|
-|**expect_char**                 | 布尔值[可选], 下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
-|**domain_pattern**              | 正则表达式[可选], 表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
+|**expect_char**                 | 布尔值[可选]，下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
+|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
@@ -133,6 +133,26 @@ Surfingkeys目前只有两种模式。
 可视化模式下的mapkey
 
     vmapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
+
+### 映射按键到其他按键
+
+    map(new_keystroke, old_keystroke, [domain_pattern])
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**new_keystroke**               | 字符串，将要使用的按键。|
+|**old_keystroke**               | 字符串，将被替换的按键。|
+|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。|
+
+### 删除一个按键映射
+
+    unmap(keystroke, [domain_pattern])
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**keystroke**                   | 字符串，将要删除的按键。|
+|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该操作会生效。|
+
 
 ### 在搜索栏里添加搜索别名
 
