@@ -457,7 +457,7 @@ Hints.create = function(cssSelector, onHintKey, attrs) {
         elements.each(function(i) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
-            var link = $('<div/>').css('top', pos.top).css('left', pos.left)
+            var link = $('<div/>').css('top', pos.top).css('left', pos.left + $(this).width() / 2)
                 .css('z-index', z + 2)
                 .data('label', hintLabels[i])
                 .data('link', this)

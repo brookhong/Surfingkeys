@@ -44,7 +44,11 @@ mapkey('[[', 'Click on the previous link on current page', function() {
 mapkey(']]', 'Click on the next link on current page', function() {
     walkPageUrl(1) || clickOn($('a').regex(/((>>|next)+)/i));
 });
-mapkey('ys', "Copy current page's source", 'Normal.writeClipboard(document.documentElement.outerHTML)');
+mapkey('ys', "Copy current page's source", function() {
+    var aa = document.documentElement.cloneNode(true);
+    $(aa).find('div.surfingkeys_css_reset').remove();
+    Normal.writeClipboard(aa.outerHTML);
+});
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar(SearchEngine, "b")');
