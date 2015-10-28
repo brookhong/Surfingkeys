@@ -922,7 +922,11 @@ StatusBar.init = function(container) {
 };
 StatusBar.show = function(n, content) {
     var span = StatusBar.ui.find('span');
-    $(span[n]).html("").append(content);
+    if (n < 0) {
+        span.html("");
+    } else {
+        $(span[n]).html("").append(content);
+    }
     var lastSpan = -1;
     for (var i = 0; i < span.length; i++) {
         if ($(span[i]).html().length) {
@@ -992,12 +996,12 @@ Find.open = function() {
 };
 Find.close = function() {
     Find.input.val('');
-    StatusBar.show(0, '');
-    StatusBar.show(1, '');
+    StatusBar.show(-1, '');
 };
 Find.onKeydown = function(event) {
     var eaten = true;
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        Find.clear();
         Find.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
         if (Find.matches.length) {
@@ -1152,10 +1156,10 @@ function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
-    mapkey((search_leader_key || 's') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    vmapkey((search_leader_key || 's') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
-    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search Selected with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+    mapkey((search_leader_key || 's') + alias, 'Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
+    vmapkey((search_leader_key || 's') + alias, 'Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
+    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
 }
 
 function walkPageUrl(step) {
@@ -1848,7 +1852,7 @@ function initEventListener() {
                     event.stopImmediatePropagation();
                 }
             } else {
-                if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && !event.target.isContentEditable) {
+                if (event.target.localName !== 'input' && event.target.localName !== 'textarea' && event.target.localName !== 'select' && !event.target.isContentEditable) {
                     if (Hints.update(event) || Visual.update(event) || Normal.update(event)) {
                         window.stopEventPropagation(event, true);
                     }
