@@ -1615,6 +1615,11 @@ Normal.insertJS = function(url) {
     s.src = url;
     document.lastElementChild.appendChild(s);
 };
+Normal.moveTab = function(pos) {
+    RUNTIME('moveTab', {
+        position: pos
+    });
+};
 
 Visual = {
     state: 0,
