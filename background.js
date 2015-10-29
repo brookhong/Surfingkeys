@@ -348,7 +348,7 @@ Service.moveTab = function(message, sender, sendResponse) {
     if (newPos > -1 && newPos < 10) {
         chrome.tabs.move(activeTabId, {index: newPos});
     }
-}
+};
 
 function handleMessage(_message, _sender, _sendResponse, _port) {
     if (_message.target !== 'content_runtime') {

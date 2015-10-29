@@ -1619,7 +1619,7 @@ Normal.moveTab = function(pos) {
     RUNTIME('moveTab', {
         position: pos
     });
-}
+};
 
 Visual = {
     state: 0,
