@@ -342,6 +342,13 @@ Service.registerFrame = function(message, sender, sendResponse) {
 Service.unRegisterFrame = function(message, sender, sendResponse) {
     unRegisterFrame(sender.tab.id);
 };
+Service.moveTab = function(message, sender, sendResponse) {
+    var newPos = parseInt(message.position);
+    var activeTabId = sender.tab.id;
+    if (newPos > -1 && newPos < 10) {
+        chrome.tabs.move(activeTabId, {index: newPos});
+    }
+}
 
 function handleMessage(_message, _sender, _sendResponse, _port) {
     if (_message.target !== 'content_runtime') {
