@@ -478,27 +478,11 @@ Hints.create = function(cssSelector, onHintKey, attrs) {
         }
     }
 };
-Hints.isPureLink = function(element) {
-    var pureLink = true;
-    if (!element.hasAttribute('href') || element.getAttribute('href') === '#' || /^javascript:/.test(element.href)) {
-        pureLink = false;
-    } else if (element.hasAttribute('href') && element.href !== window.location.href) {
-        pureLink = true;
-    } else {
-        for (var i = 0; i < Hints.clicks.length; i++) {
-            if (element.hasAttribute(Hints.clicks[i])) {
-                pureLink = false;
-                break;
-            }
-        }
-    }
-    return pureLink;
-};
 Hints.dispatchMouseClick = function(element, event) {
     if (element.localName === 'textarea' || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)) || element.hasAttribute('contenteditable')) {
         element.focus();
     } else {
-        if (Hints.isPureLink(element)) {
+        if (Hints.tabbed || !Hints.active) {
             RUNTIME("openLink", {
                 tab: {
                     tabbed: Hints.tabbed,
@@ -511,7 +495,7 @@ Hints.dispatchMouseClick = function(element, event) {
             var realTargets = $(element).find('a:visible');
             realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
             element = realTargets.length ? realTargets[0] : element;
-            var events = ['mouseover', 'mousedown', 'mouseup', 'click'];
+            var events = ['mousedown', 'mouseup', 'click'];
             events.forEach(function(eventName) {
                 var event = document.createEvent('MouseEvents');
                 event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, false,
@@ -1600,7 +1584,13 @@ Normal.addVIMark = function(mark, url) {
 };
 Normal.jumpVIMark = function(mark) {
     if (settings.marks.hasOwnProperty(mark)) {
-        window.location.href = settings.marks[mark];
+        RUNTIME("openLink", {
+            tab: {
+                tabbed: false,
+                active: true
+            },
+            url: settings.marks[mark]
+        });
     } else {
         Normal.popup("No mark '{0}' defined.".format(mark));
     }

@@ -1,4 +1,4 @@
-mapkey(' ', 'Choose a tab', 'Normal.chooseTab()');
+mapkey('T', 'Choose a tab', 'Normal.chooseTab()');
 mapkey('c-i', 'Show usage', 'Normal.showUsage()');
 mapkey('u', 'Show usage', 'Normal.showUsage()');
 mapkey('e', 'Scroll a page up', 'Normal.scroll("pageUp")');
