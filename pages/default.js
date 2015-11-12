@@ -30,6 +30,10 @@ mapkey('oh', 'Open URL from history', 'Normal.openOmnibar(OpenHistory)');
 mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar(OpenVIMarks)');
 mapkey('v', 'Toggle visual mode', 'Visual.toggle()');
 mapkey('/', 'Find in current page', 'Find.open()');
+mapkey('*', 'Find selected text in current page', function() {
+    Visual.star();
+    Visual.toggle();
+});
 mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', 'Restore closed tab', 'RUNTIME("openLast")');
 mapkey('m', 'Add current URL to vim-like marks', Normal.addVIMark, 1);
@@ -39,10 +43,20 @@ mapkey('N', 'Previous found text', 'Find.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
 mapkey('p', 'Open selected link or link from clipboard', 'tabOpenLink(window.getSelection().toString() || Normal.getContentFromClipboard())');
 mapkey('[[', 'Click on the previous link on current page', function() {
-    walkPageUrl(-1) || clickOn($('a').regex(/((<<|prev(ious)?)+)/i));
+    var prevLinks = $('a').regex(/((<<|prev(ious)?)+)/i);
+    if (prevLinks.length) {
+        clickOn(prevLinks);
+    } else {
+        walkPageUrl(-1);
+    }
 });
 mapkey(']]', 'Click on the next link on current page', function() {
-    walkPageUrl(1) || clickOn($('a').regex(/((>>|next)+)/i));
+    var nextLinks = $('a').regex(/((>>|next)+)/i);
+    if (nextLinks.length) {
+        clickOn(nextLinks);
+    } else {
+        walkPageUrl(1);
+    }
 });
 mapkey('ys', "Copy current page's source", function() {
     var aa = document.documentElement.cloneNode(true);

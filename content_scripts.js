@@ -971,7 +971,7 @@ Find.open = function() {
         Visual.hideCursor();
         Find.clear();
         var query = $(this).val();
-        if (query.length > 2 && query !== '.*') {
+        if (query.length > 0 && (query[0].charCodeAt(0) > 0x7f || query.length > 2)) {
             Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
         }
     });
@@ -982,25 +982,28 @@ Find.close = function() {
     Find.input.val('');
     StatusBar.show(-1, '');
 };
+Find.updateFindHistory = function(query) {
+    if (query !== settings.findHistory[0]) {
+        settings.findHistory.unshift(query);
+        if (settings.findHistory.length > 50) {
+            settings.findHistory.pop();
+        }
+        RUNTIME('updateSettings', {
+            settings: {
+                findHistory: settings.findHistory
+            }
+        });
+    }
+};
 Find.onKeydown = function(event) {
     var eaten = true;
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
         Find.clear();
         Find.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
+        var query = Find.input.val();
+        Find.updateFindHistory(query);
         if (Find.matches.length) {
-            var query = Find.input.val();
-            if (query !== settings.findHistory[0]) {
-                settings.findHistory.unshift(query);
-                if (settings.findHistory.length > 50) {
-                    settings.findHistory.pop();
-                }
-                RUNTIME('updateSettings', {
-                    settings: {
-                        findHistory: settings.findHistory
-                    }
-                });
-            }
             setTimeout(function() {
                 Find.close();
                 document.activeElement.blur();
@@ -1008,6 +1011,8 @@ Find.onKeydown = function(event) {
                 Visual.select(Find.matches[Find.focused]);
                 StatusBar.show(2, Visual.status[Visual.state]);
             }, 0);
+        } else {
+            StatusBar.show(3, "Pattern not found: {0}".format(query));
         }
     } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
         if (settings.findHistory.length) {
@@ -1721,6 +1726,7 @@ Visual.star = function() {
         if (query.length === 0) {
             query = getNearestWord(Visual.selection.focusNode.nodeValue, Visual.selection.focusOffset);
         }
+        Find.updateFindHistory(query);
         Find.clear();
         Find.highlight(new RegExp(query, "g" + (Find.caseSensitive ? "" : "i")));
         Visual.showCursor();
