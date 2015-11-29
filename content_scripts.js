@@ -577,6 +577,7 @@ Omnibar.onKeydown = function(event) {
     if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
         Omnibar.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
+        Omnibar.handler.activeTab = !event.ctrlKey;
         Omnibar.handler.onEnter() && Omnibar.close();
     } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
         Omnibar.expandAlias($(event.target).val()) && event.preventDefault();
@@ -686,14 +687,15 @@ Omnibar.openFocused = function() {
             if (url && url.length) {
                 RUNTIME("openLink", {
                     tab: {
-                        tabbed: true
+                        tabbed: true,
+                        active: this.activeTab
                     },
                     url: url,
                     repeats: 1
                 });
             }
         }
-        ret = true;
+        ret = this.activeTab;
     }
     return ret;
 };
