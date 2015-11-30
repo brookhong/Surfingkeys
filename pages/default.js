@@ -1,3 +1,14 @@
+mapkey('ZZ', 'Save session and quit', function() {
+    RUNTIME('createSession', {
+        name: 'LAST'
+    });
+    RUNTIME('quit');
+});
+mapkey('ZR', 'Restore last session', function() {
+    RUNTIME('openSession', {
+        name: 'LAST'
+    });
+});
 mapkey('T', 'Choose a tab', 'Normal.chooseTab()');
 mapkey('c-i', 'Show usage', 'Normal.showUsage()');
 mapkey('u', 'Show usage', 'Normal.showUsage()');
@@ -65,6 +76,7 @@ mapkey('ys', "Copy current page's source", function() {
 });
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
+mapkey('yl', "Copy current page's title", 'Normal.writeClipboard(document.title)');
 mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar(SearchEngine, "b")');
 mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar(SearchEngine, "g")');
 mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar(SearchEngine, "w")');
