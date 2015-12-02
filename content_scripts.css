@@ -137,6 +137,10 @@
 #surfingkeys_omnibarSearchResult li div.url {
     color: #aaa;
 }
+#surfingkeys_omnibarSearchResult li span.annotation {
+    float: right;
+    color: #aaa;
+}
 #surfingkeys_Hints >div {
     position: absolute;
     display: block;

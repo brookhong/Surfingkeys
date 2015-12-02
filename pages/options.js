@@ -61,20 +61,22 @@ function getURIPath(fn) {
 $('#save_button').click(function() {
     var settingsCode = $('#mappings').val();
     var localPath = getURIPath($('#localPath').val().trim());
-    try {
-        if (localPath.length && localPath !== settings.localPath) {
-            RUNTIME("loadSettingsFromUrl", {url: localPath});
-            Normal.popup('Loading settings from ' + localPath, 300);
-        } else {
+    if (localPath.length && localPath !== settings.localPath) {
+        RUNTIME("loadSettingsFromUrl", {url: localPath});
+        Normal.popup('Loading settings from ' + localPath, 300);
+    } else {
+        try {
+            var F = new Function(settingsCode);
+            F();
             RUNTIME('updateSettings', {
                 settings: {
-                    snippets: $('#mappings').val(),
+                    snippets: settingsCode,
                     localPath: getURIPath($('#localPath').val())
                 }
             });
             Normal.popup('Settings saved', 300);
+        } catch (e) {
+            Normal.popup(e.toString(), 3000);
         }
-    } catch (e) {
-        Normal.popup(e.toString(), 3000);
     }
 });

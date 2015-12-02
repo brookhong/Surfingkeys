@@ -22,6 +22,7 @@ Service.settings = {
     blacklist: {},
     marks: {},
     findHistory: [],
+    cmdHistory: [],
     version: chrome.runtime.getManifest().version,
     snippets: "",
     sessions: {},
@@ -241,7 +242,7 @@ Service.getURLs = function(message, sender, sendResponse) {
         var vacancy = message.maxResults - bookmarks.length;
         if (vacancy > 0) {
             chrome.history.search({
-                'text': message.query,
+                text: message.query,
                 startTime: 0,
                 maxResults: vacancy
             }, function(tree) {
@@ -374,6 +375,13 @@ Service.createSession = function(message, sender, sendResponse) {
         });
     });
 };
+Service.getSessions = function(message, sender, sendResponse) {
+    sendResponse({
+        type: message.action,
+        id: message.id,
+        sessions: Service.settings.sessions
+    });
+};
 Service.openSession = function(message, sender, sendResponse) {
     if (Service.settings.sessions.hasOwnProperty(message.name)) {
         var urls = Service.settings.sessions[message.name]['tabs'];
@@ -387,7 +395,7 @@ Service.openSession = function(message, sender, sendResponse) {
     }
 };
 Service.deleteSession = function(message, sender, sendResponse) {
-    delete Service.settings.sessions[request.name];
+    delete Service.settings.sessions[message.name];
     chrome.storage.local.set({
         sessions: Service.settings.sessions
     });

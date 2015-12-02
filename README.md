@@ -114,6 +114,17 @@ which works same as:
 
     settings.tabsThreshold = 0;
 
+## Commands
+
+`:` to open omnibar for commands, then you can execute any pre-defined or customized command there. The result will be displayed below the omnibar. To create your own command as below:
+
+    command('<command_name>', '<help message for this command>', function() {
+        // to do
+    });
+
+Besides commands, you can also run javascript code.
+
+![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)
 
 ## Edit your own settings
 

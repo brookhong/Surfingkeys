@@ -111,6 +111,18 @@ Surfingkeys目前只有两种模式。
 
     settings.tabsThreshold = 0;
 
+## 命令
+
+用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。可以添加你自己的命令如下：
+
+    command('<command_name>', '<help message for this command>', function() {
+        // to do
+    });
+
+除了命令，你还可以执行各类简单js代码。
+
+![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)
+
 ## 配置参考
 
 ### 添加一个按键映射
