@@ -19,6 +19,7 @@ var Service = {
 Service.settings = {
     maxResults: 500,
     tabsThreshold: 9,
+    smoothScroll: true,
     blacklist: {},
     marks: {},
     findHistory: [],

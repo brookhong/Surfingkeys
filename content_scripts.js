@@ -88,7 +88,15 @@ var easeFn = function(t, b, c, d) {
     return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
 };
 
-function initSmoothScroll(elm) {
+function initScroll(elm) {
+    elm.scrollBy = function(x, y, d) {
+        if (settings.smoothScroll) {
+            elm.smoothScrollBy(x, y, d);
+        } else {
+            elm.scrollLeft = elm.scrollLeft + x;
+            elm.scrollTop = elm.scrollTop + y;
+        }
+    };
     elm.smoothScrollBy = function(x, y, d) {
         if (window.surfingkeysHold === 0) {
             var x0 = elm.scrollLeft,
@@ -1381,7 +1389,6 @@ function _handleMapKey(mode, key) {
 Normal = {
     mappings: null,
     stepSize: 70,
-    scrollNode: null,
     scrollIndex: 0,
     keydownHandlers: {},
 };
@@ -1399,52 +1406,59 @@ Normal.changeScrollTarget = function() {
 Normal.scroll = function(type, repeats) {
     if (!Normal.scrollNodes) {
         Normal.scrollNodes = getScrollableElements(100, 1.2);
+    } else {
+        Normal.scrollNodes = Normal.scrollNodes.filter(function(n) {
+            return $(n).is(":visible");
+        });
+        if (Normal.scrollIndex >= Normal.scrollNodes.length) {
+            Normal.scrollIndex = 0;
+        }
     }
     if (Normal.scrollNodes.length === 0) {
         return;
     }
     var scrollNode = Normal.scrollNodes[Normal.scrollIndex];
-    if (!scrollNode.smoothScrollBy) {
-        initSmoothScroll(scrollNode);
+    if (!scrollNode.scrollBy) {
+        initScroll(scrollNode);
     }
     var size = (scrollNode === document.body) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
     repeats = repeats || 1;
     switch (type) {
         case 'down':
-            scrollNode.smoothScrollBy(0, repeats * Normal.stepSize, 500);
+            scrollNode.scrollBy(0, repeats * Normal.stepSize, 500);
             break;
         case 'up':
-            scrollNode.smoothScrollBy(0, -repeats * Normal.stepSize, 500);
+            scrollNode.scrollBy(0, -repeats * Normal.stepSize, 500);
             break;
         case 'pageDown':
-            scrollNode.smoothScrollBy(0, repeats * size[1] / 2, 500);
+            scrollNode.scrollBy(0, repeats * size[1] / 2, 500);
             break;
         case 'fullPageDown':
-            scrollNode.smoothScrollBy(0, repeats * size[1], 500);
+            scrollNode.scrollBy(0, repeats * size[1], 500);
             break;
         case 'pageUp':
-            scrollNode.smoothScrollBy(0, -repeats * size[1] / 2, 500);
+            scrollNode.scrollBy(0, -repeats * size[1] / 2, 500);
             break;
         case 'fullPageUp':
-            scrollNode.smoothScrollBy(0, -repeats * size[1], 500);
+            scrollNode.scrollBy(0, -repeats * size[1], 500);
             break;
         case 'top':
-            scrollNode.smoothScrollBy(0, -scrollNode.scrollTop, 500);
+            scrollNode.scrollBy(0, -scrollNode.scrollTop, 500);
             break;
         case 'bottom':
-            scrollNode.smoothScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop, 500);
+            scrollNode.scrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop, 500);
             break;
         case 'left':
-            scrollNode.smoothScrollBy(repeats * -Normal.stepSize / 2, 0, 500);
+            scrollNode.scrollBy(repeats * -Normal.stepSize / 2, 0, 500);
             break;
         case 'right':
-            scrollNode.smoothScrollBy(repeats * Normal.stepSize / 2, 0, 500);
+            scrollNode.scrollBy(repeats * Normal.stepSize / 2, 0, 500);
             break;
         case 'leftmost':
-            scrollNode.smoothScrollBy(-scrollNode.scrollLeft - 10, 0, 500);
+            scrollNode.scrollBy(-scrollNode.scrollLeft - 10, 0, 500);
             break;
         case 'rightmost':
-            scrollNode.smoothScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0, 500);
+            scrollNode.scrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0, 500);
             break;
         default:
             break;

@@ -42,7 +42,7 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 ![follow](https://cloud.githubusercontent.com/assets/288207/10328833/e32d85a2-6ceb-11e5-8614-3f8a804cb2f2.png)
 * `v` to toggle visual mode
 ![visual](https://cloud.githubusercontent.com/assets/288207/10328835/e4df6c6c-6ceb-11e5-8ed7-17fd29070207.png)
-* `<space>` to switch tabs
+* `T` to switch tabs
 ![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
 
 ## Surfingkeys modes
@@ -98,7 +98,7 @@ This is very useful for those pages you access very frequently. `om` to check ou
 
 ## Switch tabs
 
-By default, pressing `<space>` will show all opened tabs in an overlay, then pressing the hint char, will switch to the related tab.
+By default, pressing `T` will show all opened tabs in an overlay, then pressing the hint char, will switch to the related tab.
 
 ![tabs_overlay](https://cloud.githubusercontent.com/assets/288207/10544636/245447f6-7457-11e5-8372-62b8f6337158.png)
 
@@ -125,6 +125,12 @@ which works same as:
 Besides commands, you can also run javascript code.
 
 ![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)
+
+## Smooth scroll
+
+Smooth scroll works for any scrollable element. It is on by defualt, to turn it off as below:
+
+    settings.smoothScroll = false;
 
 ## Edit your own settings
 
