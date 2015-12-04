@@ -325,25 +325,19 @@ Service.request = function(message, sender, sendResponse) {
 };
 Service.nextFrame = function(message, sender, sendResponse) {
     var tid = sender.tab.id;
-    if (Service.frames.hasOwnProperty(tid)) {
-        var frameData = Service.frames[tid];
-        frameData[0] = (frameData[0] + 1) % frameData[1].length;
+    chrome.tabs.executeScript(tid, { code: "prepareFrames()" }, function(results){
+        var frames = results[0];
+        if (!Service.frames.hasOwnProperty(tid)) {
+            Service.frames[tid] = 0;
+        }
+        Service.frames[tid]++;
+        Service.frames[tid] = Service.frames[tid] % frames.length;
         chrome.tabs.sendMessage(tid, {
             subject: "focusFrame",
             target: 'content_runtime',
-            frameId: frameData[1][frameData[0]]
+            frameId: frames[Service.frames[tid]]
         });
-    }
-};
-Service.registerFrame = function(message, sender, sendResponse) {
-    var tid = sender.tab.id;
-    if (!Service.frames.hasOwnProperty(tid)) {
-        Service.frames[tid] = [0, []];
-    }
-    Service.frames[tid][1].push(message.frameId);
-};
-Service.unRegisterFrame = function(message, sender, sendResponse) {
-    unRegisterFrame(sender.tab.id);
+    });
 };
 Service.moveTab = function(message, sender, sendResponse) {
     var newPos = parseInt(message.position);

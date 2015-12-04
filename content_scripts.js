@@ -371,10 +371,31 @@ var runtime_handlers = {
     },
     focusFrame: function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
-            window.focus();
+            top.surfingkeys_active_window = window;
+            top.surfingkeys_active_window.focus();
             Normal.highlightDocument();
         }
     },
+};
+function prepareFrames() {
+    var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {
+        return f.contentWindow;
+    });
+    frames.unshift(top);
+    frames = frames.map(function(f) {
+        try {
+            f.frameId = f.frameId || generateQuickGuid();
+            if (f.innerWidth * f.innerHeight === 0) {
+                return null;
+            }
+        } catch (e) {
+            return null;
+        }
+        return f.frameId;
+    });
+    return frames.filter(function(f) {
+        return f !== null;
+    });
 };
 chrome.runtime.onMessage.addListener(function(msg, sender, response) {
     if (msg.target === 'content_runtime') {
@@ -2013,17 +2034,8 @@ function initEventListener() {
 
 if (window === top) {
     initEventListener();
-    window.addEventListener("unload", function(event) {
-        RUNTIME('unRegisterFrame');
-    });
 }
 document.addEventListener('DOMContentLoaded', function() {
-    if (!window.frameId && window.innerHeight * window.innerWidth > 1000 && $(document.body).find(':visible').length) {
-        window.frameId = generateQuickGuid();
-        RUNTIME('registerFrame', {
-            frameId: window.frameId
-        });
-    }
     if (window !== top) {
         setTimeout(initEventListener, 300);
     }
