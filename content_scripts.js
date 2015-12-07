@@ -90,7 +90,7 @@ var easeFn = function(t, b, c, d) {
 
 function initScroll(elm) {
     elm.scrollBy = function(x, y, d) {
-        if (settings.smoothScroll) {
+        if (settings.smoothScroll && (Math.abs(x) > Normal.stepSize || Math.abs(y) > Normal.stepSize)) {
             elm.smoothScrollBy(x, y, d);
         } else {
             elm.scrollLeft = elm.scrollLeft + x;
@@ -622,9 +622,10 @@ Omnibar.onKeydown = function(event) {
 Omnibar.scrollIntoView = function() {
     var start = $('#surfingkeys_omnibarSearchResult').position().top;
     var end = start + $('#surfingkeys_omnibarSearchResult').outerHeight();
-    var pos = $('#surfingkeys_omnibarSearchResult li.focused').position();
-    if (pos && (pos.top < start || (pos.top + $('#surfingkeys_omnibarSearchResult li.focused').outerHeight()) > end)) {
-        var pos = $('#surfingkeys_omnibarSearchResult li.focused').offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
+    var focusedItem = $('#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused');
+    var pos = focusedItem.position();
+    if (pos && (pos.top < start || (pos.top + focusedItem.outerHeight()) > end)) {
+        var pos = focusedItem.offset().top - $('#surfingkeys_omnibarSearchResult>ul').offset().top;
         $('#surfingkeys_omnibarSearchResult').animate({
             scrollTop: pos
         }, 100);
@@ -658,9 +659,9 @@ Omnibar.rotateResult = function(backward) {
     if (total > 0) {
         var lastFocused = Omnibar.focusedItem;
         Omnibar.focusedItem = (backward ? (lastFocused + total) : (lastFocused + total + 2)) % (total + 1);
-        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(lastFocused)).removeClass('focused');
+        $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(lastFocused)).removeClass('surfingkeys_omnibar_focused');
         if (Omnibar.focusedItem < total) {
-            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(Omnibar.focusedItem)).addClass('focused');
+            $('#surfingkeys_omnibarSearchResult li:nth({0})'.format(Omnibar.focusedItem)).addClass('surfingkeys_omnibar_focused');
             Omnibar.handler.onTab && Omnibar.handler.onTab(Omnibar.focusedItem);
             Omnibar.scrollIntoView();
         } else {
@@ -696,7 +697,7 @@ Omnibar.close = function() {
 };
 Omnibar.openFocused = function() {
     var ret = false,
-        focusedItem = $('#surfingkeys_omnibarSearchResult li.focused');
+        focusedItem = $('#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused');
     var folderId = focusedItem.data('folderId');
     if (folderId) {
         this.inFolder.push({
@@ -713,7 +714,7 @@ Omnibar.openFocused = function() {
             parentId: this.folderId
         });
     } else {
-        var url = focusedItem.find('div.url').data('url');
+        var url = focusedItem.find('div.surfingkeys_omnibar_url').data('url');
         if (/^javascript:/.test(url)) {
             window.location.href = url;
         } else {
@@ -738,7 +739,7 @@ Omnibar.listResults = function(items, renderItem) {
         renderItem(b).appendTo(results);
     });
     var fi = Omnibar.focusedItem || 0;
-    results.find('li:nth({0})'.format(fi)).addClass('focused');
+    results.find('li:nth({0})'.format(fi)).addClass('surfingkeys_omnibar_focused');
     Omnibar.focusedItem = fi;
     $('#surfingkeys_omnibarSearchResult').html("");
     results.appendTo('#surfingkeys_omnibarSearchResult');
@@ -749,10 +750,10 @@ Omnibar.listBookmark = function(items, showFolder) {
         if (b.hasOwnProperty('url')) {
             var type = b.type || (b.hasOwnProperty('lastVisitTime') ? "☼" : "☆");
             b.title = (b.title && b.title !== "") ? b.title : b.url;
-            li.html('<div class="title">{1} {0}</div>'.format(b.title, type));
-            $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
+            li.html('<div class="surfingkeys_omnibar_title">{1} {0}</div>'.format(b.title, type));
+            $('<div class="surfingkeys_omnibar_url">').data('url', b.url).html(b.url).appendTo(li);
         } else if (showFolder) {
-            li.html('<div class="title">▷ {0}</div>'.format(b.title)).data('folder_name', b.title).data('folderId', b.id);
+            li.html('<div class="surfingkeys_omnibar_title">▷ {0}</div>'.format(b.title)).data('folder_name', b.title).data('folderId', b.id);
         }
         return li;
     });
@@ -823,7 +824,7 @@ OpenBookmarks.onKeydown = function(event) {
         });
         eaten = true;
     } else if (event.ctrlKey && KeyboardUtils.isWordChar(event)) {
-        var focusedURL = $('#surfingkeys_omnibarSearchResult li.focused>div.url');
+        var focusedURL = $('#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused>div.surfingkeys_omnibar_url');
         if (focusedURL.length) {
             var mark_char = String.fromCharCode(event.keyCode);
             mark_char = event.shiftKey ? mark_char : mark_char.toLowerCase();
@@ -888,7 +889,7 @@ OpenTabs = {
     prompt: 'tabs≫'
 };
 OpenTabs.onEnter = function() {
-    var focusedItem = $('#surfingkeys_omnibarSearchResult li.focused');
+    var focusedItem = $('#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused');
     RUNTIME('focusTab', {
         tab_id: focusedItem.data('tabId')
     });
@@ -901,8 +902,8 @@ OpenTabs.list = function(query) {
     }, function(response) {
         Omnibar.listResults(response.tabs, function(b) {
             var li = $('<li/>').data('tabId', b.id);
-            li.html('<div class="title">▤ {0}</div>'.format(b.title));
-            $('<div class="url">').html(b.url).appendTo(li);
+            li.html('<div class="surfingkeys_omnibar_title">▤ {0}</div>'.format(b.title));
+            $('<div class="surfingkeys_omnibar_url">').html(b.url).appendTo(li);
             return li;
         });
     });
@@ -1103,7 +1104,7 @@ SearchEngine.onTab = function() {
     Omnibar.input.val($('#surfingkeys_omnibarSearchResult li:nth({0})'.format(Omnibar.focusedItem)).data('query'));
 };
 SearchEngine.onEnter = function() {
-    var suggestion = $('#surfingkeys_omnibarSearchResult li.focused').data('query');
+    var suggestion = $('#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused').data('query');
     var url = SearchEngine.url + (suggestion || Omnibar.input.val());
     tabOpenLink(url);
     return true;
@@ -1126,7 +1127,7 @@ Commands = {
             return cmd === "" || c.indexOf(cmd) !== -1;
         });
         Omnibar.listResults(candidates, function(c) {
-            return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, Commands.items[c].annotation));
+            return $('<li/>').data('cmd', c).html("{0}<span class=surfingkeys_omnibar_annotation>{1}</span>".format(c, Commands.items[c].annotation));
         });
     }
 };
@@ -1313,6 +1314,7 @@ function tabOpenLink(url) {
         tab: {
             tabbed: true
         },
+        position: settings.newTabPosition,
         url: url,
         repeats: 1
     });
@@ -1525,6 +1527,8 @@ Normal.init = function() {
         StatusBar.init(Normal.ui_container);
         Omnibar.init(Normal.ui_container);
         document.lastElementChild.appendChild(Normal.ui_container[0]);
+    } else if ($('body').find('div.surfingkeys_css_reset').length === 0 && Normal.ui_container) {
+        Normal.ui_container.appendTo('body');
     }
     return !blacklisted && Normal.ui_container;
 };
@@ -1580,11 +1584,11 @@ Normal.renderMappings = function(mappings) {
         words = mappings.getWords();
     var left = words.length % 2;
     for (var i = 0; i < words.length - left; i += 2) {
-        $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=annotation>{1}</td><td class=keyboard><kbd>{2}</kbd></td><td class=annotation>{3}</td></tr>".format(words[i], mappings.find(words[i]).meta[0].annotation, words[i + 1], mappings.find(words[i + 1]).meta[0].annotation)).appendTo(tb);
+        $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=surfingkeys_omnibar_annotation>{1}</td><td class=keyboard><kbd>{2}</kbd></td><td class=surfingkeys_omnibar_annotation>{3}</td></tr>".format(words[i], mappings.find(words[i]).meta[0].annotation, words[i + 1], mappings.find(words[i + 1]).meta[0].annotation)).appendTo(tb);
     }
     if (left) {
         var w = words[words.length - 1];
-        $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=annotation>{1}</td><td></td><td></td></tr>".format(w, mappings.find(w).meta[0].annotation)).appendTo(tb);
+        $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=surfingkeys_omnibar_annotation>{1}</td><td></td><td></td></tr>".format(w, mappings.find(w).meta[0].annotation)).appendTo(tb);
     }
     return tb;
 };
@@ -2038,8 +2042,5 @@ if (window === top) {
 document.addEventListener('DOMContentLoaded', function() {
     if (window !== top) {
         setTimeout(initEventListener, 300);
-    }
-    if ($('body').find('div.surfingkeys_css_reset').length === 0 && Normal.ui_container) {
-        Normal.ui_container.appendTo('body');
     }
 });

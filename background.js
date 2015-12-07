@@ -27,6 +27,7 @@ Service.settings = {
     version: chrome.runtime.getManifest().version,
     snippets: "",
     sessions: {},
+    newTabPosition: 'right',
     storage: 'local'
 };
 
@@ -264,10 +265,25 @@ Service.getURLs = function(message, sender, sendResponse) {
 };
 Service.openLink = function(message, sender, sendResponse) {
     if (message.tab.tabbed) {
+        var newTabPosition = null;
+        switch (message.position) {
+            case 'left':
+                newTabPosition = sender.tab.index;
+                break;
+            case 'right':
+                newTabPosition = sender.tab.index + 1;
+                break;
+            case 'first':
+                newTabPosition = 0;
+                break;
+            default:
+                break;
+        }
         for (var i = 0; i < message.repeats; ++i) {
             chrome.tabs.create({
                 url: message.url,
                 active: message.tab.active,
+                index: newTabPosition,
                 pinned: message.tab.pinned
             });
         }

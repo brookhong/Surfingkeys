@@ -125,19 +125,19 @@
     padding: 0.4rem;
     display: block;
 }
-#surfingkeys_omnibarSearchResult li.focused {
+#surfingkeys_omnibarSearchResult li.surfingkeys_omnibar_focused {
     background-color: #444;
 }
-#surfingkeys_omnibarSearchResult li div.title {
+#surfingkeys_omnibarSearchResult li div.surfingkeys_omnibar_title {
     color: #fff;
     font-size: 16px;
     font-weight: bold;
     text-align: left;
 }
-#surfingkeys_omnibarSearchResult li div.url {
+#surfingkeys_omnibarSearchResult li div.surfingkeys_omnibar_url {
     color: #aaa;
 }
-#surfingkeys_omnibarSearchResult li span.annotation {
+#surfingkeys_omnibarSearchResult li span.surfingkeys_omnibar_annotation {
     float: right;
     color: #aaa;
 }
