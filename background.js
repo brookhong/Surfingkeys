@@ -122,6 +122,13 @@ Service.getTabs = function(message, sender, sendResponse) {
         });
     });
 };
+Service.togglePinTab = function(message, sender, sendResponse) {
+    chrome.tabs.getSelected(null, function(tab) {
+        return chrome.tabs.update(tab.id, {
+            pinned: !tab.pinned
+        });
+    });
+};
 Service.focusTab = function(message, sender, sendResponse) {
     chrome.tabs.update(message.tab_id, {
         active: true
