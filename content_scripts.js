@@ -344,15 +344,16 @@ function initPort() {
 }
 var port = initPort();
 
-var runtime_handlers = {
-    getBlacklist: function(msg, sender, response) {
+var runtime_handlers = {};
+if (window === top) {
+    runtime_handlers['getBlacklist'] = function(msg, sender, response) {
         response({
             "all": settings.blacklist.hasOwnProperty('.*'),
             "this": settings.blacklist.hasOwnProperty(window.location.origin),
             "origin": window.location.origin
         });
-    },
-    toggleBlacklist: function(msg, sender, response) {
+    };
+    runtime_handlers['toggleBlacklist'] = function(msg, sender, response) {
         if (settings.blacklist.hasOwnProperty(msg.origin)) {
             delete settings.blacklist[msg.origin];
         } else {
@@ -368,14 +369,14 @@ var runtime_handlers = {
             "this": settings.blacklist.hasOwnProperty(window.location.origin),
             "origin": window.location.origin
         });
-    },
-    focusFrame: function(msg, sender, response) {
-        if (msg.frameId === window.frameId) {
-            top.surfingkeys_active_window = window;
-            top.surfingkeys_active_window.focus();
-            Normal.highlightDocument();
-        }
-    },
+    };
+}
+runtime_handlers['focusFrame'] = function(msg, sender, response) {
+    if (msg.frameId === window.frameId) {
+        top.surfingkeys_active_window = window;
+        top.surfingkeys_active_window.focus();
+        Normal.highlightDocument();
+    }
 };
 function prepareFrames() {
     var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {
@@ -450,7 +451,8 @@ Hints.genLabels = function(M) {
 Hints.create = function(cssSelector, onHintKey, attrs) {
     attrs = $.extend({
         active: true,
-        tabbed: false
+        tabbed: false,
+        multipleHits: false
     }, attrs || {});
     for (var attr in attrs) {
         Hints[attr] = attrs[attr];
@@ -1521,7 +1523,6 @@ Normal.init = function() {
         document.lastElementChild.appendChild(Normal.ui_container[0]);
         Normal.clipboard_holder = $('<textarea/>').attr('surfingkeys', 1).css('position', 'fixed').css('z-index', '-999')
             .css('top', '0').css('left', '0').css('opacity', '0');
-        Normal.clipboard_holder.appendTo(Normal.ui_container);
         Normal.keystroke = $('<div id=surfingkeys_keystroke/>');
         Normal.keystroke.appendTo(Normal.ui_container);
         Normal.popover = $('<div id=surfingkeys_popover/>');
@@ -1668,6 +1669,7 @@ Normal.chooseTab = function() {
 };
 Normal.getContentFromClipboard = function() {
     var result = '';
+    Normal.clipboard_holder.appendTo(Normal.ui_container);
     var clipboard_holder = Normal.clipboard_holder[0];
     clipboard_holder.value = '';
     clipboard_holder.select();
@@ -1675,15 +1677,17 @@ Normal.getContentFromClipboard = function() {
         result = clipboard_holder.value;
     }
     clipboard_holder.value = '';
+    Normal.clipboard_holder.remove();
     return result;
 };
 Normal.writeClipboard = function(text) {
+    Normal.clipboard_holder.appendTo(Normal.ui_container);
     var clipboard_holder = Normal.clipboard_holder[0];
     clipboard_holder.value = text;
     clipboard_holder.select();
     document.execCommand('copy');
     clipboard_holder.value = '';
-    clipboard_holder.blur();
+    Normal.clipboard_holder.remove();
 };
 Normal.showKeystroke = function(msg) {
     if (Normal.keystroke) {
