@@ -1,30 +1,34 @@
 function renderSettings() {
-    if (settings.snippets.length) {
-        $('#mappings').val(settings.snippets);
+    if (runtime.settings.snippets.length) {
+        $('#mappings').val(runtime.settings.snippets);
     }
-    $('#storage').val(settings.storage);
-    $('#localPath').val(settings.localPath);
+    $('#storage').val(runtime.settings.storage);
+    $('#localPath').val(runtime.settings.localPath);
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
     $('#defaultMappings').height(h);
     $('#mappings').height(h);
     $('#mappings').css('width', '100%');
 }
-$(document).on("surfingkeys:connected", function() {
+$(document).on("surfingkeys:settingsApplied", function() {
     renderSettings();
-    var old_handler = port_handlers['settingsUpdated'];
-    port_handlers['settingsUpdated'] = function(resp) {
+    var old_handler = runtime.actions['settingsUpdated'];
+    runtime.actions['settingsUpdated'] = function(resp) {
         old_handler(resp);
         renderSettings();
     };
 });
 
-$('#storage').change(function(){
+$('#storage').change(function() {
     var storage = $(this).val();
-    RUNTIME("changeSettingsStorage", {storage: storage});
+    RUNTIME("changeSettingsStorage", {
+        storage: storage
+    });
 });
 
 $('#reset_button').click(function() {
-    RUNTIME("resetSettings", {useDefault: true});
+    RUNTIME("resetSettings", {
+        useDefault: true
+    });
     Normal.popup('Settings reset', 300);
 });
 
@@ -61,8 +65,10 @@ function getURIPath(fn) {
 $('#save_button').click(function() {
     var settingsCode = $('#mappings').val();
     var localPath = getURIPath($('#localPath').val().trim());
-    if (localPath.length && localPath !== settings.localPath) {
-        RUNTIME("loadSettingsFromUrl", {url: localPath});
+    if (localPath.length && localPath !== runtime.settings.localPath) {
+        RUNTIME("loadSettingsFromUrl", {
+            url: localPath
+        });
         Normal.popup('Loading settings from ' + localPath, 300);
     } else {
         try {

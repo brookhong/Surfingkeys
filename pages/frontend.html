@@ -1,0 +1,34 @@
+<html>
+<head>
+    <link rel="stylesheet" href="frontend.css">
+    <link rel="stylesheet" href="../content_scripts/content_scripts.css">
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/trie.js"></script>
+    <script src="../content_scripts/utils.js"></script>
+    <script src="../content_scripts/runtime.js"></script>
+</head>
+<body>
+    <div id=sk_omnibar>
+        <div id=sk_omnibarSearchArea>
+            <span></span>
+            <input type="text" />
+        </div>
+        <div id=sk_omnibarSearchResult>
+        </div>
+    </div>
+    <div id=sk_status>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <script src="../content_scripts/normal.js"></script>
+    <script src="../content_scripts/visual.js"></script>
+    <script src="../content_scripts/hints.js"></script>
+    <script src="../content_scripts/content_scripts.js"></script>
+    <script src="frontend.js"></script>
+    <script src="omnibar.js"></script>
+    <script src="statusbar.js"></script>
+    <script src="default.js"></script>
+</body>
+</html>

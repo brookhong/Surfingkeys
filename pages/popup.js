@@ -6,7 +6,7 @@ var disableAll = document.getElementById('disableAll'),
 
 function onSurfingkeysStatus(status) {
     surfingkeysStatus = status;
-    disableThis.textContent = status.this ? 'Enable Surfingkeys on ' + status.origin : 'Disable Surfingkeys on ' + status.origin;
+    disableThis.textContent = status.this ? 'Enable Surfingkeys on this domain' : 'Disable Surfingkeys on this domain';
     disableAll.textContent = status.all ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
 }
 

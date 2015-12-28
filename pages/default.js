@@ -25,12 +25,12 @@ mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
 mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
-Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible:not([surfingkeys])";
+Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible";
 mapkey('f', 'Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick)');
 mapkey('F', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('a-f', 'Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
-mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible:not([surfingkeys])", Hints.dispatchMouseClick)');
+mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
@@ -40,16 +40,16 @@ mapkey('gF', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: fal
 mapkey('S', 'Go back in history', 'history.go(-1)');
 mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
-mapkey('t', 'Open an URLs', 'Normal.openOmnibar(OpenURLs)');
-mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(OpenBookmarks)');
-mapkey('oh', 'Open URL from history', 'Normal.openOmnibar(OpenHistory)');
-mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar(OpenVIMarks)');
-mapkey(':', 'Open commands', 'Normal.openOmnibar(Commands)');
+mapkey('t', 'Open an URLs', 'Normal.openOmnibar({type: "URLs"})');
+mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(({type: "Bookmarks"}))');
+mapkey('oh', 'Open URL from history', 'Normal.openOmnibar({type: "History"})');
+mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar({type: "VIMarks"})');
+mapkey(':', 'Open commands', 'Normal.openOmnibar({type: "Commands"})');
 command('quit', 'quit chrome', function() {
     RUNTIME('quit');
 });
 command('listSession', 'list session', function() {
-    portRequest({
+    runtime.command({
         action: 'getSessions'
     }, function(response) {
         Omnibar.listResults(Object.keys(response.sessions), function(s) {
@@ -74,7 +74,7 @@ command('openSession', 'openSession [name]', function(name) {
     });
 });
 mapkey('v', 'Toggle visual mode', 'Visual.toggle()');
-mapkey('/', 'Find in current page', 'Find.open()');
+mapkey('/', 'Find in current page', 'Normal.openFinder()');
 mapkey('*', 'Find selected text in current page', function() {
     Visual.star();
     Visual.toggle();
@@ -83,10 +83,19 @@ mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', 'Restore closed tab', 'RUNTIME("openLast")');
 mapkey('m', 'Add current URL to vim-like marks', Normal.addVIMark, 1);
 mapkey("'", 'Jump to vim-like mark', Normal.jumpVIMark, 1);
-mapkey('n', 'Next found text', 'Find.next(false)');
-mapkey('N', 'Previous found text', 'Find.next(true)');
+mapkey('n', 'Next found text', 'Visual.next(false)');
+mapkey('N', 'Previous found text', 'Visual.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
-mapkey('p', 'Open selected link or link from clipboard', 'tabOpenLink(window.getSelection().toString() || Normal.getContentFromClipboard())');
+mapkey('p', 'Paste html on current page.', function() {
+    Normal.getContentFromClipboard(function(response) {
+        document.body.innerHTML = response.data;
+    });
+});
+mapkey('cc', 'Open selected link or link from clipboard', function() {
+    Normal.getContentFromClipboard(function(response) {
+        tabOpenLink(window.getSelection().toString() || response.data);
+    });
+});
 mapkey('[[', 'Click on the previous link on current page', function() {
     var prevLinks = $('a').regex(/((<<|prev(ious)?)+)/i);
     if (prevLinks.length) {
@@ -105,15 +114,14 @@ mapkey(']]', 'Click on the next link on current page', function() {
 });
 mapkey('ys', "Copy current page's source", function() {
     var aa = document.documentElement.cloneNode(true);
-    $(aa).find('div.surfingkeys_css_reset').remove();
     Normal.writeClipboard(aa.outerHTML);
 });
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('yl', "Copy current page's title", 'Normal.writeClipboard(document.title)');
-mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar(SearchEngine, "b")');
-mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar(SearchEngine, "g")');
-mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar(SearchEngine, "w")');
+mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar({type: "SearchEngine", extra: "b"})');
+mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar({type: "SearchEngine", extra: "g"})');
+mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar({type: "SearchEngine", extra: "w"})');
 mapkey('on', 'Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
 mapkey('gb', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
 mapkey('gj', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://chrome/settings/contentExceptions#javascript")');
@@ -124,7 +132,15 @@ mapkey('gk', 'Open Chrome Cookies', 'tabOpenLink("chrome://settings/cookies")');
 mapkey('ge', 'Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
 mapkey('gn', 'Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
 mapkey('gs', 'View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');
-mapkey('gu', 'Go up one path in the URL', 'window.location.href = getParentURL()');
+mapkey('gu', 'Go up one path in the URL', function() {
+    var url = location.href;
+    if (location.pathname.length > 1) {
+        url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
+        url = url.substr(0, url.lastIndexOf('/'));
+    }
+    window.location.href = url;
+});
+
 mapkey('gU', 'Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
 mapkey('se', 'Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('sr', 'Reset Settings', 'Normal.resetSettings()');
@@ -145,3 +161,6 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
+autocmd('.*', function() {
+    console.log(window.location.href);
+});
