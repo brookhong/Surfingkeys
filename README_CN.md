@@ -206,12 +206,6 @@ Surfingkeys目前只有两种模式。
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
 
-### 添加一个迷你查询
-
-迷你查询很像一个搜索引擎，不同的是，它把查询结果直接在小窗里显示出来，而不是打开一个新页。
-
-    addMiniQuery(alias, prompt, search_url, callback_to_display_result);
-
 ## License
 
 MIT License

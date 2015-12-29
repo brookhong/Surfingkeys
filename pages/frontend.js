@@ -31,21 +31,11 @@ var frontendUI = (function() {
     self.postMessage = function(to, message) {
         self.ports[to].postMessage(message);
     };
-
-    (function($){
-        $.fn.sk_hide = function(){
-            $(this).hide();
-            self.postMessage('top', {
-                frameHeight: getFrameHeight()
-            });
-        };
-        $.fn.sk_show = function(){
-            $(this).show();
-            self.postMessage('top', {
-                frameHeight: getFrameHeight()
-            });
-        };
-    })(jQuery);
+    self.flush = function() {
+        self.postMessage('top', {
+            frameHeight: getFrameHeight()
+        });
+    };
 
     self.omnibar = $('#sk_omnibar').hide();
     self.statusBar = $('#sk_status').hide();
@@ -74,7 +64,36 @@ var frontendUI = (function() {
     }
     var _display;
 
-    function renderTabHints(tabs) {
+    self.hidePopup = function() {
+        if (_display && _display.is(':visible')) {
+            _display.hide();
+            self.flush();
+            _display.onHide && _display.onHide();
+        }
+    }
+    function showPopup(td, args) {
+        if (_display && _display.is(':visible')) {
+            _display.hide();
+            _display.onHide && _display.onHide();
+        }
+        _display = td;
+        _display.show();
+        self.flush();
+        _display.onShow && _display.onShow(args);
+        window.focus();
+    }
+
+    runtime.actions['highlightElement'] = function(message) {
+        var rect = message.rect;
+        frameElement.css('top', rect.top).css('left', rect.left).css('width', rect.width).css('height', rect.height).show();
+        self.flush();
+        setTimeout(function() {
+            frameElement.hide();
+            self.flush();
+        }, 200);
+    };
+
+    _tabs.onShow = function(tabs) {
         var tabs_fg = _tabs.find('div.sk_tabs_fg');
         tabs_fg.html("");
         _tabs.trie = new Trie('', Trie.SORT_NONE);
@@ -83,66 +102,45 @@ var frontendUI = (function() {
         var items = tabs.forEach(function(t, i) {
             var tab = $(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
-            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, t.title));
+            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, htmlEncode(t.title)));
             tab.data('url', t.url);
             tabs_fg.append(tab);
         })
-        showPopup(_tabs);
         tabs_fg.find('div.sk_tab').each(function() {
             $(this).css('width', $(this).width() + 10);
             $(this).append($("<div class=sk_tab_url>{0}</div>".format($(this).data('url'))));
         });
         _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
     }
-    function hidePopup() {
-        if (_display && _display.is(':visible')) {
-            _display.sk_hide();
-            _display.onHide && _display.onHide();
-        }
-    }
-    function showPopup(td, args) {
-        _display = td;
-        _display.sk_show();
-        _display.onShow && _display.onShow(args);
-        window.focus();
-    }
-
-    runtime.actions['highlightElement'] = function(message) {
-        var rect = message.rect;
-        frameElement.css('top', rect.top).css('left', rect.left).css('width', rect.width).css('height', rect.height).sk_show();
-        setTimeout(function() {
-            frameElement.sk_hide();
-        }, 200);
-    };
-
-    _usage.onShow = function(message) {
-        _usage.html(message.content);
-    };
-    var popups = {'usage': _usage, 'omnibar': self.omnibar};
-    runtime.actions['showPopup'] = function(message) {
-        showPopup(popups[message.type], message);
-    };
-    runtime.actions['hidePopup'] = hidePopup;
     runtime.actions['chooseTab'] = function(message) {
-        hidePopup();
         runtime.command({
             action: 'getTabs'
         }, function(response) {
             if (response.tabs.length > runtime.settings.tabsThreshold) {
-                Omnibar.open('Tabs');
+                showPopup(self.omnibar, {type: 'Tabs'});
             } else {
-                renderTabHints(response.tabs);
+                showPopup(_tabs, response.tabs);
             }
         });
     };
+    _usage.onShow = function(message) {
+        _usage.html(message.content);
+        $('#moreHelp').on('click', function() {
+            _usage.find('.sk_visualUsage').toggle();
+        });
+    };
+    runtime.actions['showUsage'] = function(message) {
+        showPopup(_usage, message);
+    };
     runtime.actions['openOmnibar'] = function(message) {
-        Omnibar.open(message.type, message.extra);
+        showPopup(self.omnibar, message);
     };
     runtime.actions['openFinder'] = function(message) {
         Find.open();
     };
     runtime.actions['showBanner'] = function(message) {
-        banner.html(message.content).sk_show();
+        banner.html(message.content).show();
+        self.flush();
         banner.finish();
         banner.animate({
             "top": "0"
@@ -150,13 +148,15 @@ var frontendUI = (function() {
         banner.delay(message.linger_time || 1000).animate({
             "top": "-3rem"
         }, 300, function() {
-            banner.html("").sk_hide();
+            banner.html("").hide();
+            self.flush();
         });
     };
     runtime.actions['showBubble'] = function(message) {
         var pos = message.position;
         _bubble.find('div.sk_bubble_content').html(message.content);
-        _bubble.sk_show();
+        _bubble.show();
+        self.flush();
         var w = _bubble.width(),
             h = _bubble.height();
         var left = [pos.left - w / 2, w / 2];
@@ -171,7 +171,8 @@ var frontendUI = (function() {
         _bubble.css('top', pos.top - h - 12).css('left', left[0]);
     };
     runtime.actions['hideBubble'] = function(message) {
-        _bubble.sk_hide();
+        _bubble.hide();
+        self.flush();
     };
     runtime.actions['showStatus'] = function(message) {
         StatusBar.show(message.position, message.content);
@@ -204,11 +205,13 @@ var frontendUI = (function() {
             right: "-2rem"
         }, 300, function() {
             keystroke.html("");
-            keystroke.sk_hide();
+            keystroke.hide();
+            self.flush();
         });
     };
     runtime.actions['showKeystroke'] = function(message) {
-        keystroke.sk_show();
+        keystroke.show();
+        self.flush();
         if (keystroke.is(':animated')) {
             keystroke.finish()
         }
@@ -242,22 +245,19 @@ var frontendUI = (function() {
         var handled = false;
         switch (event.keyCode) {
             case KeyboardUtils.keyCodes.ESC:
-                handled = hidePopup();
-                break;
-            case KeyboardUtils.keyCodes.ctrlKey:
-            case KeyboardUtils.keyCodes.shiftKey:
+                handled = self.hidePopup();
                 break;
             default:
                 if (_tabs.trie) {
                     _tabs.trie = _tabs.trie.find(key);
                     if (!_tabs.trie) {
-                        hidePopup();
+                        self.hidePopup();
                         _tabs.trie = null;
                     } else if (_tabs.trie.meta.length) {
                         RUNTIME('focusTab', {
                             tab_id: _tabs.trie.meta[0]
                         });
-                        hidePopup();
+                        self.hidePopup();
                         _tabs.trie = null;
                     }
                     handled = true;

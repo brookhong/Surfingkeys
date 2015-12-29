@@ -4,6 +4,7 @@ var Service = (function() {
     var activePorts = [],
         frontEndPorts = {},
         contentPorts = {},
+        tabActivated = {},
         frameIncs = {},
         tabHistory = [],
         tabHistoryIndex = 0,
@@ -150,7 +151,7 @@ var Service = (function() {
         }
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
-        if (!historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
+        if (frontEndPorts.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
             if (tabHistory.length > 10) {
                 tabHistory.shift();
             }
@@ -160,6 +161,7 @@ var Service = (function() {
             tabHistory.push(activeInfo.tabId);
             tabHistoryIndex = tabHistory.length - 1;
         }
+        tabActivated[activeInfo.tabId] = new Date().getTime();
         historyTabAction = false;
     });
 
@@ -214,6 +216,10 @@ var Service = (function() {
                     return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                 });
             }
+            tabs.sort(function(a, b) {
+                return tabActivated[b.id] - tabActivated[a.id];
+            });
+            tabs.shift();
             sendResponse({
                 action: message.action,
                 id: message.id,

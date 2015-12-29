@@ -77,10 +77,10 @@ var Omnibar = (function(ui) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-            self.close();
+            frontendUI.hidePopup();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
-            handler.onEnter() && self.close();
+            handler.onEnter() && frontendUI.hidePopup();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
             expandAlias(self.input.val()) && event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
@@ -98,7 +98,7 @@ var Omnibar = (function(ui) {
             if (b.hasOwnProperty('url')) {
                 var type = b.type || (b.hasOwnProperty('lastVisitTime') ? "☼" : "☆");
                 b.title = (b.title && b.title !== "") ? b.title : b.url;
-                li.html('<div class="title">{1} {0}</div>'.format(b.title, type));
+                li.html('<div class="title">{0} {1}</div>'.format(type, htmlEncode(b.title)));
                 $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
             } else if (showFolder) {
                 li.html('<div class="title">▷ {0}</div>'.format(b.title)).data('folder_name', b.title).data('folderId', b.id);
@@ -107,12 +107,11 @@ var Omnibar = (function(ui) {
         });
     };
 
-    self.open = function(hdl, type) {
-        handler = handlers[hdl];
-        ui.sk_show();
+    ui.onShow = function(args) {
+        handler = handlers[args.type];
         self.input[0].focus();
-        if (handler === SearchEngine && self.searchAliases.hasOwnProperty(type)) {
-            $.extend(SearchEngine, self.searchAliases[type]);
+        if (handler === SearchEngine && self.searchAliases.hasOwnProperty(args.extra)) {
+            $.extend(SearchEngine, self.searchAliases[args.extra]);
             lastHandler = SearchEngine;
         }
         handler = handler;
@@ -120,8 +119,7 @@ var Omnibar = (function(ui) {
         handler.onOpen && handler.onOpen();
     };
 
-    self.close = function() {
-        ui.sk_hide();
+    ui.onHide = function() {
         lastInput = "";
         self.input.val('');
         self.resultsDiv.html("");

@@ -147,9 +147,7 @@ function applySettings() {
     }
     $(document).trigger("surfingkeys:settingsApplied");
 }
-$(document).on('surfingkeys:connected', function(e) {
-    applySettings();
-});
+
 runtime.actions['settingsUpdated'] = function(response) {
     runtime.settings = response.settings;
     applySettings();
@@ -196,6 +194,9 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
             window.stopKeyupPropagation = stopKeyUp;
         };
         window.addEventListener('keydown', function(event) {
+            if (event.keyCode === KeyboardUtils.keyCodes.ctrlKey || event.keyCode === KeyboardUtils.keyCodes.shiftKey) {
+                return;
+            }
             if (!isEditable(event.target)) {
                 var key = KeyboardUtils.getKeyChar(event);
                 for (var i = 0; i < Normal.keydownHandlers.length; i++) {
@@ -219,3 +220,11 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
         }, true);
     }
 });
+
+if (runtime && runtime.settings) {
+    applySettings();
+} else {
+    $(document).on('surfingkeys:connected', function(e) {
+        applySettings();
+    });
+}

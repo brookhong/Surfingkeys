@@ -209,12 +209,6 @@ works like
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
 
-### Add a mini query
-
-Mini query differs from search engine by showing the query result in omnibar instead of openning a new page.
-
-    addMiniQuery(alias, prompt, search_url, callback_to_display_result);
-
 ## License
 
 MIT License

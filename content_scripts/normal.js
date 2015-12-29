@@ -178,21 +178,11 @@ var Normal = (function() {
     self.showUsage = function() {
         var _usage = $('<div/>');
         renderMappings(self.mappings).appendTo(_usage);
-        var moreHelp = $("<p style='float:right; width:100%; text-align:right'>").html("<a href='#' style='color:#0095dd'>Show Mappings in Visual mode</a> | <a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(_usage);
-        moreHelp.find('a:nth(0)').on('click', function() {
-            _usage.find('.sk_visualUsage').toggle();
-        });
+        $("<p style='float:right; width:100%; text-align:right'>").html("<a id='moreHelp' href='#' style='color:#0095dd'>Show Mappings in Visual mode</a> | <a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(_usage);
         renderMappings(Visual.mappings).attr('class', 'sk_visualUsage').appendTo(_usage).hide();
         runtime.frontendCommand({
-            action: 'showPopup',
-            type: 'usage',
+            action: 'showUsage',
             content: _usage.html(),
-        });
-    };
-
-    self.hidePopup = function() {
-        runtime.frontendCommand({
-            action: 'hidePopup'
         });
     };
 

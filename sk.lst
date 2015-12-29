@@ -1,6 +1,5 @@
 background.js
-content_scripts.css
-content_scripts.js
+content_scripts
 icons
 libs
 manifest.json

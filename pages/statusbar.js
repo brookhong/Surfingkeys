@@ -20,11 +20,8 @@ var StatusBar = (function(ui) {
             }
         }
         $(span[lastSpan]).css('border-right', '');
-        if (lastSpan === -1) {
-            ui.sk_hide();
-        } else {
-            ui.sk_show();
-        }
+        ui.css('display', lastSpan === -1 ? 'none' : 'block');
+        frontendUI.flush();
     };
     return self;
 })(frontendUI.statusBar);
