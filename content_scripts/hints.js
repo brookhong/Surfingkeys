@@ -17,27 +17,6 @@ var Hints = (function() {
         return z;
     }
 
-    function removeChild(elements) {
-        var cleaned = [];
-        for (var i = 0; i < elements.length; i++) {
-            var elm = elements[i];
-            var parents = cleaned.filter(function(e) {
-                return e.contains(elm);
-            });
-            if (parents.length === 0 || parents[0].querySelectorAll('*').length > 100) {
-                for (var j = 0; j < cleaned.length; j++) {
-                    if (!cleaned[j].deleted && elm.contains(cleaned[j])) {
-                        cleaned[j].deleted = true;
-                    }
-                }
-                cleaned.push(elm);
-            }
-        }
-        return cleaned.filter(function(e) {
-            return !e.deleted;
-        });
-    }
-
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
             var event = document.createEvent('MouseEvents');
@@ -128,7 +107,6 @@ var Hints = (function() {
         elements = elements.filter(function(i) {
             return this !== null;
         });
-        elements = $(removeChild(elements));
         if (elements.length > 0) {
             var hintLabels = self.genLabels(elements.length);
             elements.each(function(i) {

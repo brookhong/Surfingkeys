@@ -162,62 +162,7 @@ runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
 };
 $(document).on('surfingkeys:settingsApplied', function(e) {
     if (!Normal.isBlacklisted()) {
-        Normal.insertJS(function() {
-            var _wr = function(type) {
-                var orig = history[type];
-                return function() {
-                    var rv = orig.apply(this, arguments);
-                    var e = new Event(type);
-                    e.arguments = arguments;
-                    window.dispatchEvent(e);
-                    return rv;
-                };
-            };
-            history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
-        });
-        window.addEventListener('pushState', function(event) {
-            Normal.resetFocusHandlers();
-        });
-        window.addEventListener('focus', function(event) {
-            for (var fn in Normal.focusHandlers) {
-                if (Normal.focusHandlers[fn](event)) {
-                    window.stopEventPropagation(event, true);
-                    break;
-                }
-            }
-        }, true);
-        Normal.keydownHandlers.unshift(Visual);
-        Normal.keydownHandlers.unshift(Hints);
-        window.stopEventPropagation = function(e, stopKeyUp) {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-            window.stopKeyupPropagation = stopKeyUp;
-        };
-        window.addEventListener('keydown', function(event) {
-            if (event.keyCode === KeyboardUtils.keyCodes.ctrlKey || event.keyCode === KeyboardUtils.keyCodes.shiftKey) {
-                return;
-            }
-            if (!isEditable(event.target)) {
-                var key = KeyboardUtils.getKeyChar(event);
-                for (var i = 0; i < Normal.keydownHandlers.length; i++) {
-                    if (Normal.keydownHandlers[i].handleKeyEvent(event, key)) {
-                        window.stopEventPropagation(event, true);
-                        break;
-                    }
-                }
-            }
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC && isEditable(document.activeElement) && !window.Omnibar) {
-                document.activeElement.blur();
-                window.stopEventPropagation(event, true);
-            }
-        }, true);
-        window.addEventListener('keyup', function(event) {
-            Normal.surfingkeysHold = 0;
-            if (window.stopKeyupPropagation) {
-                event.stopImmediatePropagation();
-                window.stopKeyupPropagation = false;
-            }
-        }, true);
+        Events.addListeners();
     }
 });
 

@@ -267,7 +267,8 @@ var frontendUI = (function() {
         return handled;
     };
 
-    Normal.keydownHandlers.unshift(self);
+    Events.keydownHandlers.unshift(self);
+    delete Events.focusHandlers.getBackFocusOnLoad;
     return self;
 })();
 

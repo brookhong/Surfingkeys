@@ -1,6 +1,5 @@
 var Normal = (function() {
     var self = {};
-    self.keydownHandlers = [self];
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
     self.surfingkeysHold = 0;
@@ -292,7 +291,6 @@ var Normal = (function() {
 
     self.handleKeyEvent = function(event, key) {
         var handled = false;
-        delete self.focusHandlers.getBackFocusOnLoad;
         switch (event.keyCode) {
             case KeyboardUtils.keyCodes.ESC:
                 handled = self.finish();
@@ -355,21 +353,6 @@ var Normal = (function() {
     self.isBlacklisted = function() {
         return runtime.settings.blacklist[window.location.origin] || runtime.settings.blacklist['.*'];
     };
-
-    self.focusHandlers = {};
-    function getBackFocusOnLoad(e) {
-        var handled = false;
-        if (isEditable(document.activeElement)) {
-            document.activeElement.blur();
-            handled = true;
-        }
-        delete self.focusHandlers.getBackFocusOnLoad;
-        return handled;
-    }
-    self.resetFocusHandlers = function() {
-        self.focusHandlers['getBackFocusOnLoad'] = getBackFocusOnLoad;
-    };
-    self.resetFocusHandlers();
 
     return self;
 })();
