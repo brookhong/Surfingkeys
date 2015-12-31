@@ -133,9 +133,11 @@ function httpRequest(args, onSuccess) {
     runtime.command(args, onSuccess);
 }
 
+var settings;
 function applySettings() {
     try {
         var theInstructions = runtime.settings.snippets;
+        settings = runtime.settings;
         var F = new Function(theInstructions);
         F();
     } catch (e) {

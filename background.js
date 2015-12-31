@@ -15,6 +15,7 @@ var Service = (function() {
     var settings = {
         maxResults: 500,
         tabsThreshold: 9,
+        tabsMRUOrder: true,
         smoothScroll: true,
         blacklist: {},
         marks: {},
@@ -216,10 +217,14 @@ var Service = (function() {
                     return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                 });
             }
-            tabs.sort(function(a, b) {
-                return tabActivated[b.id] - tabActivated[a.id];
+            tabs = tabs.filter(function(b) {
+                return b.id !== tab.id;
             });
-            tabs.shift();
+            if (settings.tabsMRUOrder) {
+                tabs.sort(function(a, b) {
+                    return tabActivated[b.id] - tabActivated[a.id];
+                });
+            }
             sendResponse({
                 action: message.action,
                 id: message.id,

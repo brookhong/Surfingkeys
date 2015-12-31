@@ -29,7 +29,7 @@ $('#reset_button').click(function() {
     RUNTIME("resetSettings", {
         useDefault: true
     });
-    Normal.popup('Settings reset', 300);
+    Normal.showBanner('Settings reset', 300);
 });
 
 $('.infoPointer').click(function() {
@@ -69,7 +69,7 @@ $('#save_button').click(function() {
         RUNTIME("loadSettingsFromUrl", {
             url: localPath
         });
-        Normal.popup('Loading settings from ' + localPath, 300);
+        Normal.showBanner('Loading settings from ' + localPath, 300);
     } else {
         try {
             var F = new Function(settingsCode);
@@ -80,9 +80,9 @@ $('#save_button').click(function() {
                     localPath: getURIPath($('#localPath').val())
                 }
             });
-            Normal.popup('Settings saved', 300);
+            Normal.showBanner('Settings saved', 300);
         } catch (e) {
-            Normal.popup(e.toString(), 3000);
+            Normal.showBanner(e.toString(), 3000);
         }
     }
 });
