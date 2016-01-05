@@ -4,8 +4,8 @@ var Hints = (function() {
     var prefix = "",
         lastMouseTarget = null,
         behaviours = {},
-        holder = $('<div id=sk_hints/>'),
-        characters = 'asdfgqwertzxcvb';
+        holder = $('<div id=sk_hints/>');
+    self.characters = 'asdfgqwertzxcvb';
 
     function getZIndex(node) {
         var z = 0;
@@ -49,21 +49,21 @@ var Hints = (function() {
     }
 
     self.genLabels = function(M) {
-        if (M <= characters.length) {
-            return characters.slice(0, M).toUpperCase().split('');
+        if (M <= self.characters.length) {
+            return self.characters.slice(0, M).toUpperCase().split('');
         }
         var codes = [];
         var genCodeWord = function(N, length) {
             for (var i = 0, word = ''; i < length; i++) {
-                word += characters.charAt(N % characters.length).toUpperCase();
-                N = ~~(N / characters.length);
+                word += self.characters.charAt(N % self.characters.length).toUpperCase();
+                N = ~~(N / self.characters.length);
             }
             codes.push(word.split('').reverse().join(''));
         };
 
-        var b = Math.ceil(Math.log(M) / Math.log(characters.length));
-        var cutoff = Math.pow(characters.length, b) - M;
-        var cutoffR = ~~(cutoff / (characters.length - 1));
+        var b = Math.ceil(Math.log(M) / Math.log(self.characters.length));
+        var cutoff = Math.pow(self.characters.length, b) - M;
+        var cutoffR = ~~(cutoff / (self.characters.length - 1));
 
         for (var i = 0; i < cutoffR; i++) {
             genCodeWord(i, b - 1);
@@ -174,7 +174,7 @@ var Hints = (function() {
                     updated = true;
                 } else {
                     var key = String.fromCharCode(event.keyCode);
-                    if (key !== '' && characters.indexOf(key.toLowerCase()) !== -1) {
+                    if (key !== '' && self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
                         updated = true;
                     }
