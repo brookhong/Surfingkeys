@@ -27,7 +27,7 @@ mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
 Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible";
 mapkey('f', 'Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick)');
-mapkey('F', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
+mapkey('af', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('a-f', 'Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
 mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible", Hints.dispatchMouseClick)');
@@ -36,7 +36,7 @@ mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
 mapkey('a-p', 'pin/unpin current tab', 'RUNTIME("togglePinTab")');
 mapkey('B', 'Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
-mapkey('gF', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
+mapkey('F', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
 mapkey('S', 'Go back in history', 'history.go(-1)');
 mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
@@ -92,9 +92,19 @@ mapkey('p', 'Paste html on current page.', function() {
     });
 });
 mapkey('cc', 'Open selected link or link from clipboard', function() {
-    Normal.getContentFromClipboard(function(response) {
-        tabOpenLink(window.getSelection().toString() || response.data);
-    });
+    if (window.getSelection().toString()) {
+        tabOpenLink(window.getSelection().toString());
+    } else {
+        Normal.getContentFromClipboard(function(response) {
+            var links = response.data.split('\n');
+            links.forEach(function(u) {
+                u = u.trim();
+                if (u.length > 0) {
+                    tabOpenLink(u);
+                }
+            });
+        });
+    }
 });
 mapkey('[[', 'Click on the previous link on current page', function() {
     var prevLinks = $('a').regex(/((<<|prev(ious)?)+)/i);

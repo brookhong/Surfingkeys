@@ -157,7 +157,6 @@ runtime.actions['settingsUpdated'] = function(response) {
 
 runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
     if (msg.frameId === window.frameId) {
-        console.log(msg.frameId);
         window.focus();
         Normal.highlightElement(document.body);
     }
