@@ -1,12 +1,10 @@
 var disableAll = document.getElementById('disableAll'),
-    disableThis = document.getElementById('disableThis'),
     settings = document.getElementById('settings'),
     activeTab = null,
     surfingkeysStatus = {};
 
 function onSurfingkeysStatus(status) {
     surfingkeysStatus = status;
-    disableThis.textContent = status.this ? 'Enable Surfingkeys on ' + status.origin : 'Disable Surfingkeys on ' + status.origin;
     disableAll.textContent = status.all ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
 }
 
@@ -35,10 +33,6 @@ chrome.tabs.query({
 
 disableAll.addEventListener('click', function() {
     toggleBlacklist('.*');
-});
-
-disableThis.addEventListener('click', function() {
-    toggleBlacklist(surfingkeysStatus.origin);
 });
 
 settings.addEventListener('click', function() {

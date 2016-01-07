@@ -25,6 +25,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * `*` to search word under cursor in visual mode.
 * Scroll actions like page up/down (`e` `d`) work for not only top window but also scrollable DIV.
 * `w` to switch frames if there is.
+* session management
 
 ## Quick start
 
@@ -131,6 +132,36 @@ Besides commands, you can also run javascript code.
 Smooth scroll works for any scrollable element. It is on by defualt, to turn it off as below:
 
     settings.smoothScroll = false;
+
+## Session management
+
+To create session in Chrome with Surfingkeys will save URLs for all tabs, and to open a session will open all the URLs of the session in different tab, so basically a session is a list of URLs, which has a name.
+
+`ZZ` will save all current tabs into a session named `LAST` then quit.
+`ZR` will restore the session named `LAST`.
+`ZQ` will just quit.
+
+You can create multiple sessions with different names in command mode. Press `:` to open omnibar for commands, then input:
+
+    createSession works
+
+Surfingkeys will create a session named `works` for you, to open the session with command input as:
+
+    openSession works
+
+To list all your saved sessions:
+
+    listSession
+
+To delete a session:
+
+    deleteSession works
+
+## Hotkey to toggle Surfingkeys
+
+By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change page-wise hotkey, use settings below:
+
+    Events.hotKey = 'i'; // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
 
 ## Edit your own settings
 

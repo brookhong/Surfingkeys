@@ -66,6 +66,7 @@ var Omnibar = (function(ui) {
 
 
     self.input = ui.find('input');
+    Events.excludeNode(self.input[0]);
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
     self.input.on('input', function() {

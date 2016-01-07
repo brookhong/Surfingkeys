@@ -30,6 +30,7 @@ var Find = (function() {
     var self = {};
 
     var input = $('<input id="sk_find"/>');
+    Events.excludeNode(input[0]);
     var historyInc;
     function reset() {
         input.val('');

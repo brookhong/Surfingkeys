@@ -263,19 +263,17 @@ var Normal = (function() {
             } else {
                 if (this.map_node.meta.length) {
                     var code = this.map_node.meta[0].code;
-                    if (typeof(code) === 'function') {
-                        if (this.map_node.meta[0].extra_chars) {
-                            this.pendingMap = code;
-                            runtime.frontendCommand({
-                                action: 'showKeystroke',
-                                key: key
-                            });
-                        } else {
-                            setTimeout(function() {
-                                code();
-                                finish();
-                            }, 0);
-                        }
+                    if (this.map_node.meta[0].extra_chars) {
+                        this.pendingMap = code;
+                        runtime.frontendCommand({
+                            action: 'showKeystroke',
+                            key: key
+                        });
+                    } else {
+                        setTimeout(function() {
+                            code();
+                            finish();
+                        }, 0);
                     }
                 } else {
                     runtime.frontendCommand({
@@ -348,10 +346,6 @@ var Normal = (function() {
         RUNTIME('moveTab', {
             position: pos
         });
-    };
-
-    self.isBlacklisted = function() {
-        return runtime.settings.blacklist[window.location.origin] || runtime.settings.blacklist['.*'];
     };
 
     return self;

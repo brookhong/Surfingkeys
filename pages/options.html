@@ -1,30 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-IEyDiO8TXtsBMq3I9XCWOU3uKIzfaYrG0wadlusuMsk='">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-lDGRdKgKO0PWPM8gzds75c6s6+XVZP1t+dfFrPEbXyk='">
         <meta charset="UTF-8">
         <title>Surfingkeys Settings</title>
         <link rel="stylesheet" href="../content_scripts/content_scripts.css">
+        <script src="../libs/ace/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="../libs/jquery.min.js"></script>
         <script src="../libs/trie.js"></script>
         <script src="../content_scripts/utils.js"></script>
         <style>
+.ace_editor {
+    display: inline-block;
+}
 #mappings_container {
     font-size: 0;
+    width: 100%;
 }
 textarea {
     display: inline-block;
-    padding: 0px;
-}
-#mappings, #defaultMappings {
-    margin: 8px 0px;
-    border: none;
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-}
-#defaultMappings {
-    display: none;
-    background: #eee;
+    box-sizing: border-box;
+    padding-left: 5px;
 }
 #save_container {
     float: right;
@@ -71,29 +67,17 @@ textarea {
             <input id="save_button" value="Save" type="button">
             <input id="reset_button" value="Reset" type="button">
         </div>
+        <div style="width: 100%;height: 1px;display: inline-block;"></div>
         <div id='mappings_container'>
-            <textarea id="defaultMappings" readonly=true></textarea>
-            <textarea id="mappings">
-// an example to create a new mapping `ctrl-y`
-mapkey('c-y', 'Show me the money', function() {
-    alert('a well-known phrase uttered by characters in the 1996 film Jerry Maguire');
-});
-
-// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.
-map('?', 'u');
-
-// an example to remove mapkey `c-i`
-unmap('c-i');
-
-// click `Save` button to make above settings to take effect.
-            </textarea>
+            <div id="defaultMappings"></div>
+            <div id="mappings"></div>
         </div>
-        <script src="options.js"></script>
         <script src="../content_scripts/runtime.js"></script>
         <script src="../content_scripts/normal.js"></script>
         <script src="../content_scripts/visual.js"></script>
         <script src="../content_scripts/hints.js"></script>
         <script src="../content_scripts/events.js"></script>
+        <script src="options.js"></script>
         <script src="../content_scripts/content_scripts.js"></script>
         <script src="../content_scripts/top.js"></script>
         <script src="default.js"></script>

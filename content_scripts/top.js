@@ -50,16 +50,7 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
         });
     };
     runtime.runtime_handlers['toggleBlacklist'] = function(msg, sender, response) {
-        if (runtime.settings.blacklist.hasOwnProperty(msg.origin)) {
-            delete runtime.settings.blacklist[msg.origin];
-        } else {
-            runtime.settings.blacklist[msg.origin] = 1;
-        }
-        RUNTIME('updateSettings', {
-            settings: {
-                blacklist: runtime.settings.blacklist
-            }
-        });
+        Events.toggleBlacklist(msg.origin);
         response({
             "all": runtime.settings.blacklist.hasOwnProperty('.*'),
             "this": runtime.settings.blacklist.hasOwnProperty(window.location.origin),
@@ -69,7 +60,7 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 
     runtime.command({
         action: 'setSurfingkeysIcon',
-        status: Normal.isBlacklisted()
+        status: Events.isBlacklisted()
     });
 });
 

@@ -162,9 +162,7 @@ runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
     }
 };
 $(document).on('surfingkeys:settingsApplied', function(e) {
-    if (!Normal.isBlacklisted()) {
-        Events.addListeners();
-    }
+    Events.resetListeners();
 });
 
 if (runtime && runtime.settings) {
