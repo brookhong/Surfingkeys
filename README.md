@@ -137,9 +137,9 @@ Smooth scroll works for any scrollable element. It is on by defualt, to turn it 
 
 To create session in Chrome with Surfingkeys will save URLs for all tabs, and to open a session will open all the URLs of the session in different tab, so basically a session is a list of URLs, which has a name.
 
-`ZZ` will save all current tabs into a session named `LAST` then quit.
-`ZR` will restore the session named `LAST`.
-`ZQ` will just quit.
+* `ZZ` will save all current tabs into a session named `LAST` then quit.
+* `ZR` will restore the session named `LAST`.
+* `ZQ` will just quit.
 
 You can create multiple sessions with different names in command mode. Press `:` to open omnibar for commands, then input:
 
@@ -159,7 +159,7 @@ To delete a session:
 
 ## Hotkey to toggle Surfingkeys
 
-By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change page-wise hotkey, use settings below:
+By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
 
     Events.hotKey = 'i'; // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
 
@@ -239,6 +239,10 @@ works like
 
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
+
+### Settings with key mappings like vimium
+
+If you're keen to key mappings of vimium, you may like [settings from yech1990@](https://gist.github.com/yech1990/eacfec43ad82f448d111).
 
 ## License
 

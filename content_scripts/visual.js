@@ -373,6 +373,10 @@ var Visual = (function() {
             } else {
                 updated = _handleMapKey(key);
             }
+        } else {
+            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+                showStatus(-1, "");
+            }
         }
         return updated;
     };

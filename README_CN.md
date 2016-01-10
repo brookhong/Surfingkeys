@@ -25,6 +25,7 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * 在visual mode下，按`*` 可以搜索当前单词。
 * 滚动操作（像`e` `d`上下翻页之类）可以在顶层页面工作，也可以在一个支持滚动的DIV中使用。
 * 在一个有多个frame的页面中，`w`可以切换frame。
+* 会话管理。
 
 ## 快速上手
 安装本插件以后，打开你要访问的站点。先按`u`或者`Ctrl-i`看看帮助信息，按`Esc`可以关掉帮助信息。
@@ -129,6 +130,36 @@ Surfingkeys目前只有两种模式。
 
     settings.smoothScroll = false;
 
+## 会话管理
+
+用Surfingkeys在Chrome里保存会话相当于保存所有标签页的地址，打开会话则相当于在不同的标签页中打开所有保存其中的网页地址，所以会话基本上就是一个网页地址列表，每个会话有自己的名字。
+
+* `ZZ`会保存所有当前标签页到一个名为`LAST`的会话，然后退出。
+* `ZR`恢复名为`LAST`的会话。
+* `ZQ`就只退出，不保存当前会话。
+
+你可以在命令模式下创建／管理多个不同名称的会话。按`:`打开命令窗口，然后输入:
+
+    createSession works
+
+就会创建一个名为`works`的会话，要打开该会话使用如下命令：
+
+    openSession works
+
+列出已保存的所有会话：
+
+    listSession
+
+删除某个会话：
+
+    deleteSession works
+
+## 开关热键
+
+默认情况下，按`alt-s`可以在当前页开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
+
+    Events.hotKey = 'i'; // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
+
 ## 配置参考
 
 ### 添加一个按键映射
@@ -205,6 +236,10 @@ Surfingkeys目前只有两种模式。
 
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
+
+### 按键与vimium保持一致的设置
+
+如果你曾经是vimium用户，并且已经习惯了vimium的按键，可以试试[yech1990@分享的设置](https://gist.github.com/yech1990/eacfec43ad82f448d111)。
 
 ## License
 
