@@ -83,6 +83,7 @@ mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', 'Restore closed tab', 'RUNTIME("openLast")');
 mapkey('m', 'Add current URL to vim-like marks', Normal.addVIMark, 1);
 mapkey("'", 'Jump to vim-like mark', Normal.jumpVIMark, 1);
+mapkey('M', 'Move current tab to position #number', Normal.moveTab, 1);
 mapkey('n', 'Next found text', 'Visual.next(false)');
 mapkey('N', 'Previous found text', 'Visual.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');

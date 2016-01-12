@@ -4,15 +4,25 @@ var frontendFrame = (function() {
         actions: {}
     };
     var uiHost = document.createElement("div");
-    uiHost.createShadowRoot();
-    var sk_style = document.createElement("style");
-    sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
-    uiHost.shadowRoot.appendChild(sk_style);
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
-    ifr.appendTo(uiHost.shadowRoot);
 
-    document.lastElementChild.appendChild(uiHost);
+    self.create = function() {
+        uiHost.createShadowRoot();
+        var sk_style = document.createElement("style");
+        sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
+        uiHost.shadowRoot.appendChild(sk_style);
+        ifr.appendTo(uiHost.shadowRoot);
+        ifr[0].addEventListener("load", function() {
+            this.contentWindow.postMessage({
+                action: 'initPort',
+                from: 'top'
+            }, frontEndURL, [channel.port2]);
+            self.contentWindow = this.contentWindow;
+        }, false);
+
+        document.body.appendChild(uiHost);
+    };
 
     var channel = new MessageChannel();
     channel.port1.onmessage = function(message) {
@@ -29,14 +39,6 @@ var frontendFrame = (function() {
             uiHost.blur();
         }
     };
-
-    ifr[0].addEventListener("load", function() {
-        this.contentWindow.postMessage({
-            action: 'initPort',
-            from: 'top'
-        }, frontEndURL, [channel.port2]);
-        self.contentWindow = this.contentWindow;
-    }, false);
 
     return self;
 })();
@@ -65,6 +67,7 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', function(e) {
+    frontendFrame.create();
     setTimeout(function() {
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
