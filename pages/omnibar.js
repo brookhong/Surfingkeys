@@ -2,7 +2,6 @@ var Omnibar = (function(ui) {
     var self = {};
     var handlers = {};
 
-    self.searchAliases = {};
     self.miniQuery = {};
 
     var lastInput, handler, lastHandler = null;
@@ -10,25 +9,12 @@ var Omnibar = (function(ui) {
         self.input[0].focus();
     });
 
-    function scrollIntoView() {
-        var start = self.resultsDiv.position().top;
-        var end = start + self.resultsDiv.outerHeight();
-        var fi = self.resultsDiv.find('li.focused');
-        var pos = fi.position();
-        if (pos && (pos.top < start || (pos.top + fi.outerHeight()) > end)) {
-            var pos = fi.offset().top - self.resultsDiv.find('>ul').offset().top;
-            self.resultsDiv.animate({
-                scrollTop: pos
-            }, 100);
-        }
-    }
-
     function expandAlias(alias) {
         var eaten = false;
-        if (!lastHandler && alias.length && self.searchAliases.hasOwnProperty(alias)) {
+        if (lastHandler !== SearchEngine && alias.length && SearchEngine.aliases.hasOwnProperty(alias)) {
             lastHandler = handler;
             handler = SearchEngine;
-            $.extend(SearchEngine, self.searchAliases[alias]);
+            $.extend(SearchEngine, SearchEngine.aliases[alias]);
             self.resultsDiv.html("");
             self.promptSpan.html(handler.prompt)
             self.input.val('');
@@ -57,7 +43,7 @@ var Omnibar = (function(ui) {
             if (self.focusedItem < total) {
                 self.resultsDiv.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
                 handler.onTabKey && handler.onTabKey(self.focusedItem);
-                scrollIntoView();
+                self.scrollIntoView();
             } else {
                 self.input.val(lastInput);
             }
@@ -92,6 +78,18 @@ var Omnibar = (function(ui) {
         }
     };
 
+    self.scrollIntoView = function() {
+        var start = self.resultsDiv.position().top;
+        var end = start + self.resultsDiv.outerHeight();
+        var fi = self.resultsDiv.find('li.focused');
+        var pos = fi.position();
+        if (pos && (pos.top < start || (pos.top + fi.outerHeight()) > end)) {
+            var pos = fi.offset().top - self.resultsDiv.find('>ul').offset().top;
+            self.resultsDiv.animate({
+                scrollTop: pos
+            }, 100);
+        }
+    };
 
     self.listBookmark = function(items, showFolder) {
         self.listResults(items, function(b) {
@@ -111,13 +109,11 @@ var Omnibar = (function(ui) {
     ui.onShow = function(args) {
         handler = handlers[args.type];
         self.input[0].focus();
-        if (handler === SearchEngine && self.searchAliases.hasOwnProperty(args.extra)) {
-            $.extend(SearchEngine, self.searchAliases[args.extra]);
-            lastHandler = SearchEngine;
-        }
+        handler.onOpen && handler.onOpen(args.extra);
+        lastHandler = handler;
         handler = handler;
         self.promptSpan.html(handler.prompt)
-        handler.onOpen && handler.onOpen();
+        ui[0].scrollTop = 0;
     };
 
     ui.onHide = function() {
@@ -289,12 +285,78 @@ var OpenBookmarks = (function() {
             });
         }
         Omnibar.listBookmark(items, true);
-        scrollIntoView();
+        Omnibar.scrollIntoView();
     };
 
     return self;
 })();
 Omnibar.addHandler('Bookmarks', OpenBookmarks);
+
+var AddBookmark = (function() {
+    var self = {
+        prompt: 'add bookmark≫'
+    };
+
+    self.onOpen = function(arg) {
+        self.page = arg;
+        runtime.command({
+            action: 'getBookmarkFolders',
+        }, self.onResponse);
+    };
+
+    self.onClose = function() {
+        Omnibar.focusedItem = 0;
+    };
+
+    var selectedFolder;
+    self.onTabKey = function() {
+        selectedFolder = Omnibar.resultsDiv.find('li.focused').data('folder');
+        Omnibar.input.val(selectedFolder.title);
+    };
+
+    self.onEnter = function() {
+        var path = Omnibar.input.val().replace(selectedFolder.title,"").split('/');
+        var title = path.pop();
+        if (title.length) {
+            self.page.title = title;
+        }
+        if (path.length) {
+            self.page.path = path;
+        } else {
+            self.page.path = [];
+        }
+        self.page.folder = selectedFolder.id;
+        runtime.command({
+            action: 'createBookmark',
+            page: self.page
+        }, function(response) {
+            Normal.showBanner("Bookmark created at {0}.".format(selectedFolder.title + self.page.path.join('/')));
+        });
+        return true;
+    };
+
+    var folders;
+    self.onInput = function() {
+        var query = $(this).val();
+        var matches = folders.filter(function(b) {
+            return b.title.indexOf(query) !== -1;
+        });
+        Omnibar.listResults(matches, function(f) {
+            return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
+        });
+    };
+    self.onResponse = function(response) {
+        folders = response.folders;
+        selectedFolder = folders[0];
+        Omnibar.listResults(folders, function(f) {
+            return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
+        });
+        Omnibar.scrollIntoView();
+    };
+
+    return self;
+})();
+Omnibar.addHandler('AddBookmark', AddBookmark);
 
 var OpenHistory = (function() {
     var self = {
@@ -400,7 +462,11 @@ Omnibar.addHandler('VIMarks', OpenVIMarks);
 
 var SearchEngine = (function() {
     var self = {};
+    self.aliases = {};
 
+    self.onOpen = function(arg) {
+        $.extend(self, self.aliases[arg]);
+    };
     self.onClose = function() {
         self.prompt = undefined;
         self.url = undefined;

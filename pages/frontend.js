@@ -16,7 +16,7 @@ function command(cmd, annotation, jscode) {
 };
 
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
-    Omnibar.searchAliases[alias] = {
+    SearchEngine.aliases[alias] = {
         prompt: prompt + "≫",
         url: url,
         suggestionURL: suggestionURL,

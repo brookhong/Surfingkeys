@@ -42,6 +42,13 @@ mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', 'Open an URLs', 'Normal.openOmnibar({type: "URLs"})');
 mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(({type: "Bookmarks"}))');
+mapkey('ab', 'Bookmark current page to selected folder', function() {
+    var page = {
+        url: window.location.href,
+        title: document.title
+    };
+    Normal.openOmnibar(({type: "AddBookmark", extra: page}));
+});
 mapkey('oh', 'Open URL from history', 'Normal.openOmnibar({type: "History"})');
 mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar({type: "VIMarks"})');
 mapkey(':', 'Open commands', 'Normal.openOmnibar({type: "Commands"})');

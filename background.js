@@ -47,6 +47,40 @@ var Service = (function() {
         }
     }
 
+    var bookmarkFolders = [];
+    function getFolders(tree, root) {
+        var cd = root;
+        if (tree.title !== "" && !tree.hasOwnProperty('url')) {
+            cd += "/" + tree.title;
+            bookmarkFolders.push({id: tree.id, title: cd + "/"});
+        }
+        if (tree.hasOwnProperty('children')) {
+            for (var i = 0; i < tree.children.length; ++i) {
+                getFolders(tree.children[i], cd);
+            }
+        }
+    }
+
+    function createBookmark(page, onCreated) {
+        if (page.path.length) {
+            chrome.bookmarks.create({
+                'parentId': page.folder,
+                'title': page.path.shift()
+            }, function(newFolder) {
+                page.folder = newFolder.id;
+                createBookmark(page, onCreated);
+            });
+        } else {
+            chrome.bookmarks.create({
+                'parentId': page.folder,
+                'title': page.title,
+                'url': page.url
+            }, function(ret) {
+                onCreated(ret);
+            });
+        }
+    }
+
     chrome.storage.local.get(null, function(data) {
         if (!data.version || parseFloat(data.version) < 0.11) {
             if (JSON.stringify(data) !== '{}') {
@@ -310,6 +344,26 @@ var Service = (function() {
         for (var i = 0; i < message.repeats; i++) {
             chrome.tabs.duplicate(sender.tab.id);
         }
+    };
+    self.getBookmarkFolders = function(message, sender, sendResponse) {
+        chrome.bookmarks.getTree(function(tree) {
+            bookmarkFolders = [];
+            getFolders(tree[0], "");
+            sendResponse({
+                action: message.action,
+                id: message.id,
+                folders: bookmarkFolders
+            });
+        });
+    };
+    self.createBookmark = function(message, sender, sendResponse) {
+        createBookmark(message.page, function(ret) {
+            sendResponse({
+                action: message.action,
+                id: message.id,
+                bookmark: ret
+            });
+        });
     };
     self.getBookmarks = function(message, sender, sendResponse) {
         if (message.parentId) {
