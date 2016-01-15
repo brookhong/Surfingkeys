@@ -67,8 +67,10 @@ var Visual = (function() {
         code: function() {
             var pos = [selection.anchorNode, selection.anchorOffset];
             Normal.writeClipboard(selection.toString());
-            selection.setPosition(pos[0], pos[1]);
-            showCursor();
+            if (runtime.settings.afterYank === 1) {
+                selection.setPosition(pos[0], pos[1]);
+                showCursor();
+            }
         }
     });
     self.mappings.add("*", {

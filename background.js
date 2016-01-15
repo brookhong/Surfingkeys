@@ -25,6 +25,7 @@ var Service = (function() {
         snippets: "",
         sessions: {},
         newTabPosition: 'right',
+        afterYank: 1,
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
