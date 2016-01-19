@@ -621,5 +621,10 @@ var Service = (function() {
         });
     };
 
+    self.closeDownloadsShelf = function(message, sender, sendResponse) {
+        chrome.downloads.setShelfEnabled(false);
+        chrome.downloads.setShelfEnabled(true);
+    };
+
     return self;
 })();
