@@ -109,6 +109,7 @@ var Omnibar = (function(ui) {
     ui.onShow = function(args) {
         handler = handlers[args.type];
         self.input[0].focus();
+        self.focusedItem = 0;
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
@@ -126,42 +127,24 @@ var Omnibar = (function(ui) {
     };
 
     self.openFocused = function() {
-        var ret = false,
-            fi = self.resultsDiv.find('li.focused');
-        var folderId = fi.data('folderId');
-        if (folderId) {
-            this.inFolder.push({
-                prompt: this.prompt,
-                folderId: this.folderId,
-                focusedItem: self.focusedItem
-            });
-            this.prompt = fi.data('folder_name') + "≫";
-            self.promptSpan.html(this.prompt)
-            self.input.val('');
-            this.folderId = folderId;
-            runtime.command({
-                action: 'getBookmarks',
-                parentId: this.folderId
-            }, OpenBookmarks.onResponse);
+        var ret = false, fi = self.resultsDiv.find('li.focused');
+        var url = fi.find('div.url').data('url');
+        if (/^javascript:/.test(url)) {
+            window.location.href = url;
         } else {
-            var url = fi.find('div.url').data('url');
-            if (/^javascript:/.test(url)) {
-                window.location.href = url;
-            } else {
-                if (url && url.length) {
-                    runtime.command({
-                        action: "openLink",
-                        tab: {
-                            tabbed: true,
-                            active: this.activeTab
-                        },
-                        url: url,
-                        repeats: 1
-                    });
-                }
+            if (url && url.length) {
+                runtime.command({
+                    action: "openLink",
+                    tab: {
+                        tabbed: true,
+                        active: this.activeTab
+                    },
+                    url: url,
+                    repeats: 1
+                });
             }
-            ret = this.activeTab;
         }
+        ret = this.activeTab;
         return ret;
     };
 
@@ -228,6 +211,30 @@ var OpenBookmarks = (function() {
         eaten = true;
     }
 
+    self.onEnter = function() {
+        var ret = false,
+            fi = Omnibar.resultsDiv.find('li.focused');
+        var folderId = fi.data('folderId');
+        if (folderId) {
+            self.inFolder.push({
+                prompt: self.prompt,
+                folderId: currentFolderId,
+                focusedItem: Omnibar.focusedItem
+            });
+            self.prompt = fi.data('folder_name') + "≫";
+            Omnibar.promptSpan.html(self.prompt)
+            Omnibar.input.val('');
+            currentFolderId = folderId;
+            Omnibar.focusedItem = 0;
+            runtime.command({
+                action: 'getBookmarks',
+                parentId: currentFolderId
+            }, OpenBookmarks.onResponse);
+        } else {
+            Omnibar.openFocused.call(self);
+        }
+        return ret;
+    };
 
     self.onOpen = function() {
         runtime.command({
@@ -241,8 +248,6 @@ var OpenBookmarks = (function() {
         currentFolderId = undefined;
         Omnibar.focusedItem = 0;
     };
-
-    self.onEnter = Omnibar.openFocused.bind(self);
 
     self.onKeydown = function(event) {
         var eaten = false;
@@ -539,9 +544,12 @@ var Commands = (function() {
         var candidates = Object.keys(self.items).filter(function(c) {
             return cmd === "" || c.indexOf(cmd) !== -1;
         });
-        Omnibar.listResults(candidates, function(c) {
-            return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, self.items[c].annotation));
-        });
+        if (candidates.length) {
+            Omnibar.listResults(candidates, function(c) {
+                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
+            });
+            Omnibar.input.val(candidates[0]);
+        }
     };
     self.onInput = self.onOpen;
     self.onTabKey = function() {
