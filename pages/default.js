@@ -1,3 +1,36 @@
+mapkey('cp', 'Proxy this site', function() {
+    var host = window.location.host.replace(/:\d+/,'');
+    if (host && host.length) {
+        RUNTIME('updateProxy', {
+            host: host
+        });
+    }
+});
+command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
+    var proxy = (type || "PROXY") + " " + endpoint;
+    RUNTIME('updateProxy', {
+        proxy: proxy
+    });
+    return true;
+});
+command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+    RUNTIME('updateProxy', {
+        mode: mode
+    });
+    return true;
+});
+command('proxySite', 'proxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
+    RUNTIME('updateProxy', {
+        host: host
+    });
+    return true;
+});
+command('proxyInfo', 'show proxy info', function() {
+    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ];
+    Omnibar.listResults(infos, function(s) {
+        return $('<li/>').html(s.name + ": " + s.value);
+    });
+});
 mapkey('ZQ', 'Quit', function() {
     RUNTIME('quit');
 });
@@ -142,7 +175,6 @@ mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar({type: "SearchEngin
 mapkey('ow', 'Open Search with alias w', 'Normal.openOmnibar({type: "SearchEngine", extra: "w"})');
 mapkey('on', 'Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
 mapkey('gb', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
-mapkey('gj', 'Open Chrome Bookmarks', 'tabOpenLink("chrome://chrome/settings/contentExceptions#javascript")');
 mapkey('gc', 'Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
 mapkey('gd', 'Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
 mapkey('gh', 'Open Chrome History', 'tabOpenLink("chrome://history/")');

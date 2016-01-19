@@ -8,6 +8,9 @@ var frontendFrame = (function() {
     var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
 
     self.create = function() {
+        if (self.ready) {
+            return;
+        }
         uiHost.createShadowRoot();
         var sk_style = document.createElement("style");
         sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
@@ -22,6 +25,7 @@ var frontendFrame = (function() {
         }, false);
 
         document.body.appendChild(uiHost);
+        self.ready = true;
     };
 
     var channel = new MessageChannel();
@@ -67,7 +71,6 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', function(e) {
-    frontendFrame.create();
     setTimeout(function() {
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
@@ -77,6 +80,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     }, 0);
 });
+function createFrontEnd(event) {
+    if (frontendFrame.ready) {
+        window.removeEventListener('keydown', createFrontEnd, true);
+    } else if (document.body) {
+        frontendFrame.create();
+        window.removeEventListener('keydown', createFrontEnd, true);
+    }
+}
+window.addEventListener('keydown', createFrontEnd, true);
 
 function prepareFrames() {
     var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {

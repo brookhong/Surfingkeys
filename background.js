@@ -26,6 +26,9 @@ var Service = (function() {
         sessions: {},
         newTabPosition: 'right',
         afterYank: 1,
+        autoproxy_hosts: {},
+        proxyMode: 'byhost',
+        proxy: "DIRECT",
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
@@ -119,12 +122,17 @@ var Service = (function() {
                 _message.repeats = _message.repeats || 1;
                 self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
-                frontEndPorts[_sender.tab.id].postMessage(_message);
-                if (_message.action === 'openFinder') {
-                    contentPorts[_sender.tab.id] = _port;
-                }
-                if (_message.ack) {
-                    onResponseById[_message.id] = _sendResponse;
+                try {
+                    frontEndPorts[_sender.tab.id].postMessage(_message);
+                    if (_message.action === 'openFinder') {
+                        contentPorts[_sender.tab.id] = _port;
+                    }
+                    if (_message.ack) {
+                        onResponseById[_message.id] = _sendResponse;
+                    }
+                } catch (e) {
+                    _message.error = e.toString();
+                    _sendResponse(_message);
                 }
             } else if (_message.toContent) {
                 contentPorts[_sender.tab.id].postMessage(_message);
@@ -201,10 +209,11 @@ var Service = (function() {
         historyTabAction = false;
     });
 
-    function _updateSettings() {
-        chrome.storage.local.set(settings);
+    function _updateSettings(diffSettings) {
+        var toSet = diffSettings || settings;
+        chrome.storage.local.set(toSet);
         if (settings.storage === 'sync') {
-            chrome.storage.sync.set(settings, function() {
+            chrome.storage.sync.set(toSet, function() {
                 if (chrome.runtime.lastError) {
                     console.log(chrome.runtime.lastError);
                 }
@@ -570,7 +579,7 @@ var Service = (function() {
                 }
             }
             settings.sessions[message.name]['tabs'] = tabg;
-            chrome.storage.local.set({
+            _updateSettings({
                 sessions: settings.sessions
             });
         });
@@ -616,8 +625,55 @@ var Service = (function() {
     };
     self.deleteSession = function(message, sender, sendResponse) {
         delete settings.sessions[message.name];
-        chrome.storage.local.set({
+        _updateSettings({
             sessions: settings.sessions
+        });
+    };
+
+    function FindProxyForURL(url, host) {
+        var lastPos;
+        if (sk_mode === "always") {
+            return sk_proxy;
+        } else if (sk_mode === "direct") {
+            return 'DIRECT';
+        }
+        do {
+            if (proxied_hosts.hasOwnProperty(host)) {
+                return sk_proxy;
+            }
+            lastPos = host.indexOf('.') + 1;
+            host = host.slice(lastPos);
+        } while (lastPos >= 1);
+        return 'DIRECT';
+    }
+    self.updateProxy = function(message, sender, sendResponse) {
+        if (message.proxy) {
+            settings.proxy = message.proxy;
+        }
+        if (message.mode) {
+            settings.proxyMode = message.mode;
+        }
+        if (message.host) {
+            message.host.split(',').forEach(function(host) {
+                if (settings.autoproxy_hosts.hasOwnProperty(host)) {
+                    delete settings.autoproxy_hosts[host];
+                } else {
+                    settings.autoproxy_hosts[host] = 1;
+                }
+            });
+        }
+        _updateSettings({
+            autoproxy_hosts: settings.autoproxy_hosts,
+            proxyMode: settings.proxyMode,
+            proxy: settings.proxy
+        });
+        var config = {
+            mode: 'pac_script',
+            pacScript: {
+                data: "var proxied_hosts = " + JSON.stringify(settings.autoproxy_hosts) + ", sk_mode = '" + settings.proxyMode + "', sk_proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+            }
+        };
+        chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
         });
     };
 
