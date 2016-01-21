@@ -643,6 +643,11 @@ var Service = (function() {
         chrome.downloads.setShelfEnabled(true);
     };
 
+    self.closeDownloadsShelf = function(message, sender, sendResponse) {
+        chrome.downloads.setShelfEnabled(false);
+        chrome.downloads.setShelfEnabled(true);
+    };
+
     function FindProxyForURL(url, host) {
         var lastPos;
         if (sk_mode === "always") {
