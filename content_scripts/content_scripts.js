@@ -140,6 +140,10 @@ function applySettings() {
         settings = runtime.settings;
         var F = new Function(theInstructions);
         F();
+        RUNTIME('updateSettings', {
+            noack: true,
+            settings: settings
+        });
     } catch (e) {
         console.log(e);
         runtime.command({

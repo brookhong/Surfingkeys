@@ -49,7 +49,10 @@ var runtime = window.runtime || (function() {
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';
         var list = self.settings[prop];
-        if (cmd !== list[0]) {
+        if (cmd.length) {
+            list = list.filter(function(c) {
+                return c.length && c !== cmd;
+            });
             list.unshift(cmd);
             if (list.length > 50) {
                 list.pop();

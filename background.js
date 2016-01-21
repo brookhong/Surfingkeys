@@ -106,16 +106,6 @@ var Service = (function() {
         }
     });
 
-    chrome.commands.onCommand.addListener(function(command) {
-        switch (command) {
-            case 'restartext':
-                chrome.runtime.reload();
-                break;
-            default:
-                break;
-        }
-    });
-
     function handleMessage(_message, _sender, _sendResponse, _port) {
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
@@ -131,8 +121,9 @@ var Service = (function() {
                         onResponseById[_message.id] = _sendResponse;
                     }
                 } catch (e) {
-                    _message.error = e.toString();
-                    _sendResponse(_message);
+                    chrome.tabs.executeScript(_sender.tab.id, {
+                        code: "createFrontEnd()"
+                    });
                 }
             } else if (_message.toContent) {
                 contentPorts[_sender.tab.id].postMessage(_message);
@@ -147,36 +138,6 @@ var Service = (function() {
                 var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
                 console.log(type + JSON.stringify(_message))
             }
-        }
-    }
-    chrome.runtime.onMessage.addListener(handleMessage);
-    chrome.extension.onConnect.addListener(function(port) {
-        var sender = port.sender;
-        if (sender.url === frontEndURL) {
-            frontEndPorts[sender.tab.id] = port;
-        }
-        activePorts.push(port);
-        port.postMessage({
-            action: 'initSettings',
-            settings: settings,
-            extension_id: chrome.i18n.getMessage("@@extension_id")
-        });
-        port.onMessage.addListener(function(message) {
-            return handleMessage(message, port.sender, port.postMessage.bind(port), port);
-        });
-        port.onDisconnect.addListener(function() {
-            for (var i = 0; i < activePorts.length; i++) {
-                if (activePorts[i] === port) {
-                    activePorts.splice(i, 1);
-                    break;
-                }
-            }
-        });
-    });
-
-    function unRegisterFrame(tabId) {
-        if (frameIncs.hasOwnProperty(tabId)) {
-            delete frameIncs[tabId];
         }
     }
 
@@ -208,8 +169,54 @@ var Service = (function() {
         tabActivated[activeInfo.tabId] = new Date().getTime();
         historyTabAction = false;
     });
+    chrome.commands.onCommand.addListener(function(command) {
+        switch (command) {
+            case 'restartext':
+                chrome.runtime.reload();
+                break;
+            default:
+                break;
+        }
+    });
+    chrome.runtime.onMessage.addListener(handleMessage);
+    chrome.extension.onConnect.addListener(function(port) {
+        var sender = port.sender;
+        if (sender.url === frontEndURL) {
+            frontEndPorts[sender.tab.id] = port;
+        }
+        activePorts.push(port);
+        port.postMessage({
+            action: 'initSettings',
+            settings: settings,
+            extension_id: chrome.i18n.getMessage("@@extension_id")
+        });
+        port.onMessage.addListener(function(message) {
+            return handleMessage(message, port.sender, port.postMessage.bind(port), port);
+        });
+        port.onDisconnect.addListener(function() {
+            for (var i = 0; i < activePorts.length; i++) {
+                if (activePorts[i] === port) {
+                    activePorts.splice(i, 1);
+                    break;
+                }
+            }
+        });
+    });
+    chrome.webRequest.onErrorOccurred.addListener(
+        function(details) {
+            console.log(details);
+        }, {
+            urls: ["<all_urls>"]
+        }
+    );
 
-    function _updateSettings(diffSettings) {
+    function unRegisterFrame(tabId) {
+        if (frameIncs.hasOwnProperty(tabId)) {
+            delete frameIncs[tabId];
+        }
+    }
+
+    function _updateSettings(diffSettings, noack) {
         var toSet = diffSettings || settings;
         chrome.storage.local.set(toSet);
         if (settings.storage === 'sync') {
@@ -219,12 +226,14 @@ var Service = (function() {
                 }
             });
         }
-        activePorts.forEach(function(port) {
-            port.postMessage({
-                action: 'settingsUpdated',
-                settings: settings
+        if (!noack) {
+            activePorts.forEach(function(port) {
+                port.postMessage({
+                    action: 'settingsUpdated',
+                    settings: settings
+                });
             });
-        });
+        }
     }
 
     function _loadSettingsFromUrl(url) {
@@ -491,7 +500,7 @@ var Service = (function() {
     };
     self.updateSettings = function(message, sender, sendResponse) {
         extendSettings(message.settings);
-        _updateSettings();
+        _updateSettings(undefined, message.noack);
     };
     self.changeSettingsStorage = function(message, sender, sendResponse) {
         settings.storage = message.storage;
@@ -628,6 +637,10 @@ var Service = (function() {
         _updateSettings({
             sessions: settings.sessions
         });
+    };
+    self.closeDownloadsShelf = function(message, sender, sendResponse) {
+        chrome.downloads.setShelfEnabled(false);
+        chrome.downloads.setShelfEnabled(true);
     };
 
     self.closeDownloadsShelf = function(message, sender, sendResponse) {

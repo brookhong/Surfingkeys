@@ -115,6 +115,10 @@ which works same as:
 
     settings.tabsThreshold = 0;
 
+The tabs are displayed in MRU order by default, either in omnibar or overlay. If you want them in natural order, use:
+
+    settings.tabsMRUOrder = false;
+
 ## Commands
 
 `:` to open omnibar for commands, then you can execute any pre-defined or customized command there. The result will be displayed below the omnibar. To create your own command as below:
