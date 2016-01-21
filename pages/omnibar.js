@@ -540,18 +540,27 @@ var Commands = (function() {
 
     self.onOpen = function() {
         historyInc = -1;
+        var candidates = runtime.settings.cmdHistory;
+        if (candidates.length) {
+            Omnibar.listResults(candidates, function(c) {
+                return $('<li/>').data('cmd', c).html(c);
+            });
+            Omnibar.focusedItem = 0;
+            Omnibar.input.val(candidates[0]);
+        }
+    };
+    self.onInput = function() {
         var cmd = Omnibar.input.val();
         var candidates = Object.keys(self.items).filter(function(c) {
             return cmd === "" || c.indexOf(cmd) !== -1;
         });
         if (candidates.length) {
+            Omnibar.focusedItem = candidates.length;
             Omnibar.listResults(candidates, function(c) {
                 return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
             });
-            Omnibar.input.val(candidates[0]);
         }
     };
-    self.onInput = self.onOpen;
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li:nth({0})'.format(Omnibar.focusedItem)).data('cmd'));
     };
@@ -570,29 +579,31 @@ var Commands = (function() {
     self.onEnter = function() {
         var ret = false;
         var cmdline = Omnibar.input.val();
-        runtime.updateHistory('cmd', cmdline);
-        var args = parse(cmdline);
-        var cmd = args.shift();
-        if (self.items.hasOwnProperty(cmd)) {
-            var code = self.items[cmd].code;
-            ret = code.apply(code, args);
-        } else {
-            var out;
-            try {
-                var F = new Function("return " + cmdline);
-                out = F();
-            } catch (e) {
-                out = e.toString();
+        if (cmdline.length) {
+            runtime.updateHistory('cmd', cmdline);
+            var args = parse(cmdline);
+            var cmd = args.shift();
+            if (self.items.hasOwnProperty(cmd)) {
+                var code = self.items[cmd].code;
+                ret = code.apply(code, args);
+            } else {
+                var out;
+                try {
+                    var F = new Function("return " + cmdline);
+                    out = F();
+                } catch (e) {
+                    out = e.toString();
+                }
+                if (out !== undefined) {
+                    out = JSON.stringify(out);
+                    out = htmlEncode(out);
+                    Omnibar.listResults([out], function(c) {
+                        return $('<li/>').html(c);
+                    });
+                }
             }
-            if (out !== undefined) {
-                out = JSON.stringify(out);
-                out = htmlEncode(out);
-                Omnibar.listResults([out], function(c) {
-                    return $('<li/>').html(c);
-                });
-            }
+            Omnibar.input.val('');
         }
-        Omnibar.input.val('');
         return ret;
     };
     return self;

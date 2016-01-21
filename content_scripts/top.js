@@ -6,42 +6,39 @@ var frontendFrame = (function() {
     var uiHost = document.createElement("div");
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
+    uiHost.createShadowRoot();
+    var sk_style = document.createElement("style");
+    sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
+    uiHost.shadowRoot.appendChild(sk_style);
+    ifr.appendTo(uiHost.shadowRoot);
 
+    function initPort() {
+        this.contentWindow.postMessage({
+            action: 'initPort',
+            from: 'top'
+        }, frontEndURL, [this.channel.port2]);
+        self.contentWindow = this.contentWindow;
+    }
     self.create = function() {
-        if (self.ready) {
-            return;
-        }
-        uiHost.createShadowRoot();
-        var sk_style = document.createElement("style");
-        sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
-        uiHost.shadowRoot.appendChild(sk_style);
-        ifr.appendTo(uiHost.shadowRoot);
-        ifr[0].addEventListener("load", function() {
-            this.contentWindow.postMessage({
-                action: 'initPort',
-                from: 'top'
-            }, frontEndURL, [channel.port2]);
-            self.contentWindow = this.contentWindow;
-        }, false);
+        ifr[0].channel = new MessageChannel();
+        ifr[0].channel.port1.onmessage = function(message) {
+            var response = message.data;
+            if (self.successById[response.id]) {
+                var f = self.successById[response.id];
+                delete self.successById[response.id];
+                f(response);
+            } else if (self.actions[response.action]) {
+                self.actions[response.action](response);
+            }
+            ifr.css('height', response.frameHeight);
+            if (response.frameHeight === '0px') {
+                uiHost.blur();
+            }
+        };
+        ifr[0].removeEventListener("load", initPort, false);
+        ifr[0].addEventListener("load", initPort, false);
 
         document.body.appendChild(uiHost);
-        self.ready = true;
-    };
-
-    var channel = new MessageChannel();
-    channel.port1.onmessage = function(message) {
-        var response = message.data;
-        if (self.successById[response.id]) {
-            var f = self.successById[response.id];
-            delete self.successById[response.id];
-            f(response);
-        } else if (self.actions[response.action]) {
-            self.actions[response.action](response);
-        }
-        ifr.css('height', response.frameHeight);
-        if (response.frameHeight === '0px') {
-            uiHost.blur();
-        }
     };
 
     return self;
@@ -71,6 +68,7 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', function(e) {
+    createFrontEnd();
     setTimeout(function() {
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
@@ -81,14 +79,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
     }, 0);
 });
 function createFrontEnd(event) {
-    if (frontendFrame.ready) {
-        window.removeEventListener('keydown', createFrontEnd, true);
-    } else if (document.body) {
+    var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
+    if (!frontendReady && document.body) {
         frontendFrame.create();
-        window.removeEventListener('keydown', createFrontEnd, true);
+        frontendReady = true;
     }
+    return frontendReady;
 }
-window.addEventListener('keydown', createFrontEnd, true);
 
 function prepareFrames() {
     var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {

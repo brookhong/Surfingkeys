@@ -24,6 +24,7 @@
     },
     "author": "brook hong",
     "permissions": [
+        "webRequest",
         "proxy",
         "<all_urls>",
         "tabs",
