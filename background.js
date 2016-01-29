@@ -638,10 +638,6 @@ var Service = (function() {
             sessions: settings.sessions
         });
     };
-    self.closeDownloadsShelf = function(message, sender, sendResponse) {
-        chrome.downloads.setShelfEnabled(false);
-        chrome.downloads.setShelfEnabled(true);
-    };
 
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
         chrome.downloads.setShelfEnabled(false);
