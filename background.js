@@ -668,13 +668,15 @@ var Service = (function() {
             settings.proxyMode = message.mode;
         }
         if (message.host) {
-            message.host.split(',').forEach(function(host) {
-                if (settings.autoproxy_hosts.hasOwnProperty(host)) {
-                    delete settings.autoproxy_hosts[host];
-                } else {
+            if (message.operation === "add") {
+                message.host.split(',').forEach(function(host) {
                     settings.autoproxy_hosts[host] = 1;
-                }
-            });
+                });
+            } else {
+                message.host.split(',').forEach(function(host) {
+                    delete settings.autoproxy_hosts[host];
+                });
+            }
         }
         _updateSettings({
             autoproxy_hosts: settings.autoproxy_hosts,

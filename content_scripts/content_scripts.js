@@ -1,10 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-// dummy functions
-function command() {}
+if (typeof(command) === 'undefined') {
+    command = function() {};
+}
 
-function addSearchAlias() {}
-
-////////////////////////////////////////////////////////////////////////////////
+if (typeof(addSearchAlias) === 'undefined') {
+    addSearchAlias = function() {};
+}
 
 RUNTIME = function(action, args) {
     (args = args || {}).action = action;
@@ -79,7 +79,6 @@ function unmap(keystroke, domain) {
     }
 }
 
-
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     mapkey((search_leader_key || 's') + alias, 'Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
@@ -145,11 +144,13 @@ function applySettings() {
             settings: settings
         });
     } catch (e) {
-        console.log(e);
-        runtime.command({
-            action: "resetSettings",
-            useDefault: true
-        });
+        if (window === top) {
+            console.log("reset Settings because of: " + e);
+            runtime.command({
+                action: "resetSettings",
+                useDefault: true
+            });
+        }
     }
     $(document).trigger("surfingkeys:settingsApplied");
 }

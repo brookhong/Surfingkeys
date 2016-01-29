@@ -1,9 +1,15 @@
-mapkey('cp', 'Proxy this site', function() {
+function toggleProxySite(host) {
+    var operation = (settings.autoproxy_hosts.hasOwnProperty(host)) ? 'remove' : 'add';
+    RUNTIME('updateProxy', {
+        host: host,
+        operation: operation
+    });
+    return true;
+}
+mapkey('cp', 'Toggle proxy for current site', function() {
     var host = window.location.host.replace(/:\d+/,'');
     if (host && host.length) {
-        RUNTIME('updateProxy', {
-            host: host
-        });
+        toggleProxySite(host);
     }
 });
 command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
@@ -19,12 +25,21 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
     });
     return true;
 });
-command('proxySite', 'proxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
+command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
     RUNTIME('updateProxy', {
-        host: host
+        host: host,
+        operation: 'add'
     });
     return true;
 });
+command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible directly.', function(host) {
+    RUNTIME('updateProxy', {
+        host: host,
+        operation: 'remove'
+    });
+    return true;
+});
+command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', toggleProxySite);
 command('proxyInfo', 'show proxy info', function() {
     var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ];
     Omnibar.listResults(infos, function(s) {

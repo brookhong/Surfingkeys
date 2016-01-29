@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys_N",
     "short_name": "Map your keys for web surfing",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
         "128": "icons/128.png",

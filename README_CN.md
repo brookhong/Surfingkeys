@@ -112,6 +112,10 @@ Surfingkeys目前只有两种模式。
 
     settings.tabsThreshold = 0;
 
+无论是否在搜索栏里，标签页都按最近使用的顺序列出。如果你希望按标签页原本的顺序列出，可以设置：
+
+    settings.tabsMRUOrder = false;
+
 ## 命令
 
 用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。可以添加你自己的命令如下：
@@ -159,6 +163,29 @@ Surfingkeys目前只有两种模式。
 默认情况下，按`alt-s`可以在当前页开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
 
     Events.hotKey = 'i'; // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
+
+## 代理设置
+
+Surfingkeys提供了一些代理设置相关的命令和一个快捷键。
+
+* setProxy, 设置代理，示例如下：
+
+        setProxy 192.168.1.100:8080
+        setProxy 127.0.0.1:1080 SOCKS5
+
+* setProxyMode, 设置代理模式，有三种模式：direct, byhost, always
+
+        direct      Chrome不使用代理访问任何网站。
+        byhost      Chrome只在访问你通过下面的命令添加的网站时使用代理。
+        always      Chrome使用代理访问所有网站。
+
+* addProxySite, removeProxySite, toggleProxySite, 管理你需要通过代理访问的网站，比如：
+
+        addProxySite google.com,facebook.com,twitter.com
+
+* proxyInfo, 列出你当前的代理设置，包括用以上命令设置的信息。
+
+* `cp`, 切换当前站点的代理设置，即是否使用代理访问当前站点。
 
 ## 配置参考
 
@@ -236,10 +263,6 @@ Surfingkeys目前只有两种模式。
 
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
-
-### 按键与vimium保持一致的设置
-
-如果你曾经是vimium用户，并且已经习惯了vimium的按键，可以试试[yech1990@分享的设置](https://gist.github.com/yech1990/eacfec43ad82f448d111)。
 
 ## License
 

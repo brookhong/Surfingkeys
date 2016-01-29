@@ -167,6 +167,29 @@ By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys i
 
     Events.hotKey = 'i'; // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
 
+## Proxy settings
+
+Surfingkeys provides some commands and a shortcut for you set proxy.
+
+* setProxy, to set proxy, some examples:
+
+        setProxy 192.168.1.100:8080
+        setProxy 127.0.0.1:1080 SOCKS5
+
+* setProxyMode, to set proxy mode, there are three modes: direct, byhost, always
+
+        direct      Chrome will connect to all sites directly.
+        byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
+        always      Chrome will connect to all sites through proxy.
+
+* addProxySite, removeProxySite, toggleProxySite, to make Chrome connect to site through proxy or not, examples:
+
+        addProxySite google.com,facebook.com,twitter.com
+
+* proxyInfo, to list proxy you set by `setProxy`, proxy mode you set by `setProxyMode` and sites you add/remove by `addProxySite`/`removeProxySite`/`toggleProxySite`.
+
+* `cp`, toggle proxy for current site.
+
 ## Edit your own settings
 
 ### Map a keystroke to some action
@@ -243,10 +266,6 @@ works like
 
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
-
-### Settings with key mappings like vimium
-
-If you're keen to key mappings of vimium, you may like [settings from yech1990@](https://gist.github.com/yech1990/eacfec43ad82f448d111).
 
 ## License
 
