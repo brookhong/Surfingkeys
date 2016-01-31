@@ -198,6 +198,13 @@ var Normal = (function() {
         });
     };
 
+    self.showPopup = function(content) {
+        runtime.frontendCommand({
+            action: 'showPopup',
+            content: content
+        });
+    };
+
     self.chooseTab = function() {
         runtime.frontendCommand({
             action: 'chooseTab'

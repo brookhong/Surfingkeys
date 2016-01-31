@@ -46,6 +46,21 @@ command('proxyInfo', 'show proxy info', function() {
         return $('<li/>').html(s.name + ": " + s.value);
     });
 });
+mapkey('sfr', 'show failed web requests of current page', function() {
+    runtime.command({
+        action: 'getTabErrors'
+    }, function(response) {
+        if (response.tabError) {
+            var errors = response.tabError.map(function(e) {
+                var url = new URL(e.url);
+                return "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>".format(e.error, e.type, url.host);
+            });
+            Normal.showPopup("<table style='width:100%'>{0}</table>".format(errors.join('')));
+        } else {
+            Normal.showPopup("No errors from webRequest.");
+        }
+    });
+});
 mapkey('ZQ', 'Quit', function() {
     RUNTIME('quit');
 });
@@ -61,6 +76,7 @@ mapkey('ZR', 'Restore last session', function() {
     });
 });
 mapkey('T', 'Choose a tab', 'Normal.chooseTab()');
+mapkey('?', 'Show usage', 'Normal.showUsage()');
 mapkey('c-i', 'Show usage', 'Normal.showUsage()');
 mapkey('u', 'Show usage', 'Normal.showUsage()');
 mapkey('e', 'Scroll a page up', 'Normal.scroll("pageUp")');

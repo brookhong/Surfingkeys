@@ -15,13 +15,14 @@ var frontendUI = (function() {
     self.statusBar = $('#sk_status').hide();
     var frameElement = $("<div class=sk_frame>").appendTo('body').hide();
     var _usage = $('<div id=sk_usage>').appendTo('body').hide();
+    var _popup = $('<div id=sk_popup>').appendTo('body').hide();
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke/>').appendTo('body');
 
-    var fullDisplays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble];
+    var fullDisplays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup];
     var miniDisplays = [self.statusBar, keystroke];
     function getFrameHeight() {
         for (var i = 0; i < fullDisplays.length; i++) {
@@ -105,6 +106,12 @@ var frontendUI = (function() {
     };
     runtime.actions['showUsage'] = function(message) {
         showPopup(_usage, message);
+    };
+    _popup.onShow = function(message) {
+        _popup.html(message.content);
+    };
+    runtime.actions['showPopup'] = function(message) {
+        showPopup(_popup, message);
     };
     runtime.actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);

@@ -29,6 +29,7 @@ var Service = (function() {
         autoproxy_hosts: {},
         proxyMode: 'byhost',
         proxy: "DIRECT",
+        interceptedErrors: '*',
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
@@ -144,6 +145,7 @@ var Service = (function() {
     function removeTab(tabId) {
         delete contentPorts[tabId];
         delete frontEndPorts[tabId];
+        delete tabErrors[tabId];
         unRegisterFrame(tabId);
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
@@ -202,13 +204,35 @@ var Service = (function() {
             }
         });
     });
+    var tabErrors = {};
     chrome.webRequest.onErrorOccurred.addListener(
         function(details) {
-            console.log(details);
+            var tabId = details.tabId;
+            if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
+                if (!tabErrors.hasOwnProperty(tabId)) {
+                    tabErrors[tabId] = [];
+                }
+                if (details.type === "main_frame") {
+                    tabErrors[tabId] = [];
+                    if (details.error !== "net::ERR_ABORTED") {
+                        chrome.tabs.update(tabId, {
+                            url: chrome.extension.getURL("pages/error.html")
+                        });
+                    }
+                }
+                tabErrors[tabId].push(details);
+            }
         }, {
             urls: ["<all_urls>"]
         }
     );
+    self.getTabErrors = function(message, sender, sendResponse) {
+        sendResponse({
+            action: message.action,
+            id: message.id,
+            tabError: tabErrors[sender.tab.id]
+        });
+    };
 
     function unRegisterFrame(tabId) {
         if (frameIncs.hasOwnProperty(tabId)) {
