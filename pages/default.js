@@ -12,6 +12,21 @@ mapkey('cp', 'Toggle proxy for current site', function() {
         toggleProxySite(host);
     }
 });
+mapkey('spa', 'use proxy always', function() {
+    RUNTIME('updateProxy', {
+        mode: 'always'
+    });
+});
+mapkey('spb', 'use proxy by host', function() {
+    RUNTIME('updateProxy', {
+        mode: 'byhost'
+    });
+});
+mapkey('spd', 'use no proxy', function() {
+    RUNTIME('updateProxy', {
+        mode: 'direct'
+    });
+});
 command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
     var proxy = (type || "PROXY") + " " + endpoint;
     RUNTIME('updateProxy', {
@@ -50,7 +65,7 @@ mapkey('sfr', 'show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'
     }, function(response) {
-        if (response.tabError) {
+        if (response.tabError && response.tabError.length) {
             var errors = response.tabError.map(function(e) {
                 var url = new URL(e.url);
                 return "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>".format(e.error, e.type, url.host);

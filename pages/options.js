@@ -44,14 +44,12 @@ function renderSettings() {
     $(mappingsEditor.container).css('width', '100%').css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
 }
-$(document).on("surfingkeys:settingsApplied", function() {
+renderSettings();
+var old_handler = runtime.actions['settingsUpdated'];
+runtime.actions['settingsUpdated'] = function(resp) {
+    old_handler(resp);
     renderSettings();
-    var old_handler = runtime.actions['settingsUpdated'];
-    runtime.actions['settingsUpdated'] = function(resp) {
-        old_handler(resp);
-        renderSettings();
-    };
-});
+};
 
 $('#storage').change(function() {
     var storage = $(this).val();

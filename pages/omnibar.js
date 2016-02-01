@@ -20,25 +20,18 @@ var frontendUI = (function() {
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
-    var keystroke = $('<div id=sk_keystroke/>').appendTo('body');
+    var keystroke = $('<div id=sk_keystroke/>').appendTo('body').hide();
 
-    var fullDisplays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup];
-    var miniDisplays = [self.statusBar, keystroke];
+    var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, self.statusBar, keystroke];
     function getFrameHeight() {
-        for (var i = 0; i < fullDisplays.length; i++) {
-            if (fullDisplays[i].is(':visible')) {
+        for (var i = 0; i < displays.length; i++) {
+            if (displays[i].is(':visible')) {
                 return '100%';
-            }
-        }
-        for (var i = 0; i < miniDisplays.length; i++) {
-            if (miniDisplays[i].is(':visible')) {
-                return '30px';
             }
         }
         return '0px';
     }
     var _display;
-
     self.hidePopup = function() {
         if (_display && _display.is(':visible')) {
             _display.hide();

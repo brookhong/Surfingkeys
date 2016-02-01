@@ -6,9 +6,6 @@
         <title>Surfingkeys Settings</title>
         <link rel="stylesheet" href="../content_scripts/content_scripts.css">
         <script src="../libs/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../libs/jquery.min.js"></script>
-        <script src="../libs/trie.js"></script>
-        <script src="../content_scripts/utils.js"></script>
         <style>
 .ace_editor {
     display: inline-block;
@@ -72,14 +69,17 @@ textarea {
             <div id="defaultMappings"></div>
             <div id="mappings"></div>
         </div>
+        <script src="../libs/trie.js"></script>
+        <script src="../libs/jquery.min.js"></script>
+        <script src="../content_scripts/utils.js"></script>
         <script src="../content_scripts/runtime.js"></script>
         <script src="../content_scripts/normal.js"></script>
         <script src="../content_scripts/visual.js"></script>
         <script src="../content_scripts/hints.js"></script>
         <script src="../content_scripts/events.js"></script>
-        <script src="options.js"></script>
         <script src="../content_scripts/content_scripts.js"></script>
-        <script src="../content_scripts/top.js"></script>
         <script src="default.js"></script>
+        <script src="../content_scripts/top.js"></script>
+        <script src="options.js"></script>
     </body>
 </html>
