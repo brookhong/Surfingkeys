@@ -145,8 +145,7 @@ var Hints = (function() {
                         tabbed: behaviours.tabbed,
                         active: behaviours.active
                     },
-                    url: element.href,
-                    repeats: 1
+                    url: element.href
                 });
             } else {
                 var realTargets = $(element).find('a:visible');

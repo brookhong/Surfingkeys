@@ -1,3 +1,4 @@
+var settingsDeferred = $.Deferred();
 var runtime = window.runtime || (function() {
     var self = {
         successById: {},
@@ -9,7 +10,7 @@ var runtime = window.runtime || (function() {
     });
     self.actions['initSettings'] = function(response) {
         self.settings = response.settings;
-        $(document).trigger("surfingkeys:connected");
+        settingsDeferred.resolve(self.settings);
     };
     _port.onMessage.addListener(function(_message) {
         if (self.successById[_message.id]) {

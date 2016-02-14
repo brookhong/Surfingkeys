@@ -10,8 +10,11 @@ runtime.command({
     var a = $('#main-message a');
     a.html(tabError.url);
     a.attr('href', tabError.url);
-    var url = new URL(tabError.url);
-    $('#errorHost').html(url.host);
+    var host = tabError.url.replace(/^\w+:\/\/([^\/]+)\/.*$/i, "$1");
+    if (/.*\..*\./.test(host)) {
+        host = host.replace(/^[^\.]*\./, '');
+    }
+    $('#errorHost').html(host);
     var wrapper = $('div.interstitial-wrapper');
     var margin = "15% calc(50% - {0}px)".format(wrapper.width() / 2);
     wrapper.css('margin', margin);
@@ -21,7 +24,7 @@ runtime.command({
     });
     mapkey('a', 'reload', function() {
         RUNTIME('updateProxy', {
-            host: url.host,
+            host: host,
             operation: 'add'
         });
     });

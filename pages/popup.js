@@ -41,7 +41,6 @@ settings.addEventListener('click', function() {
         tab: {
             tabbed: true
         },
-        url: chrome.extension.getURL('/pages/options.html'),
-        repeats: 1
+        url: chrome.extension.getURL('/pages/options.html')
     });
 });

@@ -27,6 +27,13 @@ mapkey('spd', 'use no proxy', function() {
         mode: 'direct'
     });
 });
+function showProxyInfo() {
+    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ].map(function(s) {
+        return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
+    });
+    Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
+}
+mapkey('spi', 'show proxy info', showProxyInfo);
 command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
     var proxy = (type || "PROXY") + " " + endpoint;
     RUNTIME('updateProxy', {
@@ -55,12 +62,7 @@ command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible
     return true;
 });
 command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', toggleProxySite);
-command('proxyInfo', 'show proxy info', function() {
-    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ];
-    Omnibar.listResults(infos, function(s) {
-        return $('<li/>').html(s.name + ": " + s.value);
-    });
-});
+command('proxyInfo', 'show proxy info', showProxyInfo);
 mapkey('sfr', 'show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'

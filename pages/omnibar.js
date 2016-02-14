@@ -393,8 +393,7 @@ var Omnibar = (function(ui) {
                         tabbed: true,
                         active: this.activeTab
                     },
-                    url: url,
-                    repeats: 1
+                    url: url
                 });
             }
         }
@@ -744,8 +743,7 @@ var SearchEngine = (function() {
                 tabbed: true
             },
             position: runtime.settings.newTabPosition,
-            url: url,
-            repeats: 1
+            url: url
         });
         return true;
     };
