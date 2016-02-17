@@ -161,6 +161,20 @@ To delete a session:
 
     deleteSession works
 
+## Repeats action by pressing number before mapkey
+
+If you need repeat some action several times, just press a number before mapkey, such as `3d`, which will scroll down 3 pages. Repeats also works for Tab navigation, for example, you're now on the 1st Tab, and you want to switch to the 4th Tab,
+
+* press `3R` to achieve that
+* `3E` will switch back to 1st Tab.
+
+Another example to move one Tab, say, you're on the 12th Tab of 23 tabs.
+
+* `11<<` will move current tab to beginning.
+* `10>>` will move current tab to end.
+
+Usually, you need not count the number, you just prefix a large number such as `99<<`, if you want to move a tab to beginning or end.
+
 ## Hotkey to toggle Surfingkeys
 
 By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:

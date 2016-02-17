@@ -1,8 +1,9 @@
 surfingkeys_mark {
     background-color: #ff0;
+    color: #000;
 }
 div.surfingkeys_cursor {
-    background-color: #000;
+    background-color: #0642CE;
     padding: 8px 4px;
 }
 #sk_hints >div {

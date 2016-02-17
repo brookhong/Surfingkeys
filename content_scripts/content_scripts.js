@@ -6,7 +6,7 @@ if (typeof(addSearchAlias) === 'undefined') {
     addSearchAlias = function() {};
 }
 
-var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab'];
+var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab'];
 RUNTIME = function(action, args) {
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {

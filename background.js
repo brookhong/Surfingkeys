@@ -211,6 +211,7 @@ var Service = (function() {
                 tabErrors[tabId] = [];
             }
             if (details.type === "main_frame") {
+                tabErrors[tabId] = [];
                 if (details.error !== "net::ERR_ABORTED") {
                     chrome.tabs.update(tabId, {
                         url: chrome.extension.getURL("pages/error.html")
@@ -255,7 +256,8 @@ var Service = (function() {
     }
 
     function _updateSettings(diffSettings, noack) {
-        var toSet = diffSettings || settings;
+        var toSet = diffSettings;
+        extendSettings(diffSettings);
         chrome.storage.local.set(toSet);
         if (settings.storage === 'sync') {
             chrome.storage.sync.set(toSet, function() {
@@ -277,22 +279,17 @@ var Service = (function() {
     function _loadSettingsFromUrl(url) {
         var s = request('get', url);
         s.then(function(resp) {
-            settings.localPath = url;
-            settings.snippets = resp;
-            _updateSettings();
+            _updateSettings({localPath: url, snippets: resp});
         });
     };
 
     self.resetSettings = function(message, sender, sendResponse) {
         if (message.useDefault) {
-            delete settings.localPath;
-            settings.snippets = "";
-            _updateSettings();
+            _updateSettings({localPath: "", snippets: ""});
         } else if (settings.localPath) {
             _loadSettingsFromUrl(settings.localPath);
         } else {
-            settings.snippets = "";
-            _updateSettings();
+            _updateSettings({snippets: ""});
         }
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
@@ -348,11 +345,20 @@ var Service = (function() {
             });
         }
     };
+    function _fixTo(to, length) {
+        if (to < 0) {
+            to = 0;
+        } else if (to >= length){
+            to = length - 1;
+        }
+        return to;
+    }
     function _nextTab(tab, step) {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-            chrome.tabs.update(tabs[(((tab.index + step) % tabs.length) + tabs.length) % tabs.length].id, {
+            var to = _fixTo(tab.index + step, tabs.length);
+            chrome.tabs.update(tabs[to].id, {
                 active: true
             });
         });
@@ -364,25 +370,30 @@ var Service = (function() {
         _nextTab(sender.tab, -message.repeats);
     };
     self.reloadTab = function(message, sender, sendResponse) {
-        chrome.tabs.reload({
-            bypassCache: message.nocache
+        chrome.tabs.query({
+            currentWindow: true
+        }, function(tabs) {
+            var tabIds = tabs.map(function(e) {
+                return e.id;
+            });
+            var base = sender.tab.index;
+            var repeats = message.repeats > tabs.length ? tabs.length : message.repeats;
+            for (var i = 0; i < repeats; i++) {
+                chrome.tabs.reload(tabIds[base + i], {
+                    bypassCache: message.nocache
+                });
+            }
         });
     };
     self.closeTab = function(message, sender, sendResponse) {
         chrome.tabs.query({
             currentWindow: true
         }, function(tabs) {
-            var sortedIds = tabs.map(function(e) {
+            var tabIds = tabs.map(function(e) {
                 return e.id;
             });
             var base = sender.tab.index;
-            if (message.repeats > sortedIds.length - base) {
-                base -= message.repeats - (sortedIds.length - base);
-            }
-            if (base < 0) {
-                base = 0;
-            }
-            chrome.tabs.remove(sortedIds.slice(base, base + message.repeats));
+            chrome.tabs.remove(tabIds.slice(base, base + message.repeats));
         });
     };
     self.openLast = function(message, sender, sendResponse) {
@@ -507,8 +518,7 @@ var Service = (function() {
         self.openLink(message, sender, sendResponse);
     };
     self.updateSettings = function(message, sender, sendResponse) {
-        extendSettings(message.settings);
-        _updateSettings(undefined, message.noack);
+        _updateSettings(message.settings, message.noack);
     };
     self.changeSettingsStorage = function(message, sender, sendResponse) {
         settings.storage = message.storage;
@@ -554,13 +564,14 @@ var Service = (function() {
         });
     };
     self.moveTab = function(message, sender, sendResponse) {
-        var newPos = parseInt(message.position);
-        var activeTabId = sender.tab.id;
-        if (newPos > -1 && newPos < 10) {
-            chrome.tabs.move(activeTabId, {
-                index: newPos
+        chrome.tabs.query({
+            currentWindow: true
+        }, function(tabs) {
+            var to = _fixTo(sender.tab.index + message.step * message.repeats, tabs.length);
+            chrome.tabs.move(sender.tab.id, {
+                index: to
             });
-        }
+        });
     };
     self.quit = function(message, sender, sendResponse) {
         chrome.windows.getAll({
@@ -649,14 +660,12 @@ var Service = (function() {
 
     function FindProxyForURL(url, host) {
         var lastPos;
-        if (sk_mode === "always") {
-            return sk_proxy;
-        } else if (sk_mode === "direct") {
-            return 'DIRECT';
+        if (settings.proxyMode === "always") {
+            return settings.proxy;
         }
         do {
-            if (proxied_hosts.hasOwnProperty(host)) {
-                return sk_proxy;
+            if (settings.autoproxy_hosts.hasOwnProperty(host)) {
+                return settings.proxy;
             }
             lastPos = host.indexOf('.') + 1;
             host = host.slice(lastPos);
@@ -687,9 +696,10 @@ var Service = (function() {
             proxy: settings.proxy
         });
         var config = {
-            mode: 'pac_script',
+            mode: (settings.proxyMode === "direct") ? "direct" : 'pac_script',
             pacScript: {
-                data: "var proxied_hosts = " + JSON.stringify(settings.autoproxy_hosts) + ", sk_mode = '" + settings.proxyMode + "', sk_proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+                data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
+                + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
             }
         };
         chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {

@@ -111,7 +111,7 @@ var Normal = (function() {
     }
 
     self.changeScrollTarget = function() {
-        scrollNodes = getScrollableElements(100, 1.2);
+        scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
@@ -123,8 +123,8 @@ var Normal = (function() {
     };
 
     self.scroll = function(type) {
-        if (!scrollNodes) {
-            scrollNodes = getScrollableElements(100, 1.2);
+        if (!scrollNodes || scrollNodes.length === 0) {
+            scrollNodes = getScrollableElements(100, 1.1);
         } else {
             scrollNodes = scrollNodes.filter(function(n) {
                 return $(n).is(":visible");
