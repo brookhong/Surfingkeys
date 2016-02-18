@@ -183,7 +183,15 @@ By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys i
 
 ## Proxy settings
 
-Surfingkeys provides some commands and a shortcut for you set proxy.
+SwitchySharp is a great extension to switch proxy, but my use case with it is very simple,
+
+1. create a profile using PAC script.
+1. maintain site list in the PAC script, use proxy if the site being accessed is in the list.
+1. whenever I come into a site blocked by something, I add it to the list in PAC script.
+1. click the SwitchySharp icon to reload the profile.
+1. casually I click the SwitchySharp icon to switch profile between `direct` and `pac_script`.
+
+To avoid manually editing PAC script and reloading/switching profile by clicking SwitchySharp icon, I replaced SwitchySharp by integrating proxy settings into Surfingkeys, and provides related commands and shortcuts.
 
 * setProxy, to set proxy, some examples:
 
@@ -203,6 +211,14 @@ Surfingkeys provides some commands and a shortcut for you set proxy.
 * proxyInfo, to list proxy you set by `setProxy`, proxy mode you set by `setProxyMode` and sites you add/remove by `addProxySite`/`removeProxySite`/`toggleProxySite`.
 
 * `cp`, toggle proxy for current site.
+
+* `spa`, shortcut for `:setProxyMode always`
+
+* `spb`, shortcut for `:setProxyMode byhost`
+
+* `spd`, shortcut for `:setProxyMode direct`
+
+* `spi`, shortcut for `:proxyInfo`
 
 ## Edit your own settings
 
