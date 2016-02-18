@@ -12,28 +12,6 @@ mapkey('cp', 'Toggle proxy for current site', function() {
         toggleProxySite(host);
     }
 });
-mapkey('spa', 'use proxy always', function() {
-    RUNTIME('updateProxy', {
-        mode: 'always'
-    });
-});
-mapkey('spb', 'use proxy by host', function() {
-    RUNTIME('updateProxy', {
-        mode: 'byhost'
-    });
-});
-mapkey('spd', 'use no proxy', function() {
-    RUNTIME('updateProxy', {
-        mode: 'direct'
-    });
-});
-function showProxyInfo() {
-    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ].map(function(s) {
-        return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
-    });
-    Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
-}
-mapkey('spi', 'show proxy info', showProxyInfo);
 command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
     var proxy = (type || "PROXY") + " " + endpoint;
     RUNTIME('updateProxy', {
@@ -47,6 +25,17 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
     });
     return true;
 });
+// create shortcuts for the command with different parameters
+map('spa', ':setProxyMode always');
+map('spb', ':setProxyMode byhost');
+map('spd', ':setProxyMode direct');
+command('proxyInfo', 'show proxy info', function() {
+    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ].map(function(s) {
+        return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
+    });
+    Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
+});
+map('spi', ':proxyInfo');
 command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
     RUNTIME('updateProxy', {
         host: host,
@@ -62,7 +51,6 @@ command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible
     return true;
 });
 command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', toggleProxySite);
-command('proxyInfo', 'show proxy info', showProxyInfo);
 mapkey('sfr', 'show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'
@@ -78,9 +66,10 @@ mapkey('sfr', 'show failed web requests of current page', function() {
         }
     });
 });
-mapkey('ZQ', 'Quit', function() {
+command('quit', 'quit chrome', function() {
     RUNTIME('quit');
 });
+map('ZQ', ':quit');
 mapkey('ZZ', 'Save session and quit', function() {
     RUNTIME('createSession', {
         name: 'LAST'
@@ -133,9 +122,6 @@ mapkey('ab', 'Bookmark current page to selected folder', function() {
 mapkey('oh', 'Open URL from history', 'Normal.openOmnibar({type: "History"})');
 mapkey('om', 'Open URL from vim-like marks', 'Normal.openOmnibar({type: "VIMarks"})');
 mapkey(':', 'Open commands', 'Normal.openOmnibar({type: "Commands"})');
-command('quit', 'quit chrome', function() {
-    RUNTIME('quit');
-});
 command('listSession', 'list session', function() {
     runtime.command({
         action: 'getSessions'

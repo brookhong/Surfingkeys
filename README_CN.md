@@ -124,6 +124,20 @@ Surfingkeys目前只有两种模式。
         // to do
     });
 
+例如，
+
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+        RUNTIME('updateProxy', {
+            mode: mode
+        });
+        return true;
+    });
+
+    // 映射不同的按键到该命令，但采用不同的参数。
+    map('spa', ':setProxyMode always');
+    map('spb', ':setProxyMode byhost');
+    map('spd', ':setProxyMode direct');
+
 除了命令，你还可以执行各类简单js代码。
 
 ![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)

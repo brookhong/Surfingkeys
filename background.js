@@ -696,7 +696,7 @@ var Service = (function() {
             proxy: settings.proxy
         });
         var config = {
-            mode: (settings.proxyMode === "direct") ? "direct" : 'pac_script',
+            mode: settings.proxyMode,
             pacScript: {
                 data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
                 + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()

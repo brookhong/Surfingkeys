@@ -127,6 +127,20 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
         // to do
     });
 
+For example,
+
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+        RUNTIME('updateProxy', {
+            mode: mode
+        });
+        return true;
+    });
+
+    // create shortcuts for the command with different parameters
+    map('spa', ':setProxyMode always');
+    map('spb', ':setProxyMode byhost');
+    map('spd', ':setProxyMode direct');
+
 Besides commands, you can also run javascript code.
 
 ![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)

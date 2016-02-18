@@ -1,5 +1,36 @@
-if (typeof(command) === 'undefined') {
-    command = function() {};
+if (typeof(Commands) === 'undefined') {
+    Commands = { items: {} };
+}
+
+var command = function(cmd, annotation, jscode) {
+    if (typeof(jscode) === 'string') {
+        jscode = new Function(jscode);
+    }
+    Commands.items[cmd] = {
+        code: jscode,
+        annotation: annotation
+    };
+};
+
+function parseCommand(cmdline) {
+    var cmdline = cmdline.trim();
+    var tokens = [];
+    var pendingToken = false;
+    var part = '';
+    for (var i = 0; i < cmdline.length; i++) {
+        if (cmdline.charAt(i) === ' ' && !pendingToken) {
+            tokens.push(part);
+            part = '';
+        } else {
+            if (cmdline.charAt(i) === '\"') {
+                pendingToken = !pendingToken;
+            } else {
+                part += cmdline.charAt(i);
+            }
+        }
+    }
+    tokens.push(part);
+    return tokens;
 }
 
 if (typeof(addSearchAlias) === 'undefined') {
@@ -67,15 +98,31 @@ function vmapkey(keys, annotation, jscode, extra_chars, domain) {
 
 function map(new_keystroke, old_keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        var old_map = Normal.mappings.find(old_keystroke);
-        if (old_map) {
-            var meta = old_map.meta[0];
-            Normal.mappings.remove(old_keystroke);
-            Normal.mappings.add(new_keystroke, {
-                code: meta.code,
-                annotation: meta.annotation,
-                extra_chars: meta.extra_chars
-            });
+        if (old_keystroke[0] === ':') {
+            var cmdline = old_keystroke.substr(1);
+            var args = parseCommand(cmdline);
+            var cmd = args.shift();
+            if (Commands.items.hasOwnProperty(cmd)) {
+                var meta = Commands.items[cmd];
+                Normal.mappings.add(new_keystroke, {
+                    code: function() {
+                        meta.code.apply(meta.code, args);
+                    },
+                    annotation: meta.annotation,
+                    extra_chars: 0
+                });
+            }
+        } else {
+            var old_map = Normal.mappings.find(old_keystroke);
+            if (old_map) {
+                var meta = old_map.meta[0];
+                Normal.mappings.remove(old_keystroke);
+                Normal.mappings.add(new_keystroke, {
+                    code: meta.code,
+                    annotation: meta.annotation,
+                    extra_chars: meta.extra_chars
+                });
+            }
         }
     }
 }

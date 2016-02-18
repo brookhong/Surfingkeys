@@ -768,28 +768,6 @@ var Commands = (function() {
 
     var historyInc = 0;
 
-    function parse(cmdline) {
-        var cmdline = cmdline.trim();
-        var tokens = [];
-        var pendingToken = false;
-        var part = '';
-        for (var i = 0; i < cmdline.length; i++) {
-            if (cmdline.charAt(i) === ' ' && !pendingToken) {
-                tokens.push(part);
-                part = '';
-            } else {
-                if (cmdline.charAt(i) === '\"') {
-                    pendingToken = !pendingToken;
-                } else {
-                    part += cmdline.charAt(i);
-                }
-            }
-        }
-        tokens.push(part);
-        return tokens;
-    }
-
-
     self.onOpen = function() {
         historyInc = -1;
         var candidates = runtime.settings.cmdHistory;
@@ -833,7 +811,7 @@ var Commands = (function() {
         var cmdline = Omnibar.input.val();
         if (cmdline.length) {
             runtime.updateHistory('cmd', cmdline);
-            var args = parse(cmdline);
+            var args = parseCommand(cmdline);
             var cmd = args.shift();
             if (self.items.hasOwnProperty(cmd)) {
                 var code = self.items[cmd].code;
