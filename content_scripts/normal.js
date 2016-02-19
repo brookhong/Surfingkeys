@@ -319,6 +319,14 @@ var Normal = (function() {
         return ret;
     };
 
+    self.feedkeys = function(keys) {
+        setTimeout(function() {
+            for (var i = 0; i < keys.length; i ++) {
+                self._handleMapKey(keys[i]);
+            }
+        }, 1);
+    };
+
     self.handleKeyEvent = function(event, key) {
         var handled = false;
         switch (event.keyCode) {

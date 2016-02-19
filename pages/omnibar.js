@@ -643,15 +643,27 @@ var OpenURLs = (function() {
         prompt: '≫'
     };
 
-    self.onEnter = Omnibar.openFocused.bind(self);
-    self.onInput = function() {
+    function _queryURLs(word) {
         runtime.command({
-            action: 'getURLs',
+            action: self.action,
             maxResults: runtime.settings.maxResults,
-            query: $(this).val()
+            query: word
         }, function(response) {
             Omnibar.listBookmark(response.urls, false);
         });
+    }
+    self.onOpen = function(arg) {
+        self.action = arg;
+        if (self.action === "getRecentlyClosed") {
+            self.prompt = 'Recently closed≫';
+        } else {
+            self.prompt = '≫';
+        }
+        _queryURLs("");
+    };
+    self.onEnter = Omnibar.openFocused.bind(self);
+    self.onInput = function() {
+        _queryURLs($(this).val());
     };
     return self;
 })();

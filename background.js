@@ -15,6 +15,7 @@ var Service = (function() {
     var settings = {
         maxResults: 500,
         tabsThreshold: 9,
+        repeatThreshold: 99,
         tabsMRUOrder: true,
         smoothScroll: true,
         blacklist: {},
@@ -106,10 +107,19 @@ var Service = (function() {
             }
         }
     });
+    chrome.proxy.settings.get( {}, function(data) {
+        if (data.levelOfControl === "controlled_by_this_extension") {
+            // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
+            eval(data.value.pacScript.data.substr(19));
+        }
+    });
 
     function handleMessage(_message, _sender, _sendResponse, _port) {
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
+                if (_message.repeats > settings.repeatThreshold) {
+                    _message.repeats = settings.repeatThreshold;
+                }
                 self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
                 try {
@@ -295,11 +305,45 @@ var Service = (function() {
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
         _loadSettingsFromUrl(message.url);
     };
+    function _filterByTitleOrUrl(tabs, query) {
+        if (query && query.length) {
+            tabs = tabs.filter(function(b) {
+                return b.title.indexOf(query) !== -1 || (b.url && b.url.indexOf(query) !== -1);
+            });
+        }
+        return tabs;
+    }
+    self.getRecentlyClosed = function(message, sender, sendResponse) {
+        chrome.sessions.getRecentlyClosed({}, function(sessions) {
+            var tabs = [];
+            for (var i = 0; i < sessions.length; i ++) {
+                var s = sessions[i];
+                if (s.hasOwnProperty('window')) {
+                    tabs = tabs.concat(s.window.tabs);
+                } else if (s.hasOwnProperty('tab')) {
+                    tabs.push(s.tab);
+                }
+            }
+            tabs = _filterByTitleOrUrl(tabs, message.query);
+            _response(message, sendResponse, {
+                urls: tabs
+            });
+        })
+    };
+    self.getTopSites = function(message, sender, sendResponse) {
+        chrome.topSites.get(function(urls) {
+            urls = _filterByTitleOrUrl(urls, message.query);
+            _response(message, sendResponse, {
+                urls: urls
+            });
+        })
+    };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
         chrome.tabs.query({
-            currentWindow: true
+            windowId: tab.windowId
         }, function(tabs) {
+            tabs = _filterByTitleOrUrl(tabs, message.query);
             if (message.query && message.query.length) {
                 tabs = tabs.filter(function(b) {
                     return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
@@ -345,19 +389,27 @@ var Service = (function() {
             });
         }
     };
+    // limit to between 0 and length
     function _fixTo(to, length) {
         if (to < 0) {
             to = 0;
         } else if (to >= length){
-            to = length - 1;
+            to = length;
         }
         return to;
+    }
+    // round base ahead if repeats reaches length
+    function _roundBase(base, repeats, length) {
+        if (repeats > length - base) {
+            base -= repeats - (length - base);
+        }
+        return base;
     }
     function _nextTab(tab, step) {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-            var to = _fixTo(tab.index + step, tabs.length);
+            var to = _fixTo(tab.index + step, tabs.length - 1);
             chrome.tabs.update(tabs[to].id, {
                 active: true
             });
@@ -369,31 +421,30 @@ var Service = (function() {
     self.previousTab = function(message, sender, sendResponse) {
         _nextTab(sender.tab, -message.repeats);
     };
-    self.reloadTab = function(message, sender, sendResponse) {
+    function _roundRepeatTabs(tab, repeats, operation) {
         chrome.tabs.query({
-            currentWindow: true
+            windowId: tab.windowId
         }, function(tabs) {
             var tabIds = tabs.map(function(e) {
                 return e.id;
             });
-            var base = sender.tab.index;
-            var repeats = message.repeats > tabs.length ? tabs.length : message.repeats;
-            for (var i = 0; i < repeats; i++) {
-                chrome.tabs.reload(tabIds[base + i], {
+            repeats = _fixTo(repeats, tabs.length);
+            var base = _roundBase(tab.index, repeats, tabs.length);
+            operation(tabIds.slice(base, base + repeats));
+        });
+    }
+    self.reloadTab = function(message, sender, sendResponse) {
+        _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
+            tabIds.forEach(function(tabId) {
+                chrome.tabs.reload(tabId, {
                     bypassCache: message.nocache
                 });
-            }
+            });
         });
     };
     self.closeTab = function(message, sender, sendResponse) {
-        chrome.tabs.query({
-            currentWindow: true
-        }, function(tabs) {
-            var tabIds = tabs.map(function(e) {
-                return e.id;
-            });
-            var base = sender.tab.index;
-            chrome.tabs.remove(tabIds.slice(base, base + message.repeats));
+        _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
+            chrome.tabs.remove(tabIds);
         });
     };
     self.openLast = function(message, sender, sendResponse) {
@@ -452,27 +503,6 @@ var Service = (function() {
             _response(message, sendResponse, {
                 history: tree
             });
-        });
-    };
-    self.getURLs = function(message, sender, sendResponse) {
-        chrome.bookmarks.search(message.query, function(tree) {
-            var bookmarks = tree;
-            var vacancy = message.maxResults - bookmarks.length;
-            if (vacancy > 0) {
-                chrome.history.search({
-                    text: message.query,
-                    startTime: 0,
-                    maxResults: vacancy
-                }, function(tree) {
-                    _response(message, sendResponse, {
-                        urls: tree.concat(bookmarks)
-                    });
-                });
-            } else {
-                _response(message, sendResponse, {
-                    urls: bookmarks
-                });
-            }
         });
     };
     self.openLink = function(message, sender, sendResponse) {
@@ -565,7 +595,7 @@ var Service = (function() {
     };
     self.moveTab = function(message, sender, sendResponse) {
         chrome.tabs.query({
-            currentWindow: true
+            windowId: sender.tab.windowId
         }, function(tabs) {
             var to = _fixTo(sender.tab.index + message.step * message.repeats, tabs.length);
             chrome.tabs.move(sender.tab.id, {
@@ -696,7 +726,7 @@ var Service = (function() {
             proxy: settings.proxy
         });
         var config = {
-            mode: settings.proxyMode,
+            mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
             pacScript: {
                 data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
                 + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()

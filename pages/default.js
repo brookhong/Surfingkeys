@@ -29,8 +29,16 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
 map('spa', ':setProxyMode always');
 map('spb', ':setProxyMode byhost');
 map('spd', ':setProxyMode direct');
+map('sps', ':setProxyMode system');
 command('proxyInfo', 'show proxy info', function() {
-    var infos = [ {name: 'mode', value: runtime.settings.proxyMode}, {name: 'proxy', value: runtime.settings.proxy}, {name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')} ].map(function(s) {
+    var infos = [ {name: 'mode', value: runtime.settings.proxyMode} ];
+    if (runtime.settings.proxyMode === "byhost") {
+        infos.push({name: 'proxy', value: runtime.settings.proxy});
+        infos.push({name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')});
+    } else if (runtime.settings.proxyMode === "always") {
+        infos.push({name: 'proxy', value: runtime.settings.proxy});
+    }
+    infos = infos.map(function(s) {
         return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
     });
     Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
@@ -66,6 +74,11 @@ mapkey('sfr', 'show failed web requests of current page', function() {
         }
     });
 });
+command('feedkeys', 'feed mapkeys', function(keys) {
+    Normal.feedkeys(keys);
+});
+map('0', ':feedkeys 99E');
+map('$', ':feedkeys 99R');
 command('quit', 'quit chrome', function() {
     RUNTIME('quit');
 });
@@ -110,7 +123,8 @@ mapkey('F', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: fals
 mapkey('S', 'Go back in history', 'history.go(-1)');
 mapkey('D', 'Go forward in history', 'history.go(1)');
 mapkey('r', 'Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
-mapkey('t', 'Open an URLs', 'Normal.openOmnibar({type: "URLs"})');
+mapkey('t', 'Open an URLs', 'Normal.openOmnibar({type: "URLs", extra: "getTopSites"})');
+mapkey('ox', 'Open recently closed URL', 'Normal.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
 mapkey('b', 'Open a bookmark', 'Normal.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', 'Bookmark current page to selected folder', function() {
     var page = {
@@ -238,6 +252,7 @@ mapkey('gU', 'Go to root of current URL hierarchy', 'window.location.href = wind
 mapkey('se', 'Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('sr', 'Reset Settings', 'Normal.resetSettings()');
 mapkey('si', 'Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
+mapkey(';m', 'mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', 'Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf")');
 mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
 
