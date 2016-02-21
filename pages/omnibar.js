@@ -484,7 +484,7 @@ var OpenBookmarks = (function() {
                 parentId: currentFolderId
             }, OpenBookmarks.onResponse);
         } else {
-            Omnibar.openFocused.call(self);
+            ret = Omnibar.openFocused.call(self);
         }
         return ret;
     };

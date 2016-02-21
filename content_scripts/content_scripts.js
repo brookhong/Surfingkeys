@@ -116,7 +116,7 @@ function map(new_keystroke, old_keystroke, domain) {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
                 var meta = old_map.meta[0];
-                Normal.mappings.remove(old_keystroke);
+                Normal.mappings.remove(new_keystroke);
                 Normal.mappings.add(new_keystroke, {
                     code: meta.code,
                     annotation: meta.annotation,

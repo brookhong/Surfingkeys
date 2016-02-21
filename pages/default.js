@@ -77,8 +77,8 @@ mapkey('sfr', 'show failed web requests of current page', function() {
 command('feedkeys', 'feed mapkeys', function(keys) {
     Normal.feedkeys(keys);
 });
-map('0', ':feedkeys 99E');
-map('$', ':feedkeys 99R');
+map('g0', ':feedkeys 99E');
+map('g$', ':feedkeys 99R');
 command('quit', 'quit chrome', function() {
     RUNTIME('quit');
 });
@@ -106,6 +106,8 @@ mapkey('h', 'Scroll left', 'Normal.scroll("left")');
 mapkey('l', 'Scroll right', 'Normal.scroll("right")');
 mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
+mapkey('zH', 'Scroll all the way to the left', 'Normal.scroll("leftmost")');
+mapkey('zL', 'Scroll all the way to the right', 'Normal.scroll("rightmost")');
 mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
 Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible";
@@ -113,6 +115,11 @@ mapkey('f', 'Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClic
 mapkey('af', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('a-f', 'Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
+mapkey('yf', 'Copy a link URL to the clipboard', function() {
+    Hints.create('*[href]', function(element, event) {
+        Normal.writeClipboard(element.href);
+    })
+});
 mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible", Hints.dispatchMouseClick)');
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
@@ -184,11 +191,6 @@ mapkey('>>', 'Move current tab to right', function() {
 mapkey('n', 'Next found text', 'Visual.next(false)');
 mapkey('N', 'Previous found text', 'Visual.next(true)');
 mapkey('w', 'Switch frames', 'Normal.rotateFrame()');
-mapkey('p', 'Paste html on current page.', function() {
-    Normal.getContentFromClipboard(function(response) {
-        document.body.innerHTML = response.data;
-    });
-});
 mapkey('cc', 'Open selected link or link from clipboard', function() {
     if (window.getSelection().toString()) {
         tabOpenLink(window.getSelection().toString());
@@ -225,7 +227,7 @@ mapkey('ys', "Copy current page's source", function() {
     Normal.writeClipboard(aa.outerHTML);
 });
 mapkey('yt', 'Duplicate current tab', 'RUNTIME("duplicateTab")');
-mapkey('yf', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
+mapkey('yy', "Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('yl', "Copy current page's title", 'Normal.writeClipboard(document.title)');
 mapkey('ob', 'Open Search with alias b', 'Normal.openOmnibar({type: "SearchEngine", extra: "b"})');
 mapkey('og', 'Open Search with alias g', 'Normal.openOmnibar({type: "SearchEngine", extra: "g"})');
@@ -254,6 +256,11 @@ mapkey('sr', 'Reset Settings', 'Normal.resetSettings()');
 mapkey('si', 'Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey(';m', 'mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', 'Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf")');
+mapkey(';p', 'Paste html on current page', function() {
+    Normal.getContentFromClipboard(function(response) {
+        document.body.innerHTML = response.data;
+    });
+});
 mapkey(';q', 'Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
