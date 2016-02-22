@@ -216,6 +216,7 @@ var Service = (function() {
     });
     var tabErrors = {};
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
+        if (settings.proxyMode === "disable") return;
         var tabId = details.tabId;
         if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
             if (!tabErrors.hasOwnProperty(tabId)) {
