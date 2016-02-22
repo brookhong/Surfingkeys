@@ -149,7 +149,7 @@ function walkPageUrl(step) {
 }
 
 function tabOpenLink(url) {
-    url = /^\w+:\/\/\w+/i.test(url) ? url : 'https://www.google.com/search?q=' + url;
+    url = url.convertLink();
     RUNTIME("openLink", {
         tab: {
             tabbed: true

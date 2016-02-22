@@ -28,7 +28,7 @@ var Service = (function() {
         newTabPosition: 'right',
         afterYank: 1,
         autoproxy_hosts: {},
-        proxyMode: 'byhost',
+        proxyMode: 'disable',
         proxy: "DIRECT",
         interceptedErrors: '*',
         storage: 'local'
@@ -49,6 +49,7 @@ var Service = (function() {
 
     function extendSettings(ss) {
         for (var k in ss) {
+            console.log(k,ss[k]);
             settings[k] = ss[k];
         }
     }
@@ -215,6 +216,7 @@ var Service = (function() {
     });
     var tabErrors = {};
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
+        if (settings.proxyMode === "disable") return;
         var tabId = details.tabId;
         if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
             if (!tabErrors.hasOwnProperty(tabId)) {
@@ -683,6 +685,7 @@ var Service = (function() {
             sessions: settings.sessions
         });
     };
+
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
         chrome.downloads.setShelfEnabled(false);
         chrome.downloads.setShelfEnabled(true);
@@ -725,15 +728,20 @@ var Service = (function() {
             proxyMode: settings.proxyMode,
             proxy: settings.proxy
         });
-        var config = {
-            mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
-            pacScript: {
-                data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
-                + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
-            }
-        };
-        chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
-        });
+
+        if (settings.proxyMode === "disable") {
+            chrome.proxy.settings.clear({scope: 'regular'});
+        } else {
+            var config = {
+                mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
+                pacScript: {
+                    data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
+                    + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+                }
+            };
+            chrome.proxy.settings.set({value: config, scope: 'regular'});
+        }
+
     };
 
     return self;
