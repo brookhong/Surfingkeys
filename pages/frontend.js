@@ -1,13 +1,3 @@
-var command = function(cmd, annotation, jscode) {
-    if (typeof(jscode) === 'string') {
-        jscode = new Function(jscode);
-    }
-    Commands.items[cmd] = {
-        code: jscode,
-        annotation: annotation
-    };
-};
-
 var addSearchAlias = function(alias, prompt, url, suggestionURL, listSuggestion) {
     SearchEngine.aliases[alias] = {
         prompt: prompt + "≫",

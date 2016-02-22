@@ -127,6 +127,20 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
         // to do
     });
 
+For example,
+
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+        RUNTIME('updateProxy', {
+            mode: mode
+        });
+        return true;
+    });
+
+    // create shortcuts for the command with different parameters
+    map('spa', ':setProxyMode always');
+    map('spb', ':setProxyMode byhost');
+    map('spd', ':setProxyMode direct');
+
 Besides commands, you can also run javascript code.
 
 ![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)
@@ -161,6 +175,20 @@ To delete a session:
 
     deleteSession works
 
+## Repeats action by pressing number before mapkey
+
+If you need repeat some action several times, just press a number before mapkey, such as `3d`, which will scroll down 3 pages. Repeats also works for Tab navigation, for example, you're now on the 1st Tab, and you want to switch to the 4th Tab,
+
+* press `3R` to achieve that
+* `3E` will switch back to 1st Tab.
+
+Another example to move one Tab, say, you're on the 12th Tab of 23 tabs.
+
+* `11<<` will move current tab to beginning.
+* `10>>` will move current tab to end.
+
+Usually, you need not count the number, you just prefix a large number such as `99<<`, if you want to move a tab to beginning or end.
+
 ## Hotkey to toggle Surfingkeys
 
 By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
@@ -169,7 +197,15 @@ By default, `alt-s` will toggle Surfingkeys for current page. When Surfingkeys i
 
 ## Proxy settings
 
-Surfingkeys provides some commands and a shortcut for you set proxy.
+SwitchySharp is a great extension to switch proxy, but my use case with it is very simple,
+
+1. create a profile using PAC script.
+1. maintain site list in the PAC script, use proxy if the site being accessed is in the list.
+1. whenever I come into a site blocked by something, I add it to the list in PAC script.
+1. click the SwitchySharp icon to reload the profile.
+1. casually I click the SwitchySharp icon to switch profile between `direct` and `pac_script`.
+
+To avoid manually editing PAC script and reloading/switching profile by clicking SwitchySharp icon, I replaced SwitchySharp by integrating proxy settings into Surfingkeys, and provides related commands and shortcuts.
 
 * setProxy, to set proxy, some examples:
 
@@ -189,6 +225,14 @@ Surfingkeys provides some commands and a shortcut for you set proxy.
 * proxyInfo, to list proxy you set by `setProxy`, proxy mode you set by `setProxyMode` and sites you add/remove by `addProxySite`/`removeProxySite`/`toggleProxySite`.
 
 * `cp`, toggle proxy for current site.
+
+* `spa`, shortcut for `:setProxyMode always`
+
+* `spb`, shortcut for `:setProxyMode byhost`
+
+* `spd`, shortcut for `:setProxyMode direct`
+
+* `spi`, shortcut for `:proxyInfo`
 
 ## Edit your own settings
 

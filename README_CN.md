@@ -124,6 +124,20 @@ Surfingkeys目前只有两种模式。
         // to do
     });
 
+例如，
+
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+        RUNTIME('updateProxy', {
+            mode: mode
+        });
+        return true;
+    });
+
+    // 映射不同的按键到该命令，但采用不同的参数。
+    map('spa', ':setProxyMode always');
+    map('spb', ':setProxyMode byhost');
+    map('spd', ':setProxyMode direct');
+
 除了命令，你还可以执行各类简单js代码。
 
 ![commands_in_omnibar](https://cloud.githubusercontent.com/assets/288207/11527801/fadee82c-991d-11e5-92e9-b054796a6a75.png)
@@ -158,6 +172,20 @@ Surfingkeys目前只有两种模式。
 
     deleteSession works
 
+## 前缀数字可多次重复相应操作
+
+如果需要重复多次某个操作，可以在按该映射键之前按下相应的数字，比如`3d`，就会往下滚3页。这种方法同样适用于标签操作，比如，你现在在第一个标签页，你想切换到第四个标签页，
+
+* 按`3R`就可以
+* `3E`会切回到第一个标签页
+
+另一个例子是移动标签页，假设你现在开着23个标签页，你在第12个，
+
+* `11<<` 就把当前标签页移到第一个
+* `10>>` 则会把它移到最后一个
+
+通常情况，你不需要去数多少个标签页，如果你只是想移动到开头或者结尾的话，你按一个足够大的数字就可以，比如`99<<`。
+
 ## 开关热键
 
 默认情况下，按`alt-s`可以在当前页开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
@@ -166,7 +194,15 @@ Surfingkeys目前只有两种模式。
 
 ## 代理设置
 
-Surfingkeys提供了一些代理设置相关的命令和一个快捷键。
+SwitchySharp是个很好的代理管理插件，但我的用法很简单，
+
+1. 创建一个使用PAC脚本的配置。
+1. 在PAC脚本里维护一个网站列表，如果当前所访问的站点在其中就使用代理。
+1. 当碰到一个站点是被墙的，就把这个网站加入列表。
+1. 然后点击SwitchySharp的图标重载配置。
+1. 有时也会点击图标在配置之间切换。
+
+其中需要手工编辑PAC脚本，鼠标点击SwitchySharp图片切换重载配置，因此我把代理设置的功能集成进来，并提供相关的命令和快捷键。
 
 * setProxy, 设置代理，示例如下：
 
@@ -186,6 +222,14 @@ Surfingkeys提供了一些代理设置相关的命令和一个快捷键。
 * proxyInfo, 列出你当前的代理设置，包括用以上命令设置的信息。
 
 * `cp`, 切换当前站点的代理设置，即是否使用代理访问当前站点。
+
+* `spa`, `:setProxyMode always`快捷键。
+
+* `spb`, `:setProxyMode byhost`快捷键。
+
+* `spd`, `:setProxyMode direct`快捷键。
+
+* `spi`, `:proxyInfo`快捷键。
 
 ## 配置参考
 

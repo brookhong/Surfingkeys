@@ -15,29 +15,23 @@ var frontendUI = (function() {
     self.statusBar = $('#sk_status').hide();
     var frameElement = $("<div class=sk_frame>").appendTo('body').hide();
     var _usage = $('<div id=sk_usage>').appendTo('body').hide();
+    var _popup = $('<div id=sk_popup>').appendTo('body').hide();
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
-    var keystroke = $('<div id=sk_keystroke/>').appendTo('body');
+    var keystroke = $('<div id=sk_keystroke/>').appendTo('body').hide();
 
-    var fullDisplays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble];
-    var miniDisplays = [self.statusBar, keystroke];
+    var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, self.statusBar, keystroke];
     function getFrameHeight() {
-        for (var i = 0; i < fullDisplays.length; i++) {
-            if (fullDisplays[i].is(':visible')) {
+        for (var i = 0; i < displays.length; i++) {
+            if (displays[i].is(':visible')) {
                 return '100%';
-            }
-        }
-        for (var i = 0; i < miniDisplays.length; i++) {
-            if (miniDisplays[i].is(':visible')) {
-                return '30px';
             }
         }
         return '0px';
     }
     var _display;
-
     self.hidePopup = function() {
         if (_display && _display.is(':visible')) {
             _display.hide();
@@ -105,6 +99,12 @@ var frontendUI = (function() {
     };
     runtime.actions['showUsage'] = function(message) {
         showPopup(_usage, message);
+    };
+    _popup.onShow = function(message) {
+        _popup.html(message.content);
+    };
+    runtime.actions['showPopup'] = function(message) {
+        showPopup(_popup, message);
     };
     runtime.actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
@@ -393,8 +393,7 @@ var Omnibar = (function(ui) {
                         tabbed: true,
                         active: this.activeTab
                     },
-                    url: url,
-                    repeats: 1
+                    url: url
                 });
             }
         }
@@ -485,7 +484,7 @@ var OpenBookmarks = (function() {
                 parentId: currentFolderId
             }, OpenBookmarks.onResponse);
         } else {
-            Omnibar.openFocused.call(self);
+            ret = Omnibar.openFocused.call(self);
         }
         return ret;
     };
@@ -644,15 +643,27 @@ var OpenURLs = (function() {
         prompt: '≫'
     };
 
-    self.onEnter = Omnibar.openFocused.bind(self);
-    self.onInput = function() {
+    function _queryURLs(word) {
         runtime.command({
-            action: 'getURLs',
+            action: self.action,
             maxResults: runtime.settings.maxResults,
-            query: $(this).val()
+            query: word
         }, function(response) {
             Omnibar.listBookmark(response.urls, false);
         });
+    }
+    self.onOpen = function(arg) {
+        self.action = arg;
+        if (self.action === "getRecentlyClosed") {
+            self.prompt = 'Recently closed≫';
+        } else {
+            self.prompt = '≫';
+        }
+        _queryURLs("");
+    };
+    self.onEnter = Omnibar.openFocused.bind(self);
+    self.onInput = function() {
+        _queryURLs($(this).val());
     };
     return self;
 })();
@@ -744,8 +755,7 @@ var SearchEngine = (function() {
                 tabbed: true
             },
             position: runtime.settings.newTabPosition,
-            url: url,
-            repeats: 1
+            url: url
         });
         return true;
     };
@@ -769,28 +779,6 @@ var Commands = (function() {
     };
 
     var historyInc = 0;
-
-    function parse(cmdline) {
-        var cmdline = cmdline.trim();
-        var tokens = [];
-        var pendingToken = false;
-        var part = '';
-        for (var i = 0; i < cmdline.length; i++) {
-            if (cmdline.charAt(i) === ' ' && !pendingToken) {
-                tokens.push(part);
-                part = '';
-            } else {
-                if (cmdline.charAt(i) === '\"') {
-                    pendingToken = !pendingToken;
-                } else {
-                    part += cmdline.charAt(i);
-                }
-            }
-        }
-        tokens.push(part);
-        return tokens;
-    }
-
 
     self.onOpen = function() {
         historyInc = -1;
@@ -835,7 +823,7 @@ var Commands = (function() {
         var cmdline = Omnibar.input.val();
         if (cmdline.length) {
             runtime.updateHistory('cmd', cmdline);
-            var args = parse(cmdline);
+            var args = parseCommand(cmdline);
             var cmd = args.shift();
             if (self.items.hasOwnProperty(cmd)) {
                 var code = self.items[cmd].code;

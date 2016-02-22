@@ -96,7 +96,7 @@ body {
     right: -2rem;
     z-index: 2147483000;
 }
-#sk_usage {
+#sk_usage, #sk_popup {
     overflow: auto;
     position: fixed;
     width: 80%;
@@ -111,7 +111,6 @@ body {
     padding: 1rem;
 }
 #sk_usage * {
-    background: #000;
     font-size: 10pt;
 }
 #sk_usage table {

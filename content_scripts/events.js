@@ -4,7 +4,6 @@ var Events = (function() {
         hotKey: 'a-s',
         focusHandlers: {}
     };
-    var clickHandlers = {};
 
     function getBackFocusOnLoad(e) {
         var handled = false;
@@ -15,9 +14,6 @@ var Events = (function() {
         return handled;
     }
     self.focusHandlers['getBackFocusOnLoad'] = getBackFocusOnLoad;
-    clickHandlers['setBackFocus'] = function(e) {
-        delete self.focusHandlers.getBackFocusOnLoad;
-    };
 
     var excludedNodes = [];
 
@@ -68,12 +64,7 @@ var Events = (function() {
             }
         },
         'click': function(event) {
-            for (var fn in clickHandlers) {
-                if (clickHandlers[fn](event)) {
-                    window.stopEventPropagation(event, false);
-                    break;
-                }
-            }
+            delete self.focusHandlers.getBackFocusOnLoad;
         },
         'keydown': function(event) {
             var key = KeyboardUtils.getKeyChar(event);

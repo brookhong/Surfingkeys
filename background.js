@@ -15,6 +15,7 @@ var Service = (function() {
     var settings = {
         maxResults: 500,
         tabsThreshold: 9,
+        repeatThreshold: 99,
         tabsMRUOrder: true,
         smoothScroll: true,
         blacklist: {},
@@ -29,6 +30,7 @@ var Service = (function() {
         autoproxy_hosts: {},
         proxyMode: 'byhost',
         proxy: "DIRECT",
+        interceptedErrors: '*',
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
@@ -105,11 +107,19 @@ var Service = (function() {
             }
         }
     });
+    chrome.proxy.settings.get( {}, function(data) {
+        if (data.levelOfControl === "controlled_by_this_extension") {
+            // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
+            eval(data.value.pacScript.data.substr(19));
+        }
+    });
 
     function handleMessage(_message, _sender, _sendResponse, _port) {
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
-                _message.repeats = _message.repeats || 1;
+                if (_message.repeats > settings.repeatThreshold) {
+                    _message.repeats = settings.repeatThreshold;
+                }
                 self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
                 try {
@@ -144,6 +154,7 @@ var Service = (function() {
     function removeTab(tabId) {
         delete contentPorts[tabId];
         delete frontEndPorts[tabId];
+        delete tabErrors[tabId];
         unRegisterFrame(tabId);
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
@@ -202,13 +213,51 @@ var Service = (function() {
             }
         });
     });
-    chrome.webRequest.onErrorOccurred.addListener(
-        function(details) {
-            console.log(details);
-        }, {
-            urls: ["<all_urls>"]
+    var tabErrors = {};
+    chrome.webRequest.onErrorOccurred.addListener(function(details) {
+        var tabId = details.tabId;
+        if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
+            if (!tabErrors.hasOwnProperty(tabId)) {
+                tabErrors[tabId] = [];
+            }
+            if (details.type === "main_frame") {
+                tabErrors[tabId] = [];
+                if (details.error !== "net::ERR_ABORTED") {
+                    chrome.tabs.update(tabId, {
+                        url: chrome.extension.getURL("pages/error.html")
+                    });
+                }
+            }
+            tabErrors[tabId].push(details);
         }
-    );
+    }, {
+        urls: ["<all_urls>"]
+    });
+    function _response(message, sendResponse, result) {
+        result.action = message.action;
+        result.id = message.id;
+        sendResponse(result);
+    }
+    self.getTabErrors = function(message, sender, sendResponse) {
+        _response(message, sendResponse, {
+            tabError: tabErrors[sender.tab.id]
+        });
+    };
+    self.clearTabErrors = function(message, sender, sendResponse) {
+        tabErrors[sender.tab.id] = [];
+    };
+    self.isTabActive = function(message, sender, sendResponse) {
+        chrome.tabs.query({
+            active: true
+        }, function(resp) {
+            var activeTabs = resp.map(function(t) {
+                return t.id;
+            });
+            _response(message, sendResponse, {
+                active: (activeTabs.indexOf(sender.tab.id) !== -1)
+            });
+        });
+    };
 
     function unRegisterFrame(tabId) {
         if (frameIncs.hasOwnProperty(tabId)) {
@@ -217,7 +266,8 @@ var Service = (function() {
     }
 
     function _updateSettings(diffSettings, noack) {
-        var toSet = diffSettings || settings;
+        var toSet = diffSettings;
+        extendSettings(diffSettings);
         chrome.storage.local.set(toSet);
         if (settings.storage === 'sync') {
             chrome.storage.sync.set(toSet, function() {
@@ -239,32 +289,61 @@ var Service = (function() {
     function _loadSettingsFromUrl(url) {
         var s = request('get', url);
         s.then(function(resp) {
-            settings.localPath = url;
-            settings.snippets = resp;
-            _updateSettings();
+            _updateSettings({localPath: url, snippets: resp});
         });
     };
 
     self.resetSettings = function(message, sender, sendResponse) {
         if (message.useDefault) {
-            delete settings.localPath;
-            settings.snippets = "";
-            _updateSettings();
+            _updateSettings({localPath: "", snippets: ""});
         } else if (settings.localPath) {
             _loadSettingsFromUrl(settings.localPath);
         } else {
-            settings.snippets = "";
-            _updateSettings();
+            _updateSettings({snippets: ""});
         }
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
         _loadSettingsFromUrl(message.url);
     };
+    function _filterByTitleOrUrl(tabs, query) {
+        if (query && query.length) {
+            tabs = tabs.filter(function(b) {
+                return b.title.indexOf(query) !== -1 || (b.url && b.url.indexOf(query) !== -1);
+            });
+        }
+        return tabs;
+    }
+    self.getRecentlyClosed = function(message, sender, sendResponse) {
+        chrome.sessions.getRecentlyClosed({}, function(sessions) {
+            var tabs = [];
+            for (var i = 0; i < sessions.length; i ++) {
+                var s = sessions[i];
+                if (s.hasOwnProperty('window')) {
+                    tabs = tabs.concat(s.window.tabs);
+                } else if (s.hasOwnProperty('tab')) {
+                    tabs.push(s.tab);
+                }
+            }
+            tabs = _filterByTitleOrUrl(tabs, message.query);
+            _response(message, sendResponse, {
+                urls: tabs
+            });
+        })
+    };
+    self.getTopSites = function(message, sender, sendResponse) {
+        chrome.topSites.get(function(urls) {
+            urls = _filterByTitleOrUrl(urls, message.query);
+            _response(message, sendResponse, {
+                urls: urls
+            });
+        })
+    };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
         chrome.tabs.query({
-            currentWindow: true
+            windowId: tab.windowId
         }, function(tabs) {
+            tabs = _filterByTitleOrUrl(tabs, message.query);
             if (message.query && message.query.length) {
                 tabs = tabs.filter(function(b) {
                     return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
@@ -278,9 +357,7 @@ var Service = (function() {
                     return tabActivated[b.id] - tabActivated[a.id];
                 });
             }
-            sendResponse({
-                action: message.action,
-                id: message.id,
+            _response(message, sendResponse, {
                 tabs: tabs
             });
         });
@@ -312,74 +389,82 @@ var Service = (function() {
             });
         }
     };
-    self.nextTab = function(message, sender, sendResponse) {
-        var tab = sender.tab;
+    // limit to between 0 and length
+    function _fixTo(to, length) {
+        if (to < 0) {
+            to = 0;
+        } else if (to >= length){
+            to = length;
+        }
+        return to;
+    }
+    // round base ahead if repeats reaches length
+    function _roundBase(base, repeats, length) {
+        if (repeats > length - base) {
+            base -= repeats - (length - base);
+        }
+        return base;
+    }
+    function _nextTab(tab, step) {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-            chrome.tabs.update(tabs[(((tab.index + 1) % tabs.length) + tabs.length) % tabs.length].id, {
+            var to = _fixTo(tab.index + step, tabs.length - 1);
+            chrome.tabs.update(tabs[to].id, {
                 active: true
             });
         });
+    }
+    self.nextTab = function(message, sender, sendResponse) {
+        _nextTab(sender.tab, message.repeats);
     };
     self.previousTab = function(message, sender, sendResponse) {
-        var tab = sender.tab;
+        _nextTab(sender.tab, -message.repeats);
+    };
+    function _roundRepeatTabs(tab, repeats, operation) {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-            return chrome.tabs.update(tabs[(((tab.index - 1) % tabs.length) + tabs.length) % tabs.length].id, {
-                active: true
+            var tabIds = tabs.map(function(e) {
+                return e.id;
             });
+            repeats = _fixTo(repeats, tabs.length);
+            var base = _roundBase(tab.index, repeats, tabs.length);
+            operation(tabIds.slice(base, base + repeats));
         });
-    };
+    }
     self.reloadTab = function(message, sender, sendResponse) {
-        chrome.tabs.reload({
-            bypassCache: message.nocache
+        _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
+            tabIds.forEach(function(tabId) {
+                chrome.tabs.reload(tabId, {
+                    bypassCache: message.nocache
+                });
+            });
         });
     };
     self.closeTab = function(message, sender, sendResponse) {
-        chrome.tabs.query({
-            currentWindow: true
-        }, function(tabs) {
-            var sortedIds = tabs.map(function(e) {
-                return e.id;
-            });
-            var base = sender.tab.index;
-            if (message.repeats > sortedIds.length - base) {
-                base -= message.repeats - (sortedIds.length - base);
-            }
-            if (base < 0) {
-                base = 0;
-            }
-            chrome.tabs.remove(sortedIds.slice(base, base + message.repeats));
+        _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
+            chrome.tabs.remove(tabIds);
         });
     };
     self.openLast = function(message, sender, sendResponse) {
-        for (var i = 0; i < message.repeats; i++) {
-            chrome.sessions.restore();
-        }
+        chrome.sessions.restore();
     };
     self.duplicateTab = function(message, sender, sendResponse) {
-        for (var i = 0; i < message.repeats; i++) {
-            chrome.tabs.duplicate(sender.tab.id);
-        }
+        chrome.tabs.duplicate(sender.tab.id);
     };
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
             getFolders(tree[0], "");
-            sendResponse({
-                action: message.action,
-                id: message.id,
+            _response(message, sendResponse, {
                 folders: bookmarkFolders
             });
         });
     };
     self.createBookmark = function(message, sender, sendResponse) {
         createBookmark(message.page, function(ret) {
-            sendResponse({
-                action: message.action,
-                id: message.id,
+            _response(message, sendResponse, {
                 bookmark: ret
             });
         });
@@ -393,26 +478,20 @@ var Service = (function() {
                         return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                     });
                 }
-                sendResponse({
-                    action: message.action,
-                    id: message.id,
+                _response(message, sendResponse, {
                     bookmarks: bookmarks
                 });
             });
         } else {
             if (message.query && message.query.length) {
                 chrome.bookmarks.search(message.query, function(tree) {
-                    sendResponse({
-                        action: message.action,
-                        id: message.id,
+                    _response(message, sendResponse, {
                         bookmarks: tree
                     });
                 });
             } else {
                 chrome.bookmarks.getTree(function(tree) {
-                    sendResponse({
-                        action: message.action,
-                        id: message.id,
+                    _response(message, sendResponse, {
                         bookmarks: tree[0].children
                     });
                 });
@@ -421,36 +500,9 @@ var Service = (function() {
     };
     self.getHistory = function(message, sender, sendResponse) {
         chrome.history.search(message.query, function(tree) {
-            sendResponse({
-                action: message.action,
-                id: message.id,
+            _response(message, sendResponse, {
                 history: tree
             });
-        });
-    };
-    self.getURLs = function(message, sender, sendResponse) {
-        chrome.bookmarks.search(message.query, function(tree) {
-            var bookmarks = tree;
-            var vacancy = message.maxResults - bookmarks.length;
-            if (vacancy > 0) {
-                chrome.history.search({
-                    text: message.query,
-                    startTime: 0,
-                    maxResults: vacancy
-                }, function(tree) {
-                    sendResponse({
-                        action: message.action,
-                        id: message.id,
-                        urls: tree.concat(bookmarks)
-                    });
-                });
-            } else {
-                sendResponse({
-                    action: message.action,
-                    id: message.id,
-                    urls: bookmarks
-                });
-            }
         });
     };
     self.openLink = function(message, sender, sendResponse) {
@@ -469,14 +521,12 @@ var Service = (function() {
                 default:
                     break;
             }
-            for (var i = 0; i < message.repeats; ++i) {
-                chrome.tabs.create({
-                    url: message.url,
-                    active: message.tab.active,
-                    index: newTabPosition,
-                    pinned: message.tab.pinned
-                });
-            }
+            chrome.tabs.create({
+                url: message.url,
+                active: message.tab.active,
+                index: newTabPosition,
+                pinned: message.tab.pinned
+            });
         } else {
             chrome.tabs.update({
                 url: message.url,
@@ -489,8 +539,7 @@ var Service = (function() {
         self.openLink(message, sender, sendResponse);
     };
     self.getSettings = function(message, sender, sendResponse) {
-        sendResponse({
-            action: message.action,
+        _response(message, sendResponse, {
             settings: settings
         });
     };
@@ -499,8 +548,7 @@ var Service = (function() {
         self.openLink(message, sender, sendResponse);
     };
     self.updateSettings = function(message, sender, sendResponse) {
-        extendSettings(message.settings);
-        _updateSettings(undefined, message.noack);
+        _updateSettings(message.settings, message.noack);
     };
     self.changeSettingsStorage = function(message, sender, sendResponse) {
         settings.storage = message.storage;
@@ -522,9 +570,7 @@ var Service = (function() {
     self.request = function(message, sender, sendResponse) {
         var s = request(message.method, message.url);
         s.then(function(res) {
-            sendResponse({
-                action: message.action,
-                id: message.id,
+            _response(message, sendResponse, {
                 text: res
             });
         });
@@ -548,13 +594,14 @@ var Service = (function() {
         });
     };
     self.moveTab = function(message, sender, sendResponse) {
-        var newPos = parseInt(message.position);
-        var activeTabId = sender.tab.id;
-        if (newPos > -1 && newPos < 10) {
-            chrome.tabs.move(activeTabId, {
-                index: newPos
+        chrome.tabs.query({
+            windowId: sender.tab.windowId
+        }, function(tabs) {
+            var to = _fixTo(sender.tab.index + message.step * message.repeats, tabs.length);
+            chrome.tabs.move(sender.tab.id, {
+                index: to
             });
-        }
+        });
     };
     self.quit = function(message, sender, sendResponse) {
         chrome.windows.getAll({
@@ -594,9 +641,7 @@ var Service = (function() {
         });
     };
     self.getSessions = function(message, sender, sendResponse) {
-        sendResponse({
-            action: message.action,
-            id: message.id,
+        _response(message, sendResponse, {
             sessions: settings.sessions
         });
     };
@@ -646,14 +691,12 @@ var Service = (function() {
 
     function FindProxyForURL(url, host) {
         var lastPos;
-        if (sk_mode === "always") {
-            return sk_proxy;
-        } else if (sk_mode === "direct") {
-            return 'DIRECT';
+        if (settings.proxyMode === "always") {
+            return settings.proxy;
         }
         do {
-            if (proxied_hosts.hasOwnProperty(host)) {
-                return sk_proxy;
+            if (settings.autoproxy_hosts.hasOwnProperty(host)) {
+                return settings.proxy;
             }
             lastPos = host.indexOf('.') + 1;
             host = host.slice(lastPos);
@@ -684,9 +727,10 @@ var Service = (function() {
             proxy: settings.proxy
         });
         var config = {
-            mode: 'pac_script',
+            mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
             pacScript: {
-                data: "var proxied_hosts = " + JSON.stringify(settings.autoproxy_hosts) + ", sk_mode = '" + settings.proxyMode + "', sk_proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+                data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
+                + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
             }
         };
         chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {

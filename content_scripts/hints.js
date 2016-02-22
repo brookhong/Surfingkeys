@@ -145,19 +145,21 @@ var Hints = (function() {
                         tabbed: behaviours.tabbed,
                         active: behaviours.active
                     },
-                    url: element.href,
-                    repeats: 1
+                    url: element.href
                 });
             } else {
                 var realTargets = $(element).find('a:visible');
                 realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
                 element = realTargets.length ? realTargets[0] : element;
-                if (lastMouseTarget) {
-                    dispatchMouseEvent(lastMouseTarget, ['mouseout']);
-                }
-                var events = [];
+                self.mouseoutLastElement();
                 dispatchMouseEvent(element, ['mouseover', 'mousedown', 'mouseup', 'click']);
             }
+        }
+    };
+    self.mouseoutLastElement = function() {
+        if (lastMouseTarget) {
+            dispatchMouseEvent(lastMouseTarget, ['mouseout']);
+            lastMouseTarget = null;
         }
     };
 

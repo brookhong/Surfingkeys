@@ -1,13 +1,51 @@
-if (typeof(command) === 'undefined') {
-    command = function() {};
+if (typeof(Commands) === 'undefined') {
+    Commands = { items: {} };
+}
+
+var command = function(cmd, annotation, jscode) {
+    if (typeof(jscode) === 'string') {
+        jscode = new Function(jscode);
+    }
+    Commands.items[cmd] = {
+        code: jscode,
+        annotation: annotation
+    };
+};
+
+function parseCommand(cmdline) {
+    var cmdline = cmdline.trim();
+    var tokens = [];
+    var pendingToken = false;
+    var part = '';
+    for (var i = 0; i < cmdline.length; i++) {
+        if (cmdline.charAt(i) === ' ' && !pendingToken) {
+            tokens.push(part);
+            part = '';
+        } else {
+            if (cmdline.charAt(i) === '\"') {
+                pendingToken = !pendingToken;
+            } else {
+                part += cmdline.charAt(i);
+            }
+        }
+    }
+    tokens.push(part);
+    return tokens;
 }
 
 if (typeof(addSearchAlias) === 'undefined') {
     addSearchAlias = function() {};
 }
 
+var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab'];
 RUNTIME = function(action, args) {
     (args = args || {}).action = action;
+    if (actionsRepeatBackground.indexOf(action) !== -1) {
+        // if the action can only be repeated in background, pass repeats to background with args,
+        // and set RUNTIME.repeats 1, so that it won't be repeated in foreground's _handleMapKey
+        args.repeats = RUNTIME.repeats;
+        RUNTIME.repeats = 1;
+    }
     try {
         chrome.runtime.sendMessage(args);
     } catch (e) {
@@ -60,15 +98,31 @@ function vmapkey(keys, annotation, jscode, extra_chars, domain) {
 
 function map(new_keystroke, old_keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        var old_map = Normal.mappings.find(old_keystroke);
-        if (old_map) {
-            var meta = old_map.meta[0];
-            Normal.mappings.remove(old_keystroke);
-            Normal.mappings.add(new_keystroke, {
-                code: meta.code,
-                annotation: meta.annotation,
-                extra_chars: meta.extra_chars
-            });
+        if (old_keystroke[0] === ':') {
+            var cmdline = old_keystroke.substr(1);
+            var args = parseCommand(cmdline);
+            var cmd = args.shift();
+            if (Commands.items.hasOwnProperty(cmd)) {
+                var meta = Commands.items[cmd];
+                Normal.mappings.add(new_keystroke, {
+                    code: function() {
+                        meta.code.apply(meta.code, args);
+                    },
+                    annotation: meta.annotation,
+                    extra_chars: 0
+                });
+            }
+        } else {
+            var old_map = Normal.mappings.find(old_keystroke);
+            if (old_map) {
+                var meta = old_map.meta[0];
+                Normal.mappings.remove(new_keystroke);
+                Normal.mappings.add(new_keystroke, {
+                    code: meta.code,
+                    annotation: meta.annotation,
+                    extra_chars: meta.extra_chars
+                });
+            }
         }
     }
 }
@@ -101,8 +155,7 @@ function tabOpenLink(url) {
             tabbed: true
         },
         position: runtime.settings.newTabPosition,
-        url: url,
-        repeats: 1
+        url: url
     });
 }
 
@@ -170,10 +223,6 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
     Events.resetListeners();
 });
 
-if (runtime && runtime.settings) {
+$.when(settingsDeferred).done(function (settings) {
     applySettings();
-} else {
-    $(document).on('surfingkeys:connected', function(e) {
-        applySettings();
-    });
-}
+});

@@ -2,6 +2,7 @@ var Visual = (function() {
     var self = {};
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
+    self.repeats = "";
     self.mappings.add("l", {
         annotation: "forward character",
         code: modifySelection
@@ -244,7 +245,6 @@ var Visual = (function() {
         }
         showCursor();
         scrollIntoView();
-        self.finish();
     }
 
     function scrollIntoView() {
@@ -347,13 +347,6 @@ var Visual = (function() {
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
             showCursor();
         }
-    };
-
-    self.finish = function() {
-        self.map_node = self.mappings;
-        runtime.frontendCommand({
-            action: 'hideKeystroke'
-        });
     };
 
     var _handleMapKey = Normal._handleMapKey.bind(self);

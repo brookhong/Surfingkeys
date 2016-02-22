@@ -2,6 +2,7 @@ var Normal = (function() {
     var self = {};
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
+    self.repeats = "";
     self.surfingkeysHold = 0;
 
     var stepSize = 70,
@@ -110,7 +111,7 @@ var Normal = (function() {
     }
 
     self.changeScrollTarget = function() {
-        scrollNodes = getScrollableElements(100, 1.2);
+        scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
@@ -121,9 +122,9 @@ var Normal = (function() {
         }
     };
 
-    self.scroll = function(type, repeats) {
-        if (!scrollNodes) {
-            scrollNodes = getScrollableElements(100, 1.2);
+    self.scroll = function(type) {
+        if (!scrollNodes || scrollNodes.length === 0) {
+            scrollNodes = getScrollableElements(100, 1.1);
         } else {
             scrollNodes = scrollNodes.filter(function(n) {
                 return $(n).is(":visible");
@@ -140,25 +141,24 @@ var Normal = (function() {
             initScroll(scrollNode);
         }
         var size = (scrollNode === document.body) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
-        repeats = repeats || 1;
         switch (type) {
             case 'down':
-                scrollNode.skScrollBy(0, repeats * stepSize, 500);
+                scrollNode.skScrollBy(0, stepSize, 500);
                 break;
             case 'up':
-                scrollNode.skScrollBy(0, -repeats * stepSize, 500);
+                scrollNode.skScrollBy(0, -stepSize, 500);
                 break;
             case 'pageDown':
-                scrollNode.skScrollBy(0, repeats * size[1] / 2, 500);
+                scrollNode.skScrollBy(0, size[1] / 2, 500);
                 break;
             case 'fullPageDown':
-                scrollNode.skScrollBy(0, repeats * size[1], 500);
+                scrollNode.skScrollBy(0, size[1], 500);
                 break;
             case 'pageUp':
-                scrollNode.skScrollBy(0, -repeats * size[1] / 2, 500);
+                scrollNode.skScrollBy(0, -size[1] / 2, 500);
                 break;
             case 'fullPageUp':
-                scrollNode.skScrollBy(0, -repeats * size[1], 500);
+                scrollNode.skScrollBy(0, -size[1], 500);
                 break;
             case 'top':
                 scrollNode.skScrollBy(0, -scrollNode.scrollTop, 500);
@@ -167,10 +167,10 @@ var Normal = (function() {
                 scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop, 500);
                 break;
             case 'left':
-                scrollNode.skScrollBy(repeats * -stepSize / 2, 0, 500);
+                scrollNode.skScrollBy(-stepSize / 2, 0, 500);
                 break;
             case 'right':
-                scrollNode.skScrollBy(repeats * stepSize / 2, 0, 500);
+                scrollNode.skScrollBy(stepSize / 2, 0, 500);
                 break;
             case 'leftmost':
                 scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0, 500);
@@ -195,6 +195,13 @@ var Normal = (function() {
         runtime.frontendCommand({
             action: 'showUsage',
             content: _usage.html(),
+        });
+    };
+
+    self.showPopup = function(content) {
+        runtime.frontendCommand({
+            action: 'showPopup',
+            content: content
         });
     };
 
@@ -251,8 +258,9 @@ var Normal = (function() {
     };
 
     self.finish = function() {
-        self.map_node = self.mappings;
-        self.pendingMap = null;
+        this.repeats = "";
+        this.map_node = this.mappings;
+        this.pendingMap = null;
         runtime.frontendCommand({
             action: 'hideKeystroke'
         });
@@ -260,7 +268,7 @@ var Normal = (function() {
 
     self._handleMapKey = function(key) {
         var ret = false;
-        var finish = this.finish.bind(this);
+        var finish = self.finish.bind(this);
         if (this.pendingMap) {
             var pf = this.pendingMap.bind(this);
             setTimeout(function() {
@@ -268,10 +276,17 @@ var Normal = (function() {
                 finish();
             }, 0);
             ret = true;
+        } else if (this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            this.repeats += key;
+            runtime.frontendCommand({
+                action: 'showKeystroke',
+                key: key
+            });
+            ret = true;
         } else {
             this.map_node = this.map_node.find(key);
             if (this.map_node === null) {
-                this.finish();
+                finish();
                 ret = false;
             } else {
                 if (this.map_node.meta.length) {
@@ -283,8 +298,12 @@ var Normal = (function() {
                             key: key
                         });
                     } else {
+                        RUNTIME.repeats = parseInt(this.repeats) || 1;
                         setTimeout(function() {
-                            code();
+                            while(RUNTIME.repeats > 0) {
+                                code();
+                                RUNTIME.repeats--;
+                            }
                             finish();
                         }, 0);
                     }
@@ -298,6 +317,14 @@ var Normal = (function() {
             }
         }
         return ret;
+    };
+
+    self.feedkeys = function(keys) {
+        setTimeout(function() {
+            for (var i = 0; i < keys.length; i ++) {
+                self._handleMapKey(keys[i]);
+            }
+        }, 1);
     };
 
     self.handleKeyEvent = function(event, key) {
