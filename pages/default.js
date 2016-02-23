@@ -19,7 +19,7 @@ command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', fun
     });
     return true;
 });
-command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(mode) {
     RUNTIME('updateProxy', {
         mode: mode
     });

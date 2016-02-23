@@ -1,5 +1,6 @@
 var Normal = (function() {
     var self = {};
+    self.name = "Normal";
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
     self.repeats = "";
@@ -258,7 +259,6 @@ var Normal = (function() {
     };
 
     self.finish = function() {
-        this.repeats = "";
         this.map_node = this.mappings;
         this.pendingMap = null;
         runtime.frontendCommand({
@@ -273,11 +273,14 @@ var Normal = (function() {
             var pf = this.pendingMap.bind(this);
             setTimeout(function() {
                 pf(key);
+                self.repeats = "";
                 finish();
             }, 0);
             ret = true;
-        } else if (this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
-            this.repeats += key;
+        } else if (this.map_node === this.mappings && (key >= "1" || (self.repeats !== "" && key >= "0")) && key <= "9") {
+            // self.repeats is shared by Normal and Visual
+            // and reset only after target action executed or cancelled
+            self.repeats += key;
             runtime.frontendCommand({
                 action: 'showKeystroke',
                 key: key
@@ -298,12 +301,13 @@ var Normal = (function() {
                             key: key
                         });
                     } else {
-                        RUNTIME.repeats = parseInt(this.repeats) || 1;
+                        RUNTIME.repeats = parseInt(self.repeats) || 1;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
                                 code();
                                 RUNTIME.repeats--;
                             }
+                            self.repeats = "";
                             finish();
                         }, 0);
                     }
@@ -331,6 +335,7 @@ var Normal = (function() {
         var handled = false;
         switch (event.keyCode) {
             case KeyboardUtils.keyCodes.ESC:
+                self.repeats = "";
                 handled = self.finish();
                 break;
             default:

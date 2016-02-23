@@ -217,6 +217,8 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
         direct      Chrome will connect to all sites directly.
         byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
         always      Chrome will connect to all sites through proxy.
+        system      Use proxy configuration taken from the operating system.
+        clear       Surfingkeys will take on control of proxy settings, this is the default mode.
 
 * addProxySite, removeProxySite, toggleProxySite, to make Chrome connect to site through proxy or not, examples:
 

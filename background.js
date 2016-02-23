@@ -28,9 +28,9 @@ var Service = (function() {
         newTabPosition: 'right',
         afterYank: 1,
         autoproxy_hosts: {},
-        proxyMode: 'byhost',
+        proxyMode: 'clear',
         proxy: "DIRECT",
-        interceptedErrors: '*',
+        interceptedErrors: '',
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
@@ -87,6 +87,7 @@ var Service = (function() {
         }
     }
 
+    var tabErrors = {};
     chrome.storage.local.get(null, function(data) {
         if (!data.version || parseFloat(data.version) < 0.11) {
             if (JSON.stringify(data) !== '{}') {
@@ -105,12 +106,37 @@ var Service = (function() {
                     }
                 });
             }
-        }
-    });
-    chrome.proxy.settings.get( {}, function(data) {
-        if (data.levelOfControl === "controlled_by_this_extension") {
-            // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
-            eval(data.value.pacScript.data.substr(19));
+            if (settings.proxyMode === 'clear') {
+                chrome.proxy.settings.clear({scope: 'regular'});
+            } else {
+                chrome.proxy.settings.get( {}, function(proxyInfo) {
+                    if (proxyInfo.levelOfControl === "controlled_by_this_extension") {
+                        // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
+                        eval(proxyInfo.value.pacScript.data.substr(19));
+                    }
+                });
+            }
+            if (settings.interceptedErrors.length) {
+                chrome.webRequest.onErrorOccurred.addListener(function(details) {
+                    var tabId = details.tabId;
+                    if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
+                        if (!tabErrors.hasOwnProperty(tabId)) {
+                            tabErrors[tabId] = [];
+                        }
+                        if (details.type === "main_frame") {
+                            tabErrors[tabId] = [];
+                            if (details.error !== "net::ERR_ABORTED") {
+                                chrome.tabs.update(tabId, {
+                                    url: chrome.extension.getURL("pages/error.html")
+                                });
+                            }
+                        }
+                        tabErrors[tabId].push(details);
+                    }
+                }, {
+                    urls: ["<all_urls>"]
+                });
+            }
         }
     });
 
@@ -212,26 +238,6 @@ var Service = (function() {
                 }
             }
         });
-    });
-    var tabErrors = {};
-    chrome.webRequest.onErrorOccurred.addListener(function(details) {
-        var tabId = details.tabId;
-        if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
-            if (!tabErrors.hasOwnProperty(tabId)) {
-                tabErrors[tabId] = [];
-            }
-            if (details.type === "main_frame") {
-                tabErrors[tabId] = [];
-                if (details.error !== "net::ERR_ABORTED") {
-                    chrome.tabs.update(tabId, {
-                        url: chrome.extension.getURL("pages/error.html")
-                    });
-                }
-            }
-            tabErrors[tabId].push(details);
-        }
-    }, {
-        urls: ["<all_urls>"]
     });
     function _response(message, sendResponse, result) {
         result.action = message.action;
@@ -725,15 +731,19 @@ var Service = (function() {
             proxyMode: settings.proxyMode,
             proxy: settings.proxy
         });
-        var config = {
-            mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
-            pacScript: {
-                data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
-                + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
-            }
-        };
-        chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
-        });
+        if (message.mode === 'clear') {
+            chrome.proxy.settings.clear({scope: 'regular'});
+        } else {
+            var config = {
+                mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
+                pacScript: {
+                    data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
+                    + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+                }
+            };
+            chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
+            });
+        }
     };
 
     return self;

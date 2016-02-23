@@ -1,8 +1,8 @@
 var Visual = (function() {
     var self = {};
+    self.name = "Visual";
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
-    self.repeats = "";
     self.mappings.add("l", {
         annotation: "forward character",
         code: modifySelection
