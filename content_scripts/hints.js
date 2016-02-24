@@ -147,6 +147,12 @@ var Hints = (function() {
                     },
                     url: element.href
                 });
+                // reset default behaviours
+                behaviours = {
+                    active: true,
+                    tabbed: false,
+                    multipleHits: false
+                };
             } else {
                 var realTargets = $(element).find('a:visible');
                 realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');

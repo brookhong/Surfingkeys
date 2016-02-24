@@ -57,16 +57,27 @@ var Normal = (function() {
         };
     }
 
-    function getScrollableElements(minHeight, minRatio) {
-        var nodes = [];
-        if (window.innerHeight < document.body.scrollHeight) {
-            nodes.push(document.body);
+    function hasScroll(el, direction, barSize) {
+        direction = (direction === 'vertical') ? 'scrollTop' : 'scrollLeft';
+        var result = el[direction];
+
+        if (result < barSize) {
+            // set scroll offset to barSize, and verify if we can get scroll offset as barSize
+            var originOffset = el[direction];
+            el[direction] = barSize;
+            result = el[direction];
+            el[direction] = originOffset;
         }
+        return result >= barSize;
+    }
+
+    function getScrollableElements() {
+        var nodes = [];
         var nodeIterator = document.createNodeIterator(
             document.body,
             NodeFilter.SHOW_ELEMENT, {
                 acceptNode: function(node) {
-                    return (node !== document.body && node.scrollHeight / node.offsetHeight >= minRatio && node.offsetHeight > minHeight) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    return (hasScroll(node, 'vertical', 16) || hasScroll(node, 'horizontal', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                 }
             });
         for (var node; node = nodeIterator.nextNode(); nodes.push(node));
@@ -116,9 +127,7 @@ var Normal = (function() {
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
-            if (!isElementPartiallyInViewport(sn)) {
-                sn.scrollIntoView();
-            }
+            sn.scrollIntoViewIfNeeded();
             self.highlightElement(sn);
         }
     };

@@ -85,9 +85,9 @@ command('quit', 'quit chrome', function() {
 map('ZQ', ':quit');
 mapkey('ZZ', 'Save session and quit', function() {
     RUNTIME('createSession', {
-        name: 'LAST'
+        name: 'LAST',
+        quitAfterSaved: true
     });
-    RUNTIME('quit');
 });
 mapkey('ZR', 'Restore last session', function() {
     RUNTIME('openSession', {
@@ -106,8 +106,8 @@ mapkey('h', 'Scroll left', 'Normal.scroll("left")');
 mapkey('l', 'Scroll right', 'Normal.scroll("right")');
 mapkey('gg', 'Scroll to the top of the page', 'Normal.scroll("top")');
 mapkey('G', 'Scroll to the bottom of the page', 'Normal.scroll("bottom")');
-mapkey('zH', 'Scroll all the way to the left', 'Normal.scroll("leftmost")');
-mapkey('zL', 'Scroll all the way to the right', 'Normal.scroll("rightmost")');
+mapkey('0', 'Scroll all the way to the left', 'Normal.scroll("leftmost")');
+mapkey('$', 'Scroll all the way to the right', 'Normal.scroll("rightmost")');
 mapkey('cs', 'Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
 Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible";
