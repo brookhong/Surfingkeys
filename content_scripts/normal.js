@@ -58,17 +58,17 @@ var Normal = (function() {
     }
 
     function hasScroll(el, direction, barSize) {
-        direction = (direction === 'vertical') ? 'scrollTop' : 'scrollLeft';
-        var result = el[direction];
+        var offset = (direction === 'y') ? 'scrollTop' : 'scrollLeft';
+        var result = el[offset];
 
         if (result < barSize) {
             // set scroll offset to barSize, and verify if we can get scroll offset as barSize
-            var originOffset = el[direction];
-            el[direction] = barSize;
-            result = el[direction];
-            el[direction] = originOffset;
+            var originOffset = el[offset];
+            el[offset] = barSize;
+            result = el[offset];
+            el[offset] = originOffset;
         }
-        return result >= barSize;
+        return result >= barSize && (el === document.body || $(el).css('overflow-' + direction) === 'auto');
     }
 
     function getScrollableElements() {
@@ -77,7 +77,7 @@ var Normal = (function() {
             document.body,
             NodeFilter.SHOW_ELEMENT, {
                 acceptNode: function(node) {
-                    return (hasScroll(node, 'vertical', 16) || hasScroll(node, 'horizontal', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    return (hasScroll(node, 'y', 16) || hasScroll(node, 'x', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                 }
             });
         for (var node; node = nodeIterator.nextNode(); nodes.push(node));
@@ -89,10 +89,12 @@ var Normal = (function() {
             words = mappings.getWords();
         var left = words.length % 2;
         for (var i = 0; i < words.length - left; i += 2) {
-            $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=annotation>{1}</td><td class=keyboard><kbd>{2}</kbd></td><td class=annotation>{3}</td></tr>".format(words[i], mappings.find(words[i]).meta[0].annotation, words[i + 1], mappings.find(words[i + 1]).meta[0].annotation)).appendTo(tb);
+            var tr = "<tr><td class=keyboard><kbd>{0}</kbd></td><td class=annotation>{1}</td><td class=keyboard><kbd>{2}</kbd></td><td class=annotation>{3}</td></tr>";
+            tr = tr.format(htmlEncode(words[i]), mappings.find(words[i]).meta[0].annotation, htmlEncode(words[i + 1]), mappings.find(words[i + 1]).meta[0].annotation);
+            $(tr).appendTo(tb);
         }
         if (left) {
-            var w = words[words.length - 1];
+            var w = htmlEncode(words[words.length - 1]);
             $("<tr><td class=keyboard><kbd>{0}</kbd></td><td class=annotation>{1}</td><td></td><td></td></tr>".format(w, mappings.find(w).meta[0].annotation)).appendTo(tb);
         }
         return tb;
@@ -341,15 +343,14 @@ var Normal = (function() {
     };
 
     self.handleKeyEvent = function(event, key) {
-        var handled = false;
-        switch (event.keyCode) {
-            case KeyboardUtils.keyCodes.ESC:
-                self.repeats = "";
-                handled = self.finish();
-                break;
-            default:
-                handled = self._handleMapKey(key);
-                break;
+        var handled;
+        if (!this.pendingMap || key.length === 1) {
+            // actions with extra_chars only works for one char
+            handled = self._handleMapKey(key);
+        }
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            self.repeats = "";
+            self.finish();
         }
         return handled;
     };

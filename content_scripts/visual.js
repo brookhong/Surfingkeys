@@ -80,6 +80,12 @@ var Visual = (function() {
             self.star();
         }
     });
+    self.mappings.add("<Enter>", {
+        annotation: "Click on node under cursor.",
+        code: function() {
+            Hints.dispatchMouseClick(selection.focusNode.parentNode);
+        }
+    });
 
     var selection = document.getSelection(),
         caseSensitive = false,

@@ -106,4 +106,4 @@ function prepareFrames() {
     return frames.filter(function(f) {
         return f !== null;
     });
-};
+}

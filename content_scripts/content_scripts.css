@@ -9,7 +9,7 @@ div.surfingkeys_cursor {
 #sk_hints >div {
     position: absolute;
     display: block;
-    font-size: 10pt;
+    font-size: 8pt;
     font-weight: bold;
     padding: 0px 2px 0px 2px;
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFF785), color-stop(100%,#FFC542));

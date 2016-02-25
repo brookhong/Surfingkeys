@@ -96,7 +96,7 @@ mapkey('ZR', 'Restore last session', function() {
 });
 mapkey('T', 'Choose a tab', 'Normal.chooseTab()');
 mapkey('?', 'Show usage', 'Normal.showUsage()');
-mapkey('c-i', 'Show usage', 'Normal.showUsage()');
+mapkey('<Ctrl-i>', 'Show usage', 'Normal.showUsage()');
 mapkey('u', 'Show usage', 'Normal.showUsage()');
 mapkey('e', 'Scroll a page up', 'Normal.scroll("pageUp")');
 mapkey('d', 'Scroll a page down', 'Normal.scroll("pageDown")');
@@ -114,7 +114,7 @@ Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, inpu
 mapkey('f', 'Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick)');
 mapkey('af', 'Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', 'Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
-mapkey('a-f', 'Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
+mapkey('<Alt-f>', 'Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
 mapkey('yf', 'Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element, event) {
         Normal.writeClipboard(element.href);
@@ -124,7 +124,7 @@ mapkey('i', 'Go to edit box', 'Hints.create("input:visible, textarea:visible", H
 mapkey('q', 'Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', 'Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', 'Go one tab right', 'RUNTIME("nextTab")');
-mapkey('a-p', 'pin/unpin current tab', 'RUNTIME("togglePinTab")');
+mapkey('<Alt-p>', 'pin/unpin current tab', 'RUNTIME("togglePinTab")');
 mapkey('B', 'Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
 mapkey('F', 'Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
 mapkey('S', 'Go back in history', 'history.go(-1)');
