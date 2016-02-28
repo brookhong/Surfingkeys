@@ -196,7 +196,7 @@ mapkey('cc', 'Open selected link or link from clipboard', function() {
         tabOpenLink(window.getSelection().toString());
     } else {
         Normal.getContentFromClipboard(function(response) {
-            var links = response.data.split('\n');
+            var links = response.data.split('\n').slice(0, 10);
             links.forEach(function(u) {
                 u = u.trim();
                 if (u.length > 0) {
