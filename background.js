@@ -116,27 +116,25 @@ var Service = (function() {
                     }
                 });
             }
-            if (settings.interceptedErrors.length) {
-                chrome.webRequest.onErrorOccurred.addListener(function(details) {
-                    var tabId = details.tabId;
-                    if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
-                        if (!tabErrors.hasOwnProperty(tabId)) {
-                            tabErrors[tabId] = [];
-                        }
-                        if (details.type === "main_frame") {
-                            tabErrors[tabId] = [];
-                            if (details.error !== "net::ERR_ABORTED") {
-                                chrome.tabs.update(tabId, {
-                                    url: chrome.extension.getURL("pages/error.html")
-                                });
-                            }
-                        }
-                        tabErrors[tabId].push(details);
+            chrome.webRequest.onErrorOccurred.addListener(function(details) {
+                var tabId = details.tabId;
+                if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
+                    if (!tabErrors.hasOwnProperty(tabId)) {
+                        tabErrors[tabId] = [];
                     }
-                }, {
-                    urls: ["<all_urls>"]
-                });
-            }
+                    if (details.type === "main_frame") {
+                        tabErrors[tabId] = [];
+                        if (details.error !== "net::ERR_ABORTED") {
+                            chrome.tabs.update(tabId, {
+                                url: chrome.extension.getURL("pages/error.html")
+                            });
+                        }
+                    }
+                    tabErrors[tabId].push(details);
+                }
+            }, {
+                urls: ["<all_urls>"]
+            });
         }
     });
 

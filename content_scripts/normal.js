@@ -68,7 +68,10 @@ var Normal = (function() {
             result = el[offset];
             el[offset] = originOffset;
         }
-        return result >= barSize && (el === document.body || $(el).css('overflow-' + direction) === 'auto');
+        return result >= barSize && (
+            el === document.body
+            || $(el).css('overflow-' + direction) === 'auto'
+            || $(el).css('overflow-' + direction) === 'scroll');
     }
 
     function getScrollableElements() {
