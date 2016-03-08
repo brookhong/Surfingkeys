@@ -256,13 +256,14 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
 ### 映射按键到其他按键
 
-    map(new_keystroke, old_keystroke, [domain_pattern])
+    map(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
 | 参数  | 含义 |
 |:---------------| :-----|
 |**new_keystroke**               | 字符串，将要使用的按键。|
 |**old_keystroke**               | 字符串，将被替换的按键。|
 |**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。|
+|**new_annotation**              | 字符串[可选], 如果提供了就用作帮助描述，否则就用old_keystroke对应的帮助描述。|
 
 ### 删除一个按键映射
 

@@ -261,13 +261,14 @@ mapkey in visual mode
 
 ### map a keystroke to another
 
-    map(new_keystroke, old_keystroke, [domain_pattern])
+    map(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
 | parameter  | explanation |
 |:---------------| :-----|
 |**new_keystroke**               | string, the new keystroke that will be used.|
 |**old_keystroke**               | string, the existing keystroke that will be replaced, which means pressing it will not trigger any action.|
 |**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this mapping works.|
+|**new_annotation**              | string[optional], use it instead of the annotation from old_keystroke if provided.|
 
 ### remove a keystroke mapping
 

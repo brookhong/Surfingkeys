@@ -96,7 +96,7 @@ function vmapkey(keys, annotation, jscode, extra_chars, domain) {
     _mapkey(Visual, keys, annotation, jscode, extra_chars, domain);
 }
 
-function map(new_keystroke, old_keystroke, domain) {
+function map(new_keystroke, old_keystroke, domain, new_annotation) {
     if (!domain || domain.test(window.location.origin)) {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
@@ -108,7 +108,7 @@ function map(new_keystroke, old_keystroke, domain) {
                     code: function() {
                         meta.code.apply(meta.code, args);
                     },
-                    annotation: meta.annotation,
+                    annotation: new_annotation || meta.annotation,
                     extra_chars: 0
                 });
             }
@@ -119,7 +119,7 @@ function map(new_keystroke, old_keystroke, domain) {
                 Normal.mappings.remove(new_keystroke);
                 Normal.mappings.add(new_keystroke, {
                     code: meta.code,
-                    annotation: meta.annotation,
+                    annotation: new_annotation || meta.annotation,
                     extra_chars: meta.extra_chars
                 });
             }
@@ -149,7 +149,15 @@ function walkPageUrl(step) {
 }
 
 function tabOpenLink(url) {
-    url = /^\w+:\/\/\w+/i.test(url) ? url : 'https://www.google.com/search?q=' + url;
+    if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
+        if (/^\w+?:\/\//i.test(url)) {
+            url = url
+        } else {
+            url = "http://" + url;
+        }
+    } else {
+        url = 'https://www.google.com/search?q=' + url;
+    }
     RUNTIME("openLink", {
         tab: {
             tabbed: true

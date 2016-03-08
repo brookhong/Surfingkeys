@@ -26,10 +26,10 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', func
     return true;
 });
 // create shortcuts for the command with different parameters
-map('spa', ':setProxyMode always');
-map('spb', ':setProxyMode byhost');
-map('spd', ':setProxyMode direct');
-map('sps', ':setProxyMode system');
+map('spa', ':setProxyMode always', 0, 'set proxy mode `always`');
+map('spb', ':setProxyMode byhost', 0, 'set proxy mode `byhost`');
+map('spd', ':setProxyMode direct', 0, 'set proxy mode `direct`');
+map('sps', ':setProxyMode system', 0, 'set proxy mode `system`');
 command('proxyInfo', 'show proxy info', function() {
     var infos = [ {name: 'mode', value: runtime.settings.proxyMode} ];
     if (runtime.settings.proxyMode === "byhost") {
@@ -77,8 +77,8 @@ mapkey('sfr', 'show failed web requests of current page', function() {
 command('feedkeys', 'feed mapkeys', function(keys) {
     Normal.feedkeys(keys);
 });
-map('g0', ':feedkeys 99E');
-map('g$', ':feedkeys 99R');
+map('g0', ':feedkeys 99E', 0, "Go to the first tab");
+map('g$', ':feedkeys 99R', 0, "Go to the last tab");
 command('quit', 'quit chrome', function() {
     RUNTIME('quit');
 });
