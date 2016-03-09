@@ -6,8 +6,10 @@ var command = function(cmd, annotation, jscode) {
     if (typeof(jscode) === 'string') {
         jscode = new Function(jscode);
     }
+    var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
     Commands.items[cmd] = {
         code: jscode,
+        feature_group: ag.feature_group,
         annotation: annotation
     };
 };
@@ -74,15 +76,29 @@ function autocmd(domain, jscode) {
     };
 }
 
+function _parseAnnotation(ag) {
+    var annotations = ag.annotation.match(/#(\d+)(.*)/);
+    if (annotations !== null) {
+        ag.feature_group = annotations[1];
+        ag.annotation = annotations[2];
+    }
+    return ag;
+}
+
 function _mapkey(mode, keys, annotation, jscode, extra_chars, domain) {
     if (!domain || domain.test(window.location.origin)) {
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
         }
+        var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
+        if (mode === Visual) {
+            ag.feature_group = 9;
+        }
         mode.mappings.add(keys, {
             code: jscode,
-            annotation: annotation,
+            annotation: ag.annotation,
+            feature_group: ag.feature_group,
             extra_chars: extra_chars
         });
     }
@@ -104,11 +120,13 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var cmd = args.shift();
             if (Commands.items.hasOwnProperty(cmd)) {
                 var meta = Commands.items[cmd];
+                var ag = _parseAnnotation({annotation: new_annotation || meta.annotation, feature_group: meta.feature_group});
                 Normal.mappings.add(new_keystroke, {
                     code: function() {
                         meta.code.apply(meta.code, args);
                     },
-                    annotation: new_annotation || meta.annotation,
+                    annotation: ag.annotation,
+                    feature_group: ag.feature_group,
                     extra_chars: 0
                 });
             }
@@ -116,10 +134,12 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
                 var meta = old_map.meta[0];
+                var ag = _parseAnnotation({annotation: new_annotation || meta.annotation, feature_group: meta.feature_group});
                 Normal.mappings.remove(new_keystroke);
                 Normal.mappings.add(new_keystroke, {
                     code: meta.code,
-                    annotation: new_annotation || meta.annotation,
+                    annotation: ag.annotation,
+                    feature_group: ag.feature_group,
                     extra_chars: meta.extra_chars
                 });
             }
@@ -135,10 +155,10 @@ function unmap(keystroke, domain) {
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
-    mapkey((search_leader_key || 's') + alias, 'Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    vmapkey((search_leader_key || 's') + alias, 'Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
-    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, 'Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+    mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
+    vmapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
+    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '#6Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
+    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '#6Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
 }
 
 function walkPageUrl(step) {

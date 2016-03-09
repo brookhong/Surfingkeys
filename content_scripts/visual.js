@@ -5,66 +5,82 @@ var Visual = (function() {
     self.map_node = self.mappings;
     self.mappings.add("l", {
         annotation: "forward character",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("h", {
         annotation: "backward character",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("j", {
         annotation: "forward line",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("k", {
         annotation: "backward line",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("w", {
         annotation: "forward word",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("e", {
         annotation: "forward word",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("b", {
         annotation: "backward word",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add(")", {
         annotation: "forward sentence",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("(", {
         annotation: "backward sentence",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("}", {
         annotation: "forward paragraph",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("{", {
         annotation: "backward paragraph",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("0", {
         annotation: "backward lineboundary",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("$", {
         annotation: "forward lineboundary",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("G", {
         annotation: "forward documentboundary",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("gg", {
         annotation: "backward documentboundary",
+        feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("y", {
         annotation: "Copy selected text",
+        feature_group: 9,
         code: function() {
             var pos = [selection.anchorNode, selection.anchorOffset];
             Normal.writeClipboard(selection.toString());
@@ -76,12 +92,14 @@ var Visual = (function() {
     });
     self.mappings.add("*", {
         annotation: "Search word under the cursor",
+        feature_group: 9,
         code: function() {
             self.star();
         }
     });
     self.mappings.add("<Enter>", {
         annotation: "Click on node under cursor.",
+        feature_group: 9,
         code: function() {
             Hints.dispatchMouseClick(selection.focusNode.parentNode);
         }

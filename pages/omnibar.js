@@ -93,9 +93,6 @@ var frontendUI = (function() {
     };
     _usage.onShow = function(message) {
         _usage.html(message.content);
-        $('#moreHelp').on('click', function() {
-            _usage.find('.sk_visualUsage').toggle();
-        });
     };
     runtime.actions['showUsage'] = function(message) {
         showPopup(_usage, message);

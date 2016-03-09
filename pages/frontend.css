@@ -110,15 +110,28 @@ body {
     z-index: 2147483298;
     padding: 1rem;
 }
+#sk_usage>div {
+    display: inline-block;
+    vertical-align: top;
+}
+#sk_usage .kbd-span {
+    width: 80px;
+    text-align: right;
+    display: inline-block;
+}
+#sk_usage .feature_name {
+    text-align: center;
+    padding-bottom: 4px;
+}
+#sk_usage .feature_name>span {
+    color: #E09B7E;
+    border-bottom: 2px solid #888;
+}
+#sk_usage span.annotation {
+    padding-left: 8px;
+}
 #sk_usage * {
     font-size: 10pt;
-}
-#sk_usage table {
-    width: 100%;
-}
-#sk_usage td.keyboard {
-    text-align: right;
-    padding: 2px 8px;
 }
 #sk_usage kbd {
     white-space: nowrap;
@@ -128,7 +141,7 @@ body {
     line-height: 10px;
     color: #111;
     vertical-align: middle;
-    background-color: #fcfcfc;
+    background-color: #ddd;
     border: solid 1px #ccc;
     border-bottom-color: #bbb;
     border-radius: 3px;
