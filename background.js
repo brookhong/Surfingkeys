@@ -30,7 +30,7 @@ var Service = (function() {
         autoproxy_hosts: {},
         proxyMode: 'clear',
         proxy: "DIRECT",
-        interceptedErrors: '',
+        interceptedErrors: {},
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";
@@ -118,7 +118,7 @@ var Service = (function() {
             }
             chrome.webRequest.onErrorOccurred.addListener(function(details) {
                 var tabId = details.tabId;
-                if (tabId !== -1 && (settings.interceptedErrors === "*" || details.error in settings.interceptedErrors)) {
+                if (tabId !== -1 && (settings.interceptedErrors.hasOwnProperty("*") || details.error in settings.interceptedErrors)) {
                     if (!tabErrors.hasOwnProperty(tabId)) {
                         tabErrors[tabId] = [];
                     }

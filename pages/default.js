@@ -176,6 +176,9 @@ mapkey('*', 'Find selected text in current page', function() {
 });
 mapkey('x', 'Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', 'Restore closed tab', 'RUNTIME("openLast")');
+mapkey('<Ctrl-1>', 'show pressed key', function(key) {
+    Normal.showPopup(htmlEncode(key));
+}, 1);
 mapkey('m', 'Add current URL to vim-like marks', Normal.addVIMark, 1);
 mapkey("'", 'Jump to vim-like mark', Normal.jumpVIMark, 1);
 mapkey('<<', 'Move current tab to left', function() {

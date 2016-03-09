@@ -346,11 +346,7 @@ var Normal = (function() {
     };
 
     self.handleKeyEvent = function(event, key) {
-        var handled;
-        if (!this.pendingMap || key.length === 1) {
-            // actions with extra_chars only works for one char
-            handled = self._handleMapKey(key);
-        }
+        var handled = self._handleMapKey(key);
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             self.repeats = "";
             self.finish();
