@@ -72,7 +72,7 @@ var Events = (function() {
                 self.toggleBlacklist(window.location.origin);
                 return;
             }
-            if (isExcluded(event.target)) {
+            if (isExcluded(event.target) || key === "") {
                 return;
             }
             delete self.focusHandlers.getBackFocusOnLoad;

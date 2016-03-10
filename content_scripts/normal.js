@@ -124,10 +124,11 @@ var Normal = (function() {
         return $(help_groups);
     }
 
-    self.highlightElement = function(sn) {
+    self.highlightElement = function(sn, duration) {
         var rc = sn.getBoundingClientRect();
         runtime.frontendCommand({
             action: 'highlightElement',
+            duration: duration || 200,
             rect: {
                 top: rc.top,
                 left: rc.left,

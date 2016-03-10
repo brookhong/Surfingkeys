@@ -58,7 +58,7 @@ var frontendUI = (function() {
         setTimeout(function() {
             frameElement.hide();
             self.flush();
-        }, 200);
+        }, message.duration);
     };
 
     _tabs.onShow = function(tabs) {
