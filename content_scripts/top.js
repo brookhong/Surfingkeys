@@ -95,8 +95,11 @@ function prepareFrames() {
     frames = frames.map(function(f) {
         try {
             f.frameId = f.frameId || generateQuickGuid();
-            if (f.innerWidth * f.innerHeight === 0) {
-                return null;
+            if (f.frameElement) {
+                var rc = f.frameElement.getBoundingClientRect();
+                if (rc.width * rc.height === 0) {
+                    return null;
+                }
             }
         } catch (e) {
             return null;

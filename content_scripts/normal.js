@@ -113,8 +113,6 @@ var Normal = (function() {
                 var w = words[i];
                 var meta = mappings.find(w).meta[0];
                 var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
-                console.log(meta.feature_group);
-                console.log(meta.annotation);
                 help_groups[meta.feature_group].push(item);
             }
         });
@@ -383,7 +381,7 @@ var Normal = (function() {
                 marks: runtime.settings.marks
             }
         });
-        self.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
+        self.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
     };
 
     self.jumpVIMark = function(mark) {
@@ -396,7 +394,7 @@ var Normal = (function() {
                 url: runtime.settings.marks[mark]
             });
         } else {
-            self.showBanner("No mark '{0}' defined.".format(mark));
+            self.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
         }
     };
 

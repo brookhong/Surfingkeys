@@ -244,7 +244,9 @@ runtime.actions['settingsUpdated'] = function(response) {
 runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
     if (msg.frameId === window.frameId) {
         window.focus();
-        Normal.highlightElement(document.body);
+        document.body.scrollIntoViewIfNeeded();
+        Normal.highlightElement(window.frameElement || document.body, 500);
+        Events.resetListeners();
     }
 };
 $(document).on('surfingkeys:settingsApplied', function(e) {
