@@ -1,7 +1,7 @@
 var Events = (function() {
     var self = {
         keydownHandlers: [Hints, Visual, Normal],
-        hotKey: 'a-s',
+        hotKey: '<Alt-s>',
         focusHandlers: {}
     };
 
