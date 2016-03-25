@@ -329,6 +329,9 @@ var Omnibar = (function(ui) {
         } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
             rotateResult(event.shiftKey);
             event.preventDefault();
+        } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
+            rotateResult(event.keyCode === KeyboardUtils.keyCodes.upArrow);
+            event.preventDefault();
         }
     };
 
@@ -824,18 +827,6 @@ var Commands = (function() {
     };
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li:nth({0})'.format(Omnibar.focusedItem)).data('cmd'));
-    };
-    self.onKeydown = function(event) {
-        var eaten = false;
-        if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
-            if (runtime.settings.cmdHistory.length) {
-                historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (historyInc + 1) : (historyInc + runtime.settings.cmdHistory.length - 1);
-                historyInc = historyInc % runtime.settings.cmdHistory.length;
-                Omnibar.input.val(runtime.settings.cmdHistory[historyInc]);
-            }
-            eaten = true;
-        }
-        return eaten;
     };
     self.onEnter = function() {
         var ret = false;

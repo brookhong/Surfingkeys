@@ -49,8 +49,15 @@ var runtime = window.runtime || (function() {
     };
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';
-        var list = self.settings[prop];
-        if (cmd.length) {
+        var list = self.settings[prop] || [];
+        var toUpdate = {};
+        if (cmd.constructor.name === "Array") {
+            toUpdate[prop] = cmd;
+            self.command({
+                action: 'updateSettings',
+                settings: toUpdate
+            });
+        } else if (cmd.length) {
             list = list.filter(function(c) {
                 return c.length && c !== cmd;
             });
@@ -58,7 +65,6 @@ var runtime = window.runtime || (function() {
             if (list.length > 50) {
                 list.pop();
             }
-            var toUpdate = {};
             toUpdate[prop] = list;
             self.command({
                 action: 'updateSettings',

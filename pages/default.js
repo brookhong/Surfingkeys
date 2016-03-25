@@ -143,6 +143,9 @@ mapkey('ab', '#8Bookmark current page to selected folder', function() {
 mapkey('oh', '#8Open URL from history', 'Normal.openOmnibar({type: "History"})');
 mapkey('om', '#8Open URL from vim-like marks', 'Normal.openOmnibar({type: "VIMarks"})');
 mapkey(':', '#8Open commands', 'Normal.openOmnibar({type: "Commands"})');
+command('clearHistory', 'clearHistory <find|cmd|img|...>', function(type) {
+    runtime.updateHistory(type, []);
+});
 command('listSession', 'list session', function() {
     runtime.command({
         action: 'getSessions'
