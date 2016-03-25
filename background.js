@@ -20,6 +20,7 @@ var Service = (function() {
         smoothScroll: true,
         blacklist: {},
         marks: {},
+        historyQuota: {},
         findHistory: [],
         cmdHistory: [],
         version: chrome.runtime.getManifest().version,
