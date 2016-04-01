@@ -235,6 +235,13 @@ mapkey('ys', "#7Copy current page's source", function() {
 mapkey('yt', '#3Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yy', "#7Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('yl', "#7Copy current page's title", 'Normal.writeClipboard(document.title)');
+mapkey('yf', '#7Copy form data on current page', function() {
+    var aa = [];
+    $('form').each(function() {
+        aa.push(getFormData(this));
+    });
+    Normal.writeClipboard(JSON.stringify(aa, null, 4));
+});
 mapkey('ob', '#8Open Search with alias b', 'Normal.openOmnibar({type: "SearchEngine", extra: "b"})');
 mapkey('og', '#8Open Search with alias g', 'Normal.openOmnibar({type: "SearchEngine", extra: "g"})');
 mapkey('ow', '#8Open Search with alias w', 'Normal.openOmnibar({type: "SearchEngine", extra: "w"})');

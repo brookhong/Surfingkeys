@@ -26,6 +26,7 @@ body {
 }
 #sk_omnibarSearchArea>input {
     display: inline-block;
+    flex: 1;
     color: #fff;
     font-size: 20px;
     height: 34px;
@@ -33,11 +34,10 @@ body {
     padding: 0px 0px 0px 0.5rem;
     background-color: #000;
     border-style: none;
-    width: 70%;
     outline: none;
 }
 #sk_omnibarSearchArea {
-    display: block;
+    display: flex;
     margin: 0.5rem 1rem;
     background-color: #000;
     border-bottom: 1px solid #999;
