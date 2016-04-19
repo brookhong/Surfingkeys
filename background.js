@@ -696,8 +696,7 @@ var Service = (function() {
         }, false);
     };
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
-        chrome.downloads.setShelfEnabled(false);
-        chrome.downloads.setShelfEnabled(true);
+        chrome.downloads.erase({"urlRegex": ".*"});
     };
 
     function FindProxyForURL(url, host) {

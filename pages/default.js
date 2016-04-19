@@ -143,7 +143,7 @@ mapkey('ab', '#8Bookmark current page to selected folder', function() {
 mapkey('oh', '#8Open URL from history', 'Normal.openOmnibar({type: "History"})');
 mapkey('om', '#8Open URL from vim-like marks', 'Normal.openOmnibar({type: "VIMarks"})');
 mapkey(':', '#8Open commands', 'Normal.openOmnibar({type: "Commands"})');
-command('clearHistory', 'clearHistory <find|cmd|img|...>', function(type) {
+command('clearHistory', 'clearHistory <find|cmd|...>', function(type) {
     runtime.updateHistory(type, []);
 });
 command('listSession', 'list session', function() {
@@ -231,6 +231,9 @@ mapkey(']]', '#1Click on the next link on current page', function() {
 mapkey('ys', "#7Copy current page's source", function() {
     var aa = document.documentElement.cloneNode(true);
     Normal.writeClipboard(aa.outerHTML);
+});
+mapkey('yj', "#7Copy current settings", function() {
+    Normal.writeClipboard(JSON.stringify(settings, null, 4));
 });
 mapkey('yt', '#3Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yy', "#7Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
