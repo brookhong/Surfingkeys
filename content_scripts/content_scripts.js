@@ -197,14 +197,33 @@ function searchSelectedWith(se, onlyThisSite) {
     });
 }
 
-function clickOn(links) {
+function clickOn(links, force) {
     var ret = false;
     if (typeof(links) === 'string') {
         links = $(links);
     }
+    var clean = [], pushed = {};
     links.each(function() {
-        Hints.dispatchMouseClick(this);
+        if (this.href) {
+            if (!pushed.hasOwnProperty(this.href)) {
+                clean.push(this);
+                pushed[this.href] = 1;
+            }
+        } else {
+            clean.push(this);
+        }
     });
+    if (clean.length > 1) {
+        if (force) {
+            clean.forEach(function(u) {
+                Hints.dispatchMouseClick(u);
+            });
+        } else {
+            Hints.create(clean, Hints.dispatchMouseClick);
+        }
+    } else {
+        Hints.dispatchMouseClick(clean[0]);
+    }
 }
 
 function getFormData(form) {

@@ -4,6 +4,7 @@ var Hints = (function() {
     var prefix = "",
         lastMouseTarget = null,
         behaviours = {},
+        style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
 
@@ -90,6 +91,7 @@ var Hints = (function() {
             behaviours[attr] = attrs[attr];
         }
         holder.html('');
+        style.appendTo(holder);
         var elements = $(document.body).find(cssSelector).map(function(i) {
             var elm = this;
             var r = elm.getBoundingClientRect();
@@ -206,6 +208,10 @@ var Hints = (function() {
             }
         }
         return updated;
+    };
+
+    self.style = function(css) {
+        style.html("#sk_hints>div{" + css + "}");
     };
 
     return self;

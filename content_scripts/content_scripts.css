@@ -6,7 +6,7 @@ div.surfingkeys_cursor {
     background-color: #0642CE;
     padding: 8px 4px;
 }
-#sk_hints >div {
+#sk_hints>div {
     position: absolute;
     display: block;
     font-size: 8pt;
