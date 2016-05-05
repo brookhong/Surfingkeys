@@ -115,7 +115,7 @@ mapkey('f', '#1Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseCl
 mapkey('af', '#1Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('<Alt-f>', '#1Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
-mapkey('yf', '#7Copy a link URL to the clipboard', function() {
+mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element, event) {
         Normal.writeClipboard(element.href);
     })

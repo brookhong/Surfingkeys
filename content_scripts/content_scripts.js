@@ -231,7 +231,20 @@ function getFormData(form) {
     var indexed_array = {};
 
     $.map(unindexed_array, function(n, i){
-        indexed_array[n['name']] = n['value'];
+        var nn = n['name'];
+        var vv = n['value'];
+        if (indexed_array.hasOwnProperty(nn)) {
+            var p = indexed_array[nn];
+            if (p.constructor.name === "Array") {
+                p.push(vv);
+            } else {
+                indexed_array[nn] = [];
+                indexed_array[nn].push(p);
+                indexed_array[nn].push(vv);
+            }
+        } else {
+            indexed_array[nn] = vv;
+        }
     });
 
     return indexed_array;
