@@ -375,7 +375,11 @@ var Normal = (function() {
 
     self.addVIMark = function(mark, url) {
         url = url || window.location.href;
-        runtime.settings.marks[mark] = url;
+        runtime.settings.marks[mark] = {
+            url: url,
+            scrollLeft: document.body.scrollLeft,
+            scrollTop: document.body.scrollTop
+        };
         RUNTIME('updateSettings', {
             settings: {
                 marks: runtime.settings.marks
@@ -386,13 +390,19 @@ var Normal = (function() {
 
     self.jumpVIMark = function(mark) {
         if (runtime.settings.marks.hasOwnProperty(mark)) {
-            RUNTIME("openLink", {
-                tab: {
-                    tabbed: false,
-                    active: true
-                },
-                url: runtime.settings.marks[mark]
-            });
+            var markInfo = runtime.settings.marks[mark];
+            if (typeof(markInfo) === "string") {
+                markInfo = {
+                    url: markInfo,
+                    scrollLeft: 0,
+                    scrollTop: 0
+                }
+            }
+            markInfo.tab = {
+                tabbed: false,
+                active: true
+            };
+            RUNTIME("openLink", markInfo);
         } else {
             self.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
         }

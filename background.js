@@ -5,6 +5,7 @@ var Service = (function() {
         frontEndPorts = {},
         contentPorts = {},
         tabActivated = {},
+        tabMessages = {},
         frameIncs = {},
         tabHistory = [],
         tabHistoryIndex = 0,
@@ -186,10 +187,23 @@ var Service = (function() {
         });
     }
     chrome.tabs.onRemoved.addListener(removeTab);
+    function _setScrollPos_bg(tabId) {
+        if (tabMessages.hasOwnProperty(tabId)) {
+            var message = tabMessages[tabId];
+            chrome.tabs.executeScript(tabId, {
+                code: "_setScrollPos(" + message.scrollLeft + ", " + message.scrollTop + ")"
+            });
+            delete tabMessages[tabId];
+        }
+    }
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
             unRegisterFrame(tabId);
         }
+        _setScrollPos_bg(tabId);
+    });
+    chrome.tabs.onCreated.addListener(function(tabId, changeInfo, tab) {
+        _setScrollPos_bg(tabId);
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
         if (frontEndPorts.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
@@ -535,11 +549,25 @@ var Service = (function() {
                 active: message.tab.active,
                 index: newTabPosition,
                 pinned: message.tab.pinned
+            }, function(tab) {
+                if (message.scrollLeft || message.scrollTop) {
+                    tabMessages[tab.id] = {
+                        scrollLeft: message.scrollLeft,
+                        scrollTop: message.scrollTop
+                    };
+                }
             });
         } else {
             chrome.tabs.update({
                 url: message.url,
                 pinned: message.tab.pinned || sender.tab.pinned
+            }, function(tab) {
+                if (message.scrollLeft || message.scrollTop) {
+                    tabMessages[tab.id] = {
+                        scrollLeft: message.scrollLeft,
+                        scrollTop: message.scrollTop
+                    };
+                }
             });
         }
     };
@@ -587,7 +615,7 @@ var Service = (function() {
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
         chrome.tabs.executeScript(tid, {
-            code: "prepareFrames()"
+            code: "_prepareFrames()"
         }, function(results) {
             var frames = results[0];
             if (!frameIncs.hasOwnProperty(tid)) {

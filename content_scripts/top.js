@@ -87,7 +87,14 @@ function createFrontEnd(event) {
     return frontendReady;
 }
 
-function prepareFrames() {
+function _setScrollPos(x, y) {
+    $(document).ready(function() {
+        document.body.scrollLeft = x;
+        document.body.scrollTop = y;
+    });
+}
+
+function _prepareFrames() {
     var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {
         return f.contentWindow;
     });

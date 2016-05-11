@@ -736,11 +736,19 @@ var OpenVIMarks = (function() {
         var query = Omnibar.input.val();
         var urls = [];
         for (var m in runtime.settings.marks) {
-            if (query === "" || runtime.settings.marks[m].indexOf(query) !== -1) {
+            var markInfo = runtime.settings.marks[m];
+            if (typeof(markInfo) === "string") {
+                markInfo = {
+                    url: markInfo,
+                    scrollLeft: 0,
+                    scrollTop: 0
+                }
+            }
+            if (query === "" || markInfo.url.indexOf(query) !== -1) {
                 urls.push({
                     title: m,
                     type: '♡',
-                    url: runtime.settings.marks[m]
+                    url: markInfo.url
                 });
             }
         }
