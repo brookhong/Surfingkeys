@@ -726,6 +726,13 @@ var Service = (function() {
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
         chrome.downloads.erase({"urlRegex": ".*"});
     };
+    self.getDownloads = function(message, sender, sendResponse) {
+        chrome.downloads.search(message.query, function(items) {
+            _response(message, sendResponse, {
+                downloads: items
+            });
+        })
+    };
 
     function FindProxyForURL(url, host) {
         var lastPos;

@@ -235,6 +235,17 @@ mapkey('ys', "#7Copy current page's source", function() {
 mapkey('yj', "#7Copy current settings", function() {
     Normal.writeClipboard(JSON.stringify(settings, null, 4));
 });
+mapkey('yd', "#7Copy current downloading URL", function() {
+    runtime.command({
+        action: 'getDownloads',
+        query: {state: "in_progress"}
+    }, function(response) {
+        var items = response.downloads.map(function(o) {
+            return o.url;
+        });
+        Normal.writeClipboard(items.join(','));
+    });
+});
 mapkey('yt', '#3Duplicate current tab', 'RUNTIME("duplicateTab")');
 mapkey('yy', "#7Copy current page's URL", 'Normal.writeClipboard(window.location.href)');
 mapkey('yl', "#7Copy current page's title", 'Normal.writeClipboard(document.title)');
