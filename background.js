@@ -739,8 +739,12 @@ var Service = (function() {
         if (settings.proxyMode === "always") {
             return settings.proxy;
         }
+        var pp = new RegExp(settings.autoproxy_pattern);
         do {
             if (settings.autoproxy_hosts.hasOwnProperty(host)) {
+                return settings.proxy;
+            }
+            if (settings.autoproxy_pattern.length && pp.test(host)) {
                 return settings.proxy;
             }
             lastPos = host.indexOf('.') + 1;
@@ -774,11 +778,17 @@ var Service = (function() {
         if (message.mode === 'clear') {
             chrome.proxy.settings.clear({scope: 'regular'});
         } else {
+            var autoproxy_pattern = Object.keys(settings.autoproxy_hosts).filter(function(a) {
+                return a.indexOf('*') !== -1;
+            }).join('|');
             var config = {
                 mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
                 pacScript: {
                     data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
-                    + ", settings.proxyMode = '" + settings.proxyMode + "', settings.proxy = '" + settings.proxy + "'; " + FindProxyForURL.toString()
+                    + ", settings.autoproxy_pattern = '" + autoproxy_pattern
+                    + "', settings.proxyMode = '" + settings.proxyMode
+                    + "', settings.proxy = '" + settings.proxy + "'; "
+                    + FindProxyForURL.toString()
                 }
             };
             chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
