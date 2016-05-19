@@ -733,6 +733,15 @@ var Service = (function() {
             });
         })
     };
+    self.executeScript = function(message, sender, sendResponse) {
+        chrome.tabs.executeScript(sender.tab.id, {
+            code: message.code
+        }, function(result) {
+            _response(message, sendResponse, {
+                response: result
+            });
+        });
+    };
 
     function FindProxyForURL(url, host) {
         var lastPos;

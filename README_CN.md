@@ -80,6 +80,8 @@ Surfingkeys目前只有两种模式。
 
 此外，还有`sog`可以使用google在本站搜索选中文本。在这个`sog`里面，`s`是search_leader_key，`o`是only_this_site_key，`g`是搜索别名。
 
+search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以修改添加搜索内容，再用Google搜索。其它别名和你通过`addSearchAliasX`添加的别名，大写的都可以这样工作。
+
 ## 类vim标示
 
 简单说，vim中的marks就是按`m`，然后跟一个字符（0-9，A-Z，a-z），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
@@ -188,7 +190,7 @@ Surfingkeys目前只有两种模式。
 
 ## 开关热键
 
-默认情况下，按`alt-s`可以在当前页开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
+默认情况下，按`alt-s`可以在当前站点开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
 
     Events.hotKey = 'i'; // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
 

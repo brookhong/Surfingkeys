@@ -366,6 +366,9 @@ var Omnibar = (function(ui) {
     ui.onShow = function(args) {
         handler = handlers[args.type];
         self.input[0].focus();
+        if (args.pref) {
+            self.input.val(args.pref);
+        }
         self.focusedItem = 0;
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
@@ -393,7 +396,12 @@ var Omnibar = (function(ui) {
             }
         }
         if (/^javascript:/.test(url)) {
-            window.location.href = url;
+            var code = url.replace(/^javascript:/,'');
+            runtime.command({
+                action: "executeScript",
+                code: code
+            }, function(ret) {
+            });
         } else {
             if (url && url.length) {
                 runtime.command({
