@@ -156,21 +156,25 @@ function unmap(keystroke, domain) {
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    mapkey((search_leader_key || 's') + alias.toUpperCase(), '#6Search selected with {0} interactively'.format(prompt), function() {
-        searchSelectedWith(search_url, false, true, alias);
-    });
     vmapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    vmapkey((search_leader_key || 's') + alias.toUpperCase(), '#6Search selected with {0} interactively'.format(prompt), function() {
-        searchSelectedWith(search_url, false, true, alias);
-    });
     mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '#6Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
-    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias.toUpperCase(), '#6Search selected only in this site with {0} interactively'.format(prompt), function() {
-        searchSelectedWith(search_url, true, true, alias);
-    });
     vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '#6Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
-    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias.toUpperCase(), '#6Search selected only in this site with {0} interactively'.format(prompt), function() {
-        searchSelectedWith(search_url, true, true, alias);
-    });
+
+    var capitalAlias = alias.toUpperCase();
+    if (capitalAlias !== alias) {
+        mapkey((search_leader_key || 's') + capitalAlias, '#6Search selected with {0} interactively'.format(prompt), function() {
+            searchSelectedWith(search_url, false, true, alias);
+        });
+        vmapkey((search_leader_key || 's') + capitalAlias, '#6Search selected with {0} interactively'.format(prompt), function() {
+            searchSelectedWith(search_url, false, true, alias);
+        });
+        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '#6Search selected only in this site with {0} interactively'.format(prompt), function() {
+            searchSelectedWith(search_url, true, true, alias);
+        });
+        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '#6Search selected only in this site with {0} interactively'.format(prompt), function() {
+            searchSelectedWith(search_url, true, true, alias);
+        });
+    }
 }
 
 function walkPageUrl(step) {
