@@ -432,6 +432,11 @@ var Service = (function() {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
+			if (tab.index == 0 && step == -1){
+				step = tabs.length -1 ;
+			}else if(tab.index == tabs.length -1 && step == 1 ){
+				step = 1 - tabs.length ;
+			}
             var to = _fixTo(tab.index + step, tabs.length - 1);
             chrome.tabs.update(tabs[to].id, {
                 active: true
@@ -469,6 +474,12 @@ var Service = (function() {
         _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
             chrome.tabs.remove(tabIds);
         });
+    };
+    self.muteTab = function(message, sender, sendResponse) {
+		var tab = sender.tab;
+		chrome.tabs.update(tab.id, {
+			muted: ! tab.mutedInfo.muted
+		});
     };
     self.openLast = function(message, sender, sendResponse) {
         chrome.sessions.restore();
