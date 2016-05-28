@@ -178,9 +178,9 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
 }
 
 function walkPageUrl(step) {
-    var numbers = window.location.href.match(/^(.*\/[^\/\d]*)(\d+)$/);
-    if (numbers && numbers.length === 3) {
-        window.location.href = numbers[1] + (parseInt(numbers[2]) + step);
+    var numbers = window.location.href.match(/^(.*\/[^\/\d]*)(\d+)([^\d]*)$/);
+    if (numbers && numbers.length === 4) {
+        window.location.href = numbers[1] + (parseInt(numbers[2]) + step) + numbers[3];
     }
 }
 
