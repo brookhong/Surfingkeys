@@ -239,6 +239,14 @@ var Normal = (function() {
         });
     };
 
+    self.showEditor = function(content, onWrite) {
+        runtime.frontendCommand({
+            action: 'showEditor',
+            onWrite: onWrite.toString(),
+            content: content
+        });
+    };
+
     self.chooseTab = function() {
         runtime.frontendCommand({
             action: 'chooseTab'
@@ -303,10 +311,10 @@ var Normal = (function() {
         var ret = false;
         var finish = self.finish.bind(this);
         if (this.pendingMap) {
-            if (key == "<Esc>" || key == "<Ctrl-[>"){
+            if (key == "<Esc>" || key == "<Ctrl-[>") {
                 self.repeats = "";
                 finish();
-            }else{
+            } else {
                 var pf = this.pendingMap.bind(this);
                 setTimeout(function() {
                     pf(key);

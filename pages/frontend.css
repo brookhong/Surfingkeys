@@ -96,7 +96,7 @@ body {
     right: -2rem;
     z-index: 2147483000;
 }
-#sk_usage, #sk_popup {
+#sk_usage, #sk_popup, #sk_editor {
     overflow: auto;
     position: fixed;
     width: 80%;

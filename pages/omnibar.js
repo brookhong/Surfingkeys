@@ -16,13 +16,34 @@ var frontendUI = (function() {
     var frameElement = $("<div class=sk_frame>").appendTo('body').hide();
     var _usage = $('<div id=sk_usage>').appendTo('body').hide();
     var _popup = $('<div id=sk_popup>').appendTo('body').hide();
+    var _editor = $('<div id=sk_editor>').appendTo('body').hide();
+    var ue = ace.edit("sk_editor");
+    ue.setTheme("ace/theme/chrome");
+    ue.setKeyboardHandler('ace/keyboard/vim');
+    ue.container.style.background="#f1f1f1";
+    ue.getSession().setMode("ace/mode/javascript");
+    ue.renderer.setOption('showLineNumbers', false);
+    setTimeout(function() {
+        ue.state.cm.on('vim-mode-change', function(data) {
+            if (data.mode === "normal") {
+                Events.includeNode(ue.container);
+            } else {
+                Events.excludeNode(ue.container);
+            }
+        });
+        var VimApi = require("ace/keyboard/vim").CodeMirror.Vim
+        VimApi.defineEx("write", "w", function(cm, input) {
+            var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
+            wf(ue);
+        });
+    }, 100);
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke/>').appendTo('body').hide();
 
-    var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, self.statusBar, keystroke];
+    var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, _editor, self.statusBar, keystroke];
     function getFrameHeight() {
         for (var i = 0; i < displays.length; i++) {
             if (displays[i].is(':visible')) {
@@ -102,6 +123,14 @@ var frontendUI = (function() {
     };
     runtime.actions['showPopup'] = function(message) {
         showPopup(_popup, message);
+    };
+    _editor.onShow = function(message) {
+        ue.write = message.onWrite;
+        ue.setValue(message.content, -1);
+        $(ue.container).find('textarea').focus();
+    };
+    runtime.actions['showEditor'] = function(message) {
+        showPopup(_editor, message);
     };
     runtime.actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
