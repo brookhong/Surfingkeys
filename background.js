@@ -175,29 +175,29 @@ var Service = (function() {
                 urls: ["<all_urls>"]
             });
         }
-		chrome.extension.onConnect.addListener(function(port) {
-			var sender = port.sender;
-			if (sender.url === frontEndURL) {
-				frontEndPorts[sender.tab.id] = port;
-			}
-			activePorts.push(port);
-			port.postMessage({
-				action: 'initSettings',
-				settings: settings,
-				extension_id: chrome.i18n.getMessage("@@extension_id")
-			});
-			port.onMessage.addListener(function(message) {
-				return handleMessage(message, port.sender, port.postMessage.bind(port), port);
-			});
-			port.onDisconnect.addListener(function() {
-				for (var i = 0; i < activePorts.length; i++) {
-					if (activePorts[i] === port) {
-						activePorts.splice(i, 1);
-						break;
-					}
-				}
-			});
-		});
+        chrome.extension.onConnect.addListener(function(port) {
+            var sender = port.sender;
+            if (sender.url === frontEndURL) {
+                frontEndPorts[sender.tab.id] = port;
+            }
+            activePorts.push(port);
+            port.postMessage({
+                action: 'initSettings',
+                settings: settings,
+                extension_id: chrome.i18n.getMessage("@@extension_id")
+            });
+            port.onMessage.addListener(function(message) {
+                return handleMessage(message, port.sender, port.postMessage.bind(port), port);
+            });
+            port.onDisconnect.addListener(function() {
+                for (var i = 0; i < activePorts.length; i++) {
+                    if (activePorts[i] === port) {
+                        activePorts.splice(i, 1);
+                        break;
+                    }
+                }
+            });
+        });
     });
 
     function removeTab(tabId) {
@@ -432,11 +432,11 @@ var Service = (function() {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-			if (tab.index == 0 && step == -1){
-				step = tabs.length -1 ;
-			}else if(tab.index == tabs.length -1 && step == 1 ){
-				step = 1 - tabs.length ;
-			}
+            if (tab.index == 0 && step == -1){
+                step = tabs.length -1 ;
+            }else if(tab.index == tabs.length -1 && step == 1 ){
+                step = 1 - tabs.length ;
+            }
             var to = _fixTo(tab.index + step, tabs.length - 1);
             chrome.tabs.update(tabs[to].id, {
                 active: true
@@ -476,10 +476,10 @@ var Service = (function() {
         });
     };
     self.muteTab = function(message, sender, sendResponse) {
-		var tab = sender.tab;
-		chrome.tabs.update(tab.id, {
-			muted: ! tab.mutedInfo.muted
-		});
+        var tab = sender.tab;
+        chrome.tabs.update(tab.id, {
+            muted: ! tab.mutedInfo.muted
+        });
     };
     self.openLast = function(message, sender, sendResponse) {
         chrome.sessions.restore();
