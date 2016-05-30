@@ -90,6 +90,43 @@ var Service = (function() {
     }
 
     var tabErrors = {};
+    function handleMessage(_message, _sender, _sendResponse, _port) {
+        if (_message && _message.target !== 'content_runtime') {
+            if (self.hasOwnProperty(_message.action)) {
+                if (_message.repeats > settings.repeatThreshold) {
+                    _message.repeats = settings.repeatThreshold;
+                }
+                self[_message.action](_message, _sender, _sendResponse);
+            } else if (_message.toFrontend) {
+                try {
+                    frontEndPorts[_sender.tab.id].postMessage(_message);
+                    if (_message.action === 'openFinder') {
+                        contentPorts[_sender.tab.id] = _port;
+                    }
+                    if (_message.ack) {
+                        onResponseById[_message.id] = _sendResponse;
+                    }
+                } catch (e) {
+                    chrome.tabs.executeScript(_sender.tab.id, {
+                        code: "createFrontEnd()"
+                    });
+                }
+            } else if (_message.toContent) {
+                contentPorts[_sender.tab.id].postMessage(_message);
+                if (_message.ack) {
+                    onResponseById[_message.id] = _sendResponse;
+                }
+            } else if (onResponseById.hasOwnProperty(_message.id)) {
+                var f = onResponseById[_message.id];
+                delete onResponseById[_message.id];
+                f(_message);
+            } else {
+                var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
+                console.log(type + JSON.stringify(_message))
+            }
+        }
+    }
+
     chrome.storage.local.get(null, function(data) {
         if (!data.version || parseFloat(data.version) < 0.11) {
             if (JSON.stringify(data) !== '{}') {
@@ -138,44 +175,30 @@ var Service = (function() {
                 urls: ["<all_urls>"]
             });
         }
-    });
-
-    function handleMessage(_message, _sender, _sendResponse, _port) {
-        if (_message && _message.target !== 'content_runtime') {
-            if (self.hasOwnProperty(_message.action)) {
-                if (_message.repeats > settings.repeatThreshold) {
-                    _message.repeats = settings.repeatThreshold;
-                }
-                self[_message.action](_message, _sender, _sendResponse);
-            } else if (_message.toFrontend) {
-                try {
-                    frontEndPorts[_sender.tab.id].postMessage(_message);
-                    if (_message.action === 'openFinder') {
-                        contentPorts[_sender.tab.id] = _port;
-                    }
-                    if (_message.ack) {
-                        onResponseById[_message.id] = _sendResponse;
-                    }
-                } catch (e) {
-                    chrome.tabs.executeScript(_sender.tab.id, {
-                        code: "createFrontEnd()"
-                    });
-                }
-            } else if (_message.toContent) {
-                contentPorts[_sender.tab.id].postMessage(_message);
-                if (_message.ack) {
-                    onResponseById[_message.id] = _sendResponse;
-                }
-            } else if (onResponseById.hasOwnProperty(_message.id)) {
-                var f = onResponseById[_message.id];
-                delete onResponseById[_message.id];
-                f(_message);
-            } else {
-                var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
-                console.log(type + JSON.stringify(_message))
+        chrome.extension.onConnect.addListener(function(port) {
+            var sender = port.sender;
+            if (sender.url === frontEndURL) {
+                frontEndPorts[sender.tab.id] = port;
             }
-        }
-    }
+            activePorts.push(port);
+            port.postMessage({
+                action: 'initSettings',
+                settings: settings,
+                extension_id: chrome.i18n.getMessage("@@extension_id")
+            });
+            port.onMessage.addListener(function(message) {
+                return handleMessage(message, port.sender, port.postMessage.bind(port), port);
+            });
+            port.onDisconnect.addListener(function() {
+                for (var i = 0; i < activePorts.length; i++) {
+                    if (activePorts[i] === port) {
+                        activePorts.splice(i, 1);
+                        break;
+                    }
+                }
+            });
+        });
+    });
 
     function removeTab(tabId) {
         delete contentPorts[tabId];
@@ -229,29 +252,6 @@ var Service = (function() {
         }
     });
     chrome.runtime.onMessage.addListener(handleMessage);
-    chrome.extension.onConnect.addListener(function(port) {
-        var sender = port.sender;
-        if (sender.url === frontEndURL) {
-            frontEndPorts[sender.tab.id] = port;
-        }
-        activePorts.push(port);
-        port.postMessage({
-            action: 'initSettings',
-            settings: settings,
-            extension_id: chrome.i18n.getMessage("@@extension_id")
-        });
-        port.onMessage.addListener(function(message) {
-            return handleMessage(message, port.sender, port.postMessage.bind(port), port);
-        });
-        port.onDisconnect.addListener(function() {
-            for (var i = 0; i < activePorts.length; i++) {
-                if (activePorts[i] === port) {
-                    activePorts.splice(i, 1);
-                    break;
-                }
-            }
-        });
-    });
     function _response(message, sendResponse, result) {
         result.action = message.action;
         result.id = message.id;
@@ -432,6 +432,11 @@ var Service = (function() {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
+            if (tab.index == 0 && step == -1){
+                step = tabs.length -1 ;
+            }else if(tab.index == tabs.length -1 && step == 1 ){
+                step = 1 - tabs.length ;
+            }
             var to = _fixTo(tab.index + step, tabs.length - 1);
             chrome.tabs.update(tabs[to].id, {
                 active: true
@@ -468,6 +473,12 @@ var Service = (function() {
     self.closeTab = function(message, sender, sendResponse) {
         _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
             chrome.tabs.remove(tabIds);
+        });
+    };
+    self.muteTab = function(message, sender, sendResponse) {
+        var tab = sender.tab;
+        chrome.tabs.update(tab.id, {
+            muted: ! tab.mutedInfo.muted
         });
     };
     self.openLast = function(message, sender, sendResponse) {

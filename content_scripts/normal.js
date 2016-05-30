@@ -303,12 +303,17 @@ var Normal = (function() {
         var ret = false;
         var finish = self.finish.bind(this);
         if (this.pendingMap) {
-            var pf = this.pendingMap.bind(this);
-            setTimeout(function() {
-                pf(key);
+            if (key == "<Esc>" || key == "<Ctrl-[>"){
                 self.repeats = "";
                 finish();
-            }, 0);
+            }else{
+                var pf = this.pendingMap.bind(this);
+                setTimeout(function() {
+                    pf(key);
+                    self.repeats = "";
+                    finish();
+                }, 0);
+            }
             ret = true;
         } else if (this.map_node === this.mappings && (key >= "1" || (self.repeats !== "" && key >= "0")) && key <= "9") {
             // self.repeats is shared by Normal and Visual
