@@ -48,7 +48,8 @@ var Events = (function() {
     };
 
     self.isBlacklisted = function() {
-        return runtime.settings.blacklist[window.location.origin] || runtime.settings.blacklist['.*'];
+        return runtime.settings.blacklist[window.location.origin] || runtime.settings.blacklist['.*']
+            || (runtime.settings.blacklistPattern && typeof(runtime.settings.blacklistPattern.test) === "function" && runtime.settings.blacklistPattern.test(window.location.href));
     };
 
     var eventListeners = {

@@ -282,6 +282,11 @@ mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = wi
 mapkey('se', '#11Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
 mapkey('si', '#12Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
+mapkey('su', '#4Edit current URL with vim editor', function() {
+    Normal.showEditor(window.location.href, function(data) {
+        top.location.href = data;
+    });
+});
 mapkey(';m', '#1mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', '#12Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf")');
 mapkey(';p', '#7Paste html on current page', function() {

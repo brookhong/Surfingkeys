@@ -238,6 +238,10 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `spi`, shortcut for `:proxyInfo`
 
+## ACE VIM editor
+
+`su` to open an ACE editor in vim mode to edit current URL, then `:w` to open the new URL.
+
 ## Edit your own settings
 
 ### Map a keystroke to some action

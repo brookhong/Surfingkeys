@@ -432,9 +432,9 @@ var Service = (function() {
         chrome.tabs.query({
             windowId: tab.windowId
         }, function(tabs) {
-            if (tab.index == 0 && step == -1){
+            if (tab.index == 0 && step == -1) {
                 step = tabs.length -1 ;
-            }else if(tab.index == tabs.length -1 && step == 1 ){
+            } else if (tab.index == tabs.length -1 && step == 1 ) {
                 step = 1 - tabs.length ;
             }
             var to = _fixTo(tab.index + step, tabs.length - 1);

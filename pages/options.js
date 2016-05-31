@@ -8,18 +8,7 @@ defaultMappingsEditor.container.style.background="#f1f1f1";
 
 var mappingsEditor = ace.edit("mappings");
 mappingsEditor.setTheme("ace/theme/chrome");
-mappingsEditor.setKeyboardHandler('ace/keyboard/vim');
-mappingsEditor.getSession().setMode("ace/mode/javascript");
-mappingsEditor.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.", -1);
-mappingsEditor.commands.addCommand({
-    name: 'myCommand',
-    bindKey: {win: 'Tab',  mac: 'Tab'},
-    exec: function(editor) {
-    },
-    readOnly: false
-});
-
-setTimeout(function() {
+mappingsEditor.setKeyboardHandler('ace/keyboard/vim', function() {
     mappingsEditor.state.cm.on('vim-mode-change', function(data) {
         if (data.mode === "normal") {
             Events.includeNode(mappingsEditor.container);
@@ -31,8 +20,16 @@ setTimeout(function() {
     VimApi.defineEx("write", "w", function(cm, input) {
         saveSettings();
     });
-}, 100);
-
+});
+mappingsEditor.getSession().setMode("ace/mode/javascript");
+mappingsEditor.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.", -1);
+mappingsEditor.commands.addCommand({
+    name: 'myCommand',
+    bindKey: {win: 'Tab',  mac: 'Tab'},
+    exec: function(editor) {
+    },
+    readOnly: false
+});
 
 function renderSettings() {
     if (runtime.settings.snippets.length) {
