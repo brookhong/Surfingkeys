@@ -117,10 +117,11 @@ var Hints = (function() {
         });
         if (elements.length > 0) {
             var hintLabels = self.genLabels(elements.length);
+            var bof = $(document.body).offset();
             elements.each(function(i) {
                 var pos = $(this).offset(),
                     z = getZIndex(this);
-                var link = $('<div/>').css('top', pos.top).css('left', pos.left + $(this).width() / 2)
+                var link = $('<div/>').css('top', pos.top - bof.top).css('left', pos.left - bof.left + $(this).width() / 2)
                     .css('z-index', z + 2)
                     .data('label', hintLabels[i])
                     .data('link', this)

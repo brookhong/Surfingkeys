@@ -20,7 +20,8 @@ var frontendUI = (function() {
     var ue = ace.edit("sk_editor");
     ue.setTheme("ace/theme/chrome");
     ue.setKeyboardHandler('ace/keyboard/vim', function() {
-        ue.state.cm.on('vim-mode-change', function(data) {
+        var cm = ue.state.cm;
+        cm.on('vim-mode-change', function(data) {
             if (data.mode === "normal") {
                 Events.includeNode(ue.container);
             } else {
@@ -34,11 +35,12 @@ var frontendUI = (function() {
                 self.hidePopup();
             }
         });
-        var VimApi = require("ace/keyboard/vim").CodeMirror.Vim
-        VimApi.defineEx("write", "w", function(cm, input) {
+        var Vim = cm.constructor.Vim;
+        Vim.defineEx("write", "w", function(cm, input) {
             var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
             wf(ue);
         });
+        Vim.map('<CR>', ':w', 'normal')
     });
     ue.container.style.background="#f1f1f1";
     ue.getSession().setMode("ace/mode/javascript");

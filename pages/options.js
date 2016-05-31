@@ -9,15 +9,15 @@ defaultMappingsEditor.container.style.background="#f1f1f1";
 var mappingsEditor = ace.edit("mappings");
 mappingsEditor.setTheme("ace/theme/chrome");
 mappingsEditor.setKeyboardHandler('ace/keyboard/vim', function() {
-    mappingsEditor.state.cm.on('vim-mode-change', function(data) {
+    var cm = mappingsEditor.state.cm;
+    cm.on('vim-mode-change', function(data) {
         if (data.mode === "normal") {
             Events.includeNode(mappingsEditor.container);
         } else {
             Events.excludeNode(mappingsEditor.container);
         }
     });
-    var VimApi = require("ace/keyboard/vim").CodeMirror.Vim
-    VimApi.defineEx("write", "w", function(cm, input) {
+    cm.constructor.Vim.defineEx("write", "w", function(cm, input) {
         saveSettings();
     });
 });
