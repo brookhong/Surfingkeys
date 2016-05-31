@@ -19,11 +19,7 @@ var frontendUI = (function() {
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var ue = ace.edit("sk_editor");
     ue.setTheme("ace/theme/chrome");
-    ue.setKeyboardHandler('ace/keyboard/vim');
-    ue.container.style.background="#f1f1f1";
-    ue.getSession().setMode("ace/mode/javascript");
-    ue.renderer.setOption('showLineNumbers', false);
-    setTimeout(function() {
+    ue.setKeyboardHandler('ace/keyboard/vim', function() {
         ue.state.cm.on('vim-mode-change', function(data) {
             if (data.mode === "normal") {
                 Events.includeNode(ue.container);
@@ -31,12 +27,23 @@ var frontendUI = (function() {
                 Events.excludeNode(ue.container);
             }
         });
+        ue.on('blur', function(evt, el) {
+            var exDialog = $(el.container).find('div.ace_dialog-bottom');
+            if (exDialog.length === 0) {
+                // not in command line mode
+                self.hidePopup();
+            }
+        });
         var VimApi = require("ace/keyboard/vim").CodeMirror.Vim
         VimApi.defineEx("write", "w", function(cm, input) {
             var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
             wf(ue);
         });
-    }, 100);
+    });
+    ue.container.style.background="#f1f1f1";
+    ue.getSession().setMode("ace/mode/javascript");
+    ue.renderer.setOption('showLineNumbers', false);
+    ue.$blockScrolling = Infinity;
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
