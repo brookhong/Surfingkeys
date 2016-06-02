@@ -81,6 +81,15 @@ var Hints = (function() {
         return codes;
     };
 
+    self.coordinate = function() {
+        // a hack to get co-ordinate
+        var link = $('<div/>').css('top', 0).css('left', 0).html('A').appendTo(holder);
+        holder.appendTo('body');
+        var ordinate = link.offset();
+        holder.html('');
+        return ordinate;
+    };
+
     self.create = function(cssSelector, onHintKey, attrs) {
         attrs = $.extend({
             active: true,
@@ -117,7 +126,7 @@ var Hints = (function() {
         });
         if (elements.length > 0) {
             var hintLabels = self.genLabels(elements.length);
-            var bof = $(document.body).offset();
+            var bof = self.coordinate();
             elements.each(function(i) {
                 var pos = $(this).offset(),
                     z = getZIndex(this);
