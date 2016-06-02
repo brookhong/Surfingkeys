@@ -18,6 +18,13 @@ var frontendUI = (function() {
     var _popup = $('<div id=sk_popup>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var ue = ace.edit("sk_editor");
+    ace.config.loadModule('ace/ext/language_tools', function (mod) {
+        ue.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: false,
+            enableSnippets: false
+        });
+    });
     ue.setTheme("ace/theme/chrome");
     ue.setKeyboardHandler('ace/keyboard/vim', function() {
         var cm = ue.state.cm;
@@ -41,6 +48,7 @@ var frontendUI = (function() {
             wf(ue);
         });
         Vim.map('<CR>', ':w', 'normal')
+        Vim.map('<Tab>', '<C-Space>', 'insert')
     });
     ue.container.style.background="#f1f1f1";
     ue.getSession().setMode("ace/mode/javascript");

@@ -320,6 +320,11 @@ works like
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
 
+## Build
+
+    npm install
+    ./node_modules/gulp/bin/gulp.js
+
 ## License
 
 MIT License

@@ -1,0 +1,27 @@
+{
+  "name": "surfingkeys",
+  "version": "0.4.1",
+  "description": "Map your keys for web surfing, expand your browser with javascript and keyboard.",
+  "main": "background.js",
+  "dependencies": {
+    "gulp-clean": "^0.3.2",
+    "gulp": "^3.9.1",
+    "gulp-uglify": "^1.5.3",
+    "gulp-concat": "^2.6.0",
+    "gulp-zip": "^3.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brookhong/Surfingkeys.git"
+  },
+  "author": "brook hong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brookhong/Surfingkeys/issues"
+  },
+  "homepage": "https://github.com/brookhong/Surfingkeys#readme"
+}
