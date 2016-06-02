@@ -127,6 +127,26 @@ var Service = (function() {
         }
     }
 
+    function triggerEvent(obj, evt) {
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent(evt, true, true);
+        event.eventName = evt;
+        obj.dispatchEvent(event);
+    }
+
+    var settingsReady = false;
+
+    document.addEventListener("settingsReady", function(e) {
+        settingsReady = true;
+        activePorts.forEach(function(port) {
+            port.postMessage({
+                action: 'initSettings',
+                settings: settings,
+                extension_id: chrome.i18n.getMessage("@@extension_id")
+            });
+        });
+    });
+
     chrome.storage.local.get(null, function(data) {
         if (!data.version || parseFloat(data.version) < 0.11) {
             if (JSON.stringify(data) !== '{}') {
@@ -142,14 +162,17 @@ var Service = (function() {
                     } else {
                         extendSettings(data);
                         settings.storage = "sync";
+                        triggerEvent(document, "settingsReady");
                     }
                 });
+            } else {
+                triggerEvent(document, "settingsReady");
             }
             if (settings.proxyMode === 'clear') {
                 chrome.proxy.settings.clear({scope: 'regular'});
             } else {
                 chrome.proxy.settings.get( {}, function(proxyInfo) {
-                    if (proxyInfo.levelOfControl === "controlled_by_this_extension") {
+                    if (proxyInfo.levelOfControl === "controlled_by_this_extension" && proxyInfo.value.hasOwnProperty('pacScript')) {
                         // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
                         eval(proxyInfo.value.pacScript.data.substr(19));
                     }
@@ -175,28 +198,31 @@ var Service = (function() {
                 urls: ["<all_urls>"]
             });
         }
-        chrome.extension.onConnect.addListener(function(port) {
-            var sender = port.sender;
-            if (sender.url === frontEndURL) {
-                frontEndPorts[sender.tab.id] = port;
-            }
-            activePorts.push(port);
+    });
+
+    chrome.extension.onConnect.addListener(function(port) {
+        var sender = port.sender;
+        if (sender.url === frontEndURL) {
+            frontEndPorts[sender.tab.id] = port;
+        }
+        activePorts.push(port);
+        if (settingsReady) {
             port.postMessage({
                 action: 'initSettings',
                 settings: settings,
                 extension_id: chrome.i18n.getMessage("@@extension_id")
             });
-            port.onMessage.addListener(function(message) {
-                return handleMessage(message, port.sender, port.postMessage.bind(port), port);
-            });
-            port.onDisconnect.addListener(function() {
-                for (var i = 0; i < activePorts.length; i++) {
-                    if (activePorts[i] === port) {
-                        activePorts.splice(i, 1);
-                        break;
-                    }
+        }
+        port.onMessage.addListener(function(message) {
+            return handleMessage(message, port.sender, port.postMessage.bind(port), port);
+        });
+        port.onDisconnect.addListener(function() {
+            for (var i = 0; i < activePorts.length; i++) {
+                if (activePorts[i] === port) {
+                    activePorts.splice(i, 1);
+                    break;
                 }
-            });
+            }
         });
     });
 

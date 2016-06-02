@@ -12,6 +12,12 @@ var runtime = window.runtime || (function() {
         self.settings = response.settings;
         settingsDeferred.resolve(self.settings);
     };
+    _port.onDisconnect.addListener(function(evt) {
+        if (window === top) {
+            console.log('reload triggered by runtime disconnection.');
+            window.location.reload();
+        }
+    });
     _port.onMessage.addListener(function(_message) {
         if (self.successById[_message.id]) {
             var f = self.successById[_message.id];
