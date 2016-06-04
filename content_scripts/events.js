@@ -5,10 +5,10 @@ var Events = (function() {
         focusHandlers: {}
     };
 
-    function getBackFocusOnLoad(e) {
+    function getBackFocusOnLoad(elm) {
         var handled = false;
-        if (isEditable(e.target)) {
-            e.target.blur();
+        if (isEditable(elm)) {
+            elm.blur();
             handled = true;
         }
         return handled;
@@ -58,13 +58,13 @@ var Events = (function() {
         },
         'focus': function(event) {
             for (var fn in self.focusHandlers) {
-                if (self.focusHandlers[fn](event)) {
+                if (self.focusHandlers[fn](event.target)) {
                     window.stopEventPropagation(event, false);
                     break;
                 }
             }
         },
-        'click': function(event) {
+        'mousedown': function(event) {
             delete self.focusHandlers.getBackFocusOnLoad;
         },
         'keydown': function(event) {
@@ -136,6 +136,9 @@ var Events = (function() {
         for (var evt in eventListeners) {
             window.removeEventListener(evt, eventListeners[evt], true);
             window.addEventListener(evt, eventListeners[evt], true);
+        }
+        if (document.activeElement) {
+            getBackFocusOnLoad(document.activeElement);
         }
     };
 

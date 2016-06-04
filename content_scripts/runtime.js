@@ -15,7 +15,9 @@ var runtime = window.runtime || (function() {
     _port.onDisconnect.addListener(function(evt) {
         if (window === top) {
             console.log('reload triggered by runtime disconnection.');
-            window.location.reload();
+            setTimeout(function() {
+                window.location.reload();
+            }, 100);
         }
     });
     _port.onMessage.addListener(function(_message) {
