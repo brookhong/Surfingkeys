@@ -57,7 +57,7 @@ var Normal = (function() {
         };
     }
 
-    function hasScroll(el, direction, barSize) {
+    self.hasScroll = function(el, direction, barSize) {
         var offset = (direction === 'y') ? 'scrollTop' : 'scrollLeft';
         var result = el[offset];
 
@@ -80,7 +80,7 @@ var Normal = (function() {
             document.body,
             NodeFilter.SHOW_ELEMENT, {
                 acceptNode: function(node) {
-                    return (hasScroll(node, 'y', 16) || hasScroll(node, 'x', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    return (self.hasScroll(node, 'y', 16) || self.hasScroll(node, 'x', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                 }
             });
         for (var node; node = nodeIterator.nextNode(); nodes.push(node));

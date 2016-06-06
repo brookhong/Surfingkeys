@@ -272,10 +272,19 @@ var Visual = (function() {
     }
 
     function scrollIntoView() {
-        var ff = cursor;
-        var front = $(ff).offset();
-        if (front.top < document.body.scrollTop || (front.top + $(ff).height()) > (document.body.scrollTop + window.innerHeight) || front.left < document.body.scrollLeft || (front.left + $(ff).width()) > (document.body.scrollLeft + window.innerWidth)) {
-            window.scrollTo($(ff).offset().left, $(ff).offset().top - window.innerHeight / 2);
+        var p = cursor.parentElement;
+        while (p != document.body && !Normal.hasScroll(p, 'y', 16) && !Normal.hasScroll(p, 'x', 16)) {
+            p = p.parentElement;
+        }
+        if (p === document.body) {
+            return cursor.parentElement.scrollIntoViewIfNeeded();
+        }
+        var front = cursor.getBoundingClientRect(), view = p.getBoundingClientRect();
+        if (front.top < view.top || front.bottom > view.bottom) {
+            p.scrollTop = cursor.offsetTop - p.offsetTop - p.clientHeight / 2;
+        }
+        if (front.left < view.left || front.right > view.right) {
+            p.scrollLeft = cursor.offsetLeft - p.offsetLeft;
         }
     }
 
