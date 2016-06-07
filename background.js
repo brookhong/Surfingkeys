@@ -153,6 +153,7 @@ var Service = (function() {
                 chrome.storage.local.clear();
                 chrome.storage.sync.clear();
             }
+            triggerEvent(document, "settingsReady");
         } else {
             extendSettings(data);
             if (data.storage === 'sync') {
@@ -162,8 +163,8 @@ var Service = (function() {
                     } else {
                         extendSettings(data);
                         settings.storage = "sync";
-                        triggerEvent(document, "settingsReady");
                     }
+                    triggerEvent(document, "settingsReady");
                 });
             } else {
                 triggerEvent(document, "settingsReady");

@@ -4,7 +4,8 @@ surfingkeys_mark {
 }
 div.surfingkeys_cursor {
     background-color: #0642CE;
-    padding: 8px 4px;
+    color: #0642CE;
+    padding: 1px;
 }
 #sk_hints>div {
     position: absolute;
