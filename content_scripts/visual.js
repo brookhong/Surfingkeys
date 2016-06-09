@@ -112,7 +112,7 @@ var Visual = (function() {
         state = 0,
         status = ['', 'Caret', 'Range'],
         mark_template = $('<surfingkeys_mark>')[0],
-        cursor = $('<div class="surfingkeys_cursor">|</div>')[0];
+        cursor = $('<div class="surfingkeys_cursor"></div>')[0];
 
     document.addEventListener('click', function(event) {
         switch (selection.type) {
@@ -277,7 +277,11 @@ var Visual = (function() {
             p = p.parentElement;
         }
         if (p === document.body) {
-            return cursor.scrollIntoViewIfNeeded();
+            // set content of cursor to enable scrollIntoViewIfNeeded
+            $(cursor).html('|');
+            cursor.scrollIntoViewIfNeeded();
+            $(cursor).html('');
+            return;
         }
         var front = cursor.getBoundingClientRect(), view = p.getBoundingClientRect();
         if (front.top < view.top || front.bottom > view.bottom) {

@@ -18,6 +18,16 @@ body {
     border: 1px solid #222;
     z-index: 2147483000;
 }
+#sk_omnibar span.omnibar_highlight {
+    text-shadow: 0 0 0.01em;
+    color: #d4b922;
+}
+#sk_omnibar span.omnibar_folder {
+    color: #4b3acc;
+}
+#sk_omnibar span.omnibar_timestamp {
+    color: #cc4b9c;
+}
 #sk_omnibarSearchArea>span {
     display: inline-block;
     color: #aaa;
@@ -56,7 +66,7 @@ body {
     display: block;
 }
 #sk_omnibarSearchResult li.focused {
-    background-color: #444;
+    background-color: #222;
 }
 #sk_omnibarSearchResult li div.title {
     font-weight: bold;
@@ -64,6 +74,7 @@ body {
 }
 #sk_omnibarSearchResult li div.url {
     color: #aaa;
+    word-wrap: break-word;
 }
 #sk_omnibarSearchResult li span.annotation {
     float: right;

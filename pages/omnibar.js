@@ -291,18 +291,17 @@ var frontendUI = (function() {
 
 function _filterByTitleOrUrl(urls, query) {
     if (query && query.length) {
+        var query = query.toUpperCase();
         urls = urls.filter(function(b) {
-            return b.title.indexOf(query) !== -1 || (b.url && b.url.indexOf(query) !== -1);
+            return b.title.toUpperCase().indexOf(query) !== -1 || (b.url && b.url.toUpperCase().indexOf(query) !== -1);
         });
     }
     return urls;
 }
 
 var Omnibar = (function(ui) {
-    var self = {};
+    var self = {bookmarkFolders: {}};
     var handlers = {};
-
-    self.miniQuery = {};
 
     var lastInput, handler, lastHandler = null;
     ui.on('click', function(event) {
@@ -394,16 +393,40 @@ var Omnibar = (function(ui) {
         }
     };
 
-    self.listBookmark = function(items, showFolder) {
-        self.listResults(items, function(b) {
+    self.highlight = function(str) {
+        return str.replace(new RegExp(Omnibar.input.val(), 'gi'), function(m) {
+            return "<span class=omnibar_highlight>" + m + "</span>";
+        });
+    };
+
+    /**
+     * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
+     * @param {Array} items - Array of url items with title.
+     * @param {boolean} showFolder - True to show a item as folder if it has no property url.
+     *
+     */
+    self.listURLs = function(items, showFolder) {
+        var sliced = items.slice(0, (runtime.settings.omnibarMaxResults || 20));
+        self.listResults(sliced, function(b) {
             var li = $('<li/>');
             if (b.hasOwnProperty('url')) {
-                var type = b.type || (b.hasOwnProperty('lastVisitTime') ? "☼" : "☆");
                 b.title = (b.title && b.title !== "") ? b.title : b.url;
-                li.html('<div class="title">{0} {1}</div>'.format(type, htmlEncode(b.title)));
-                $('<div class="url">').data('url', b.url).html(b.url).appendTo(li);
+                var type = b.type, additional = "";
+                if (!type) {
+                    if (b.hasOwnProperty('lastVisitTime')) {
+                        type = "☼";
+                        additional = "<span class=omnibar_timestamp>@ {0}</span>".format(timeStampString(b.lastVisitTime));
+                    } else if(b.hasOwnProperty('dateAdded')) {
+                        type = "☆";
+                        additional = "<span class=omnibar_folder>@ {0}</span>".format(self.bookmarkFolders[b.parentId] || "");
+                    } else {
+                        type = "▤";
+                    }
+                }
+                li.html('<div class="title">{0} {1} {2}</div>'.format(type, self.highlight(htmlEncode(b.title)), additional));
+                $('<div class="url">').data('url', b.url).html(self.highlight(b.url)).appendTo(li);
             } else if (showFolder) {
-                li.html('<div class="title">▷ {0}</div>'.format(b.title)).data('folder_name', b.title).data('folderId', b.id);
+                li.html('<div class="title">▷ {0}</div>'.format(self.highlight(b.title))).data('folder_name', b.title).data('folderId', b.id);
             }
             return li;
         });
@@ -495,6 +518,18 @@ var Omnibar = (function(ui) {
         handlers[name] = hdl;
     };
 
+    self.listBookmarkFolders = function(cb) {
+        runtime.command({
+            action: 'getBookmarkFolders'
+        }, function(response) {
+            self.bookmarkFolders = {};
+            response.folders.forEach(function(f) {
+                self.bookmarkFolders[f.id] = f.title;
+            });
+            cb && cb(response);
+        });
+    };
+
     return self;
 })(frontendUI.omnibar);
 
@@ -553,9 +588,11 @@ var OpenBookmarks = (function() {
     };
 
     self.onOpen = function() {
-        runtime.command({
-            action: 'getBookmarks',
-        }, self.onResponse);
+        Omnibar.listBookmarkFolders(function() {
+            runtime.command({
+                action: 'getBookmarks',
+            }, self.onResponse);
+        });
     };
 
     self.onClose = function() {
@@ -605,7 +642,7 @@ var OpenBookmarks = (function() {
                 return !b.hasOwnProperty('url');
             });
         }
-        Omnibar.listBookmark(items, true);
+        Omnibar.listURLs(items, true);
         Omnibar.scrollIntoView();
     };
 
@@ -616,13 +653,18 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 var AddBookmark = (function() {
     var self = {
         prompt: 'add bookmark≫'
-    };
+    }, folders;
 
     self.onOpen = function(arg) {
         self.page = arg;
-        runtime.command({
-            action: 'getBookmarkFolders',
-        }, self.onResponse);
+        Omnibar.listBookmarkFolders(function(response) {
+            folders = response.folders;
+            selectedFolder = folders[0];
+            Omnibar.listResults(folders, function(f) {
+                return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
+            });
+            Omnibar.scrollIntoView();
+        });
     };
 
     self.onClose = function() {
@@ -662,7 +704,6 @@ var AddBookmark = (function() {
         return true;
     };
 
-    var folders;
     self.onInput = function() {
         var query = $(this).val();
         var matches = folders.filter(function(b) {
@@ -672,14 +713,6 @@ var AddBookmark = (function() {
             return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
         });
     };
-    self.onResponse = function(response) {
-        folders = response.folders;
-        selectedFolder = folders[0];
-        Omnibar.listResults(folders, function(f) {
-            return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
-        });
-        Omnibar.scrollIntoView();
-    };
 
     return self;
 })();
@@ -688,27 +721,25 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 var OpenHistory = (function() {
     var self = {
         prompt: 'history≫'
-    };
+    }, all;
 
-    var all;
     self.onOpen = function(arg) {
         runtime.command({
             action: 'getHistory',
             query: {
                 startTime: 0,
-                maxResults: runtime.settings.maxResults,
                 text: ""
             }
         }, function(response) {
             all = response.history;
-            Omnibar.listBookmark(response.history, false);
+            Omnibar.listURLs(response.history, false);
         });
     };
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
         var filtered = _filterByTitleOrUrl(all, $(this).val());
-        Omnibar.listBookmark(filtered, false);
+        Omnibar.listURLs(filtered, false);
     };
     return self;
 })();
@@ -717,15 +748,22 @@ Omnibar.addHandler('History', OpenHistory);
 var OpenURLs = (function() {
     var self = {
         prompt: '≫'
-    };
+    }, all;
 
     function _queryURLs(word) {
         runtime.command({
             action: self.action,
-            maxResults: runtime.settings.maxResults,
             query: word
         }, function(response) {
-            Omnibar.listBookmark(response.urls, false);
+            all = response.urls;
+            Omnibar.listURLs(response.urls, false);
+        });
+        Omnibar.listBookmarkFolders(function() {
+            runtime.command({
+                action: 'getAllURLs'
+            }, function(response) {
+                all = all.concat(response.urls);
+            });
         });
     }
     self.onOpen = function(arg) {
@@ -739,7 +777,8 @@ var OpenURLs = (function() {
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        _queryURLs($(this).val());
+        var filtered = _filterByTitleOrUrl(all, $(this).val());
+        Omnibar.listURLs(filtered, false);
     };
     return self;
 })();
@@ -806,7 +845,7 @@ var OpenVIMarks = (function() {
                 });
             }
         }
-        Omnibar.listBookmark(urls, false);
+        Omnibar.listURLs(urls, false);
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = self.onOpen;

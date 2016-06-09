@@ -14,7 +14,7 @@ var Service = (function() {
         frontEndURL = chrome.extension.getURL('/pages/frontend.html');
 
     var settings = {
-        maxResults: 500,
+        omnibarMaxResults: 20,
         tabsThreshold: 9,
         repeatThreshold: 99,
         tabsMRUOrder: true,
@@ -388,6 +388,21 @@ var Service = (function() {
             });
         })
     };
+    self.getAllURLs = function(message, sender, sendResponse) {
+        chrome.bookmarks.getRecent(2147483647, function(tree) {
+            var urls = tree;
+            chrome.history.search({
+                startTime: 0,
+                maxResults: 2147483647,
+                text: ""
+            }, function(tree) {
+                urls = urls.concat(tree);
+                _response(message, sendResponse, {
+                    urls: urls
+                });
+            });
+        });
+    };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
         chrome.tabs.query({
@@ -560,6 +575,7 @@ var Service = (function() {
         }
     };
     self.getHistory = function(message, sender, sendResponse) {
+        message.query.maxResults = 2147483647;
         chrome.history.search(message.query, function(tree) {
             _response(message, sendResponse, {
                 history: tree
