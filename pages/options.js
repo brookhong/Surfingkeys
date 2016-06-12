@@ -8,6 +8,19 @@ defaultMappingsEditor.container.style.background="#f1f1f1";
 
 var mappingsEditor = ace.edit("mappings");
 mappingsEditor.setTheme("ace/theme/chrome");
+ace.config.loadModule('ace/ext/language_tools', function (mod) {
+    ace.config.loadModule('ace/autocomplete', function (mod) {
+        mod.Autocomplete.startCommand.bindKey = "Tab";
+        mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
+        mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
+        mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
+    });
+    mappingsEditor.setOptions({
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: false,
+        enableSnippets: false
+    });
+});
 mappingsEditor.setKeyboardHandler('ace/keyboard/vim', function() {
     var cm = mappingsEditor.state.cm;
     cm.on('vim-mode-change', function(data) {
