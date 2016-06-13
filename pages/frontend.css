@@ -281,3 +281,8 @@ div.sk_arrowdown_inner {
     border-top: 10px solid #ffd;
     background: transparent;
 }
+.ace_editor.ace_autocomplete {
+    z-index: 2147483300 !important;
+    width: 680px !important;
+}
+

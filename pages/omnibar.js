@@ -19,6 +19,38 @@ var frontendUI = (function() {
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var ue = ace.edit("sk_editor");
     ace.config.loadModule('ace/ext/language_tools', function (mod) {
+        var allVisitedURLs;
+        runtime.command({
+            action: 'getAllURLs'
+        }, function(response) {
+            allVisitedURLs = response.urls.map(function(u) {
+                var typedCount = 0, visitCount = 1;
+                if (u.hasOwnProperty('typedCount')) {
+                    typedCount = u.typedCount;
+                }
+                if (u.hasOwnProperty('visitCount')) {
+                    visitCount = u.visitCount;
+                }
+                return {
+                    caption: u.url,
+                    value: u.url,
+                    score: typedCount*10 + visitCount,
+                    meta: 'local'
+                }
+            });
+        });
+        var urlCompleter = {
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                callback(null, allVisitedURLs);
+            }
+        };
+        mod.setCompleters([urlCompleter]);
+        ace.config.loadModule('ace/autocomplete', function (mod) {
+            mod.Autocomplete.startCommand.bindKey = "Tab";
+            mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
+            mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
+            mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
+        });
         ue.setOptions({
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: false,
@@ -39,7 +71,7 @@ var frontendUI = (function() {
             var exDialog = $(el.container).find('div.ace_dialog-bottom');
             if (exDialog.length === 0) {
                 // not in command line mode
-                self.hidePopup();
+                // self.hidePopup();
             }
         });
         var Vim = cm.constructor.Vim;
@@ -48,10 +80,12 @@ var frontendUI = (function() {
             wf(ue);
         });
         Vim.map('<CR>', ':w', 'normal')
-        Vim.map('<Tab>', '<C-Space>', 'insert')
+        Vim.defineEx("quit", "q", function(cm, input) {
+            self.hidePopup();
+        });
+        Vim.map('<Esc>', ':q', 'normal')
     });
     ue.container.style.background="#f1f1f1";
-    ue.getSession().setMode("ace/mode/javascript");
     ue.renderer.setOption('showLineNumbers', false);
     ue.$blockScrolling = Infinity;
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
