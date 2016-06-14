@@ -19,6 +19,9 @@ var frontendFrame = (function() {
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
     }
+    self.actions['ace_editor_saved'] = function(response) {
+        Normal.onEditorSaved(response.data);
+    };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
         ifr[0].channel.port1.onmessage = function(message) {

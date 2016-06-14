@@ -112,7 +112,9 @@ var Normal = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var handled;
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        if (isEditable(document.activeElement)) {
+            Insert.enter();
+        } else if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             self.repeats = "";
             self.finish();
         } else if (event.sk_keyName === Events.hotKey) {
@@ -393,9 +395,9 @@ var Normal = (function(mode) {
     };
 
     self.showEditor = function(content, onWrite) {
+        self.onEditorSaved = onWrite;
         runtime.frontendCommand({
             action: 'showEditor',
-            onWrite: onWrite.toString(),
             content: content
         });
     };

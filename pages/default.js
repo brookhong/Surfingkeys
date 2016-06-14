@@ -120,7 +120,14 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
         Normal.writeClipboard(element.href);
     })
 });
-mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible", Hints.dispatchMouseClick)');
+mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true]", Hints.dispatchMouseClick)');
+mapkey('I', '#1Go to edit box', function() {
+    Hints.create("input:visible, textarea:visible, *[contenteditable=true]", function(element, event) {
+        Normal.showEditor($(element).val(), function(data) {
+            $(element).val(data);
+        });
+    });
+});
 mapkey('q', '#1Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', '#3Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', '#3Go one tab right', 'RUNTIME("nextTab")');

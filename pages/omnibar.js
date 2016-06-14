@@ -28,6 +28,7 @@ var frontendUI = (function(mode) {
 
 
     self.postMessage = function(to, message) {
+        message.id = generateQuickGuid();
         self.ports[to].postMessage(message);
     };
     self.flush = function() {
@@ -284,6 +285,7 @@ var AceEditor = (function(mode, elmId) {
             });
         });
         var urlCompleter = {
+            identifierRegexps: [/.*/],
             getCompletions: function(editor, session, pos, prefix, callback) {
                 callback(null, allVisitedURLs);
             }
@@ -309,10 +311,13 @@ var AceEditor = (function(mode, elmId) {
         });
         var Vim = cm.constructor.Vim;
         Vim.defineEx("write", "w", function(cm, input) {
-            var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
-            wf(ue);
+            frontendUI.postMessage('top', {
+                action: 'ace_editor_saved',
+                data: ue.getValue()
+            });
         });
         Vim.map('<CR>', ':w', 'normal')
+        Vim.map('<CR>', ':w', 'insert')
         Vim.defineEx("quit", "q", function(cm, input) {
             frontendUI.hidePopup();
         });
@@ -323,7 +328,6 @@ var AceEditor = (function(mode, elmId) {
     ue.$blockScrolling = Infinity;
 
     self.show = function(message) {
-        ue.write = message.onWrite;
         ue.setValue(message.content, -1);
         $(ue.container).find('textarea').focus();
         self.enter();
