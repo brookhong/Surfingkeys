@@ -309,11 +309,11 @@ runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         window.focus();
         document.body.scrollIntoViewIfNeeded();
         Normal.highlightElement(window.frameElement || document.body, 500);
-        Events.resetListeners();
+        Events.resetMode(true);
     }
 };
 $(document).on('surfingkeys:settingsApplied', function(e) {
-    Events.resetListeners();
+    Events.resetMode(typeof(Omnibar) === 'undefined');
 });
 
 $.when(settingsDeferred).done(function (settings) {

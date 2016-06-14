@@ -1,6 +1,27 @@
-var Visual = (function() {
-    var self = {};
-    self.name = "Visual";
+var Visual = (function(mode) {
+    var self = $.extend({name: "Visual", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        var updated = "";
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            if (state > 1) {
+                cursor.remove();
+                selection.collapse(selection.anchorNode, selection.anchorOffset);
+                showCursor();
+            } else {
+                hideCursor();
+                clear();
+                self.exit();
+            }
+            state--;
+            showStatus(2, status[state]);
+            updated = "stopEventPropagation";
+        } else {
+            updated = Normal._handleMapKey.call(self, event.sk_keyName);
+        }
+        return updated;
+    });
+
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
     self.mappings.add("l", {
@@ -347,11 +368,13 @@ var Visual = (function() {
             case 2:
                 hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
+                self.exit();
                 break;
             default:
                 var pos = getStartPos();
                 selection.setPosition(pos[0], pos[1]);
                 showCursor();
+                self.enter();
                 break;
         }
         state = (state + 1) % 3;
@@ -372,33 +395,6 @@ var Visual = (function() {
         }
     };
 
-    var _handleMapKey = Normal._handleMapKey.bind(self);
-    self.handleKeyEvent = function(event, key) {
-        var updated = false;
-        if (state) {
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-                if (state > 1) {
-                    cursor.remove();
-                    selection.collapse(selection.anchorNode, selection.anchorOffset);
-                    showCursor();
-                } else {
-                    hideCursor();
-                    clear();
-                }
-                state--;
-                showStatus(2, status[state]);
-                updated = true;
-            } else {
-                updated = _handleMapKey(key);
-            }
-        } else {
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-                showStatus(-1, "");
-            }
-        }
-        return updated;
-    };
-
     self.next = function(backward) {
         if (matches.length) {
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
@@ -412,6 +408,7 @@ var Visual = (function() {
                 showStatus(2, status[state]);
                 hideCursor();
                 select(matches[currentOccurrence]);
+                self.enter();
             }
         }
     };
@@ -432,9 +429,13 @@ var Visual = (function() {
             state = 1;
             select(matches[currentOccurrence]);
             showStatus(2, status[state]);
+            self.enter();
         } else {
             showStatus(3, "Pattern not found: {0}".format(message.query));
+            setTimeout(function() {
+                showStatus(-1, "");
+            }, 1000);
         }
     };
     return self;
-})();
+})(Mode);

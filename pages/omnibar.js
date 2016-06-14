@@ -1,7 +1,32 @@
-var frontendUI = (function() {
-    var self = {
-        ports: {}
-    };
+var frontendUI = (function(mode) {
+    var self = $.extend({name: "frontendUI", eventListeners: {}, ports: {}}, mode);
+    self.addEventListener('keydown', function(event) {
+        var handled = "";
+        switch (event.keyCode) {
+            case KeyboardUtils.keyCodes.ESC:
+                self.hidePopup();
+                break;
+            default:
+                if (_tabs.trie) {
+                    _tabs.trie = _tabs.trie.find(key);
+                    if (!_tabs.trie) {
+                        self.hidePopup();
+                        _tabs.trie = null;
+                    } else if (_tabs.trie.meta.length) {
+                        RUNTIME('focusTab', {
+                            tab_id: _tabs.trie.meta[0]
+                        });
+                        self.hidePopup();
+                        _tabs.trie = null;
+                    }
+                    handled = "stopEventPropagation";
+                }
+                break;
+        }
+        return handled;
+    });
+
+
     self.postMessage = function(to, message) {
         self.ports[to].postMessage(message);
     };
@@ -17,77 +42,6 @@ var frontendUI = (function() {
     var _usage = $('<div id=sk_usage>').appendTo('body').hide();
     var _popup = $('<div id=sk_popup>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
-    var ue = ace.edit("sk_editor");
-    ace.config.loadModule('ace/ext/language_tools', function (mod) {
-        var allVisitedURLs;
-        runtime.command({
-            action: 'getAllURLs'
-        }, function(response) {
-            allVisitedURLs = response.urls.map(function(u) {
-                var typedCount = 0, visitCount = 1;
-                if (u.hasOwnProperty('typedCount')) {
-                    typedCount = u.typedCount;
-                }
-                if (u.hasOwnProperty('visitCount')) {
-                    visitCount = u.visitCount;
-                }
-                return {
-                    caption: u.url,
-                    value: u.url,
-                    score: typedCount*10 + visitCount,
-                    meta: 'local'
-                }
-            });
-        });
-        var urlCompleter = {
-            getCompletions: function(editor, session, pos, prefix, callback) {
-                callback(null, allVisitedURLs);
-            }
-        };
-        mod.setCompleters([urlCompleter]);
-        ace.config.loadModule('ace/autocomplete', function (mod) {
-            mod.Autocomplete.startCommand.bindKey = "Tab";
-            mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
-            mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
-            mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
-        });
-        ue.setOptions({
-            enableBasicAutocompletion: true,
-            enableLiveAutocompletion: false,
-            enableSnippets: false
-        });
-    });
-    ue.setTheme("ace/theme/chrome");
-    ue.setKeyboardHandler('ace/keyboard/vim', function() {
-        var cm = ue.state.cm;
-        cm.on('vim-mode-change', function(data) {
-            if (data.mode === "normal") {
-                Events.includeNode(ue.container);
-            } else {
-                Events.excludeNode(ue.container);
-            }
-        });
-        ue.on('blur', function(evt, el) {
-            var exDialog = $(el.container).find('div.ace_dialog-bottom');
-            if (exDialog.length === 0) {
-                // not in command line mode
-                // self.hidePopup();
-            }
-        });
-        var Vim = cm.constructor.Vim;
-        Vim.defineEx("write", "w", function(cm, input) {
-            var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
-            wf(ue);
-        });
-        Vim.map('<CR>', ':w', 'normal')
-        Vim.defineEx("quit", "q", function(cm, input) {
-            self.hidePopup();
-        });
-        Vim.map('<Esc>', ':q', 'normal')
-    });
-    ue.container.style.background="#f1f1f1";
-    ue.renderer.setOption('showLineNumbers', false);
-    ue.$blockScrolling = Infinity;
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
@@ -109,9 +63,11 @@ var frontendUI = (function() {
             _display.hide();
             self.flush();
             _display.onHide && _display.onHide();
+            self.exit();
         }
     }
     function showPopup(td, args) {
+        self.enter();
         if (_display && _display.is(':visible')) {
             _display.hide();
             _display.onHide && _display.onHide();
@@ -176,9 +132,7 @@ var frontendUI = (function() {
         showPopup(_popup, message);
     };
     _editor.onShow = function(message) {
-        ue.write = message.onWrite;
-        ue.setValue(message.content, -1);
-        $(ue.container).find('textarea').focus();
+        AceEditor.show(message);
     };
     runtime.actions['showEditor'] = function(message) {
         showPopup(_editor, message);
@@ -292,36 +246,91 @@ var frontendUI = (function() {
         }
     };
 
-    self.handleKeyEvent = function(event, key) {
-        var handled = false;
-        switch (event.keyCode) {
-            case KeyboardUtils.keyCodes.ESC:
-                handled = self.hidePopup();
-                break;
-            default:
-                if (_tabs.trie) {
-                    _tabs.trie = _tabs.trie.find(key);
-                    if (!_tabs.trie) {
-                        self.hidePopup();
-                        _tabs.trie = null;
-                    } else if (_tabs.trie.meta.length) {
-                        RUNTIME('focusTab', {
-                            tab_id: _tabs.trie.meta[0]
-                        });
-                        self.hidePopup();
-                        _tabs.trie = null;
-                    }
-                    handled = true;
-                }
-                break;
+    return self;
+})(Mode);
+
+var AceEditor = (function(mode, elmId) {
+    var self = $.extend({name: "AceEditor", eventListeners: {}, mode: 'normal'}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        event.sk_suppressed = true;
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC && self.mode === 'normal') {
+            document.activeElement.blur();
+            self.exit();
+            frontendUI.hidePopup();
         }
-        return handled;
+    });
+
+    var ue = ace.edit(elmId);
+    ace.config.loadModule('ace/ext/language_tools', function (mod) {
+        var allVisitedURLs;
+        runtime.command({
+            action: 'getAllURLs'
+        }, function(response) {
+            allVisitedURLs = response.urls.map(function(u) {
+                var typedCount = 0, visitCount = 1;
+                if (u.hasOwnProperty('typedCount')) {
+                    typedCount = u.typedCount;
+                }
+                if (u.hasOwnProperty('visitCount')) {
+                    visitCount = u.visitCount;
+                }
+                return {
+                    caption: u.url,
+                    value: u.url,
+                    score: typedCount*10 + visitCount,
+                    meta: 'local'
+                }
+            });
+        });
+        var urlCompleter = {
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                callback(null, allVisitedURLs);
+            }
+        };
+        mod.setCompleters([urlCompleter]);
+        ace.config.loadModule('ace/autocomplete', function (mod) {
+            mod.Autocomplete.startCommand.bindKey = "Tab";
+            mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
+            mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
+            mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
+        });
+        ue.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: false,
+            enableSnippets: false
+        });
+    });
+    ue.setTheme("ace/theme/chrome");
+    ue.setKeyboardHandler('ace/keyboard/vim', function() {
+        var cm = ue.state.cm;
+        cm.on('vim-mode-change', function(data) {
+            self.mode = data.mode;
+        });
+        var Vim = cm.constructor.Vim;
+        Vim.defineEx("write", "w", function(cm, input) {
+            var wf = new Function('ue', "var v = ue.getValue(); ({0})(v);".format(ue.write));
+            wf(ue);
+        });
+        Vim.map('<CR>', ':w', 'normal')
+        Vim.defineEx("quit", "q", function(cm, input) {
+            frontendUI.hidePopup();
+        });
+        Vim.map('<Esc>', ':q', 'normal')
+    });
+    ue.container.style.background="#f1f1f1";
+    ue.renderer.setOption('showLineNumbers', false);
+    ue.$blockScrolling = Infinity;
+
+    self.show = function(message) {
+        ue.write = message.onWrite;
+        ue.setValue(message.content, -1);
+        $(ue.container).find('textarea').focus();
+        self.enter();
     };
 
-    Events.keydownHandlers.unshift(self);
-    delete Events.focusHandlers.getBackFocusOnLoad;
     return self;
-})();
+})(Mode, 'sk_editor');
 
 function _filterByTitleOrUrl(urls, query) {
     if (query && query.length) {
@@ -385,7 +394,6 @@ var Omnibar = (function(ui) {
 
 
     self.input = ui.find('input');
-    Events.excludeNode(self.input[0]);
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
     self.input.on('input', function() {
@@ -469,6 +477,7 @@ var Omnibar = (function(ui) {
     ui.onShow = function(args) {
         handler = handlers[args.type];
         self.input[0].focus();
+        Insert.enter();
         if (args.pref) {
             self.input.val(args.pref);
         }
@@ -486,6 +495,7 @@ var Omnibar = (function(ui) {
         self.resultsDiv.html("");
         lastHandler = null;
         handler.onClose && handler.onClose();
+        Insert.exit();
         handler = null;
     };
 

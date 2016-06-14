@@ -25,9 +25,9 @@ mappingsEditor.setKeyboardHandler('ace/keyboard/vim', function() {
     var cm = mappingsEditor.state.cm;
     cm.on('vim-mode-change', function(data) {
         if (data.mode === "normal") {
-            Events.includeNode(mappingsEditor.container);
+            Insert.exit();
         } else {
-            Events.excludeNode(mappingsEditor.container);
+            Insert.enter();
         }
     });
     cm.constructor.Vim.defineEx("write", "w", function(cm, input) {

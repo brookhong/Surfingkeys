@@ -1,6 +1,159 @@
-var Normal = (function() {
-    var self = {};
-    self.name = "Normal";
+var Mode = (function() {
+    var self = {}, mode_stack = [];
+
+    self.addEventListener = function(evt, handler) {
+        var mode_name = this.name;
+        this.eventListeners[evt] = function(event) {
+            if (event.type === "keydown" && !event.hasOwnProperty('sk_keyName')) {
+                event.sk_keyName = KeyboardUtils.getKeyChar(event);
+            }
+
+            if (!event.hasOwnProperty('sk_suppressed')) {
+                var ret = handler(event);
+                if (ret === "stopEventPropagation") {
+                    window.stopEventPropagation(event, true);
+                }
+                console.log('handle ' + event.type + ' in ' + mode_name);
+            }
+        };
+    };
+
+    self.enter = function() {
+        if (mode_stack[0] !== this) {
+            mode_stack.forEach(function(m) {
+                for (var evt in m.eventListeners) {
+                    window.removeEventListener(evt, m.eventListeners[evt], true);
+                }
+            });
+
+            mode_stack.unshift(this);
+
+            mode_stack.forEach(function(m) {
+                for (var evt in m.eventListeners) {
+                    window.addEventListener(evt, m.eventListeners[evt], true);
+                }
+            });
+
+            console.log('enter ' + this.name);
+        }
+    };
+
+    self.exit = function() {
+        if (mode_stack[0] === this) {
+            mode_stack.shift();
+            for (var evt in this.eventListeners) {
+                window.removeEventListener(evt, this.eventListeners[evt], true);
+            }
+            console.log('exit ' + this.name);
+        }
+    };
+
+    self.stack = function() {
+        return mode_stack;
+    };
+
+    return self;
+})();
+
+var Disabled = (function(mode) {
+    var self = $.extend({name: "Disabled", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        event.sk_suppressed = true;
+        console.log(event.sk_keyName);
+        if (event.sk_keyName === Events.hotKey) {
+            Normal.toggleBlacklist(window.location.origin);
+            self.exit();
+        }
+    });
+
+    return self;
+})(Mode);
+
+var GetBackFocus = (function(mode) {
+    var self = $.extend({name: "GetBackFocus", eventListeners: {}}, mode);
+
+    self.addEventListener('focus', function(event) {
+        var handled = "", elm = event.target;
+        if (isEditable(elm)) {
+            elm.blur();
+            handled = "stopEventPropagation";
+        }
+        return handled;
+    });
+
+    self.addEventListener('mousedown', function(event) {
+        self.exit();
+    });
+
+    self.addEventListener('keydown', function(event) {
+        self.exit();
+    });
+
+    return self;
+})(Mode);
+
+var Insert = (function(mode) {
+    var self = $.extend({name: "Insert", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        event.sk_suppressed = true;
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            document.activeElement.blur();
+            self.exit();
+        }
+    });
+
+    return self;
+})(Mode);
+
+var Normal = (function(mode) {
+    var self = $.extend({name: "Normal", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        var handled;
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            self.repeats = "";
+            self.finish();
+        } else if (event.sk_keyName === Events.hotKey) {
+            self.toggleBlacklist(window.location.origin);
+            handled = "stopEventPropagation";
+        } else if (event.sk_keyName.length) {
+            handled = self._handleMapKey(event.sk_keyName);
+        }
+        return handled;
+    });
+    self.addEventListener('keyup', function(event) {
+        Normal.surfingkeysHold = 0;
+        if (window.stopKeyupPropagation) {
+            event.stopImmediatePropagation();
+            window.stopKeyupPropagation = false;
+        }
+    });
+    self.addEventListener('pushState', function(event) {
+        GetBackFocus.enter();
+    });
+    self.addEventListener('mousedown', function(event) {
+        if (isEditable(event.target)) {
+            Insert.enter();
+        } else {
+            Insert.exit();
+        }
+    });
+
+    self.toggleBlacklist = function(domain) {
+        if (runtime.settings.blacklist.hasOwnProperty(domain)) {
+            delete runtime.settings.blacklist[domain];
+        } else {
+            runtime.settings.blacklist[domain] = 1;
+        }
+        RUNTIME('updateSettings', {
+            settings: {
+                blacklist: runtime.settings.blacklist
+            }
+        });
+    };
+
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
     self.repeats = "";
@@ -308,7 +461,7 @@ var Normal = (function() {
     };
 
     self._handleMapKey = function(key) {
-        var ret = false;
+        var ret = "";
         var finish = self.finish.bind(this);
         if (this.pendingMap) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
@@ -322,7 +475,7 @@ var Normal = (function() {
                     finish();
                 }, 0);
             }
-            ret = true;
+            ret = "stopEventPropagation";
         } else if (this.map_node === this.mappings && (key >= "1" || (self.repeats !== "" && key >= "0")) && key <= "9") {
             // self.repeats is shared by Normal and Visual
             // and reset only after target action executed or cancelled
@@ -331,12 +484,11 @@ var Normal = (function() {
                 action: 'showKeystroke',
                 key: key
             });
-            ret = true;
+            ret = "stopEventPropagation";
         } else {
             this.map_node = this.map_node.find(key);
             if (this.map_node === null) {
                 finish();
-                ret = false;
             } else {
                 if (this.map_node.meta.length) {
                     var code = this.map_node.meta[0].code;
@@ -363,7 +515,7 @@ var Normal = (function() {
                         key: key
                     });
                 }
-                ret = true;
+                ret = "stopEventPropagation";
             }
         }
         return ret;
@@ -375,15 +527,6 @@ var Normal = (function() {
                 self._handleMapKey(keys[i]);
             }
         }, 1);
-    };
-
-    self.handleKeyEvent = function(event, key) {
-        var handled = self._handleMapKey(key);
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-            self.repeats = "";
-            self.finish();
-        }
-        return handled;
     };
 
     self.addVIMark = function(mark, url) {
@@ -445,4 +588,4 @@ var Normal = (function() {
     };
 
     return self;
-})();
+})(Mode);

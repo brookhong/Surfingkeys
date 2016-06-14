@@ -30,11 +30,11 @@ var Find = (function() {
     var self = {};
 
     var input = $('<input id="sk_find"/>');
-    Events.excludeNode(input[0]);
     var historyInc;
     function reset() {
         input.val('');
         StatusBar.show(-1, '');
+        Insert.exit();
     }
 
     self.open = function() {
@@ -75,6 +75,7 @@ var Find = (function() {
             }
         };
         input.focus();
+        Insert.enter();
     };
     return self;
 })();
