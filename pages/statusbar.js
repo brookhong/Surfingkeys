@@ -1,7 +1,12 @@
 var StatusBar = (function(ui) {
     var self = {};
 
-    self.show = function(n, content) {
+    var timerHide = null;
+    self.show = function(n, content, duration) {
+        if (timerHide) {
+            clearTimeout(timerHide);
+            timerHide = null;
+        }
         var span = ui.find('span');
         if (n < 0) {
             span.html("");
@@ -22,6 +27,11 @@ var StatusBar = (function(ui) {
         $(span[lastSpan]).css('border-right', '');
         ui.css('display', lastSpan === -1 ? 'none' : 'block');
         frontendUI.flush();
+        if (duration) {
+            timerHide = setTimeout(function() {
+                ui.css('display', 'none');
+            }, duration);
+        }
     };
     return self;
 })(frontendUI.statusBar);

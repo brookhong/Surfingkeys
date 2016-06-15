@@ -112,7 +112,7 @@ var Normal = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var handled;
-        if (isEditable(document.activeElement)) {
+        if (isEditable(event.target)) {
             Insert.enter();
         } else if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             self.repeats = "";
@@ -171,7 +171,7 @@ var Normal = (function(mode) {
 
     function initScroll(elm) {
         elm.skScrollBy = function(x, y, d) {
-            if (runtime.settings.smoothScroll && (Math.abs(x) > stepSize || Math.abs(y) > stepSize)) {
+            if (runtime.settings.smoothScroll) {
                 elm.smoothScrollBy(x, y, d);
             } else {
                 elm.scrollLeft = elm.scrollLeft + x;
@@ -179,6 +179,10 @@ var Normal = (function(mode) {
             }
         };
         elm.smoothScrollBy = function(x, y, d) {
+            // surfingkeysHold:
+            // 0 - smoothScroll not started
+            // 1 - smoothScroll just started
+            // 2 - smoothScroll transfered to normal scroll because user holds the key
             if (self.surfingkeysHold === 0) {
                 var x0 = elm.scrollLeft,
                     y0 = elm.scrollTop,
@@ -189,7 +193,8 @@ var Normal = (function(mode) {
                     elm.scrollTop = easeFn(timestamp - start, y0, y, d);
                     if (self.surfingkeysHold !== 2 && (timestamp - start) < d) {
                         window.requestAnimationFrame(step);
-                    } else {
+                    } else if (Math.abs(x) > stepSize || Math.abs(y) > stepSize) {
+                        // don't do fine tune for minor scroll
                         elm.scrollLeft = x0 + x;
                         elm.scrollTop = y0 + y;
                     }
@@ -198,6 +203,8 @@ var Normal = (function(mode) {
                 window.requestAnimationFrame(step);
                 self.surfingkeysHold++;
             } else if (self.surfingkeysHold === 1) {
+                // smoothScroll already started, hold key to keep scroll
+                // use no easeFn to keep fixed speed
                 function holdStep(timestamp) {
                     elm.scrollLeft = elm.scrollLeft + x / 4;
                     elm.scrollTop = elm.scrollTop + y / 4;
@@ -394,10 +401,11 @@ var Normal = (function(mode) {
         });
     };
 
-    self.showEditor = function(content, onWrite) {
+    self.showEditor = function(content, onWrite, type) {
         self.onEditorSaved = onWrite;
         runtime.frontendCommand({
             action: 'showEditor',
+            type: type || "text",
             content: content
         });
     };

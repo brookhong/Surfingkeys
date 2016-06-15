@@ -34,6 +34,7 @@ var frontendFrame = (function() {
                 self.actions[response.action](response);
             }
             ifr.css('height', response.frameHeight);
+            ifr.css('pointer-events', response.pointerEvents);
             if (response.frameHeight === '0px') {
                 uiHost.blur();
             }

@@ -22,6 +22,32 @@ var Visual = (function(mode) {
         return updated;
     });
 
+    self.addEventListener('click', function(event) {
+        switch (selection.type) {
+            case "None":
+                hideCursor();
+                state = 0;
+                break;
+            case "Caret":
+                if (state) {
+                    hideCursor();
+                    if (state === 0) {
+                        state = 1;
+                    }
+                    showCursor();
+                }
+                break;
+            case "Range":
+                if (state) {
+                    hideCursor();
+                    state = 2;
+                    showCursor();
+                }
+                break;
+        }
+        showStatus(2, status[state]);
+    });
+
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
     self.mappings.add("l", {
@@ -135,36 +161,11 @@ var Visual = (function(mode) {
         mark_template = $('<surfingkeys_mark>')[0],
         cursor = $('<div class="surfingkeys_cursor"></div>')[0];
 
-    document.addEventListener('click', function(event) {
-        switch (selection.type) {
-            case "None":
-                hideCursor();
-                state = 0;
-                break;
-            case "Caret":
-                if (state) {
-                    hideCursor();
-                    if (state === 0) {
-                        state = 1;
-                    }
-                    showCursor();
-                }
-                break;
-            case "Range":
-                if (state) {
-                    hideCursor();
-                    state = 2;
-                    showCursor();
-                }
-                break;
-        }
-        showStatus(2, status[state]);
-    });
-
-    function showStatus(pos, msg) {
+    function showStatus(pos, msg, duration) {
         runtime.frontendCommand({
             action: "showStatus",
             content: msg,
+            duration: duration,
             position: pos
         });
     }
@@ -403,13 +404,7 @@ var Visual = (function(mode) {
         } else if (runtime.settings.findHistory.length) {
             var query = runtime.settings.findHistory[0];
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
-            if (matches.length) {
-                state = 1;
-                showStatus(2, status[state]);
-                hideCursor();
-                select(matches[currentOccurrence]);
-                self.enter();
-            }
+            _visualEnter(query);
         }
     };
 
@@ -424,18 +419,19 @@ var Visual = (function(mode) {
     runtime.actions['visualClear'] = function(message) {
         clear();
     };
-    runtime.actions['visualEnter'] = function(message) {
+
+    function _visualEnter(query) {
         if (matches.length) {
             state = 1;
-            select(matches[currentOccurrence]);
             showStatus(2, status[state]);
+            select(matches[currentOccurrence]);
             self.enter();
         } else {
-            showStatus(3, "Pattern not found: {0}".format(message.query));
-            setTimeout(function() {
-                showStatus(-1, "");
-            }, 1000);
+            showStatus(3, "Pattern not found: {0}".format(query), 1000);
         }
+    }
+    runtime.actions['visualEnter'] = function(message) {
+        _visualEnter(message.query);
     };
     return self;
 })(Mode);

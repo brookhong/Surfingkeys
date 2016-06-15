@@ -125,6 +125,7 @@ mapkey('I', '#1Go to edit box', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true]", function(element, event) {
         Normal.showEditor($(element).val(), function(data) {
             $(element).val(data);
+            element.focus();
         });
     });
 });
@@ -291,8 +292,8 @@ mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
 mapkey('si', '#12Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Normal.showEditor(window.location.href, function(data) {
-        top.location.href = data;
-    });
+        tabOpenLink(data);
+    }, 'url');
 });
 mapkey(';m', '#1mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', '#12Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf")');

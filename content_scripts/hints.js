@@ -2,46 +2,43 @@ var Hints = (function(mode) {
     var self = $.extend({name: "Hints", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        var updated = "";
+        var updated = false;
         var hints = holder.find('>div');
-        if (hints.length > 0) {
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-                hide();
-                updated = "stopEventPropagation";
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            hide();
+        } else if (hints.length > 0) {
+            if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
+                prefix = prefix.substr(0, prefix.length - 1);
+                updated = true;
             } else {
-                if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
-                    prefix = prefix.substr(0, prefix.length - 1);
-                    updated = "stopEventPropagation";
-                } else {
-                    var key = String.fromCharCode(event.keyCode);
-                    if (key !== '' && self.characters.indexOf(key.toLowerCase()) !== -1) {
-                        prefix = prefix + key;
-                        updated = "stopEventPropagation";
-                    }
+                var key = String.fromCharCode(event.keyCode);
+                if (key !== '' && self.characters.indexOf(key.toLowerCase()) !== -1) {
+                    prefix = prefix + key;
+                    updated = true;
                 }
-                if (updated.length) {
-                    var matches = refresh();
-                    if (matches.length === 1) {
-                        var onhint = $(matches[0]).data('onhint');
-                        var link = $(matches[0]).data('link');
-                        if (onhint) {
-                            onhint.call(window, link, event);
-                            if (behaviours.multipleHits) {
-                                prefix = "";
-                                refresh();
-                            } else {
-                                hide();
-                            }
+            }
+            if (updated) {
+                var matches = refresh();
+                if (matches.length === 1) {
+                    var onhint = $(matches[0]).data('onhint');
+                    var link = $(matches[0]).data('link');
+                    if (onhint) {
+                        onhint.call(window, link, event);
+                        if (behaviours.multipleHits) {
+                            prefix = "";
+                            refresh();
                         } else {
-                            self.dispatchMouseClick(link, event);
+                            hide();
                         }
-                    } else if (matches.length === 0) {
-                        hide();
+                    } else {
+                        self.dispatchMouseClick(link, event);
                     }
+                } else if (matches.length === 0) {
+                    hide();
                 }
             }
         }
-        return updated;
+        return "stopEventPropagation";
     });
 
     var prefix = "",

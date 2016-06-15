@@ -16,6 +16,7 @@ function htmlDecode(str) {
     return $('<div/>').html(str).text();
 }
 function isEditable(element) {
+    // to do, not all input elements are editable
     return element.localName === 'input' || element.localName === 'textarea' || element.localName === 'select' || element.isContentEditable;
 }
 
