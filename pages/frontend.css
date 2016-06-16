@@ -283,5 +283,5 @@ div.sk_arrowdown_inner {
 }
 .ace_editor.ace_autocomplete {
     z-index: 2147483300 !important;
-    width: 680px !important;
+    width: 80% !important;
 }

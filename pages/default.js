@@ -126,7 +126,7 @@ mapkey('I', '#1Go to edit box', function() {
         Normal.showEditor($(element).val(), function(data) {
             $(element).val(data);
             element.focus();
-        });
+        }, element.localName);
     });
 });
 mapkey('q', '#1Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');

@@ -16,8 +16,10 @@ function htmlDecode(str) {
     return $('<div/>').html(str).text();
 }
 function isEditable(element) {
-    // to do, not all input elements are editable
-    return element.localName === 'input' || element.localName === 'textarea' || element.localName === 'select' || element.isContentEditable;
+    return element.localName === 'textarea'
+        || element.localName === 'select'
+        || element.isContentEditable
+        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
 }
 
 String.prototype.format = function() {

@@ -18,32 +18,48 @@ var Mode = (function() {
         };
     };
 
+    function popModes(modes) {
+        modes.forEach(function(m) {
+            for (var evt in m.eventListeners) {
+                window.removeEventListener(evt, m.eventListeners[evt], true);
+            }
+        });
+    }
+
+    function pushModes(modes) {
+        modes.forEach(function(m) {
+            for (var evt in m.eventListeners) {
+                window.addEventListener(evt, m.eventListeners[evt], true);
+            }
+        });
+
+    }
+
     self.enter = function() {
-        if (mode_stack[0] !== this) {
-            mode_stack.forEach(function(m) {
-                for (var evt in m.eventListeners) {
-                    window.removeEventListener(evt, m.eventListeners[evt], true);
-                }
-            });
+        // we need clear the modes stack first to make sure eventListeners of this mode added at first.
+        popModes(mode_stack);
 
+        var pos = mode_stack.indexOf(this);
+
+        if (pos === -1) {
+            // push this mode into stack
             mode_stack.unshift(this);
-
-            mode_stack.forEach(function(m) {
-                for (var evt in m.eventListeners) {
-                    window.addEventListener(evt, m.eventListeners[evt], true);
-                }
-            });
-
-            console.log('enter ' + this.name);
+        } else {
+            // pop up all the modes over this
+            mode_stack = mode_stack.slice(pos);
         }
+
+        pushModes(mode_stack);
+        console.log('enter ' + this.name);
     };
 
     self.exit = function() {
-        if (mode_stack[0] === this) {
-            mode_stack.shift();
-            for (var evt in this.eventListeners) {
-                window.removeEventListener(evt, this.eventListeners[evt], true);
-            }
+        var pos = mode_stack.indexOf(this);
+        if (pos !== -1) {
+            pos++;
+            var popup = mode_stack.slice(0, pos);
+            popModes(popup);
+            mode_stack = mode_stack.slice(pos);
             console.log('exit ' + this.name);
         }
     };
@@ -405,7 +421,7 @@ var Normal = (function(mode) {
         self.onEditorSaved = onWrite;
         runtime.frontendCommand({
             action: 'showEditor',
-            type: type || "text",
+            type: type || "textarea",
             content: content
         });
     };

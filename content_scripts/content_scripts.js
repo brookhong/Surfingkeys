@@ -312,8 +312,13 @@ runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         Events.resetMode(true);
     }
 };
+
+var firstApplied = false;
 $(document).on('surfingkeys:settingsApplied', function(e) {
-    Events.resetMode(typeof(Omnibar) === 'undefined');
+    if (!firstApplied) {
+        Events.resetMode(typeof(Omnibar) === 'undefined');
+        firstApplied = true;
+    }
 });
 
 $.when(settingsDeferred).done(function (settings) {

@@ -196,11 +196,14 @@ var Hints = (function(mode) {
     };
 
     self.dispatchMouseClick = function(element, event) {
-        if (element.localName === 'textarea' || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)) || element.hasAttribute('contenteditable')) {
+        if (isEditable(element)) {
             element.focus();
             self.exit();
             Insert.enter();
         } else {
+            if (!behaviours.multipleHits) {
+                self.exit();
+            }
             if (behaviours.tabbed || behaviours.active === false) {
                 RUNTIME("openLink", {
                     tab: {
@@ -215,9 +218,6 @@ var Hints = (function(mode) {
                 element = realTargets.length ? realTargets[0] : element;
                 self.mouseoutLastElement();
                 dispatchMouseEvent(element, ['mouseover', 'mousedown', 'mouseup', 'click']);
-            }
-            if (!behaviours.multipleHits) {
-                self.exit();
             }
         }
     };

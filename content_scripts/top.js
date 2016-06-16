@@ -18,6 +18,10 @@ var frontendFrame = (function() {
             from: 'top'
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
+        runtime.frontendCommand({
+            action: 'pageContentReady',
+            content: document.body.innerText
+        });
     }
     self.actions['ace_editor_saved'] = function(response) {
         Normal.onEditorSaved(response.data);

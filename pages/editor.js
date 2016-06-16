@@ -294,6 +294,34 @@ var AceEditor = (function(mode, elmId) {
         }
     };
 
+    var wordsOnPage = [];
+    runtime.actions['pageContentReady'] = function(message) {
+        var splitRegex = /[^a-zA-Z_0-9\$\-\u00C0-\u1FFF\u2C00-\uD7FF\w]+/;
+        var words = message.content.split(splitRegex);
+        var wordScores = {};
+        words.forEach(function(word) {
+            if (wordScores.hasOwnProperty(word)) {
+                wordScores[word]++;
+            } else {
+                wordScores[word] = 1;
+            }
+        });
+
+        wordsOnPage = Object.keys(wordScores).map(function(w) {
+            return {
+                caption: w,
+                value: w,
+                score: wordScores[w],
+                meta: 'local'
+            }
+        });
+    };
+    var pageWordCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+            callback(null, wordsOnPage);
+        }
+    };
+
     ace.config.loadModule('ace/ext/language_tools', function (mod) {
         self.language_tools = mod;
         ace.config.loadModule('ace/autocomplete', function (mod) {
@@ -346,8 +374,14 @@ var AceEditor = (function(mode, elmId) {
             self.language_tools.setCompleters([urlCompleter]);
             self.css('height', '');
             self.setFontSize(24);
+        } else if (message.type === 'input') {
+            self.renderer.setOption('showLineNumbers', false);
+            self.language_tools.setCompleters([pageWordCompleter]);
+            self.css('height', '');
+            self.setFontSize(24);
         } else {
             self.renderer.setOption('showLineNumbers', true);
+            self.language_tools.setCompleters([pageWordCompleter]);
             self.Vim.unmap('<CR>', 'insert')
             self.Vim.map('<C-CR>', ':wq', 'insert')
             self.css('height', '30%');
