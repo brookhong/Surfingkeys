@@ -1,38 +1,36 @@
 # Surfingkeys -- 用javascript和键盘扩展你的chrome
 
-Surfingkeys和现有的一些插件，如[philc/vimium](https://github.com/philc/vimium)和[1995eaton/chromium-vim](https://github.com/1995eaton/chromium-vim)一样，让你尽可能的通过键盘来使用chrome浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
-
-我先是用了一年的vimium，大概半年前又切到了chromium-vim。之所以要自己重新造一个类似的轮子，是因为我发现要在这些插件里加上我自己的需求，需要改很多地方。比如，我就试图把下面这两个功能加入其中
-
-* 用某种搜索引擎搜索选中的文本
-* 双击某个单词获取中文翻译
+Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用chrome浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
-    mapkey('c-y', 'Show me the money', function() {
-        alert('a well-known phrase uttered by characters in the 1996 film Jerry Maguire');
+    mapkey('<Ctrl-y>', 'Show me the money', function() {
+        Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
 [配置参考](#配置参考).
 
 [演示](http://video.weibo.com/show?fid=1034:09ef299edbed112e9c0a66a18ffb3463)
 
-## 哪些功能是Surfingkeys不同于其他插件的？
+## 功能特性
 * 所有配置都用javascript描述，易于修改添加自己的按键。
 * 一个大号光标，这样visual mode不会太痛苦。
-* 我最喜欢的功能 -- 搜索选中文本，在normal mode和visual mode都好用。
+* 搜索选中文本，在normal mode和visual mode都好用。
 * 自动生成帮助信息。
 * 在visual mode下，按`*` 可以搜索当前单词。
 * 滚动操作（像`e` `d`上下翻页之类）可以在顶层页面工作，也可以在一个支持滚动的DIV中使用。
 * 在一个有多个frame的页面中，`w`可以切换frame。
 * 会话管理。
+* 一个多功能书签地址栏
+* 前缀数字可多次重复相应操作
+* 使用VIM编辑页面上各种输入框
 
 ## 快速上手
-安装本插件以后，打开你要访问的站点。先按`u`或者`Ctrl-i`看看帮助信息，按`Esc`可以关掉帮助信息。
+安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
 试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
 
-* `u` 显示帮助
+* `?` 显示帮助
 ![help](https://cloud.githubusercontent.com/assets/288207/10328829/d3db179a-6ceb-11e5-8faf-73761584eeee.png)
 * `b` 浏览/搜索收藏夹
 ![bookmark](https://cloud.githubusercontent.com/assets/288207/10328828/d3ac1fd0-6ceb-11e5-8e9c-7c0d35a195a1.png)
@@ -47,11 +45,11 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 
 ## Surfingkeys支持的模式
 
-Surfingkeys目前只有两种模式。
+Surfingkeys有三种模式：normal，visual和insert。
 
 ### Normal mode，默认模式
 
-通过函数`mapkey`添加的所有按键都只在这种模式下有用。
+当你打开一个页面时，自动进入该模式。通过函数`mapkey`添加的所有按键都只在这种模式下有用。
 
 ### Visual mode，用于选中文本，以及各种针对选中文本的操作
 
@@ -67,6 +65,11 @@ Surfingkeys目前只有两种模式。
 1. 使用`j` `k` `h` `l` `b` `w``0` `$`试试选中文本。
 1. 按下`sg`看看发生了什么。
 1. 再按下`v`回到normal mode。
+
+### Insert mode
+
+当输入焦点定位到各类输入框时（无论你是通过`i`或`f`选择定位还是鼠标点击定位的），就进入该模式。
+通过函数`imapkey`添加的所有按键都只在这种模式下有用。
 
 ### 查找
 
@@ -235,7 +238,36 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
 ## ACE VIM编辑器
 
-`su`可以打开一个vim模式的ACE编辑器来编辑当前URL，`:w`就会打开编辑后的URL。
+Surfingkeys集成了ACE里的VIM编辑器，用于：
+
+* 编辑网页上的各类文本输入框。
+* 编辑URL并在新标签页打开
+* 编辑设置
+
+### 编辑网页上的各类文本输入框
+
+在Normal模式，按大写的`I`，然后按相应的字母选择一个输入框。这时会打开一个VIM编辑器。对于单行输入框`input`和多行输入框`textarea`，打开的VIM编辑器会有点细微的不同。
+
+对于单行输入框`input`，打开的VIM编辑器只有一行，你可以通过各类VIM按键编辑你的文本，按`Enter`或者`:w`就会把VIM编辑器里的内容写回相应的输入框。
+对于多行输入框`textarea`，打开的VIM编辑器有多行，在你完成编辑之后，按`Ctrl-Enter`或者`:w`就会把VIM编辑器里的内容写回相应的输入框。
+
+按键`Esc`或`:q`可退出VIM编辑器，不写回输入。
+
+`Tab`键可以从当前页面上搜索匹配的词组，然后按空格键补齐。
+
+如果你是通过按键`i`或者鼠标点击进入一个输入框的，你可以正常修改输入框中的文本，也可以随时按`Ctrl-i`打开一个VIM编辑器。
+
+记住在插入模式，按`Ctrl-i`打开VIM编辑器。
+
+### 编辑URL并在新标签页打开
+
+`su`可以打开一个VIM编辑器来编辑当前URL，然后按`Enter`或者`:w`就会打开编辑后的URL，就像一个地址栏一样，但这是一个支持vim按键的地址栏。
+
+`Tab`键可以从书签和访问历史中搜索匹配的URL，然后按空格键补齐。
+
+### 编辑设置
+
+`se`打开设置编辑器, `:w`保存设置。
 
 ## 配置参考
 
@@ -314,6 +346,12 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
+
+## 编译
+
+    npm install
+    ./node_modules/gulp/bin/gulp.js
+
 
 ## License
 

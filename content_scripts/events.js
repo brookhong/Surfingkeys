@@ -31,8 +31,9 @@ var Events = (function() {
     function blackList() {
         if (self.isBlacklisted()) {
             Disabled.enter();
-        } else if (typeof(Omnibar) === 'undefined') {
+        } else if (self.needGetBackFocus && typeof(Omnibar) === 'undefined') {
             GetBackFocus.enter();
+            self.needGetBackFocus = false;
         }
 
     }
@@ -41,6 +42,7 @@ var Events = (function() {
         if (Mode.stack().length === 0) {
             // if mode stack is empty, enter normal mode automatically
             Normal.enter();
+            self.needGetBackFocus = true;
         }
         if (document.body) {
             blackList()

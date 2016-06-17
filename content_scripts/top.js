@@ -25,6 +25,10 @@ var frontendFrame = (function() {
     }
     self.actions['ace_editor_saved'] = function(response) {
         Normal.onEditorSaved(response.data);
+        if (runtime.settings.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
+            Normal.elementBehindEditor.focus();
+            Insert.enter();
+        }
     };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
@@ -72,6 +76,11 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
     runtime.command({
         action: 'setSurfingkeysIcon',
         status: Events.isBlacklisted()
+    });
+    runtime.command({
+        action: 'tabURLAccessed',
+        title: document.title,
+        url: window.location.href
     });
 });
 

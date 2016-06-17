@@ -1,8 +1,7 @@
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = document.activeElement;
-    Normal.showEditor($(element).val(), function(data) {
+    Normal.showEditor(element, function(data) {
         $(element).val(data);
-        element.focus();
     }, element.localName);
 });
 function toggleProxySite(host) {
@@ -128,11 +127,10 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     })
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true]", Hints.dispatchMouseClick)');
-mapkey('I', '#1Go to edit box', function() {
+mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true]", function(element, event) {
-        Normal.showEditor($(element).val(), function(data) {
+        Normal.showEditor(element, function(data) {
             $(element).val(data);
-            element.focus();
         }, element.localName);
     });
 });
@@ -148,6 +146,7 @@ mapkey('D', '#4Go forward in history', 'history.go(1)');
 mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', '#8Open an URLs', 'Normal.openOmnibar({type: "URLs", extra: "getTopSites"})');
 mapkey('ox', '#8Open recently closed URL', 'Normal.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
+mapkey('H', '#8Open opened URL in current tab', 'Normal.openOmnibar({type: "URLs", extra: "getTabURLs"})');
 mapkey('b', '#8Open a bookmark', 'Normal.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', '#8Bookmark current page to selected folder', function() {
     var page = {

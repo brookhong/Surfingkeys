@@ -2,13 +2,6 @@
 
 Surfingkeys is another Chrome extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
-There are several Chrome extensions that provides similar functionalities. I used [philc/vimium](https://github.com/philc/vimium) for almost one year, then I switched to [1995eaton/chromium-vim](https://github.com/1995eaton/chromium-vim) for half a year.
-
-Both are great extensions. What makes me create another wheel, is that I found so many changes that need to be done when I tried to add some functionalities to meet my own requirements. For example, some functions that I originally used some other extensions for,
-
-* Search selected text with different kinds for search engine
-* Double click on a word to get translation
-
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
@@ -17,23 +10,26 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 
 [Reference for editing your own settings](#edit-your-own-settings).
 
-## Which features make Surfingkeys more usable for me than others?
+## Feature list
 * All settings are set up within a javascript file, which makes it easy to create mapping to user customized function.
 * A large cursor in visual mode, which makes visual mode better.
-* My favorite feature -- search selected with, which works in both normal mode and visual mode.
+* Search selected with, which works in both normal mode and visual mode.
 * Help messages are automatically generated for mappings.
 * `*` to search word under cursor in visual mode.
 * Scroll actions like page up/down (`e` `d`) work for not only top window but also scrollable DIV.
 * `w` to switch frames if there is.
-* session management
+* Session management
+* A versatile bookmark/url finder
+* Count prefixes to repeat actions
+* Use vim editor to edit input on page
 
 ## Quick start
 
-After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc), open a site you'd like. Then press `u` or `Ctrl-i` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
+After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
 
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 
-* `u` to show help
+* `?` to show help
 ![help](https://cloud.githubusercontent.com/assets/288207/10328829/d3db179a-6ceb-11e5-8faf-73761584eeee.png)
 * `b` to browse/search bookmarks
 ![bookmark](https://cloud.githubusercontent.com/assets/288207/10328828/d3ac1fd0-6ceb-11e5-8e9c-7c0d35a195a1.png)
@@ -48,15 +44,13 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 
 ## Surfingkeys modes
 
-Surfingkeys now have only two modes.
+There are three modes in Surfingkeys: normal, visual and insert.
 
 ### Normal mode, the default mode.
 
-All mappings added with `mapkey` works in this mode.
+When you open a page, it enters normal mode automatically. All mappings added with `mapkey` work in this mode.
 
 ### Visual mode, the mode for text selection, and actions on the selected text.
-
-All mappings added with `vmapkey` works in this mode, with some built-in mappings like those in VIM - `j` `k` `h` `l` `b` `w``0` `$` etc.
 
 Press `v` to toggle visual mode. You'll see an indicator at bottom of current page - `Caret` or `Range`, and a large cursor on page. The cursor is made large for visibility, as sometimes it's not easy for human to locate a normal cursor on a web page.
 
@@ -70,6 +64,14 @@ Now here is a small practice,
 1. use the VIM key bindings to select some text.
 1. press `sg` to see what will happen.
 1. press `v` again to back to normal mode.
+
+All mappings added with `vmapkey` work in this mode, with some built-in mappings like those in VIM - `j` `k` `h` `l` `b` `w``0` `$` etc.
+
+### Insert mode
+
+When focus is switched into any editable element by whatever means(`i` hints or `f` hints or mouse click), Insert mode is on.
+
+All mappings added with `imapkey` work in this mode.
 
 ### Find
 
@@ -240,7 +242,37 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 ## ACE VIM editor
 
-`su` to open an ACE editor in vim mode to edit current URL, then `:w` to open the new URL.
+Thanks ACE for the vim editor, Surfingkeys integrates ACE for the vim editor. The vim editor is used:
+
+* to edit any input on html page
+* to edit URL to open in new tab
+* to edit settings
+
+### Edit any input on html page
+
+In normal mode, press capital `I`, then use a hint letter to pick up a input box. A vim editor is opened for you to edit text. The vim editor is opened in lightly different way for `input` and `textarea`.
+
+For `input` element, the vim editor has only one line, you use vim-bindings keys to edit your text, then press `Enter` or `:w` to write your text back to the input element.
+
+For `textarea` element, the vim editor is opened in bigger size, after you complete your edit, then press `Ctrl-Enter` or `:w` to write your text back to the textarea element.
+
+`Esc` or `:q` to quit vim editor without writing text back.
+
+`Tab` completion works with all words on current page, `Space` to choose a match from popup.
+
+If you enter insert mode with `i` or mouse click, you will edit your input in normal way. You could also open vim editor at that time by pressing `Ctrl-i`.
+
+Remember that in insert mode, press `Ctrl-i` to open vim editor.
+
+### Edit URL to open in new tab
+
+`su` to open vim editor to edit current URL, then `Enter` or `:w` to open the input URL, which works just like address bar with vim-binding keys.
+
+`Tab` completion works with all URLs from bookmark/history, `Space` to choose a match from popup.
+
+### Edit settings
+
+`se` to open settings editor, `:w` to save settings.
 
 ## Edit your own settings
 

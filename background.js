@@ -7,6 +7,7 @@ var Service = (function() {
         tabActivated = {},
         tabMessages = {},
         frameIncs = {},
+        tabURLs = {},
         tabHistory = [],
         tabHistoryIndex = 0,
         historyTabAction = false,
@@ -14,6 +15,7 @@ var Service = (function() {
         frontEndURL = chrome.extension.getURL('/pages/frontend.html');
 
     var settings = {
+        focusOnSaved: true,
         omnibarMaxResults: 20,
         tabsThreshold: 9,
         repeatThreshold: 99,
@@ -794,6 +796,25 @@ var Service = (function() {
             _response(message, sendResponse, {
                 response: result
             });
+        });
+    };
+    self.tabURLAccessed = function(message, sender, sendResponse) {
+        var tabId = sender.tab.id;
+        if (!tabURLs.hasOwnProperty(tabId)) {
+            tabURLs[tabId] = {};
+        }
+        tabURLs[tabId][message.url] = message.title;
+    };
+    self.getTabURLs = function(message, sender, sendResponse) {
+        var tabURL = tabURLs[sender.tab.id] || {};
+        tabURL = Object.keys(tabURL).map(function(u) {
+            return {
+                url: u,
+                title: tabURL[u]
+            };
+        });
+        _response(message, sendResponse, {
+            urls: tabURL
         });
     };
 

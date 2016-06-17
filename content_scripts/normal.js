@@ -49,6 +49,9 @@ var Mode = (function() {
         }
 
         pushModes(mode_stack);
+        console.log('enter {0}, {1}'.format(this.name, mode_stack.map(function(m) {
+            return m.name;
+        }).join('->')));
     };
 
     self.exit = function() {
@@ -58,6 +61,9 @@ var Mode = (function() {
             var popup = mode_stack.slice(0, pos);
             popModes(popup);
             mode_stack = mode_stack.slice(pos);
+            console.log('exit {0}, {1}'.format(this.name, mode_stack.map(function(m) {
+                return m.name;
+            }).join('->')));
         }
     };
 
@@ -72,6 +78,7 @@ var Disabled = (function(mode) {
     var self = $.extend({name: "Disabled", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
         if (event.sk_keyName === Events.hotKey) {
             Normal.toggleBlacklist(window.location.origin);
@@ -113,6 +120,7 @@ var Insert = (function(mode) {
     self.map_node = self.mappings;
 
     self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             document.activeElement.blur();
@@ -140,7 +148,6 @@ var Normal = (function(mode) {
         if (isEditable(event.target)) {
             Insert.enter();
         } else if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
-            self.repeats = "";
             self.finish();
         } else if (event.sk_keyName === Events.hotKey) {
             self.toggleBlacklist(window.location.origin);
@@ -428,7 +435,15 @@ var Normal = (function(mode) {
         });
     };
 
-    self.showEditor = function(content, onWrite, type) {
+    self.showEditor = function(element, onWrite, type) {
+        var content;
+        if (typeof(element) === "string") {
+            content = element;
+            self.elementBehindEditor = document.body;
+        } else {
+            content = $(element).val();
+            self.elementBehindEditor = element;
+        }
         self.onEditorSaved = onWrite;
         runtime.frontendCommand({
             action: 'showEditor',
@@ -495,6 +510,9 @@ var Normal = (function(mode) {
         runtime.frontendCommand({
             action: 'hideKeystroke'
         });
+        if (this.repeats) {
+            this.repeats = "";
+        }
     };
 
     self._handleMapKey = function(key) {
@@ -502,21 +520,19 @@ var Normal = (function(mode) {
         var finish = self.finish.bind(this);
         if (this.pendingMap) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
-                self.repeats = "";
                 finish();
             } else {
                 var pf = this.pendingMap.bind(this);
                 setTimeout(function() {
                     pf(key);
-                    self.repeats = "";
                     finish();
                 }, 0);
             }
             ret = "stopEventPropagation";
-        } else if (this.map_node === this.mappings && (key >= "1" || (self.repeats !== "" && key >= "0")) && key <= "9") {
-            // self.repeats is shared by Normal and Visual
-            // and reset only after target action executed or cancelled
-            self.repeats += key;
+        } else if (this.repeats !== undefined &&
+            this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            // reset only after target action executed or cancelled
+            this.repeats += key;
             runtime.frontendCommand({
                 action: 'showKeystroke',
                 key: key
@@ -536,13 +552,12 @@ var Normal = (function(mode) {
                             key: key
                         });
                     } else {
-                        RUNTIME.repeats = parseInt(self.repeats) || 1;
+                        RUNTIME.repeats = parseInt(this.repeats) || 1;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
                                 code();
                                 RUNTIME.repeats--;
                             }
-                            self.repeats = "";
                             finish();
                         }, 0);
                     }

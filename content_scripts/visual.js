@@ -50,6 +50,7 @@ var Visual = (function(mode) {
 
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
+    self.repeats = "";
     self.mappings.add("l", {
         annotation: "forward character",
         feature_group: 9,

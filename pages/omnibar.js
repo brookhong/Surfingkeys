@@ -468,18 +468,22 @@ var OpenURLs = (function() {
             all = response.urls;
             Omnibar.listURLs(response.urls, false);
         });
-        Omnibar.listBookmarkFolders(function() {
-            runtime.command({
-                action: 'getAllURLs'
-            }, function(response) {
-                all = all.concat(response.urls);
+        if (self.action === "getTopSites") {
+            Omnibar.listBookmarkFolders(function() {
+                runtime.command({
+                    action: 'getAllURLs'
+                }, function(response) {
+                    all = all.concat(response.urls);
+                });
             });
-        });
+        }
     }
     self.onOpen = function(arg) {
         self.action = arg;
         if (self.action === "getRecentlyClosed") {
             self.prompt = 'Recently closed≫';
+        } else if (self.action === "getTabURLs") {
+            self.prompt = 'Tab History≫';
         } else {
             self.prompt = '≫';
         }

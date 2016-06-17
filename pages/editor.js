@@ -329,6 +329,23 @@ var AceEditor = (function(mode, elmId) {
             mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
             mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
             mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
+            mod.FilteredList.prototype.filterCompletions = function(items, needle) {
+                var results = [];
+                var upper = needle.toUpperCase();
+                loop: for (var i = 0, item; item = items[i]; i++) {
+                    var caption = item.value.toUpperCase();
+                    if (!caption) continue;
+                    var index = caption.indexOf(upper), matchMask = 0;
+
+                    if (index === -1)
+                        continue loop;
+                    matchMask = matchMask | (Math.pow(2, needle.length) - 1 << index);
+                    item.matchMask = matchMask;
+                    item.exactMatch = 0;
+                    results.push(item);
+                }
+                return results;
+            };
         });
         self.setOptions({
             enableBasicAutocompletion: true,
