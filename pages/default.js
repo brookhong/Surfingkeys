@@ -1,3 +1,10 @@
+imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
+    var element = document.activeElement;
+    Normal.showEditor($(element).val(), function(data) {
+        $(element).val(data);
+        element.focus();
+    }, element.localName);
+});
 function toggleProxySite(host) {
     var operation = (settings.autoproxy_hosts.hasOwnProperty(host)) ? 'remove' : 'add';
     RUNTIME('updateProxy', {

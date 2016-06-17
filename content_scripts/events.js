@@ -31,15 +31,17 @@ var Events = (function() {
     function blackList() {
         if (self.isBlacklisted()) {
             Disabled.enter();
-        }
-    }
-
-    self.resetMode = function(getbackFocus) {
-        Normal.enter();
-        if (getbackFocus) {
+        } else if (typeof(Omnibar) === 'undefined') {
             GetBackFocus.enter();
         }
 
+    }
+
+    self.resetMode = function() {
+        if (Mode.stack().length === 0) {
+            // if mode stack is empty, enter normal mode automatically
+            Normal.enter();
+        }
         if (document.body) {
             blackList()
         } else {

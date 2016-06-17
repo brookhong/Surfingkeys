@@ -8,7 +8,7 @@ var frontendUI = (function(mode) {
                 break;
             default:
                 if (_tabs.trie) {
-                    _tabs.trie = _tabs.trie.find(key);
+                    _tabs.trie = _tabs.trie.find(event.sk_keyName);
                     if (!_tabs.trie) {
                         self.hidePopup();
                         _tabs.trie = null;

@@ -16,7 +16,7 @@ var Visual = (function(mode) {
             state--;
             showStatus(2, status[state]);
             updated = "stopEventPropagation";
-        } else {
+        } else if (event.sk_keyName.length) {
             updated = Normal._handleMapKey.call(self, event.sk_keyName);
         }
         return updated;

@@ -13,7 +13,6 @@ var Mode = (function() {
                 if (ret === "stopEventPropagation") {
                     window.stopEventPropagation(event, true);
                 }
-                console.log('handle ' + event.type + ' in ' + mode_name);
             }
         };
     };
@@ -50,7 +49,6 @@ var Mode = (function() {
         }
 
         pushModes(mode_stack);
-        console.log('enter ' + this.name);
     };
 
     self.exit = function() {
@@ -60,7 +58,6 @@ var Mode = (function() {
             var popup = mode_stack.slice(0, pos);
             popModes(popup);
             mode_stack = mode_stack.slice(pos);
-            console.log('exit ' + this.name);
         }
     };
 
@@ -76,10 +73,10 @@ var Disabled = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
-        console.log(event.sk_keyName);
         if (event.sk_keyName === Events.hotKey) {
             Normal.toggleBlacklist(window.location.origin);
             self.exit();
+            return "stopEventPropagation";
         }
     });
 
@@ -112,10 +109,22 @@ var GetBackFocus = (function(mode) {
 var Insert = (function(mode) {
     var self = $.extend({name: "Insert", eventListeners: {}}, mode);
 
+    self.mappings = new Trie('', Trie.SORT_NONE);
+    self.map_node = self.mappings;
+
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             document.activeElement.blur();
+            self.exit();
+        } else if (!isEditable(event.target)) {
+            self.exit();
+        } else if (event.sk_keyName.length) {
+            return Normal._handleMapKey.call(self, event.sk_keyName);
+        }
+    });
+    self.addEventListener('focus', function(event) {
+        if (!isEditable(event.target)) {
             self.exit();
         }
     });
@@ -149,6 +158,7 @@ var Normal = (function(mode) {
         }
     });
     self.addEventListener('pushState', function(event) {
+        Insert.exit();
         GetBackFocus.enter();
     });
     self.addEventListener('mousedown', function(event) {
@@ -281,11 +291,12 @@ var Normal = (function(mode) {
         'Chrome URLs',           // 12
         'Proxy',                 // 13
         'Misc',                  // 14
+        'Insert Mode',           // 15
     ];
     function renderMappings() {
         var div = $("<div></div>");
         var help_groups = feature_groups.map(function(){return [];});
-        [ Normal.mappings, Visual.mappings ].map(function(mappings) {
+        [ Normal.mappings, Visual.mappings, Insert.mappings ].map(function(mappings) {
             var words = mappings.getWords();
             for (var i = 0; i < words.length; i++) {
                 var w = words[i];

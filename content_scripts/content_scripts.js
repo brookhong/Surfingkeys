@@ -112,6 +112,10 @@ function vmapkey(keys, annotation, jscode, extra_chars, domain) {
     _mapkey(Visual, keys, annotation, jscode, extra_chars, domain);
 }
 
+function imapkey(keys, annotation, jscode, extra_chars, domain) {
+    _mapkey(Insert, keys, annotation, jscode, extra_chars, domain);
+}
+
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
     if (!domain || domain.test(window.location.origin)) {
         if (old_keystroke[0] === ':') {
@@ -309,16 +313,12 @@ runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         window.focus();
         document.body.scrollIntoViewIfNeeded();
         Normal.highlightElement(window.frameElement || document.body, 500);
-        Events.resetMode(true);
+        Events.resetMode();
     }
 };
 
-var firstApplied = false;
 $(document).on('surfingkeys:settingsApplied', function(e) {
-    if (!firstApplied) {
-        Events.resetMode(typeof(Omnibar) === 'undefined');
-        firstApplied = true;
-    }
+    Events.resetMode();
 });
 
 $.when(settingsDeferred).done(function (settings) {
