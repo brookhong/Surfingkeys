@@ -49,9 +49,10 @@ var Mode = (function() {
         }
 
         pushModes(mode_stack);
-        console.log('enter {0}, {1}'.format(this.name, mode_stack.map(function(m) {
+        var modes = mode_stack.map(function(m) {
             return m.name;
-        }).join('->')));
+        }).join('->');
+        console.log('enter {0}, {1}'.format(this.name, modes));
     };
 
     self.exit = function() {
@@ -61,9 +62,10 @@ var Mode = (function() {
             var popup = mode_stack.slice(0, pos);
             popModes(popup);
             mode_stack = mode_stack.slice(pos);
-            console.log('exit {0}, {1}'.format(this.name, mode_stack.map(function(m) {
+            var modes = mode_stack.map(function(m) {
                 return m.name;
-            }).join('->')));
+            }).join('->');
+            console.log('exit {0}, {1}'.format(this.name, modes));
         }
     };
 
@@ -118,6 +120,7 @@ var Insert = (function(mode) {
 
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
+    self.suppressKeyEsc = true;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -125,6 +128,7 @@ var Insert = (function(mode) {
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             document.activeElement.blur();
             self.exit();
+            return self.suppressKeyEsc ? "stopEventPropagation" : "";
         } else if (!isEditable(event.target)) {
             self.exit();
         } else if (event.sk_keyName.length) {
@@ -149,6 +153,7 @@ var Normal = (function(mode) {
             Insert.enter();
         } else if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             self.finish();
+            handled = "stopEventPropagation";
         } else if (event.sk_keyName === Events.hotKey) {
             self.toggleBlacklist(window.location.origin);
             handled = "stopEventPropagation";

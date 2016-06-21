@@ -18,10 +18,6 @@ var frontendFrame = (function() {
             from: 'top'
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
-        runtime.frontendCommand({
-            action: 'pageContentReady',
-            content: document.body.innerText
-        });
     }
     self.actions['ace_editor_saved'] = function(response) {
         Normal.onEditorSaved(response.data);
@@ -85,7 +81,16 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', function(e) {
+    var fakeBody = $('body[createdBySurfingkeys=1]');
+    if (fakeBody.length) {
+        fakeBody.remove();
+        frontendFrame.contentWindow = null;
+    }
     createFrontEnd();
+    runtime.frontendCommand({
+        action: 'pageContentReady',
+        content: document.body.innerText
+    });
     setTimeout(function() {
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
@@ -95,9 +100,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     }, 0);
 });
-function createFrontEnd(event) {
+function createFrontEnd() {
     var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
-    if (!frontendReady && document.body) {
+    if (!frontendReady) {
+        if (!document.body) {
+            var dom = document.implementation.createDocument('http://www.w3.org/1999/xhtml', 'html', null);
+            var body = dom.createElement("body");
+            $(body).attr('createdBySurfingkeys', 1);
+            document.documentElement.appendChild(body);
+        }
         frontendFrame.create();
         frontendReady = true;
     }

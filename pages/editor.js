@@ -5,6 +5,7 @@ var frontendUI = (function(mode) {
         switch (event.keyCode) {
             case KeyboardUtils.keyCodes.ESC:
                 self.hidePopup();
+                handled = "stopEventPropagation";
                 break;
             default:
                 if (_tabs.trie) {

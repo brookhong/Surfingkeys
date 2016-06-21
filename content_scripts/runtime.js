@@ -49,6 +49,9 @@ var runtime = window.runtime || (function() {
     };
     self.frontendCommand = function(args, successById) {
         args.toFrontend = true;
+        if (window === top) {
+            createFrontEnd();
+        }
         self.command(args, successById);
     };
     self.contentCommand = function(args, successById) {

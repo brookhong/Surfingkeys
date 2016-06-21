@@ -72,6 +72,7 @@ var Omnibar = (function(ui) {
         }
         if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
             frontendUI.hidePopup();
+            event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
             handler.onEnter() && frontendUI.hidePopup();
@@ -143,6 +144,7 @@ var Omnibar = (function(ui) {
     ui.onShow = function(args) {
         handler = handlers[args.type];
         self.input[0].focus();
+        Insert.suppressKeyEsc = false;
         Insert.enter();
         if (args.pref) {
             self.input.val(args.pref);
@@ -162,6 +164,7 @@ var Omnibar = (function(ui) {
         lastHandler = null;
         handler.onClose && handler.onClose();
         Insert.exit();
+        Insert.suppressKeyEsc = true;
         handler = null;
     };
 
