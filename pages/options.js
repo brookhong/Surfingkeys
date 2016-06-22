@@ -6,43 +6,57 @@ $(defaultMappingsEditor.container).hide();
 defaultMappingsEditor.setReadOnly(true);
 defaultMappingsEditor.container.style.background="#f1f1f1";
 
-var mappingsEditor = ace.edit("mappings");
-mappingsEditor.setTheme("ace/theme/chrome");
-ace.config.loadModule('ace/ext/language_tools', function (mod) {
-    ace.config.loadModule('ace/autocomplete', function (mod) {
-        mod.Autocomplete.startCommand.bindKey = "Tab";
-        mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
-        mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
-        mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
-    });
-    mappingsEditor.setOptions({
-        enableBasicAutocompletion: true,
-        enableLiveAutocompletion: false,
-        enableSnippets: false
-    });
-});
-mappingsEditor.setKeyboardHandler('ace/keyboard/vim', function() {
-    var cm = mappingsEditor.state.cm;
-    cm.on('vim-mode-change', function(data) {
-        if (data.mode === "normal") {
-            Insert.exit();
-        } else {
-            Insert.enter();
+var mappingsEditor = (function(mode, elmId) {
+    var self = ace.edit(elmId);
+    self = $.extend(self, mode);
+    self = $.extend(self, {name: "mappingsEditor", eventListeners: {}, mode: 'normal'});
+
+    self.addEventListener('keydown', function(event) {
+        event.sk_suppressed = true;
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC
+            && self.mode === 'normal' // vim in normal mode
+            && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
+        ) {
+            document.activeElement.blur();
+            self.exit();
         }
     });
-    cm.constructor.Vim.defineEx("write", "w", function(cm, input) {
-        saveSettings();
+    $('#mappings textarea').on('focus', function() {
+        setTimeout(function() {
+            Hints.exit();
+            Insert.exit();
+            self.enter();
+        }, 10);
     });
-});
-mappingsEditor.getSession().setMode("ace/mode/javascript");
-mappingsEditor.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.", -1);
-mappingsEditor.commands.addCommand({
-    name: 'myCommand',
-    bindKey: {win: 'Tab',  mac: 'Tab'},
-    exec: function(editor) {
-    },
-    readOnly: false
-});
+
+    self.setTheme("ace/theme/chrome");
+    ace.config.loadModule('ace/ext/language_tools', function (mod) {
+        ace.config.loadModule('ace/autocomplete', function (mod) {
+            mod.Autocomplete.startCommand.bindKey = "Tab";
+            mod.Autocomplete.prototype.commands['Space'] = mod.Autocomplete.prototype.commands['Tab'];
+            mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
+            mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
+        });
+        self.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: false,
+            enableSnippets: false
+        });
+    });
+    self.setKeyboardHandler('ace/keyboard/vim', function() {
+        var cm = self.state.cm;
+        cm.on('vim-mode-change', function(data) {
+            self.mode = data.mode;
+        });
+        cm.constructor.Vim.defineEx("write", "w", function(cm, input) {
+            saveSettings();
+        });
+    });
+    self.getSession().setMode("ace/mode/javascript");
+    self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.", -1);
+
+    return self;
+})(Mode, 'mappings');
 
 function renderSettings() {
     if (runtime.settings.snippets.length) {

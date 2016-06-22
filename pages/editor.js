@@ -261,7 +261,10 @@ var AceEditor = (function(mode, elmId) {
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC && self.mode === 'normal') {
+        if (event.keyCode === KeyboardUtils.keyCodes.ESC
+            && self.mode === 'normal' // vim in normal mode
+            && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
+        ) {
             document.activeElement.blur();
             self.exit();
             frontendUI.hidePopup();
@@ -396,14 +399,14 @@ var AceEditor = (function(mode, elmId) {
             self.renderer.setOption('showLineNumbers', false);
             self.language_tools.setCompleters([pageWordCompleter]);
             self.css('height', '');
-            self.setFontSize(24);
+            self.setFontSize('24pt');
         } else {
             self.renderer.setOption('showLineNumbers', true);
             self.language_tools.setCompleters([pageWordCompleter]);
             self.Vim.unmap('<CR>', 'insert')
             self.Vim.map('<C-CR>', ':wq', 'insert')
             self.css('height', '30%');
-            self.setFontSize(12);
+            self.setFontSize('14pt');
         }
         self.Vim.exitInsertMode(self.state.cm);
     };
