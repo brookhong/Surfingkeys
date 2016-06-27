@@ -682,7 +682,7 @@ Omnibar.addHandler('Commands', Commands);
 
 var OmniQuery = (function() {
     var self = {
-        prompt: '?'
+        prompt: 'ǭ'
     };
     self.onOpen = function(arg) {
         if (arg) {

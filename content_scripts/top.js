@@ -31,6 +31,7 @@ var frontendFrame = (function() {
         }
     };
     self.actions['omnibar_query_entered'] = function(response) {
+        runtime.updateHistory('OmniQuery', response.query);
         Normal.onOmniQuery(response.query);
     };
     self.create = function() {

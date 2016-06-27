@@ -10,6 +10,25 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 
 [Reference for editing your own settings](#edit-your-own-settings).
 
+### TABLE OF CONTENTS
+
+* [Feature list](#feature-list)
+* [Quick start](#quick-start)
+* [Surfingkeys modes](#surfingkeys-modes)
+* [Search selected with](#search-selected-with)
+* [Vim-like marks](#vim-like-marks)
+* [Switch tabs](#switch-tabs)
+* [Commands](#commands)
+* [Smooth scroll](#smooth-scroll)
+* [Session management](#session-management)
+* [Repeats action by pressing number before mapkey](#repeats-action-by-pressing-number-before-mapkey)
+* [Hotkey to toggle Surfingkeys](#hotkey-to-toggle-surfingkeys)
+* [Proxy settings](#proxy-settings)
+* [VIM editor](#vim-editor)
+* [Edit your own settings](#edit-your-own-settings)
+* [Build](#build)
+* [License](#license)
+
 ## Feature list
 * All settings are set up within a javascript file, which makes it easy to create mapping to user customized function.
 * A large cursor in visual mode, which makes visual mode better.
@@ -240,7 +259,7 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `spi`, shortcut for `:proxyInfo`
 
-## ACE VIM editor
+## VIM editor
 
 Thanks ACE for the vim editor, Surfingkeys integrates ACE for the vim editor. The vim editor is used:
 
