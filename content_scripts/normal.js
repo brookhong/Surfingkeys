@@ -468,6 +468,22 @@ var Normal = (function(mode) {
         runtime.frontendCommand(args);
     };
 
+    self.openOmniquery = function(args) {
+        self.onOmniQuery = function(query) {
+            httpRequest({
+                'url': args.url + query
+            }, function(res) {
+                var words = args.parseResult(res);
+
+                runtime.frontendCommand({
+                    action: 'updateOmnibarResult',
+                    words: words
+                });
+            });
+        };
+        self.openOmnibar(({type: "OmniQuery", extra: args.query}))
+    };
+
     self.openFinder = function() {
         runtime.frontendCommand({
             action: "openFinder"

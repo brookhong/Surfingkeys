@@ -147,6 +147,15 @@ mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', '#8Open an URLs', 'Normal.openOmnibar({type: "URLs", extra: "getTopSites"})');
 mapkey('ox', '#8Open recently closed URL', 'Normal.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
 mapkey('H', '#8Open opened URL in current tab', 'Normal.openOmnibar({type: "URLs", extra: "getTabURLs"})');
+mapkey('Q', '#8Open omnibar for word translation', function() {
+    Normal.openOmniquery({
+        url: "https://api.shanbay.com/bdc/search/?word=",
+        parseResult: function(res) {
+            var res = eval("a=" + res.text);
+            return [res.data.definition || res.msg];
+        }
+    });
+});
 mapkey('b', '#8Open a bookmark', 'Normal.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', '#8Bookmark current page to selected folder', function() {
     var page = {

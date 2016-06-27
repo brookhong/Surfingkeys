@@ -64,7 +64,7 @@ var Omnibar = (function(ui) {
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
     self.input.on('input', function() {
         lastInput = self.input.val();
-        handler.onInput.call(this);
+        handler.onInput && handler.onInput.call(this);
     });
     self.input[0].onkeydown = function(event) {
         if (handler && handler.onKeydown) {
@@ -679,3 +679,27 @@ var Commands = (function() {
     return self;
 })();
 Omnibar.addHandler('Commands', Commands);
+
+var OmniQuery = (function() {
+    var self = {
+        prompt: '?'
+    };
+    self.onOpen = function(arg) {
+        if (arg) {
+            Omnibar.input.val(arg);
+            frontendUI.postMessage('top', {
+                action: 'omnibar_query_entered',
+                query: arg
+            });
+        }
+    };
+    self.onEnter = function() {
+        frontendUI.postMessage('top', {
+            action: 'omnibar_query_entered',
+            query: Omnibar.input.val()
+        });
+    };
+
+    return self;
+})();
+Omnibar.addHandler('OmniQuery', OmniQuery);

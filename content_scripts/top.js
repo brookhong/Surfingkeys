@@ -30,6 +30,9 @@ var frontendFrame = (function() {
             Insert.enter();
         }
     };
+    self.actions['omnibar_query_entered'] = function(response) {
+        Normal.onOmniQuery(response.query);
+    };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
         ifr[0].channel.port1.onmessage = function(message) {

@@ -142,6 +142,9 @@ var frontendUI = (function(mode) {
     runtime.actions['showEditor'] = function(message) {
         showPopup(_editor, message);
     };
+    runtime.actions['updateOmnibarResult'] = function(message) {
+        Omnibar.listWords(message.words);
+    };
     runtime.actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
     };
