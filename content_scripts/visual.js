@@ -409,6 +409,14 @@ var Visual = (function(mode) {
         }
     };
 
+    self.feedkeys = function(keys) {
+        setTimeout(function() {
+            for (var i = 0; i < keys.length; i ++) {
+                Normal._handleMapKey.call(self, keys[i]);
+            }
+        }, 1);
+    };
+
     runtime.actions['visualUpdate'] = function(message) {
         hideCursor();
         clear();

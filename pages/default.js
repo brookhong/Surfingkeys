@@ -201,6 +201,12 @@ mapkey('*', '#9Find selected text in current page', function() {
     Visual.star();
     Visual.toggle();
 });
+vmapkey('<Ctrl-u>', '#9Backward 20 lines', function() {
+    Visual.feedkeys('20k');
+});
+vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
+    Visual.feedkeys('20j');
+});
 mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
 mapkey('<Ctrl-1>', '#0show pressed key', function(key) {

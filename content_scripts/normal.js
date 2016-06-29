@@ -104,6 +104,11 @@ var GetBackFocus = (function(mode) {
         return handled;
     });
 
+    self.enter = function() {
+        mode.enter.call(self);
+        document.activeElement.blur();
+    };
+
     self.addEventListener('mousedown', function(event) {
         self.exit();
     });
