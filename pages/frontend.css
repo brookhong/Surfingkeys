@@ -176,7 +176,7 @@ body {
     border-radius: 3px;
     box-shadow: inset 0 -1px 0 #bbb;
 }
-div.sk_frame {
+#sk_frame {
     position: absolute;
     border: 4px solid #3CF30F;
     box-sizing: border-box;
