@@ -39,7 +39,7 @@ var StatusBar = (function(ui) {
 var Find = (function() {
     var self = {};
 
-    var input = $('<input id="sk_find"/>');
+    var input = $('<input id="sk_find" class="sk_theme"/>');
     var historyInc;
     function reset() {
         input.val('');

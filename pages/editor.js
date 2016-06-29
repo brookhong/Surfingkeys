@@ -41,15 +41,15 @@ var frontendUI = (function(mode) {
 
     self.omnibar = $('#sk_omnibar').hide();
     self.statusBar = $('#sk_status').hide();
-    var frameElement = $("<div class=sk_frame>").appendTo('body').hide();
-    var _usage = $('<div id=sk_usage>').appendTo('body').hide();
-    var _popup = $('<div id=sk_popup>').appendTo('body').hide();
+    var frameElement = $('<div class=sk_frame class="sk_theme">').appendTo('body').hide();
+    var _usage = $('<div id=sk_usage class="sk_theme">').appendTo('body').hide();
+    var _popup = $('<div id=sk_popup class="sk_theme">').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
-    var banner = $('<div id=sk_banner/>').appendTo('body').hide();
+    var banner = $('<div id=sk_banner class="sk_theme"/>').appendTo('body').hide();
     var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
-    var keystroke = $('<div id=sk_keystroke/>').appendTo('body').hide();
+    var keystroke = $('<div id=sk_keystroke class="sk_theme"/>').appendTo('body').hide();
 
     var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, _editor, self.statusBar, keystroke];
     function getFrameHeight() {
@@ -236,6 +236,9 @@ var frontendUI = (function(mode) {
             }, 300);
         }
     };
+    runtime.actions['style'] = function(message) {
+        $('style').html(message.css);
+    };
 
     self.initPort = function(message) {
         self.ports[message.from] = event.ports[0];
@@ -267,6 +270,7 @@ var AceEditor = (function(mode, elmId) {
         if (event.keyCode === KeyboardUtils.keyCodes.ESC
             && self.mode === 'normal' // vim in normal mode
             && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
+            && (!self.completer || !self.completer.activated) // and completion popup not opened
         ) {
             document.activeElement.blur();
             self.exit();
@@ -411,6 +415,7 @@ var AceEditor = (function(mode, elmId) {
             self.css('height', '30%');
             self.setFontSize('14pt');
         }
+        self.Vim.map('<C-d>', '<C-w>', 'insert')
         self.Vim.exitInsertMode(self.state.cm);
     };
 

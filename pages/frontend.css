@@ -1,6 +1,47 @@
+.sk_theme {
+    background: #000;
+    color: #fff;
+}
+.sk_theme tbody {
+    color: #fff;
+}
+.sk_theme input {
+    color: #fff;
+}
+.sk_theme .focused {
+    background: #222;
+}
+.sk_theme kbd {
+    background: #ddd;
+    color: #111;
+}
+.sk_theme .frame {
+    background: rgba(129, 120, 222, 0.62);
+}
+.sk_theme .omnibar_highlight {
+    color: #d4b922;
+}
+.sk_theme .omnibar_folder {
+    color: #4b3acc;
+}
+.sk_theme .omnibar_timestamp {
+    color: #cc4b9c;
+}
+.sk_theme .prompt {
+    color: #aaa;
+}
+.sk_theme .feature_name {
+    color: #e09b7e;
+}
+.sk_theme .url {
+    color: #aaa;
+}
+.sk_theme .annotation {
+    color: #aaa;
+}
+
 body {
     margin: 0;
-    color: #fff;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 12px;
 }
@@ -12,7 +53,6 @@ body {
     max-height: 80%;
     top: 10%;
     left: 10%;
-    background: #000;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
     border: 1px solid #222;
@@ -20,36 +60,26 @@ body {
 }
 #sk_omnibar span.omnibar_highlight {
     text-shadow: 0 0 0.01em;
-    color: #d4b922;
 }
-#sk_omnibar span.omnibar_folder {
-    color: #4b3acc;
-}
-#sk_omnibar span.omnibar_timestamp {
-    color: #cc4b9c;
-}
-#sk_omnibarSearchArea>span {
+#sk_omnibarSearchArea .prompt {
     display: inline-block;
-    color: #aaa;
     font-size: 20px;
     width: auto;
 }
 #sk_omnibarSearchArea>input {
     display: inline-block;
     flex: 1;
-    color: #fff;
     font-size: 20px;
     height: 34px;
     margin-bottom: 0;
     padding: 0px 0px 0px 0.5rem;
-    background-color: #000;
+    background: transparent;
     border-style: none;
     outline: none;
 }
 #sk_omnibarSearchArea {
     display: flex;
     margin: 0.5rem 1rem;
-    background-color: #000;
     border-bottom: 1px solid #999;
 }
 #sk_omnibarSearchResult {
@@ -65,20 +95,15 @@ body {
     padding: 0.4rem;
     display: block;
 }
-#sk_omnibarSearchResult li.focused {
-    background-color: #222;
-}
 #sk_omnibarSearchResult li div.title {
     font-weight: bold;
     text-align: left;
 }
 #sk_omnibarSearchResult li div.url {
-    color: #aaa;
     word-wrap: break-word;
 }
 #sk_omnibarSearchResult li span.annotation {
     float: right;
-    color: #aaa;
 }
 #sk_status {
     display: none;
@@ -86,20 +111,16 @@ body {
     bottom: 0;
     left: 70%;
     z-index: 2147483000;
-    background-color: #000;
     padding: 4px 8px 0 8px;
     border-radius: 4px 4px 0px 0px;
     border: 1px solid #777;
     font-size: 12px;
 }
 #sk_find {
-    color: #fff;
-    background-color: #000;
     border-style: none;
     outline: none;
 }
 #sk_keystroke {
-    background-color: #000;
     padding: 6px;
     position: fixed;
     float: right;
@@ -114,7 +135,6 @@ body {
     max-height: 80%;
     top: 10%;
     left: 10%;
-    background: #000;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
     border: 1px solid #222;
@@ -135,7 +155,6 @@ body {
     padding-bottom: 4px;
 }
 #sk_usage .feature_name>span {
-    color: #E09B7E;
     border-bottom: 2px solid #888;
 }
 #sk_usage span.annotation {
@@ -151,9 +170,7 @@ body {
     padding: 3px 5px;
     font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;
     line-height: 10px;
-    color: #111;
     vertical-align: middle;
-    background-color: #ddd;
     border: solid 1px #ccc;
     border-bottom-color: #bbb;
     border-radius: 3px;
@@ -164,7 +181,6 @@ div.sk_frame {
     border: 4px solid #3CF30F;
     box-sizing: border-box;
     z-index: 2147483000;
-    background: rgba(129, 120, 222, 0.62);
     box-shadow: 0px 0px 10px rgba(218, 60, 13, 0.8);
 }
 #sk_clipboard {
@@ -175,7 +191,6 @@ div.sk_frame {
     opacity: 0;
 }
 #sk_banner {
-    background-color: #000;
     padding: 0.5rem;
     position: fixed;
     left: 0px;
@@ -189,7 +204,7 @@ div.sk_tabs {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: transparent;
+    background: transparent;
     z-index: 2147483000;
 }
 div.sk_tabs_fg {
@@ -199,7 +214,7 @@ div.sk_tabs_fg {
 div.sk_tabs_bg {
     position: fixed;
     z-index: 2147483299;
-    background-color: #eee;
+    background: #eee;
     opacity: 0.2;
 }
 div.sk_tab {

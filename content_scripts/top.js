@@ -22,6 +22,10 @@ var frontendFrame = (function() {
             action: 'pageContentReady',
             content: document.body.innerText
         });
+        runtime.frontendCommand({
+            action: 'style',
+            css: runtime.settings.theme || ""
+        });
     }
     self.actions['ace_editor_saved'] = function(response) {
         Normal.onEditorSaved(response.data);
