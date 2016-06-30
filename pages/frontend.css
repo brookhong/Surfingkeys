@@ -1,6 +1,7 @@
 .sk_theme {
     background: #000;
     color: #fff;
+    border-radius: 4px;
 }
 .sk_theme tbody {
     color: #fff;
@@ -47,7 +48,7 @@ body {
 }
 #sk_omnibar {
     display: none;
-    overflow: auto;
+    overflow: hidden;
     position: fixed;
     width: 80%;
     max-height: 80%;
@@ -55,7 +56,6 @@ body {
     left: 10%;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
-    border: 1px solid #222;
     z-index: 2147483000;
 }
 #sk_omnibar span.omnibar_highlight {
@@ -137,7 +137,6 @@ body {
     left: 10%;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
-    border: 1px solid #222;
     z-index: 2147483298;
     padding: 1rem;
 }

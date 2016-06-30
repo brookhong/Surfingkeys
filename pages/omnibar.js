@@ -1,8 +1,17 @@
+function _matchWithList(str, keys) {
+    for (var i = 0; i < keys.length; i++) {
+        if (str.indexOf(keys[i]) === -1) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function _filterByTitleOrUrl(urls, query) {
     if (query && query.length) {
-        var query = query.toUpperCase();
+        var keys = query.toUpperCase().trim().split(/\s+/);
         urls = urls.filter(function(b) {
-            return b.title.toUpperCase().indexOf(query) !== -1 || (b.url && b.url.toUpperCase().indexOf(query) !== -1);
+            return _matchWithList(b.title.toUpperCase(), keys) || _matchWithList(b.url.toUpperCase(), keys);
         });
     }
     return urls;
@@ -102,8 +111,8 @@ var Omnibar = (function(ui) {
         }
     };
 
-    self.highlight = function(str) {
-        return str.replace(new RegExp(Omnibar.input.val(), 'gi'), function(m) {
+    self.highlight = function(rxp, str) {
+        return str.replace(rxp, function(m) {
             return "<span class=omnibar_highlight>" + m + "</span>";
         });
     };
@@ -116,6 +125,7 @@ var Omnibar = (function(ui) {
      */
     self.listURLs = function(items, showFolder) {
         var sliced = items.slice(0, (runtime.settings.omnibarMaxResults || 20));
+        var rxp = new RegExp(Omnibar.input.val().trim().replace(/\s+/, "\|"), 'gi');
         self.listResults(sliced, function(b) {
             var li = $('<li/>');
             if (b.hasOwnProperty('url')) {
@@ -132,10 +142,10 @@ var Omnibar = (function(ui) {
                         type = "▤";
                     }
                 }
-                li.html('<div class="title">{0} {1} {2}</div>'.format(type, self.highlight(htmlEncode(b.title)), additional));
-                $('<div class="url">').data('url', b.url).html(self.highlight(b.url)).appendTo(li);
+                li.html('<div class="title">{0} {1} {2}</div>'.format(type, self.highlight(rxp, htmlEncode(b.title)), additional));
+                $('<div class="url">').data('url', b.url).html(self.highlight(rxp, b.url)).appendTo(li);
             } else if (showFolder) {
-                li.html('<div class="title">▷ {0}</div>'.format(self.highlight(b.title))).data('folder_name', b.title).data('folderId', b.id);
+                li.html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
             }
             return li;
         });

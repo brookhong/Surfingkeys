@@ -53,7 +53,10 @@ var mappingsEditor = (function(mode, elmId) {
         });
     });
     self.getSession().setMode("ace/mode/javascript");
-    self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.// set theme\nsettings.theme = '\\\n.sk_theme { \\\n    background: #fff; \\\n    color: #000; \\\n    border-radius: 4px; \\\n} \\\n.sk_theme tbody { \\\n    color: #000; \\\n} \\\n.sk_theme input { \\\n    color: #000; \\\n} \\\n.sk_theme .focused { \\\n    background: #f0f0f0; \\\n}';\n", -1);
+
+    self.setExampleValue = function() {
+        self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.\n// set theme\nsettings.theme = '\\\n.sk_theme { \\\n    background: #fff; \\\n    color: #000; \\\n} \\\n.sk_theme tbody { \\\n    color: #000; \\\n} \\\n.sk_theme input { \\\n    color: #000; \\\n} \\\n.sk_theme .url { \\\n    color: #555; \\\n} \\\n.sk_theme .annotation { \\\n    color: #555; \\\n} \\\n.sk_theme .focused { \\\n    background: #f0f0f0; \\\n}';\n", -1);
+    };
 
     return self;
 })(Mode, 'mappings');
@@ -61,6 +64,8 @@ var mappingsEditor = (function(mode, elmId) {
 function renderSettings() {
     if (runtime.settings.snippets.length) {
         mappingsEditor.setValue(runtime.settings.snippets, -1);
+    } else {
+        mappingsEditor.setExampleValue();
     }
     $('#storage').val(runtime.settings.storage);
     $('#localPath').val(runtime.settings.localPath);
@@ -85,10 +90,14 @@ $('#storage').change(function() {
 });
 
 $('#reset_button').click(function() {
-    RUNTIME("resetSettings", {
+    runtime.command({
+        action: "resetSettings",
         useDefault: true
+    }, function(response) {
+        runtime.settings = response.settings;
+        renderSettings();
+        Normal.showBanner('Settings reset', 300);
     });
-    Normal.showBanner('Settings reset', 300);
 });
 
 $('.infoPointer').click(function() {

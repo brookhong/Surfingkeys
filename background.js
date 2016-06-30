@@ -347,7 +347,9 @@ var Service = (function() {
 
     self.resetSettings = function(message, sender, sendResponse) {
         if (message.useDefault) {
-            _updateSettings({localPath: "", snippets: ""}, false);
+            _updateSettings({localPath: "", snippets: "", theme: ""}, false, _response.bind(_response, message, sendResponse, {
+                settings: settings
+            }));
         } else if (settings.localPath) {
             _loadSettingsFromUrl(settings.localPath);
         } else {
