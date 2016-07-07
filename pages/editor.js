@@ -364,6 +364,16 @@ var AceEditor = (function(mode, elmId) {
             enableSnippets: false
         });
     });
+    self._getValue = function() {
+        var val = self.getValue();
+        if (self.type === 'select') {
+            // get current line
+            val = self.session.getLine(self.selection.lead.row);
+            val = val.match(/.*>< ([^<]*)$/);
+            val = val ? val[1] : "";
+        }
+        return val;
+    };
     self.setTheme("ace/theme/chrome");
     self.setKeyboardHandler('ace/keyboard/vim', function() {
         var cm = self.state.cm;
@@ -374,13 +384,13 @@ var AceEditor = (function(mode, elmId) {
         self.Vim.defineEx("write", "w", function(cm, input) {
             frontendUI.postMessage('top', {
                 action: 'ace_editor_saved',
-                data: self.getValue()
+                data: self._getValue()
             });
         });
         self.Vim.defineEx("wq", "wq", function(cm, input) {
             frontendUI.postMessage('top', {
                 action: 'ace_editor_saved',
-                data: self.getValue()
+                data: self._getValue()
             });
             frontendUI.hidePopup();
         });
@@ -397,23 +407,22 @@ var AceEditor = (function(mode, elmId) {
         $(self.container).find('textarea').focus();
         self.enter();
         self.Vim.map('<CR>', ':wq', 'insert')
+        self.type = message.type;
+        self.setFontSize(16);
         if (message.type === 'url') {
             self.renderer.setOption('showLineNumbers', false);
             self.language_tools.setCompleters([urlCompleter]);
-            self.css('height', '');
-            self.setFontSize(24);
+            self.css('height', '30%');
         } else if (message.type === 'input') {
             self.renderer.setOption('showLineNumbers', false);
             self.language_tools.setCompleters([pageWordCompleter]);
             self.css('height', '');
-            self.setFontSize('24pt');
         } else {
             self.renderer.setOption('showLineNumbers', true);
             self.language_tools.setCompleters([pageWordCompleter]);
             self.Vim.unmap('<CR>', 'insert')
             self.Vim.map('<C-CR>', ':wq', 'insert')
             self.css('height', '30%');
-            self.setFontSize('14pt');
         }
         self.Vim.map('<C-d>', '<C-w>', 'insert')
         self.Vim.exitInsertMode(self.state.cm);

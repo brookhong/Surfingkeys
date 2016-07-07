@@ -49,10 +49,10 @@ var Mode = (function() {
         }
 
         pushModes(mode_stack);
-        var modes = mode_stack.map(function(m) {
-            return m.name;
-        }).join('->');
-        console.log('enter {0}, {1}'.format(this.name, modes));
+        // var modes = mode_stack.map(function(m) {
+            // return m.name;
+        // }).join('->');
+        // console.log('enter {0}, {1}'.format(this.name, modes));
     };
 
     self.exit = function() {
@@ -62,10 +62,10 @@ var Mode = (function() {
             var popup = mode_stack.slice(0, pos);
             popModes(popup);
             mode_stack = mode_stack.slice(pos);
-            var modes = mode_stack.map(function(m) {
-                return m.name;
-            }).join('->');
-            console.log('exit {0}, {1}'.format(this.name, modes));
+            // var modes = mode_stack.map(function(m) {
+                // return m.name;
+            // }).join('->');
+            // console.log('exit {0}, {1}'.format(this.name, modes));
         }
     };
 
@@ -450,6 +450,12 @@ var Normal = (function(mode) {
         if (typeof(element) === "string") {
             content = element;
             self.elementBehindEditor = document.body;
+        } else if (type === 'select') {
+            var options = $(element).find('option').map(function() {
+                return "{0} >< {1}".format($(this).text(), $(this).val());
+            }).toArray();
+            content = options.join('\n');
+            self.elementBehindEditor = element;
         } else {
             content = $(element).val();
             self.elementBehindEditor = element;

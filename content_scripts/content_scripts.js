@@ -188,22 +188,27 @@ function walkPageUrl(step) {
     }
 }
 
-function tabOpenLink(url) {
-    if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-        if (/^\w+?:\/\//i.test(url)) {
-            url = url
-        } else {
-            url = "http://" + url;
+function tabOpenLink(str) {
+    var urls = str.trim().split('\n').slice(0, 10).forEach(function(url) {
+        url = url.trim();
+        if (url.length > 0) {
+            if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
+                if (/^\w+?:\/\//i.test(url)) {
+                    url = url
+                } else {
+                    url = "http://" + url;
+                }
+            } else {
+                url = 'https://www.google.com/search?q=' + url;
+            }
+            RUNTIME("openLink", {
+                tab: {
+                    tabbed: true
+                },
+                position: runtime.settings.newTabPosition,
+                url: url
+            });
         }
-    } else {
-        url = 'https://www.google.com/search?q=' + url;
-    }
-    RUNTIME("openLink", {
-        tab: {
-            tabbed: true
-        },
-        position: runtime.settings.newTabPosition,
-        url: url
     });
 }
 

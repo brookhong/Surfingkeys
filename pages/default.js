@@ -128,7 +128,7 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true]", Hints.dispatchMouseClick)');
 mapkey('I', '#1Go to edit box with vim editor', function() {
-    Hints.create("input:visible, textarea:visible, *[contenteditable=true]", function(element, event) {
+    Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {
         Normal.showEditor(element, function(data) {
             $(element).val(data);
         }, element.localName);
@@ -232,13 +232,7 @@ mapkey('cc', '#7Open selected link or link from clipboard', function() {
         tabOpenLink(window.getSelection().toString());
     } else {
         Normal.getContentFromClipboard(function(response) {
-            var links = response.data.split('\n').slice(0, 10);
-            links.forEach(function(u) {
-                u = u.trim();
-                if (u.length > 0) {
-                    tabOpenLink(u);
-                }
-            });
+            tabOpenLink(response.data);
         });
     }
 });
