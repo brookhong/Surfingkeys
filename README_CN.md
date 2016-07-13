@@ -27,6 +27,7 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * [开关热键](#开关热键)
 * [代理设置](#代理设置)
 * [VIM编辑器](#vim编辑器)
+* [点命令重复前一个操作](#点命令重复前一个操作)
 * [配置参考](#配置参考)
 * [编译](#编译)
 * [License](#license)
@@ -288,19 +289,25 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 `se`打开设置编辑器, `:w`保存设置。
 
+## 点命令重复前一个操作
+
+[重复前一个操作](https://github.com/brookhong/Surfingkeys/issues/67)
+
 ## 配置参考
 
 ### 添加一个按键映射
 
-    mapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
+    mapkey(keystroke, help_string, action_code, [options])
 
 | 参数  | 含义 |
 |:---------------| :-----|
 |**keystroke**                   | 字符串，触发某个操作的按键|
 |**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
 |**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。|
-|**expect_char**                 | 布尔值[可选]，下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
-|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
+[**options**                     | object, 字段属性如下|
+|**extra_chars**                 | 布尔值[可选]，下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
+|**domain**                      | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
+|**repeatIgnore**                | 布尔值[可选]，是否可通过点命令重复该按键。|
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
@@ -309,7 +316,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 可视化模式下的mapkey
 
-    vmapkey(keystroke, help_string, action_code, [expect_char], [domain_pattern])
+    vmapkey(keystroke, help_string, action_code, [options])
 
 ### 映射按键到其他按键
 

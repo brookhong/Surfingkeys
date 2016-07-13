@@ -85,8 +85,9 @@ function _parseAnnotation(ag) {
     return ag;
 }
 
-function _mapkey(mode, keys, annotation, jscode, extra_chars, domain) {
-    if (!domain || domain.test(window.location.origin)) {
+function _mapkey(mode, keys, annotation, jscode, options) {
+    options = options || {};
+    if (!options.domain || options.domain.test(window.location.origin)) {
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
@@ -99,21 +100,22 @@ function _mapkey(mode, keys, annotation, jscode, extra_chars, domain) {
             code: jscode,
             annotation: ag.annotation,
             feature_group: ag.feature_group,
-            extra_chars: extra_chars
+            repeatIgnore: options.repeatIgnore,
+            extra_chars: options.extra_chars
         });
     }
 }
 
-function mapkey(keys, annotation, jscode, extra_chars, domain) {
-    _mapkey(Normal, keys, annotation, jscode, extra_chars, domain);
+function mapkey(keys, annotation, jscode, options) {
+    _mapkey(Normal, keys, annotation, jscode, options);
 }
 
-function vmapkey(keys, annotation, jscode, extra_chars, domain) {
-    _mapkey(Visual, keys, annotation, jscode, extra_chars, domain);
+function vmapkey(keys, annotation, jscode, options) {
+    _mapkey(Visual, keys, annotation, jscode, options);
 }
 
-function imapkey(keys, annotation, jscode, extra_chars, domain) {
-    _mapkey(Insert, keys, annotation, jscode, extra_chars, domain);
+function imapkey(keys, annotation, jscode, options) {
+    _mapkey(Insert, keys, annotation, jscode, options);
 }
 
 function map(new_keystroke, old_keystroke, domain, new_annotation) {

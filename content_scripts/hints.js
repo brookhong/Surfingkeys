@@ -17,26 +17,7 @@ var Hints = (function(mode) {
                     updated = true;
                 }
             }
-            if (updated) {
-                var matches = refresh();
-                if (matches.length === 1) {
-                    var onhint = $(matches[0]).data('onhint');
-                    var link = $(matches[0]).data('link');
-                    if (onhint) {
-                        onhint.call(window, link, event);
-                        if (behaviours.multipleHits) {
-                            prefix = "";
-                            refresh();
-                        } else {
-                            hide();
-                        }
-                    } else {
-                        self.dispatchMouseClick(link, event);
-                    }
-                } else if (matches.length === 0) {
-                    hide();
-                }
-            }
+            handleHint();
         }
         return "stopEventPropagation";
     });
@@ -56,6 +37,28 @@ var Hints = (function(mode) {
             node = node.parentNode;
         } while (node && node !== document.body && node !== document);
         return z;
+    }
+
+    function handleHint() {
+        var matches = refresh();
+        if (matches.length === 1) {
+            Normal.appendKeysForRepeat("Hints", prefix);
+            var onhint = $(matches[0]).data('onhint');
+            var link = $(matches[0]).data('link');
+            if (onhint) {
+                onhint.call(window, link, event);
+                if (behaviours.multipleHits) {
+                    prefix = "";
+                    refresh();
+                } else {
+                    hide();
+                }
+            } else {
+                self.dispatchMouseClick(link, event);
+            }
+        } else if (matches.length === 0) {
+            hide();
+        }
     }
 
     function dispatchMouseEvent(element, events) {
@@ -231,6 +234,14 @@ var Hints = (function(mode) {
     self.style = function(css) {
         style.html("#sk_hints>div{" + css + "}");
     };
+
+    self.feedkeys = function(keys) {
+        setTimeout(function() {
+            prefix = keys.toUpperCase();
+            handleHint();
+        }, 1);
+    };
+
 
     return self;
 })(Mode);

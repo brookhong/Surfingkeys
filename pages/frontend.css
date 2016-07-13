@@ -1,16 +1,22 @@
 .sk_theme {
-    background: #000;
-    color: #fff;
+    background: #fff;
+    color: #000;
     border-radius: 4px;
 }
 .sk_theme tbody {
-    color: #fff;
+    color: #000;
 }
 .sk_theme input {
-    color: #fff;
+    color: #000;
+}
+.sk_theme .url {
+    color: #222;
+}
+.sk_theme .annotation {
+    color: #222;
 }
 .sk_theme .focused {
-    background: #222;
+    background: #f0f0f0;
 }
 .sk_theme kbd {
     background: #ddd;
@@ -20,7 +26,7 @@
     background: rgba(129, 120, 222, 0.62);
 }
 .sk_theme .omnibar_highlight {
-    color: #d4b922;
+    color: #b90c0c;
 }
 .sk_theme .omnibar_folder {
     color: #4b3acc;
@@ -33,12 +39,6 @@
 }
 .sk_theme .feature_name {
     color: #e09b7e;
-}
-.sk_theme .url {
-    color: #aaa;
-}
-.sk_theme .annotation {
-    color: #aaa;
 }
 
 body {
@@ -96,11 +96,14 @@ body {
     display: block;
 }
 #sk_omnibarSearchResult li div.title {
-    font-weight: bold;
     text-align: left;
 }
 #sk_omnibarSearchResult li div.url {
-    word-wrap: break-word;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#sk_omnibarSearchResult li.focused div.url {
+    white-space: normal;
 }
 #sk_omnibarSearchResult li span.annotation {
     float: right;
@@ -121,6 +124,8 @@ body {
     outline: none;
 }
 #sk_keystroke {
+    background-color: #000;
+    color: #fff;
     padding: 6px;
     position: fixed;
     float: right;

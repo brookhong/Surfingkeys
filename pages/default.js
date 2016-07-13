@@ -89,6 +89,10 @@ command('quit', '#5quit chrome', function() {
     RUNTIME('quit');
 });
 map('ZQ', ':quit');
+mapkey(".", '#0Repeat last action', Normal.repeatLast, {repeatIgnore: true});
+mapkey("<Ctrl-2>", '#0Show last action', function() {
+    Normal.showPopup(htmlEncode(settings.lastKeys.join('\n')));
+}, {repeatIgnore: true});
 mapkey('ZZ', '#5Save session and quit', function() {
     RUNTIME('createSession', {
         name: 'LAST',
@@ -211,9 +215,9 @@ mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
 mapkey('<Ctrl-1>', '#0show pressed key', function(key) {
     Normal.showPopup(htmlEncode(key));
-}, 1);
-mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark, 1);
-mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark, 1);
+}, {extra_chars: 1});
+mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark, {extra_chars: 1});
+mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark, {extra_chars: 1});
 mapkey('<<', '#3Move current tab to left', function() {
     RUNTIME('moveTab', {
         step: -1

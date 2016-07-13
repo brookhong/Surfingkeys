@@ -261,6 +261,7 @@ var frontendUI = (function(mode) {
 })(Mode);
 
 var AceEditor = (function(mode, elmId) {
+    $('#' + elmId).css('height', '30%');
     var self = ace.edit(elmId);
     self = $.extend(self, mode);
     self = $.extend(self, {name: "AceEditor", eventListeners: {}, mode: 'normal'});

@@ -205,7 +205,8 @@ var Normal = (function(mode) {
     self.surfingkeysHold = 0;
 
     var stepSize = 70,
-        scrollNodes, scrollIndex = 0;
+        scrollNodes, scrollIndex = 0,
+        lastKeys;
 
     function easeFn(t, b, c, d) {
         // t: current time, b: begInnIng value, c: change In value, d: duration
@@ -554,6 +555,10 @@ var Normal = (function(mode) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
                 finish();
             } else {
+                if (!this.map_node.meta[0].repeatIgnore) {
+                    lastKeys = [this.map_node.meta[0].word + key];
+                    saveLastKeys();
+                }
                 var pf = this.pendingMap.bind(this);
                 setTimeout(function() {
                     pf(key);
@@ -584,6 +589,10 @@ var Normal = (function(mode) {
                             key: key
                         });
                     } else {
+                        if (!this.map_node.meta[0].repeatIgnore) {
+                            lastKeys = [this.map_node.meta[0].word];
+                            saveLastKeys();
+                        }
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
@@ -611,6 +620,39 @@ var Normal = (function(mode) {
                 self._handleMapKey(keys[i]);
             }
         }, 1);
+    };
+
+    function saveLastKeys() {
+        RUNTIME('updateSettings', {
+            settings: {
+                lastKeys: lastKeys
+            }
+        });
+    }
+
+    self.appendKeysForRepeat = function(mode, keys) {
+        if (lastKeys.length > 0) {
+            // keys for normal mode must be pushed.
+            lastKeys.push('{0}\t{1}'.format(mode, keys));
+            saveLastKeys();
+        }
+    };
+
+    self.repeatLast = function() {
+        // lastKeys in format: <keys in normal mode>[,(<mode name>\t<keys in this mode>)*], examples
+        // ['se']
+        // ['f', 'Hints\tBA']
+        lastKeys = settings.lastKeys;
+        self.feedkeys(lastKeys[0]);
+        var modeKeys = lastKeys.slice(1);
+        for (var i = 0; i < modeKeys.length; i++) {
+            var modeKey = modeKeys[i].split('\t');
+            if (modeKey[0] === 'Hints') {
+                setTimeout(function() {
+                    Hints.feedkeys(modeKey[1]);
+                }, 120 + i*100);
+            }
+        }
     };
 
     self.addVIMark = function(mark, url) {
