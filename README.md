@@ -42,6 +42,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * A versatile bookmark/url finder
 * Count prefixes to repeat actions
 * Use vim editor to edit input on page
+* Dot to repeat previous action
 
 ## Quick start
 
@@ -309,7 +310,7 @@ Remember that in insert mode, press `Ctrl-i` to open vim editor.
 |**keystroke**                   | string, any keystroke to trigger the action|
 |**help_string**                 | string, a help message to describe the action, which will displayed in help opened by `u`.|
 |**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function.|
-[**options**                     | object, keys listed below|
+|**options**                     | object, properties listed below|
 |**extra_chars**                 | boolean[optional], whether the next key input is used as parameter of action_code, please see `m` or `'` for example.|
 |**domain**                      | regex[optional], a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com.|
 |**repeatIgnore**                | boolean[optional], whether this keystroke will be repeat by dot command.|

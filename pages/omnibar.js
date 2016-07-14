@@ -152,6 +152,7 @@ var Omnibar = (function(ui) {
     };
 
     ui.onShow = function(args) {
+        self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
         self.input[0].focus();
         Insert.suppressKeyEsc = false;
@@ -199,7 +200,7 @@ var Omnibar = (function(ui) {
                 runtime.command({
                     action: "openLink",
                     tab: {
-                        tabbed: true,
+                        tabbed: Omnibar.tabbed,
                         active: this.activeTab
                     },
                     url: url
@@ -602,7 +603,7 @@ var SearchEngine = (function() {
         runtime.command({
             action: "openLink",
             tab: {
-                tabbed: true
+                tabbed: Omnibar.tabbed
             },
             position: runtime.settings.newTabPosition,
             url: url
