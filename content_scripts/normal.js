@@ -1,5 +1,8 @@
 var Mode = (function() {
     var self = {}, mode_stack = [];
+    self.specialKeys = {
+        "<Esc>": "<Esc>"
+    };
 
     self.addEventListener = function(evt, handler) {
         var mode_name = this.name;
@@ -130,7 +133,7 @@ var Insert = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             document.activeElement.blur();
             self.exit();
             return self.suppressKeyEsc ? "stopEventPropagation" : "";
@@ -156,7 +159,7 @@ var Normal = (function(mode) {
         var handled;
         if (isEditable(event.target)) {
             Insert.enter();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        } else if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             self.finish();
             handled = "stopEventPropagation";
         } else if (event.sk_keyName === Events.hotKey) {

@@ -79,7 +79,7 @@ var Omnibar = (function(ui) {
         if (handler && handler.onKeydown) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             frontendUI.hidePopup();
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {

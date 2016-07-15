@@ -2,27 +2,24 @@ var frontendUI = (function(mode) {
     var self = $.extend({name: "frontendUI", eventListeners: {}, ports: {}}, mode);
     self.addEventListener('keydown', function(event) {
         var handled = "";
-        switch (event.keyCode) {
-            case KeyboardUtils.keyCodes.ESC:
-                self.hidePopup();
-                handled = "stopEventPropagation";
-                break;
-            default:
-                if (_tabs.trie) {
-                    _tabs.trie = _tabs.trie.find(event.sk_keyName);
-                    if (!_tabs.trie) {
-                        self.hidePopup();
-                        _tabs.trie = null;
-                    } else if (_tabs.trie.meta.length) {
-                        RUNTIME('focusTab', {
-                            tab_id: _tabs.trie.meta[0]
-                        });
-                        self.hidePopup();
-                        _tabs.trie = null;
-                    }
-                    handled = "stopEventPropagation";
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+            self.hidePopup();
+            handled = "stopEventPropagation";
+        } else {
+            if (_tabs.trie) {
+                _tabs.trie = _tabs.trie.find(event.sk_keyName);
+                if (!_tabs.trie) {
+                    self.hidePopup();
+                    _tabs.trie = null;
+                } else if (_tabs.trie.meta.length) {
+                    RUNTIME('focusTab', {
+                        tab_id: _tabs.trie.meta[0]
+                    });
+                    self.hidePopup();
+                    _tabs.trie = null;
                 }
-                break;
+                handled = "stopEventPropagation";
+            }
         }
         return handled;
     });
@@ -268,7 +265,7 @@ var AceEditor = (function(mode, elmId) {
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]
             && self.mode === 'normal' // vim in normal mode
             && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
             && (!self.completer || !self.completer.activated) // and completion popup not opened

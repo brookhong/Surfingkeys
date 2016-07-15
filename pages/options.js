@@ -13,7 +13,7 @@ var mappingsEditor = (function(mode, elmId) {
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]
             && self.mode === 'normal' // vim in normal mode
             && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
         ) {

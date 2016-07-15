@@ -59,7 +59,7 @@ var Find = (function() {
             });
         });
         input[0].onkeydown = function(event) {
-            if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+            if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
                 runtime.contentCommand({
                     action: 'visualClear'
                 });

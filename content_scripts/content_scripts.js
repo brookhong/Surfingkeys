@@ -148,6 +148,8 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                     feature_group: ag.feature_group,
                     extra_chars: meta.extra_chars
                 });
+            } else if (old_keystroke in Mode.specialKeys) {
+                Mode.specialKeys[old_keystroke] = new_keystroke;
             }
         }
     }

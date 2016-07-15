@@ -4,7 +4,7 @@ var Hints = (function(mode) {
     self.addEventListener('keydown', function(event) {
         var updated = false;
         var hints = holder.find('>div');
-        if (event.keyCode === KeyboardUtils.keyCodes.ESC) {
+        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             hide();
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
