@@ -711,9 +711,6 @@ var Service = (function() {
         _quit();
     };
     self.createSession = function(message, sender, sendResponse) {
-        settings.sessions[message.name] = {
-            'tabs': []
-        };
         chrome.tabs.query({}, function(tabs) {
             var tabGroup = {};
             tabs.forEach(function(tab) {
@@ -732,6 +729,7 @@ var Service = (function() {
                     tabg.push(tabGroup[k]);
                 }
             }
+            settings.sessions[message.name] = {};
             settings.sessions[message.name]['tabs'] = tabg;
             _updateSettings({
                 sessions: settings.sessions

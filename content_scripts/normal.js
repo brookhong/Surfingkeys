@@ -555,10 +555,7 @@ var Normal = (function(mode) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
                 finish();
             } else {
-                if (!this.map_node.meta[0].repeatIgnore) {
-                    lastKeys = [this.map_node.meta[0].word + key];
-                    saveLastKeys();
-                }
+                this.setLastKeys && this.setLastKeys(this.map_node.meta[0].word + key);
                 var pf = this.pendingMap.bind(this);
                 setTimeout(function() {
                     pf(key);
@@ -589,10 +586,7 @@ var Normal = (function(mode) {
                             key: key
                         });
                     } else {
-                        if (!this.map_node.meta[0].repeatIgnore) {
-                            lastKeys = [this.map_node.meta[0].word];
-                            saveLastKeys();
-                        }
+                        this.setLastKeys && this.setLastKeys(this.map_node.meta[0].word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
@@ -620,6 +614,13 @@ var Normal = (function(mode) {
                 self._handleMapKey(keys[i]);
             }
         }, 1);
+    };
+
+    self.setLastKeys = function(key) {
+        if (!this.map_node.meta[0].repeatIgnore) {
+            lastKeys = [key];
+            saveLastKeys();
+        }
     };
 
     function saveLastKeys() {
