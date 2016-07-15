@@ -218,7 +218,7 @@ Usually, you need not count the number, you just prefix a large number such as `
 
 By default, `Alt-s` will toggle Surfingkeys for current site. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
 
-    Events.hotKey = 'i'; // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
+    map('<Ctrl-i>', '<Alt-s>'); // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
 
 When Surfingkeys is turned off on some site by `Alt-s`, the status will be persisted in settings, for example,
 

@@ -305,7 +305,9 @@ mapkey('gu', '#4Go up one path in the URL', function() {
     }
     window.location.href = url;
 });
-
+mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
+    window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
+});
 mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
 mapkey('se', '#11Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');

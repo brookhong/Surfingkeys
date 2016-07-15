@@ -1,7 +1,5 @@
 var Events = (function() {
-    var self = {
-        hotKey: '<Alt-s>'
-    };
+    var self = {};
 
     self.isBlacklisted = function() {
         return runtime.settings.blacklist[window.location.origin] || runtime.settings.blacklist['.*']

@@ -1,6 +1,7 @@
 var Mode = (function() {
     var self = {}, mode_stack = [];
     self.specialKeys = {
+        "<Alt-s>": "<Alt-s>",       // hotkey to toggleBlacklist
         "<Esc>": "<Esc>"
     };
 
@@ -85,7 +86,7 @@ var Disabled = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        if (event.sk_keyName === Events.hotKey) {
+        if (event.sk_keyName === Mode.specialKeys["<Alt-s>"]) {
             Normal.toggleBlacklist(window.location.origin);
             self.exit();
             return "stopEventPropagation";
@@ -162,7 +163,7 @@ var Normal = (function(mode) {
         } else if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             self.finish();
             handled = "stopEventPropagation";
-        } else if (event.sk_keyName === Events.hotKey) {
+        } else if (event.sk_keyName === Mode.specialKeys["<Alt-s>"]) {
             self.toggleBlacklist(window.location.origin);
             handled = "stopEventPropagation";
         } else if (event.sk_keyName.length) {
