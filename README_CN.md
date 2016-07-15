@@ -214,9 +214,19 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 ## 开关热键
 
-默认情况下，按`alt-s`可以在当前站点开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
+默认情况下，按`Alt-s`可以在当前站点开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
 
     Events.hotKey = 'i'; // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
+
+当Surfingkeys在某个网站被`Alt-s`关掉时，这个状态会被保存在设置里，如
+
+    "blacklist": {
+        "https://github.com": 1
+    },
+
+再按一次`Alt-s`会从settings.blacklist中删除该站点。另外，`yj`可以把当前设置复制到系统剪贴板。
+
+另一个禁用Surfingkeys的方法是用`settings.blacklistPattern`，请参考[regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
 
 ## 代理设置
 
@@ -293,6 +303,12 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 ## 点命令重复前一个操作
 
 [重复前一个操作](https://github.com/brookhong/Surfingkeys/issues/67)
+
+所有normal模式下的按键都可以由点来重复，除了那些在创建时指定`repeatIgnore`为`true`的按键，如
+
+    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+
+这样，`.`就不会往上翻页，即使你刚刚按了`e`。
 
 ## 配置参考
 

@@ -216,9 +216,19 @@ Usually, you need not count the number, you just prefix a large number such as `
 
 ## Hotkey to toggle Surfingkeys
 
-By default, `alt-s` will toggle Surfingkeys for current site. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
+By default, `Alt-s` will toggle Surfingkeys for current site. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
 
     Events.hotKey = 'i'; // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
+
+When Surfingkeys is turned off on some site by `Alt-s`, the status will be persisted in settings, for example,
+
+    "blacklist": {
+        "https://github.com": 1
+    },
+
+`Alt-s` once more will remove it from settings.blacklist. By the way, `yj` to dump all settings into clipboard.
+
+Another way to disable Surfingkeys is to use `settings.blacklistPattern`, please refer to [regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
 
 ## Proxy settings
 
@@ -298,6 +308,12 @@ Remember that in insert mode, press `Ctrl-i` to open vim editor.
 ## Dot to repeat previous action
 
 [Repeating previous actions](https://github.com/brookhong/Surfingkeys/issues/67)
+
+All keystrokes in normal mode are repeatable by dot, except those keystrokes mapped with `repeatIgnore` as `true`, for example,
+
+    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+
+Then `.` will not repeat action to page up, even `e` is just pressed.
 
 ## Edit your own settings
 
