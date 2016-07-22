@@ -879,6 +879,16 @@ var Service = (function() {
             });
         }
     };
+    self.setZoom = function(message, sender, sendResponse) {
+        var tabId = sender.tab.id;
+        if (message.zoomFactor == 0) {
+            chrome.tabs.setZoom(tabId, 1);
+        } else {
+            chrome.tabs.getZoom(tabId, function(zf) {
+                chrome.tabs.setZoom(tabId, zf + message.zoomFactor);
+            });
+        }
+    };
 
     return self;
 })();

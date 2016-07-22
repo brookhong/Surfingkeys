@@ -85,6 +85,22 @@ command('feedkeys', 'feed mapkeys', function(keys) {
 });
 map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
 map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
+mapkey('zr', '#3zoom reset', function() {
+    RUNTIME('setZoom', {
+        zoomFactor: 0
+    });
+});
+mapkey('zi', '#3zoom in', function() {
+    RUNTIME('setZoom', {
+        zoomFactor: 0.1
+    });
+});
+mapkey('zo', '#3zoom out', function() {
+    RUNTIME('setZoom', {
+        zoomFactor: -0.1
+    });
+});
+
 command('quit', '#5quit chrome', function() {
     RUNTIME('quit');
 });
