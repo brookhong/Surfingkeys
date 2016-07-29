@@ -15,7 +15,7 @@ var mappingsEditor = (function(mode, elmId) {
         event.sk_suppressed = true;
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]
             && self.mode === 'normal' // vim in normal mode
-            && !self.state.cm.state.vim.inputState.operator // and no pending normal operation
+            && (self.state.cm.state.vim.status === null || self.state.cm.state.vim.status === "") // and no pending normal operation
         ) {
             document.activeElement.blur();
             self.exit();
