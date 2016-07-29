@@ -146,22 +146,24 @@ var Hints = (function(mode) {
         holder.html('');
         style.appendTo(holder);
         var elements = $(document.body).find(cssSelector).map(function(i) {
-            var elm = this;
-            var r = elm.getBoundingClientRect();
-            if (r.width === 0 || r.height === 0) {
-                var children = $(elm).find('*').filter(function(j) {
-                    var r = this.getBoundingClientRect();
-                    return (r.width > 0 && r.height > 0);
-                });
-                if (children.length) {
-                    elm = children[0];
-                    r = elm.getBoundingClientRect();
-                }
-            }
-            var size = (r.width > 0 && r.height > 0);
             var ret = null;
-            if (!!r && r.bottom >= 0 && r.right >= 0 && r.top <= document.documentElement.clientHeight && r.left <= document.documentElement.clientWidth && size) {
-                ret = elm;
+            var elm = this;
+            if ($(elm).is(":enabled")) {
+                var r = elm.getBoundingClientRect();
+                if (r.width === 0 || r.height === 0) {
+                    var children = $(elm).find('*').filter(function(j) {
+                        var r = this.getBoundingClientRect();
+                        return (r.width > 0 && r.height > 0);
+                    });
+                    if (children.length) {
+                        elm = children[0];
+                        r = elm.getBoundingClientRect();
+                    }
+                }
+                var size = (r.width > 0 && r.height > 0);
+                if (!!r && r.bottom >= 0 && r.right >= 0 && r.top <= document.documentElement.clientHeight && r.left <= document.documentElement.clientWidth && size) {
+                    ret = elm;
+                }
             }
             return ret;
         });
@@ -195,6 +197,9 @@ var Hints = (function(mode) {
             }
             holder.appendTo('body');
             self.enter();
+        }
+        if (elements.length === 1) {
+            handleHint();
         }
     };
 
