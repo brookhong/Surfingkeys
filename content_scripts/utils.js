@@ -82,6 +82,38 @@ String.prototype.format = function() {
             32:  'Space',
             46:  'Delete',
         },
+        keyIdentifierCorrectionMap: {
+            "U+00C0": ["U+0060", "U+007E"],
+            "U+0030": ["U+0030", "U+0029"],
+            "U+0031": ["U+0031", "U+0021"],
+            "U+0032": ["U+0032", "U+0040"],
+            "U+0033": ["U+0033", "U+0023"],
+            "U+0034": ["U+0034", "U+0024"],
+            "U+0035": ["U+0035", "U+0025"],
+            "U+0036": ["U+0036", "U+005E"],
+            "U+0037": ["U+0037", "U+0026"],
+            "U+0038": ["U+0038", "U+002A"],
+            "U+0039": ["U+0039", "U+0028"],
+            "U+00BD": ["U+002D", "U+005F"],
+            "U+00BB": ["U+003D", "U+002B"],
+            "U+00DB": ["U+005B", "U+007B"],
+            "U+00DD": ["U+005D", "U+007D"],
+            "U+00DC": ["U+005C", "U+007C"],
+            "U+00BA": ["U+003B", "U+003A"],
+            "U+00DE": ["U+0027", "U+0022"],
+            "U+00BC": ["U+002C", "U+003C"],
+            "U+00BE": ["U+002E", "U+003E"],
+            "U+00BF": ["U+002F", "U+003F"]
+        },
+        init: function() {
+            if (navigator.platform.indexOf("Mac") !== -1) {
+                return this.platform = "Mac";
+            } else if (navigator.userAgent.indexOf("Linux") !== -1) {
+                return this.platform = "Linux";
+            } else {
+                return this.platform = "Windows";
+            }
+        },
         getKeyChar: function(event) {
             var character;
             if (event.keyCode in this.modifierKeys) {
@@ -91,6 +123,21 @@ String.prototype.format = function() {
                     character = "{0}".format(this.keyNames[event.keyCode]);
                 } else {
                     character = event.key;
+                    if (!character) {
+                        // keep for chrome version below 52
+                        if (event.keyIdentifier.slice(0, 2) !== "U+") {
+                            character = "{0}".format(event.keyIdentifier);
+                        } else {
+                            var keyIdentifier = event.keyIdentifier;
+                            if ((this.platform === "Windows" || this.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
+                                var correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
+                                keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
+                            }
+                            var unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
+                            character = String.fromCharCode(parseInt(unicodeKeyInHex));
+                            character = event.shiftKey ? character : character.toLowerCase();
+                        }
+                    }
                 }
                 if (event.metaKey) {
                     character = "Meta-" + character;
@@ -112,6 +159,7 @@ String.prototype.format = function() {
         }
     };
 
+    KeyboardUtils.init();
 
     root = typeof exports !== "undefined" && exports !== null ? exports : window;
 

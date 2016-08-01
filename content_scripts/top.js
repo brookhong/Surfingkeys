@@ -73,7 +73,7 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
         });
     };
     runtime.runtime_handlers['toggleBlacklist'] = function(msg, sender, response) {
-        Events.toggleBlacklist(msg.origin);
+        Normal.toggleBlacklist(msg.origin);
         response({
             "all": runtime.settings.blacklist.hasOwnProperty('.*'),
             "this": runtime.settings.blacklist.hasOwnProperty(window.location.origin),
