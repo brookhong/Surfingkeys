@@ -254,7 +254,7 @@ function clickOn(links, force) {
         } else {
             Hints.create(clean, Hints.dispatchMouseClick);
         }
-    } else {
+    } else if (clean.length === 1) {
         Hints.dispatchMouseClick(clean[0]);
     }
 }

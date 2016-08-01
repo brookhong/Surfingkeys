@@ -660,23 +660,37 @@ var Normal = (function(mode) {
         }
     };
 
+    var localMarks = {};
     self.addVIMark = function(mark, url) {
-        url = url || window.location.href;
-        runtime.settings.marks[mark] = {
-            url: url,
-            scrollLeft: document.body.scrollLeft,
-            scrollTop: document.body.scrollTop
-        };
-        RUNTIME('updateSettings', {
-            settings: {
-                marks: runtime.settings.marks
-            }
-        });
-        self.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
+        if (/^[a-z]$/.test(mark)) {
+            // local mark
+            localMarks[mark] = {
+                scrollLeft: document.body.scrollLeft,
+                scrollTop: document.body.scrollTop
+            };
+        } else {
+            // global mark
+            url = url || window.location.href;
+            runtime.settings.marks[mark] = {
+                url: url,
+                scrollLeft: document.body.scrollLeft,
+                scrollTop: document.body.scrollTop
+            };
+            RUNTIME('updateSettings', {
+                settings: {
+                    marks: runtime.settings.marks
+                }
+            });
+            self.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
+        }
     };
 
     self.jumpVIMark = function(mark) {
-        if (runtime.settings.marks.hasOwnProperty(mark)) {
+        if (localMarks.hasOwnProperty(mark)) {
+            var markInfo = localMarks[mark];
+            document.body.scrollLeft = markInfo.scrollLeft;
+            document.body.scrollTop = markInfo.scrollTop;
+        } else if (runtime.settings.marks.hasOwnProperty(mark)) {
             var markInfo = runtime.settings.marks[mark];
             if (typeof(markInfo) === "string") {
                 markInfo = {

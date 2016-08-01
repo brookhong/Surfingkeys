@@ -110,7 +110,7 @@ The search_leader_key `s` plus captial alias `G` will search selected with googl
 
 ## Vim-like marks
 
-You can create vim-like marks by pressing `m`, followed by a word character(0-9, A-Z, a-z), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
+You can create vim-like marks by pressing `m`, followed by a word character(a-z for local marks, others like 0-9 / A-Z for global marks), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
 
 In this way, the created mark always points to current URL. You can also create vim-like marks from the bookmarks. Try following steps:
 
