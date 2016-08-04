@@ -263,6 +263,32 @@ var AceEditor = (function(mode, elmId) {
     self = $.extend(self, mode);
     self = $.extend(self, {name: "AceEditor", eventListeners: {}, mode: 'normal'});
 
+    var originValue;
+    function isDirty() {
+        return self.getValue() != originValue;
+    }
+
+    var dialog = (function() {
+        // inner mode of vim: VimDialog
+        var _dialog = $.extend({name: "VimDialog", eventListeners:{}}, mode);
+        _dialog.addEventListener('keydown', function(event) {
+            event.sk_suppressed = true;
+        });
+        _dialog.open = function(template, onEnter, options) {
+            _dialog.enter();
+            var _onClose = options.onClose;
+            options.onClose = function() {
+                _dialog.exit();
+                _onClose && _onClose();
+            };
+            self.state.cm.openDialog(template, function(q) {
+                onEnter(q);
+                options.onClose();
+            }, options);
+        };
+        return _dialog;
+    })();
+
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]
@@ -270,9 +296,27 @@ var AceEditor = (function(mode, elmId) {
             && (self.state.cm.state.vim.status === null || self.state.cm.state.vim.status === "") // and no pending normal operation
             && (!self.completer || !self.completer.activated) // and completion popup not opened
         ) {
-            document.activeElement.blur();
-            self.exit();
-            frontendUI.hidePopup();
+            if (isDirty()) {
+                dialog.open('<span style="font-family: monospace">Quit anyway? Y/n </span><input type="text"/>', function(q) {
+                    if (q.toLowerCase() === 'y') {
+                        document.activeElement.blur();
+                        self.exit();
+                        frontendUI.hidePopup();
+                    }
+                }, {
+                    bottom: true,
+                    value: "Y",
+                    onKeyDown: function(e, q, close) {
+                        if (e.keyCode === KeyboardUtils.keyCodes.enter || e.keyCode === KeyboardUtils.keyCodes.ESC) {
+                            close();
+                        }
+                    }
+                });
+            } else {
+                document.activeElement.blur();
+                self.exit();
+                frontendUI.hidePopup();
+            }
         }
     });
 
@@ -402,6 +446,7 @@ var AceEditor = (function(mode, elmId) {
 
     self.show = function(message) {
         self.setValue(message.content, -1);
+        originValue = message.content;
         $(self.container).find('textarea').focus();
         self.enter();
         self.Vim.map('<CR>', ':wq', 'insert')
