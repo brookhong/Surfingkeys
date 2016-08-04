@@ -63,6 +63,14 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 * `T` to switch tabs
 ![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
 
+## Follow links
+
+Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hint key is pressed. Add below line to your settings to make it right hand:
+
+    Hints.characters = 'yuiophjklnm'; // for right hand
+
+When hints are overlapped, press `Shift` to flip them.
+
 ## Surfingkeys modes
 
 There are three modes in Surfingkeys: normal, visual and insert.

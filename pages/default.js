@@ -136,11 +136,10 @@ mapkey('0', '#2Scroll all the way to the left', 'Normal.scroll("leftmost")', {re
 mapkey('$', '#2Scroll all the way to the right', 'Normal.scroll("rightmost")', {repeatIgnore: true});
 mapkey('cs', '#2Change scroll target', 'Normal.changeScrollTarget()');
 // define all the css selectors that can be followed
-Hints.pointers = "a, button, *:visible:css(cursor=pointer), select:visible, input:visible, textarea:visible";
-mapkey('f', '#1Open a link', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick)');
-mapkey('af', '#1Open a link in new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true})');
-mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false})');
-mapkey('<Alt-f>', '#1Open multiple links in a new tab', 'Hints.create(Hints.pointers, Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
+mapkey('f', '#1Open a link', 'Hints.create("", Hints.dispatchMouseClick)');
+mapkey('af', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
+mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false})');
+mapkey('<Alt-f>', '#1Open multiple links in a new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element, event) {
         Normal.writeClipboard(element.href);
@@ -305,6 +304,7 @@ mapkey('ob', '#8Open Search with alias b', 'Normal.openOmnibar({type: "SearchEng
 mapkey('og', '#8Open Search with alias g', 'Normal.openOmnibar({type: "SearchEngine", extra: "g"})');
 mapkey('ow', '#8Open Search with alias w', 'Normal.openOmnibar({type: "SearchEngine", extra: "w"})');
 mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
+mapkey('ga', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://help/")');
 mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
 mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
 mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');

@@ -64,6 +64,14 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * `T` 切换标签页
 ![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
 
+## 打开连接
+
+默认的拨号键有`asdfgqwertzxcvb`，如果按了一个非拨号键，会自动退出拨号。下面的设置可以改成右手习惯：
+
+    Hints.characters = 'yuiophjklnm'; // for right hand
+
+当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。
+
 ## Surfingkeys支持的模式
 
 Surfingkeys有三种模式：normal，visual和insert。
