@@ -890,6 +890,21 @@ var Service = (function() {
             });
         }
     };
+    self.removeURL = function(message, sender, sendResponse) {
+        if (/^\d+$/.test(message.uid)) {
+            chrome.bookmarks.remove(message.uid, function() {
+                _response(message, sendResponse, {
+                    response: "Done"
+                });
+            });
+        } else {
+            chrome.history.deleteUrl({url: message.uid}, function () {
+                _response(message, sendResponse, {
+                    response: "Done"
+                });
+            });
+        }
+    };
 
     return self;
 })();

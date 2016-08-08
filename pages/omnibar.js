@@ -67,6 +67,20 @@ var Omnibar = (function(ui) {
         }
     }
 
+    function deleteFocused() {
+        var focusedItem = Omnibar.resultsDiv.find('li.focused');
+        var uid = focusedItem.find('div.title').attr('data-uid');
+        if (uid) {
+            runtime.command({
+                action: "removeURL",
+                uid: uid
+            }, function(ret) {
+                if (ret.response === "Done") {
+                    focusedItem.remove();
+                }
+            });
+        }
+    }
 
     self.input = ui.find('input');
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
@@ -82,6 +96,8 @@ var Omnibar = (function(ui) {
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             frontendUI.hidePopup();
             event.preventDefault();
+        } else if (event.sk_keyName === Mode.specialKeys["<Ctrl-d>"]) {
+            deleteFocused();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
             handler.onEnter() && frontendUI.hidePopup();
@@ -112,7 +128,7 @@ var Omnibar = (function(ui) {
     };
 
     self.highlight = function(rxp, str) {
-        return str.replace(rxp, function(m) {
+        return rxp === null ? str : str.replace(rxp, function(m) {
             return "<span class=omnibar_highlight>" + m + "</span>";
         });
     };
@@ -125,7 +141,8 @@ var Omnibar = (function(ui) {
      */
     self.listURLs = function(items, showFolder) {
         var sliced = items.slice(0, (runtime.settings.omnibarMaxResults || 20));
-        var rxp = new RegExp(Omnibar.input.val().trim().replace(/\s+/, "\|"), 'gi');
+        var query = Omnibar.input.val().trim();
+        var rxp = query.length ? (new RegExp(query.replace(/\s+/, "\|"), 'gi')) : null;
         self.listResults(sliced, function(b) {
             var li = $('<li/>');
             if (b.hasOwnProperty('url')) {
@@ -135,14 +152,22 @@ var Omnibar = (function(ui) {
                     if (b.hasOwnProperty('lastVisitTime')) {
                         type = "☼";
                         additional = "<span class=omnibar_timestamp>@ {0}</span>".format(timeStampString(b.lastVisitTime));
+                        b.id = b.url;
                     } else if(b.hasOwnProperty('dateAdded')) {
+                        // bookmark has its id
                         type = "☆";
                         additional = "<span class=omnibar_folder>@ {0}</span>".format(self.bookmarkFolders[b.parentId] || "");
                     } else {
                         type = "▤";
+                        b.id = "";
                     }
                 }
-                li.html('<div class="title">{0} {1} {2}</div>'.format(type, self.highlight(rxp, htmlEncode(b.title)), additional));
+                li.html('<div class="title" data-uid={3}>{0} {1} {2}</div>'.format(
+                    type,
+                    self.highlight(rxp, htmlEncode(b.title)),
+                    additional,
+                    b.id
+                ));
                 $('<div class="url">').data('url', b.url).html(self.highlight(rxp, b.url)).appendTo(li);
             } else if (showFolder) {
                 li.html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
@@ -155,8 +180,7 @@ var Omnibar = (function(ui) {
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
         self.input[0].focus();
-        Insert.suppressKeyEsc = false;
-        Insert.enter();
+        PassThrough.enter();
         if (args.pref) {
             self.input.val(args.pref);
         }
@@ -174,8 +198,7 @@ var Omnibar = (function(ui) {
         self.resultsDiv.html("");
         lastHandler = null;
         handler.onClose && handler.onClose();
-        Insert.exit();
-        Insert.suppressKeyEsc = true;
+        PassThrough.exit();
         handler = null;
     };
 
@@ -345,7 +368,7 @@ var OpenBookmarks = (function() {
             var focusedURL = Omnibar.resultsDiv.find('li.focused>div.url');
             if (focusedURL.length) {
                 var mark_char = String.fromCharCode(event.keyCode);
-                mark_char = event.shiftKey ? mark_char : mark_char.toLowerCase();
+                // global marks always from here
                 Normal.addVIMark(mark_char, focusedURL.data('url'));
                 eaten = true;
             }

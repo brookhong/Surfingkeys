@@ -269,24 +269,20 @@ var AceEditor = (function(mode, elmId) {
     }
 
     var dialog = (function() {
-        // inner mode of vim: VimDialog
-        var _dialog = $.extend({name: "VimDialog", eventListeners:{}}, mode);
-        _dialog.addEventListener('keydown', function(event) {
-            event.sk_suppressed = true;
-        });
-        _dialog.open = function(template, onEnter, options) {
-            _dialog.enter();
-            var _onClose = options.onClose;
-            options.onClose = function() {
-                _dialog.exit();
-                _onClose && _onClose();
-            };
-            self.state.cm.openDialog(template, function(q) {
-                onEnter(q);
-                options.onClose();
-            }, options);
+        return {
+            open: function(template, onEnter, options) {
+                PassThrough.enter();
+                var _onClose = options.onClose;
+                options.onClose = function() {
+                    PassThrough.exit();
+                    _onClose && _onClose();
+                };
+                self.state.cm.openDialog(template, function(q) {
+                    onEnter(q);
+                    options.onClose();
+                }, options);
+            }
         };
-        return _dialog;
     })();
 
     self.addEventListener('keydown', function(event) {
@@ -467,6 +463,7 @@ var AceEditor = (function(mode, elmId) {
             self.Vim.map('<C-CR>', ':wq', 'insert')
             self.css('height', '30%');
         }
+        self.setReadOnly(message.type === 'select');
         self.Vim.map('<C-d>', '<C-w>', 'insert')
         self.Vim.exitInsertMode(self.state.cm);
     };

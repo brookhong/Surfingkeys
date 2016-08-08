@@ -44,8 +44,7 @@ var Find = (function() {
     function reset() {
         input.val('');
         StatusBar.show(-1, '');
-        Insert.exit();
-        Insert.suppressKeyEsc = true;
+        PassThrough.exit();
     }
 
     self.open = function() {
@@ -86,8 +85,7 @@ var Find = (function() {
             }
         };
         input.focus();
-        Insert.suppressKeyEsc = false;
-        Insert.enter();
+        PassThrough.enter();
     };
     return self;
 })();

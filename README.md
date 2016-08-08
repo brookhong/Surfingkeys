@@ -102,9 +102,28 @@ When focus is switched into any editable element by whatever means(`i` hints or 
 
 All mappings added with `imapkey` work in this mode.
 
+    `Ctrl - i` to open vim editor to edit.
+
 ### Find
 
 `Find` is not actually a mode, it just another way to enter visual mode. Press `/` to open find bar, which sits at almost the same position with Mode indicator, type something there. All occurrences of your input will be highlighted. Press `Enter` to finish the finding, and you're in `Caret` visual mode now, press `n` to find next, `N` to find previous.
+
+## Omnibar
+
+The omnibar provides kinds of functions that need user input, for example,
+
+* Open url(from both bookmarks and history) with `t`
+* Open bookmarks with `b`
+* Open search engines with `og` / `ow` ...
+* Open commands with `:`
+
+In omnibar opened with `t`
+
+    `Ctrl - d` to delete from bookmark or history
+
+In omnibar opened with `b`
+
+    `Ctrl - <any letter>` to create vim-like global mark
 
 ## Search selected with
 
@@ -126,7 +145,7 @@ In this way, the created mark always points to current URL. You can also create 
 1. type something to locate the URL you'd like to create vim-like mark for.
 1. press Ctrl, plus a mark name, such as `f`.
 
-Then afterwards `'f` will open that URL directly.
+Then afterwards `'F` will open that URL directly.
 
 This is very useful for those pages you access very frequently. `om` to check out all the vim-like marks you have created.
 
@@ -294,6 +313,8 @@ In normal mode, press capital `I`, then use a hint letter to pick up a input box
 For `input` element, the vim editor has only one line, you use vim-bindings keys to edit your text, then press `Enter` or `:w` to write your text back to the input element.
 
 For `textarea` element, the vim editor is opened in bigger size, after you complete your edit, then press `Ctrl-Enter` or `:w` to write your text back to the textarea element.
+
+For `select` element, the vim editor is opened in bigger size, you are expected to edit the text, instead of, to search your option and jump to the line, then press `Enter` to select it. This is much handy for `select` element that has dozens of options.
 
 `Esc` or `:q` to quit vim editor without writing text back.
 

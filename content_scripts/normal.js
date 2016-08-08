@@ -2,6 +2,7 @@ var Mode = (function() {
     var self = {}, mode_stack = [];
     self.specialKeys = {
         "<Alt-s>": "<Alt-s>",       // hotkey to toggleBlacklist
+        "<Ctrl-d>": "<Ctrl-d>",     // hotkey to delete from omnibar
         "<Esc>": "<Esc>"
     };
 
@@ -96,6 +97,17 @@ var Disabled = (function(mode) {
     return self;
 })(Mode);
 
+var PassThrough = (function(mode) {
+    var self = $.extend({name: "PassThrough", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+    });
+
+    return self;
+})(Mode);
+
 var GetBackFocus = (function(mode) {
     var self = $.extend({name: "GetBackFocus", eventListeners: {}}, mode);
 
@@ -129,7 +141,6 @@ var Insert = (function(mode) {
 
     self.mappings = new Trie('', Trie.SORT_NONE);
     self.map_node = self.mappings;
-    self.suppressKeyEsc = true;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -137,7 +148,7 @@ var Insert = (function(mode) {
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             document.activeElement.blur();
             self.exit();
-            return self.suppressKeyEsc ? "stopEventPropagation" : "";
+            return "stopEventPropagation";
         } else if (!isEditable(event.target)) {
             self.exit();
         } else if (event.sk_keyName.length) {
