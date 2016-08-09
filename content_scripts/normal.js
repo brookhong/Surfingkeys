@@ -20,6 +20,7 @@ var Mode = (function() {
                 }
             }
         };
+        return this;
     };
 
     function popModes(modes) {
@@ -102,6 +103,8 @@ var PassThrough = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+    }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
 

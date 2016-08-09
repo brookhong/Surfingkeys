@@ -891,14 +891,21 @@ var Service = (function() {
         }
     };
     self.removeURL = function(message, sender, sendResponse) {
-        if (/^\d+$/.test(message.uid)) {
-            chrome.bookmarks.remove(message.uid, function() {
+        var type = message.uid[0], uid = message.uid.substr(1);
+        if (type === 'B') {
+            chrome.bookmarks.remove(uid, function() {
                 _response(message, sendResponse, {
                     response: "Done"
                 });
             });
-        } else {
-            chrome.history.deleteUrl({url: message.uid}, function () {
+        } else if (type === 'H') {
+            chrome.history.deleteUrl({url: uid}, function () {
+                _response(message, sendResponse, {
+                    response: "Done"
+                });
+            });
+        } else if (type === 'T') {
+            chrome.tabs.remove(parseInt(uid), function() {
                 _response(message, sendResponse, {
                     response: "Done"
                 });
