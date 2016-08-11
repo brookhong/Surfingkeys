@@ -145,7 +145,7 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
         Normal.writeClipboard(element.href);
     })
 });
-mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true]", Hints.dispatchMouseClick)');
+mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {
         Normal.showEditor(element, function(data) {

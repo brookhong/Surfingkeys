@@ -349,6 +349,7 @@ var AceEditor = (function(mode, elmId) {
         var words = message.content.split(splitRegex);
         var wordScores = {};
         words.forEach(function(word) {
+            word = "sk_" + word;
             if (wordScores.hasOwnProperty(word)) {
                 wordScores[word]++;
             } else {
@@ -357,6 +358,7 @@ var AceEditor = (function(mode, elmId) {
         });
 
         wordsOnPage = Object.keys(wordScores).map(function(w) {
+            w = w.substr(3);
             return {
                 caption: w,
                 value: w,

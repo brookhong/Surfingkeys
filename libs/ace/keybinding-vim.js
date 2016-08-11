@@ -2957,6 +2957,10 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                 if (macroModeState.isRecording) {
                     logSearchQuery(macroModeState, query);
                 }
+                if (cm.ace.$blockScrolling) {
+                    // refer to ace.js:12263
+                    cm.ace.renderer.scrollCursorIntoView();
+                }
             }
 
             function onPromptKeyUp(e, query, close) {

@@ -5,6 +5,7 @@ defaultMappingsEditor.getSession().setMode("ace/mode/javascript");
 $(defaultMappingsEditor.container).hide();
 defaultMappingsEditor.setReadOnly(true);
 defaultMappingsEditor.container.style.background="#f1f1f1";
+defaultMappingsEditor.$blockScrolling = Infinity;
 
 var mappingsEditor = (function(mode, elmId) {
     var self = ace.edit(elmId);
@@ -53,6 +54,7 @@ var mappingsEditor = (function(mode, elmId) {
         });
     });
     self.getSession().setMode("ace/mode/javascript");
+    self.$blockScrolling = Infinity;
 
     self.setExampleValue = function() {
         self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.\n// set theme\nsettings.theme = '\\\n.sk_theme { \\\n    background: #fff; \\\n    color: #000; \\\n} \\\n.sk_theme tbody { \\\n    color: #000; \\\n} \\\n.sk_theme input { \\\n    color: #000; \\\n} \\\n.sk_theme .url { \\\n    color: #555; \\\n} \\\n.sk_theme .annotation { \\\n    color: #555; \\\n} \\\n.sk_theme .focused { \\\n    background: #f0f0f0; \\\n}';\n", -1);
@@ -70,7 +72,7 @@ function renderSettings() {
     $('#storage').val(runtime.settings.storage);
     $('#localPath').val(runtime.settings.localPath);
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
-    $(mappingsEditor.container).css('width', '100%').css('height', h);
+    $(mappingsEditor.container).css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
 }
 $.when(settingsDeferred).done(function (settings) {
@@ -116,8 +118,8 @@ $('#showDefaultSettings').click(function() {
             $(defaultMappingsEditor.container).css('display', 'inline-block');
             defaultMappingsEditor.setValue(response, -1);
             $(defaultMappingsEditor.container).css('width', '50%');
-            $(mappingsEditor.container).css('width', '50%');
         });
+        $(mappingsEditor.container).css('width', '50%');
     }
 });
 
