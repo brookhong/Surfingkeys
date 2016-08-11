@@ -122,7 +122,6 @@ mapkey('ZR', '#5Restore last session', function() {
 });
 mapkey('T', '#3Choose a tab', 'Normal.chooseTab()');
 mapkey('?', '#0Show usage', 'Normal.showUsage()');
-mapkey('<Ctrl-i>', '#0Show usage', 'Normal.showUsage()');
 mapkey('u', '#0Show usage', 'Normal.showUsage()');
 mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
 mapkey('d', '#2Scroll a page down', 'Normal.scroll("pageDown")', {repeatIgnore: true});
@@ -153,6 +152,7 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
         }, element.localName);
     });
 });
+map('<Ctrl-i>', 'I');
 mapkey('q', '#1Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', '#3Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', '#3Go one tab right', 'RUNTIME("nextTab")');

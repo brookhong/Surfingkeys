@@ -465,12 +465,16 @@ var Normal = (function(mode) {
     };
 
     self.showEditor = function(element, onWrite, type) {
-        var content;
+        var content, initial_line = 0;
         if (typeof(element) === "string") {
             content = element;
             self.elementBehindEditor = document.body;
         } else if (type === 'select') {
-            var options = $(element).find('option').map(function() {
+            var selected = $(element).val();
+            var options = $(element).find('option').map(function(i) {
+                if ($(this).val() === selected) {
+                    initial_line = i;
+                }
                 return "{0} >< {1}".format($(this).text(), $(this).val());
             }).toArray();
             content = options.join('\n');
@@ -483,6 +487,7 @@ var Normal = (function(mode) {
         runtime.frontendCommand({
             action: 'showEditor',
             type: type || "textarea",
+            initial_line: initial_line,
             content: content
         });
     };

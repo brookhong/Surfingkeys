@@ -433,10 +433,13 @@ var AceEditor = (function(mode, elmId) {
                 data: self._getValue()
             });
             frontendUI.hidePopup();
+            // tell vim editor that command is done
+            self.state.cm.signal('vim-command-done', '')
         });
         self.Vim.map('<CR>', ':wq', 'normal')
         self.Vim.defineEx("quit", "q", function(cm, input) {
             frontendUI.hidePopup();
+            self.state.cm.signal('vim-command-done', '')
         });
     });
     self.container.style.background="#f1f1f1";
@@ -468,6 +471,10 @@ var AceEditor = (function(mode, elmId) {
         self.setReadOnly(message.type === 'select');
         self.Vim.map('<C-d>', '<C-w>', 'insert')
         self.Vim.exitInsertMode(self.state.cm);
+
+        // set cursor at initial line
+        self.state.cm.setCursor(message.initial_line, 0);
+        self.state.cm.ace.renderer.scrollCursorIntoView()
     };
 
     self.css = function(name, value) {
