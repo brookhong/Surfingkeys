@@ -474,7 +474,14 @@ var AceEditor = (function(mode, elmId) {
 
         // set cursor at initial line
         self.state.cm.setCursor(message.initial_line, 0);
-        self.state.cm.ace.renderer.scrollCursorIntoView()
+        self.state.cm.ace.renderer.scrollCursorIntoView();
+        // reset undo
+        setTimeout( function () {
+            self.renderer.session.$undoManager.reset();
+        }, 1);
+
+        self.state.cm.ace.setOption('indentedSoftWrap', false);
+        self.state.cm.ace.setOption('wrap', true);
     };
 
     self.css = function(name, value) {

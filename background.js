@@ -40,15 +40,20 @@ var Service = (function() {
     };
     var newTabUrl = "chrome://newtab/";
 
-    function request(method, url) {
+    function request(url, headers, data) {
+        headers = headers || {};
         return new Promise(function(acc, rej) {
             var xhr = new XMLHttpRequest();
+            var method = (data !== undefined) ? "POST" : "GET";
             xhr.open(method, url);
+            for (var h in headers) {
+                xhr.setRequestHeader(h, headers[h]);
+            }
             xhr.onload = function() {
                 acc(xhr.responseText);
             };
             xhr.onerror = rej.bind(null, xhr);
-            xhr.send();
+            xhr.send(data);
         });
     }
 
@@ -340,7 +345,7 @@ var Service = (function() {
     }
 
     function _loadSettingsFromUrl(url) {
-        var s = request('get', url);
+        var s = request(url);
         s.then(function(resp) {
             _updateSettings({localPath: url, snippets: resp}, false);
         });
@@ -664,7 +669,7 @@ var Service = (function() {
         });
     };
     self.request = function(message, sender, sendResponse) {
-        var s = request(message.method, message.url);
+        var s = request(message.url, message.headers, message.data);
         s.then(function(res) {
             _response(message, sendResponse, {
                 text: res
