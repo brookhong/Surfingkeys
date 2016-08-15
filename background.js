@@ -14,6 +14,7 @@ var Service = (function() {
         frontEndURL = chrome.extension.getURL('/pages/frontend.html');
 
     var settings = {
+        useLocalMarkdownAPI: true,                         // use local js to parse markdown own, or use github markdown API
         focusOnSaved: true,
         omnibarMaxResults: 20,
         tabsThreshold: 9,

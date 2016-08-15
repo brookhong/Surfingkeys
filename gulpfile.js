@@ -53,6 +53,7 @@ gulp.task('copy-js-files', ['clean'], function() {
         'content_scripts/content_scripts.js',
         'content_scripts/top.js',
         'libs/ace/*.js',
+        'libs/marked.min.js',
         'pages/*.js'
     ], {base: "."})
     .pipe(gp_uglify())
