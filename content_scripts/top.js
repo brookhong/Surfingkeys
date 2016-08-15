@@ -26,6 +26,7 @@ var frontendFrame = (function() {
             action: 'style',
             css: runtime.settings.theme || ""
         });
+        $(document).trigger("surfingkeys:frontendReady");
     }
     self.actions['ace_editor_saved'] = function(response) {
         Normal.onEditorSaved(response.data);

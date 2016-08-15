@@ -11,7 +11,6 @@ var Service = (function() {
         tabHistory = [],
         tabHistoryIndex = 0,
         historyTabAction = false,
-        optionsURL = chrome.extension.getURL('/pages/options.html'),
         frontEndURL = chrome.extension.getURL('/pages/frontend.html');
 
     var settings = {
@@ -150,6 +149,7 @@ var Service = (function() {
             port.postMessage({
                 action: 'initSettings',
                 settings: settings,
+                extensionURLRoot: chrome.extension.getURL(''),
                 extension_id: chrome.i18n.getMessage("@@extension_id")
             });
         });
@@ -219,6 +219,7 @@ var Service = (function() {
             port.postMessage({
                 action: 'initSettings',
                 settings: settings,
+                extensionURLRoot: chrome.extension.getURL(''),
                 extension_id: chrome.i18n.getMessage("@@extension_id")
             });
         }
@@ -643,10 +644,6 @@ var Service = (function() {
         _response(message, sendResponse, {
             settings: settings
         });
-    };
-    self.editSettings = function(message, sender, sendResponse) {
-        message.url = optionsURL;
-        self.openLink(message, sender, sendResponse);
     };
     self.updateSettings = function(message, sender, sendResponse) {
         _updateSettings(message.settings, message.noack);

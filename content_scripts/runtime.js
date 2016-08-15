@@ -10,6 +10,7 @@ var runtime = window.runtime || (function() {
     });
     self.actions['initSettings'] = function(response) {
         self.settings = response.settings;
+        self.extensionURLRoot = response.extensionURLRoot;
         settingsDeferred.resolve(self.settings);
     };
     _port.onDisconnect.addListener(function(evt) {

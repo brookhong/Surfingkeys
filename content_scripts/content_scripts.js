@@ -197,7 +197,7 @@ function tabOpenLink(str) {
         url = url.trim();
         if (url.length > 0) {
             if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-                if (/^\w+?:\/\//i.test(url)) {
+                if (/^[\w-]+?:\/\//i.test(url)) {
                     url = url
                 } else {
                     url = "http://" + url;

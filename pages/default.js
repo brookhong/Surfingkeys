@@ -325,9 +325,10 @@ mapkey('g?', '#4Reload current page without query string(all parts after questio
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
 mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
-mapkey('se', '#11Edit Settings', 'RUNTIME("editSettings", { tab: { tabbed: true }})');
+mapkey('se', '#11Edit Settings', 'tabOpenLink(runtime.extensionURLRoot + "pages/options.html")');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
 mapkey('si', '#12Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
+mapkey('sm', '#11Preview markdown', 'tabOpenLink(runtime.extensionURLRoot + "pages/github-markdown.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Normal.showEditor(window.location.href, function(data) {
         tabOpenLink(data);

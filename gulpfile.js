@@ -37,7 +37,7 @@ gulp.task('build_common_content_min', ['clean'], function() {
 });
 
 gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
-    gulp.src(['pages/frontend.html', 'pages/error.html', 'pages/options.html'], {base: "."})
+    gulp.src(['pages/frontend.html', 'pages/error.html', 'pages/options.html', 'pages/github-markdown.html'], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
         .pipe(replace('sha256-lDGRdKgKO0PWPM8gzds75c6s6+XVZP1t+dfFrPEbXyk=', 'sha256-g8hZSMVxfGe/9E8KGWayP4wSYYmyR3rNoNJoxPobLcE='))
         .pipe(gulp.dest('dist'));
