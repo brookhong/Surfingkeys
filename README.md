@@ -14,7 +14,9 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 
 * [Feature list](#feature-list)
 * [Quick start](#quick-start)
+* [Follow links](#follow-links)
 * [Surfingkeys modes](#surfingkeys-modes)
+* [Omnibar](#omnibar)
 * [Search selected with](#search-selected-with)
 * [Vim-like marks](#vim-like-marks)
 * [Switch tabs](#switch-tabs)
@@ -26,6 +28,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * [Proxy settings](#proxy-settings)
 * [VIM editor](#vim-editor)
 * [Dot to repeat previous action](#dot-to-repeat-previous-action)
+* [Markdown preview](#markdown-preview)
 * [Edit your own settings](#edit-your-own-settings)
 * [Build](#build)
 * [License](#license)
@@ -43,6 +46,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * Count prefixes to repeat actions
 * Use vim editor to edit input on page
 * Dot to repeat previous action
+* `sm` to preview markdown
 
 ## Quick start
 
@@ -96,6 +100,8 @@ Now here is a small practice,
 
 All mappings added with `vmapkey` work in this mode, with some built-in mappings like those in VIM - `j` `k` `h` `l` `b` `w``0` `$` etc.
 
+![search_selected](https://cloud.githubusercontent.com/assets/288207/17644215/759f1e70-61b3-11e6-8bf8-0bdff7d0c933.gif)
+
 ### Insert mode
 
 When focus is switched into any editable element by whatever means(`i` hints or `f` hints or mouse click), Insert mode is on.
@@ -124,6 +130,8 @@ In omnibar opened with `t`
 In omnibar opened with `b`
 
     `Ctrl - <any letter>` to create vim-like global mark
+
+![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
 ## Search selected with
 
@@ -312,9 +320,15 @@ In normal mode, press capital `I`, then use a hint letter to pick up a input box
 
 For `input` element, the vim editor has only one line, you use vim-bindings keys to edit your text, then press `Enter` or `:w` to write your text back to the input element.
 
+![input_with_vim](https://cloud.githubusercontent.com/assets/288207/17644219/75a72b2e-61b3-11e6-8ce2-06c9cc94aeca.gif)
+
 For `textarea` element, the vim editor is opened in bigger size, after you complete your edit, then press `Ctrl-Enter` or `:w` to write your text back to the textarea element.
 
+![textarea_with_vim](https://cloud.githubusercontent.com/assets/288207/17644217/75a27e44-61b3-11e6-8f21-9cd79d3c5776.gif)
+
 For `select` element, the vim editor is opened in bigger size, you are expected to edit the text, instead of, to search your option and jump to the line, then press `Enter` to select it. This is much handy for `select` element that has dozens of options.
+
+![select_with_vim](https://cloud.githubusercontent.com/assets/288207/17644218/75a458a4-61b3-11e6-8ce7-eedcc996745c.gif)
 
 `Esc` or `:q` to quit vim editor without writing text back.
 
@@ -330,6 +344,8 @@ Remember that in insert mode, press `Ctrl-i` to open vim editor.
 
 `Tab` completion works with all URLs from bookmark/history, `Space` to choose a match from popup.
 
+![url_with_vim](https://cloud.githubusercontent.com/assets/288207/17644220/75f8eedc-61b3-11e6-9630-da2250ac5f10.gif)
+
 ### Edit settings
 
 `se` to open settings editor, `:w` to save settings.
@@ -343,6 +359,20 @@ All keystrokes in normal mode are repeatable by dot, except those keystrokes map
     mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
 
 Then `.` will not repeat action to page up, even `e` is just pressed.
+
+## Markdown preview
+
+1. copy your markdown source into clipboard.
+1. `sm` to open markdown preview, which will preview markdown from clipboard.
+1. Then on the preview page, another `sm` will open vim editor to edit markdown source.
+1. `:wp` to refresh preview.
+1. `r` to reload markdown source from clipboard.
+
+![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)
+
+By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/marked) to preview markdown, if you'd like to use [github markdown API](https://developer.github.com/v3/markdown/) to parse your markdown, please add below line to your settings:
+
+    settings.useLocalMarkdownAPI = false;
 
 ## Edit your own settings
 
@@ -428,6 +458,13 @@ works like
 
     npm install
     ./node_modules/gulp/bin/gulp.js
+
+## Credits
+
+* [jQuery](https://github.com/jquery/jquery)
+* [TRIE](https://github.com/mikedeboer/trie)
+* [ACE vim editor](https://github.com/ajaxorg/ace)
+* [markdown parser](https://github.com/chjj/marked)
 
 ## License
 
