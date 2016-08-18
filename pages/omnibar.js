@@ -553,34 +553,24 @@ Omnibar.addHandler('URLs', OpenURLs);
 var OpenTabs = (function() {
     var self = {
         prompt: 'tabs≫'
-    };
+    }, all;
 
     function listTabs(query) {
         runtime.command({
             action: 'getTabs',
             query: query
         }, function(response) {
-            Omnibar.listResults(response.tabs, function(b) {
-                var li = $('<li/>').data('tabId', b.id);
-                li.html('<div class="title">▤ {0}</div>'.format(b.title));
-                $('<div class="url">').html(b.url).appendTo(li);
-                return li;
-            });
+            all = response.tabs;
+            Omnibar.listURLs(response.tabs, false);
         });
     };
-    self.onEnter = function() {
-        var fi = Omnibar.resultsDiv.find('li.focused');
-        runtime.command({
-            action: 'focusTab',
-            tab_id: fi.data('tabId')
-        });
-        return true;
-    };
+    self.onEnter = Omnibar.openFocused.bind(self);
     self.onOpen = function() {
         listTabs('');
     };
     self.onInput = function() {
-        listTabs($(this).val());
+        var filtered = _filterByTitleOrUrl(all, $(this).val());
+        Omnibar.listURLs(filtered, false);
     };
     return self;
 })();

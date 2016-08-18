@@ -1,3 +1,25 @@
+// ************************* WARNING *************************
+//
+// The file contains the default mappings, and it is released un-minified
+// for your referrence on creating your own mappings.
+//
+// But please don't just copy statement from this file to your own settings.
+// As the bound functions in this file may rely on some unstable functions/
+// variables, which may be changed some day. If you insist on that, please
+// compare your settings with this file to find what stops your keystrokes
+// from working.
+//
+// Therefore, the best practice to remap is using map instead of mapkey, for
+// example:
+//
+//      map('F', 'af');
+//
+// is better than
+//
+//      mapkey('F', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
+//
+// ************************* WARNING *************************
+
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = document.activeElement;
     Normal.showEditor(element, function(data) {
@@ -138,7 +160,7 @@ mapkey('cs', '#2Change scroll target', 'Normal.changeScrollTarget()');
 mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', 'Hints.create("", Hints.dispatchMouseClick)');
 mapkey('af', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false})');
-mapkey('<Alt-f>', '#1Open multiple links in a new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
+mapkey('cf', '#1Open multiple links in a new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element, event) {
         Normal.writeClipboard(element.href);
