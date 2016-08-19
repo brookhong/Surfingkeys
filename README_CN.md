@@ -461,6 +461,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 * [TRIE](https://github.com/mikedeboer/trie)
 * [ACE vim editor](https://github.com/ajaxorg/ace)
 * [markdown parser](https://github.com/chjj/marked)
+* [vimium](https://github.com/philc/vimium)
+* [cVim](https://github.com/1995eaton/chromium-vim)
 
 ## License
 
