@@ -633,7 +633,6 @@ var SearchEngine = (function() {
             tab: {
                 tabbed: Omnibar.tabbed
             },
-            position: runtime.settings.newTabPosition,
             url: url
         });
         return true;

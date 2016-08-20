@@ -50,7 +50,7 @@
         "js": [
             // build:common_content
             "libs/trie.js",
-            "libs/jquery.min.js",
+            "libs/jquery.js",
             "content_scripts/utils.js",
             "content_scripts/debug_utils.js",
             "content_scripts/runtime.js",

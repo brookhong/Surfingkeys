@@ -597,7 +597,7 @@ var Service = (function() {
     self.openLink = function(message, sender, sendResponse) {
         if (message.tab.tabbed) {
             var newTabPosition = null;
-            switch (message.position) {
+            switch (settings.newTabPosition) {
                 case 'left':
                     newTabPosition = sender.tab.index;
                     break;

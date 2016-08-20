@@ -733,13 +733,14 @@ var Normal = (function(mode) {
         self.showBanner("Settings reset.");
     };
 
-    self.insertJS = function(code) {
+    self.insertJS = function(code, onload) {
         var s = document.createElement('script');
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
             s.innerText = "(" + code.toString() + ")(window);";
         } else {
             s.src = code;
+            s.onload = onload;
         }
         document.lastElementChild.appendChild(s);
         s.remove();

@@ -209,7 +209,6 @@ function tabOpenLink(str) {
                 tab: {
                     tabbed: true
                 },
-                position: runtime.settings.newTabPosition,
                 url: url
             });
         }

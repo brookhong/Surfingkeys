@@ -23,7 +23,7 @@ gulp.task('copy-pretty-default-js', ['copy-js-files'], function() {
 gulp.task('build_common_content_min', ['clean'], function() {
     return gulp.src([
         "libs/trie.js",
-        "libs/jquery.min.js",
+        "libs/jquery.js",
         "content_scripts/utils.js",
         "content_scripts/runtime.js",
         "content_scripts/normal.js",
