@@ -108,9 +108,7 @@ var Service = (function() {
             } else if (_message.toFrontend) {
                 try {
                     frontEndPorts[_sender.tab.id].postMessage(_message);
-                    if (_message.action === 'openFinder') {
-                        contentPorts[_sender.tab.id] = _port;
-                    }
+                    contentPorts[_sender.tab.id] = _port;
                     if (_message.ack) {
                         onResponseById[_message.id] = _sendResponse;
                     }
@@ -596,19 +594,21 @@ var Service = (function() {
     };
     self.openLink = function(message, sender, sendResponse) {
         if (message.tab.tabbed) {
-            var newTabPosition = null;
-            switch (settings.newTabPosition) {
-                case 'left':
-                    newTabPosition = sender.tab.index;
-                    break;
-                case 'right':
-                    newTabPosition = sender.tab.index + 1;
-                    break;
-                case 'first':
-                    newTabPosition = 0;
-                    break;
-                default:
-                    break;
+            var newTabPosition;
+            if (sender.tab) {
+                switch (settings.newTabPosition) {
+                    case 'left':
+                        newTabPosition = sender.tab.index;
+                        break;
+                    case 'right':
+                        newTabPosition = sender.tab.index + 1;
+                        break;
+                    case 'first':
+                        newTabPosition = 0;
+                        break;
+                    default:
+                        break;
+                }
             }
             chrome.tabs.create({
                 url: message.url,

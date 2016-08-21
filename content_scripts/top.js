@@ -19,26 +19,11 @@ var frontendFrame = (function() {
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
         runtime.frontendCommand({
-            action: 'pageContentReady',
-            content: document.body.innerText
-        });
-        runtime.frontendCommand({
             action: 'style',
             css: runtime.settings.theme || ""
         });
         $(document).trigger("surfingkeys:frontendReady");
     }
-    self.actions['ace_editor_saved'] = function(response) {
-        Normal.onEditorSaved(response.data);
-        if (runtime.settings.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
-            Normal.elementBehindEditor.focus();
-            Insert.enter();
-        }
-    };
-    self.actions['omnibar_query_entered'] = function(response) {
-        runtime.updateHistory('OmniQuery', response.query);
-        Normal.onOmniQuery(response.query);
-    };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
         ifr[0].channel.port1.onmessage = function(message) {

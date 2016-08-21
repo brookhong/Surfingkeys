@@ -725,14 +725,14 @@ var OmniQuery = (function() {
     self.onOpen = function(arg) {
         if (arg) {
             Omnibar.input.val(arg);
-            frontendUI.postMessage('top', {
+            runtime.contentCommand({
                 action: 'omnibar_query_entered',
                 query: arg
             });
         }
     };
     self.onEnter = function() {
-        frontendUI.postMessage('top', {
+        runtime.contentCommand({
             action: 'omnibar_query_entered',
             query: Omnibar.input.val()
         });

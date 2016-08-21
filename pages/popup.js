@@ -4,8 +4,10 @@ var disableAll = document.getElementById('disableAll'),
     surfingkeysStatus = {};
 
 function onSurfingkeysStatus(status) {
-    surfingkeysStatus = status;
-    disableAll.textContent = status.all ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
+    if (status) {
+        surfingkeysStatus = status;
+        disableAll.textContent = status.all ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
+    }
 }
 
 function toggleBlacklist(origin) {

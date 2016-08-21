@@ -84,10 +84,10 @@ var AceEditor = (function(mode, elmId) {
         }
     };
 
-    var wordsOnPage = [];
-    runtime.actions['pageContentReady'] = function(message) {
+    var wordsOnPage = null;
+    function getWordsOnPage(message) {
         var splitRegex = /[^a-zA-Z_0-9\$\-\u00C0-\u1FFF\u2C00-\uD7FF\w]+/;
-        var words = message.content.split(splitRegex);
+        var words = message.split(splitRegex);
         var wordScores = {};
         words.forEach(function(word) {
             word = "sk_" + word;
@@ -98,7 +98,7 @@ var AceEditor = (function(mode, elmId) {
             }
         });
 
-        wordsOnPage = Object.keys(wordScores).map(function(w) {
+        return Object.keys(wordScores).map(function(w) {
             w = w.substr(3);
             return {
                 caption: w,
@@ -108,9 +108,19 @@ var AceEditor = (function(mode, elmId) {
             }
         });
     };
+
     var pageWordCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
-            callback(null, wordsOnPage);
+            if (!wordsOnPage) {
+                runtime.contentCommand({
+                    action: 'getPageText'
+                }, function(message) {
+                    wordsOnPage = getWordsOnPage(message.data);
+                    callback(null, wordsOnPage);
+                });
+            } else {
+                callback(null, wordsOnPage);
+            }
         }
     };
 
@@ -165,13 +175,13 @@ var AceEditor = (function(mode, elmId) {
         var vim = cm.constructor.Vim;
         vimDeferred.resolve(vim);
         vim.defineEx("write", "w", function(cm, input) {
-            frontendUI.postMessage('top', {
+            runtime.contentCommand({
                 action: 'ace_editor_saved',
                 data: self._getValue()
             });
         });
         vim.defineEx("wq", "wq", function(cm, input) {
-            frontendUI.postMessage('top', {
+            runtime.contentCommand({
                 action: 'ace_editor_saved',
                 data: self._getValue()
             });

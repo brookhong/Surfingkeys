@@ -13,6 +13,20 @@ var runtime = window.runtime || (function() {
         self.extensionURLRoot = response.extensionURLRoot;
         settingsDeferred.resolve(self.settings);
     };
+    self.actions['ace_editor_saved'] = function(response) {
+        Normal.onEditorSaved(response.data);
+        if (runtime.settings.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
+            Normal.elementBehindEditor.focus();
+            Insert.enter();
+        }
+    };
+    self.actions['omnibar_query_entered'] = function(response) {
+        runtime.updateHistory('OmniQuery', response.query);
+        Normal.onOmniQuery(response.query);
+    };
+    self.actions['getPageText'] = function(response) {
+        return document.body.innerText;
+    };
     _port.onDisconnect.addListener(function(evt) {
         if (window === top) {
             console.log('reload triggered by runtime disconnection.');

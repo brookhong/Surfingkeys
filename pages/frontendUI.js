@@ -255,13 +255,11 @@ var frontendUI = (function(mode) {
 
     self.handleMessage = function(event) {
         var _message = event.data;
-        if (_message.action) {
-            if (self.hasOwnProperty(_message.action)) {
-                var ret = self[_message.action](_message) || {};
-                ret.id = _message.id;
-                if (_message.from && self.ports[_message.from]) {
-                    self.ports[_message.from].postMessage(ret);
-                }
+        if (_message.action && self.hasOwnProperty(_message.action)) {
+            var ret = self[_message.action](_message) || {};
+            ret.id = _message.id;
+            if (_message.from && self.ports[_message.from]) {
+                self.ports[_message.from].postMessage(ret);
             }
         }
     };
