@@ -20,7 +20,17 @@ a:hover {
 </head>
 <body>
     <a id="disableAll" href="#">Disable Surfingkeys</a>
-    <a id="settings" href="#">Settings</a>
+    <a id="lnkSettings" href="#">Settings</a>
+        <!-- build:common_content -->
+        <script src="../libs/trie.js"></script>
+        <script src="../libs/jquery.js"></script>
+        <script src="../content_scripts/utils.js"></script>
+        <script src="../content_scripts/debug_utils.js"></script>
+        <script src="../content_scripts/runtime.js"></script>
+        <script src="../content_scripts/normal.js"></script>
+        <script src="../content_scripts/visual.js"></script>
+        <script src="../content_scripts/hints.js"></script>
+        <!-- endbuild -->
+        <script src="popup.js"></script>
 </body>
-<script src="popup.js"></script>
 </html>

@@ -57,6 +57,13 @@ var Find = (function() {
                 query: input.val()
             });
         });
+        var findHistory = [];
+        runtime.command({
+            action: 'localData',
+            data: 'findHistory'
+        }, function(response) {
+            findHistory = response.data.findHistory;
+        });
         input[0].onkeydown = function(event) {
             if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
                 runtime.contentCommand({
@@ -72,10 +79,10 @@ var Find = (function() {
                     query: query
                 });
             } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
-                if (runtime.settings.findHistory.length) {
-                    historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (historyInc + 1) : (historyInc + runtime.settings.findHistory.length - 1);
-                    historyInc = historyInc % runtime.settings.findHistory.length;
-                    var query = runtime.settings.findHistory[historyInc];
+                if (findHistory.length) {
+                    historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (historyInc + 1) : (historyInc + findHistory.length - 1);
+                    historyInc = historyInc % findHistory.length;
+                    var query = findHistory[historyInc];
                     input.val(query);
                     runtime.contentCommand({
                         action: 'visualUpdate',

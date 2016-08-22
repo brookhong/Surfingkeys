@@ -2,7 +2,7 @@ var markdown_code = "";
 
 function previewMarkdown(mk) {
     markdown_code = mk;
-    if (runtime.settings.useLocalMarkdownAPI) {
+    if (runtime.conf.useLocalMarkdownAPI) {
         $('.markdown-body').html(marked(mk));
     } else {
         httpRequest({

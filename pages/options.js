@@ -64,9 +64,11 @@ function createMappingEditor(mode, elmId) {
     return self;
 }
 
+var localPathSaved = "";
 function renderSettings(rs) {
     $('#storage').val(rs.storage);
     $('#localPath').val(rs.localPath);
+    localPathSaved = rs.localPath;
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
     $(mappingsEditor.container).css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
@@ -77,7 +79,7 @@ function renderSettings(rs) {
     }
 }
 
-runtime.actions['settingsUpdated'] = function(resp) {
+runtime.on('settingsUpdated', function(resp) {
     if ('snippets' in resp.settings) {
         if (resp.settings.snippets.length) {
             mappingsEditor.setValue(resp.settings.snippets, -1);
@@ -85,8 +87,7 @@ runtime.actions['settingsUpdated'] = function(resp) {
             mappingsEditor.setExampleValue();
         }
     }
-    applySettings(resp.settings);
-};
+});
 
 runtime.command({
     action: 'getSettings'
@@ -108,7 +109,6 @@ $('#reset_button').click(function() {
         useDefault: true
     }, function(response) {
         renderSettings(response.settings);
-        applySettings(response.settings);
         Normal.showBanner('Settings reset', 300);
     });
 });
@@ -147,7 +147,7 @@ function getURIPath(fn) {
 function saveSettings() {
     var settingsCode = mappingsEditor.getValue();
     var localPath = getURIPath($('#localPath').val().trim());
-    if (localPath.length && localPath !== runtime.settings.localPath) {
+    if (localPath.length && localPath !== localPathSaved) {
         RUNTIME("loadSettingsFromUrl", {
             url: localPath
         });

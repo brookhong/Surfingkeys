@@ -57,9 +57,9 @@ var Service = (function() {
         });
     }
 
-    function extendSettings(ss) {
+    function extendObject(target, ss) {
         for (var k in ss) {
-            settings[k] = ss[k];
+            target[k] = ss[k];
         }
     }
 
@@ -144,14 +144,6 @@ var Service = (function() {
 
     document.addEventListener("settingsReady", function(e) {
         settingsReady = true;
-        activePorts.forEach(function(port) {
-            port.postMessage({
-                action: 'initSettings',
-                settings: settings,
-                extensionURLRoot: chrome.extension.getURL(''),
-                extension_id: chrome.i18n.getMessage("@@extension_id")
-            });
-        });
     });
 
     chrome.storage.local.get(null, function(data) {
@@ -162,13 +154,13 @@ var Service = (function() {
             }
             triggerEvent(document, "settingsReady");
         } else {
-            extendSettings(data);
+            extendObject(settings, data);
             if (data.storage === 'sync') {
                 chrome.storage.sync.get(null, function(data) {
                     if (chrome.runtime.lastError) {
                         console.log(chrome.runtime.lastError);
                     } else {
-                        extendSettings(data);
+                        extendObject(settings, data);
                         settings.storage = "sync";
                     }
                     triggerEvent(document, "settingsReady");
@@ -214,14 +206,6 @@ var Service = (function() {
             frontEndPorts[sender.tab.id] = port;
         }
         activePorts.push(port);
-        if (settingsReady) {
-            port.postMessage({
-                action: 'initSettings',
-                settings: settings,
-                extensionURLRoot: chrome.extension.getURL(''),
-                extension_id: chrome.i18n.getMessage("@@extension_id")
-            });
-        }
         port.onMessage.addListener(function(message) {
             return handleMessage(message, port.sender, port.postMessage.bind(port), port);
         });
@@ -320,15 +304,14 @@ var Service = (function() {
     }
 
     function _updateSettings(diffSettings, afterSet) {
-        var toSet = diffSettings;
-        extendSettings(diffSettings);
-        chrome.storage.local.set(toSet, function() {
+        extendObject(settings, diffSettings);
+        chrome.storage.local.set(diffSettings, function() {
             if (afterSet) {
                 afterSet();
             }
         });
         if (settings.storage === 'sync') {
-            chrome.storage.sync.set(toSet, function() {
+            chrome.storage.sync.set(diffSettings, function() {
                 if (chrome.runtime.lastError) {
                     console.log(chrome.runtime.lastError);
                 }
@@ -342,6 +325,24 @@ var Service = (function() {
         });
     }
 
+    self.toggleBlacklist = function(message, sender, sendResponse) {
+        if (settings.blacklist.hasOwnProperty(message.domain)) {
+            delete settings.blacklist[message.domain];
+        } else {
+            settings.blacklist[message.domain] = 1;
+        }
+        _updateSettings({blacklist: settings.blacklist}, function() {
+            _response(message, sendResponse, {
+                blacklist: settings.blacklist
+            });
+        });
+    };
+
+    self.addVIMark = function(message, sender, sendResponse) {
+        extendObject(settings.marks, message.mark);
+        _updateSettings({marks: settings.marks});
+    };
+
     function _loadSettingsFromUrl(url) {
         var s = request(url);
         s.then(function(resp) {
@@ -351,7 +352,7 @@ var Service = (function() {
 
     self.resetSettings = function(message, sender, sendResponse) {
         if (message.useDefault) {
-            _updateSettings({localPath: "", snippets: "", theme: ""}, false, _response.bind(_response, message, sendResponse, {
+            _updateSettings({localPath: "", snippets: ""}, false, _response.bind(_response, message, sendResponse, {
                 settings: settings
             }));
         } else if (settings.localPath) {
@@ -640,9 +641,17 @@ var Service = (function() {
         self.openLink(message, sender, sendResponse);
     };
     self.getSettings = function(message, sender, sendResponse) {
-        _response(message, sendResponse, {
-            settings: settings
-        });
+        if (settingsReady) {
+            _response(message, sendResponse, {
+                settings: settings
+            });
+        } else {
+            document.addEventListener("settingsReady", function(e) {
+                _response(message, sendResponse, {
+                    settings: settings
+                });
+            });
+        }
     };
     self.updateSettings = function(message, sender, sendResponse) {
         _updateSettings(message.settings);
@@ -661,7 +670,7 @@ var Service = (function() {
     self.setSurfingkeysIcon = function(message, sender, sendResponse) {
         chrome.browserAction.setIcon({
             path: (message.status ? 'icons/48-x.png' : 'icons/48.png'),
-            tabId: sender.tab.id
+            tabId: (sender.tab ? sender.tab.id : undefined)
         });
     };
     self.request = function(message, sender, sendResponse) {
@@ -846,6 +855,10 @@ var Service = (function() {
             settings.proxyMode = message.mode;
         }
         if (message.host) {
+            if (message.operation === "toggle") {
+                message.operation = (settings.autoproxy_hosts.hasOwnProperty(message.host)) ? 'remove' : 'add';
+            }
+
             if (message.operation === "add") {
                 message.host.split(/\s*[ ,\n]\s*/).forEach(function(host) {
                     settings.autoproxy_hosts[host] = 1;
@@ -914,16 +927,17 @@ var Service = (function() {
         }
     };
     self.localData = function(message, sender, sendResponse) {
-        if (typeof(message.data) === "string") {
-            chrome.storage.local.get(message.data, function(data) {
-                _response(message, sendResponse, {
-                    data: data
-                });
-            });
-        } else {
+        if (message.data.constructor === Object) {
             chrome.storage.local.set(message.data, function() {
                 _response(message, sendResponse, {
                     data: "Done"
+                });
+            });
+        } else {
+            // string or array of string keys
+            chrome.storage.local.get(message.data, function(data) {
+                _response(message, sendResponse, {
+                    data: data
                 });
             });
         }

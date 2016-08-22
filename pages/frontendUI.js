@@ -81,7 +81,7 @@ var frontendUI = (function(mode) {
         window.focus();
     }
 
-    runtime.actions['highlightElement'] = function(message) {
+    runtime.on('highlightElement', function(message) {
         var rect = message.rect;
         frameElement.css('top', rect.top).css('left', rect.left).css('width', rect.width).css('height', rect.height).show();
         self.flush();
@@ -89,7 +89,7 @@ var frontendUI = (function(mode) {
             frameElement.hide();
             self.flush();
         }, message.duration);
-    };
+    });
 
     _tabs.onShow = function(tabs) {
         var tabs_fg = _tabs.find('div.sk_tabs_fg');
@@ -110,29 +110,29 @@ var frontendUI = (function(mode) {
         });
         _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
     }
-    runtime.actions['chooseTab'] = function(message) {
+    runtime.on('chooseTab', function(message) {
         runtime.command({
             action: 'getTabs'
         }, function(response) {
-            if (response.tabs.length > runtime.settings.tabsThreshold) {
+            if (response.tabs.length > runtime.conf.tabsThreshold) {
                 showPopup(self.omnibar, {type: 'Tabs'});
             } else {
                 showPopup(_tabs, response.tabs);
             }
         });
-    };
+    });
     _usage.onShow = function(message) {
         _usage.html(message.content);
     };
-    runtime.actions['showUsage'] = function(message) {
+    runtime.on('showUsage', function(message) {
         showPopup(_usage, message);
-    };
+    });
     _popup.onShow = function(message) {
         _popup.html(message.content);
     };
-    runtime.actions['showPopup'] = function(message) {
+    runtime.on('showPopup', function(message) {
         showPopup(_popup, message);
-    };
+    });
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {
             AceEditor.show(message);
@@ -148,19 +148,19 @@ var frontendUI = (function(mode) {
             });
         }
     };
-    runtime.actions['showEditor'] = function(message) {
+    runtime.on('showEditor', function(message) {
         showPopup(_editor, message);
-    };
-    runtime.actions['updateOmnibarResult'] = function(message) {
+    });
+    runtime.on('updateOmnibarResult', function(message) {
         Omnibar.listWords(message.words);
-    };
-    runtime.actions['openOmnibar'] = function(message) {
+    });
+    runtime.on('openOmnibar', function(message) {
         showPopup(self.omnibar, message);
-    };
-    runtime.actions['openFinder'] = function(message) {
+    });
+    runtime.on('openFinder', function(message) {
         Find.open();
-    };
-    runtime.actions['showBanner'] = function(message) {
+    });
+    runtime.on('showBanner', function(message) {
         banner.html(message.content).show();
         self.flush();
         banner.finish();
@@ -173,8 +173,8 @@ var frontendUI = (function(mode) {
             banner.html("").hide();
             self.flush();
         });
-    };
-    runtime.actions['showBubble'] = function(message) {
+    });
+    runtime.on('showBubble', function(message) {
         var pos = message.position;
         _bubble.find('div.sk_bubble_content').html(message.content);
         _bubble.show();
@@ -191,18 +191,18 @@ var frontendUI = (function(mode) {
         }
         _bubble.find('div.sk_arrow').css('left', left[1]);
         _bubble.css('top', pos.top - h - 12).css('left', left[0]);
-    };
-    runtime.actions['hideBubble'] = function(message) {
+    });
+    runtime.on('hideBubble', function(message) {
         _bubble.hide();
         self.flush();
-    };
-    runtime.actions['showStatus'] = function(message) {
+    });
+    runtime.on('showStatus', function(message) {
         StatusBar.show(message.position, message.content, message.duration);
-    };
+    });
 
     var clipboard_holder = $('<textarea id=sk_clipboard/>');
     clipboard_holder = clipboard_holder[0];
-    runtime.actions['getContentFromClipboard'] = function(message) {
+    runtime.on('getContentFromClipboard', function(message) {
         var result = '';
         document.body.appendChild(clipboard_holder);
         clipboard_holder.value = '';
@@ -213,16 +213,16 @@ var frontendUI = (function(mode) {
         clipboard_holder.value = '';
         clipboard_holder.remove();
         return result;
-    };
-    runtime.actions['writeClipboard'] = function(message) {
+    });
+    runtime.on('writeClipboard', function(message) {
         document.body.appendChild(clipboard_holder);
         clipboard_holder.value = message.content;
         clipboard_holder.select();
         document.execCommand('copy');
         clipboard_holder.value = '';
         clipboard_holder.remove();
-    };
-    runtime.actions['hideKeystroke'] = function(message) {
+    });
+    runtime.on('hideKeystroke', function(message) {
         keystroke.animate({
             right: "-2rem"
         }, 300, function() {
@@ -230,8 +230,8 @@ var frontendUI = (function(mode) {
             keystroke.hide();
             self.flush();
         });
-    };
-    runtime.actions['showKeystroke'] = function(message) {
+    });
+    runtime.on('showKeystroke', function(message) {
         if (keystroke.is(':animated')) {
             keystroke.finish()
         }
@@ -244,10 +244,7 @@ var frontendUI = (function(mode) {
                 right: 0
             }, 300);
         }
-    };
-    runtime.actions['style'] = function(message) {
-        $('#sk_theme').html(message.css);
-    };
+    });
 
     self.initPort = function(message) {
         self.ports[message.from] = event.ports[0];

@@ -208,8 +208,6 @@ function tabOpenLink(str) {
                 } else {
                     url = "http://" + url;
                 }
-            } else {
-                url = 'https://www.google.com/search?q=' + url;
             }
             RUNTIME("openLink", {
                 tab: {
@@ -313,33 +311,97 @@ function applySettings(rs) {
         var delta = runUserScript(rs.snippets);
         if (!jQuery.isEmptyObject(delta.settings)) {
             // overrides local settings from snippets
-            $.extend(runtime.settings, delta.settings);
+            if ('theme' in delta.settings) {
+                $(document).trigger("surfingkeys:themeChanged", [delta.settings.theme]);
+                delete delta.settings.theme;
+            }
+            $.extend(runtime.conf, delta.settings);
         } else if (delta.error !== "" && window === top) {
             Normal.showPopup("Error found in settings: " + delta.error);
         }
         delete rs.snippets;
     }
-    $.extend(runtime.settings, rs);
-    $(document).trigger("surfingkeys:settingsApplied");
+    // $.extend(runtime.conf, rs);
 }
 
-runtime.actions['settingsUpdated'] = function(response) {
+runtime.on('settingsUpdated', function(response) {
     applySettings(response.settings);
-};
+    if ('blacklist' in response.settings) {
+        if (checkBlackList(response.settings)) {
+            Disabled.enter();
+        } else {
+            Disabled.exit();
+        }
+    }
+});
+runtime.on('ace_editor_saved', function(response) {
+    Normal.onEditorSaved(response.data);
+    if (runtime.conf.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
+        Normal.elementBehindEditor.focus();
+        Insert.enter();
+    }
+});
+runtime.on('omnibar_query_entered', function(response) {
+    runtime.updateHistory('OmniQuery', response.query);
+    Normal.onOmniQuery(response.query);
+});
+runtime.on('getPageText', function(response) {
+    return document.body.innerText;
+});
 
 runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
     if (msg.frameId === window.frameId) {
         window.focus();
         document.body.scrollIntoViewIfNeeded();
         Normal.highlightElement(window.frameElement || document.body, 500);
-        Events.resetMode();
+
+        if (Mode.stack().length === 0) {
+            // if mode stack is empty, enter normal mode automatically
+            Normal.enter();
+            GetBackFocus.enter();
+        }
     }
 };
 
-$(document).on('surfingkeys:settingsApplied', function(e) {
-    Events.resetMode();
+function checkBlackList(sb) {
+    return sb.blacklist[window.location.origin] || sb.blacklist['.*']
+        || (sb.blacklistPattern && typeof(sb.blacklistPattern.test) === "function" && sb.blacklistPattern.test(window.location.href));
+}
+
+runtime.command({
+    action: 'getSettings'
+}, function(response) {
+    var rs = response.settings;
+    runtime.conf.hintsThreshold = rs.hintsThreshold;
+    runtime.conf.afterYank = rs.afterYank;
+    runtime.conf.smoothScroll = rs.smoothScroll;
+    runtime.conf.lastKeys = rs.lastKeys;
+    runtime.conf.marks = rs.marks;
+    runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
+
+    applySettings(rs);
+
+    Normal.enter();
+
+    if (checkBlackList(rs)) {
+        Disabled.enter();
+    } else {
+        document.addEventListener('DOMContentLoaded', function(e) {
+            GetBackFocus.enter();
+        });
+    }
 });
 
-$.when(settingsDeferred).done(function (settings) {
-    applySettings(settings);
+Normal.insertJS(function() {
+    var _wr = function(type) {
+        var orig = history[type];
+        return function() {
+            var rv = orig.apply(this, arguments);
+            var e = new Event(type);
+            e.arguments = arguments;
+            window.dispatchEvent(e);
+            return rv;
+        };
+    };
+    history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
 });

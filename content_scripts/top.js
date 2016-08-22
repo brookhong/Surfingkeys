@@ -18,15 +18,6 @@ var frontendFrame = (function() {
             from: 'top'
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
-        runtime.command({
-            action: 'localData',
-            data: 'theme'
-        }, function(response) {
-            runtime.frontendCommand({
-                action: 'style',
-                css: response.data.theme || ""
-            });
-        });
         $(document).trigger("surfingkeys:frontendReady");
     }
     self.create = function() {
@@ -55,35 +46,35 @@ var frontendFrame = (function() {
     return self;
 })();
 
-$(document).on('surfingkeys:settingsApplied', function(e) {
-    runtime.runtime_handlers['getBlacklist'] = function(msg, sender, response) {
-        response({
-            "all": runtime.settings.blacklist.hasOwnProperty('.*'),
-            "this": runtime.settings.blacklist.hasOwnProperty(window.location.origin),
-            "origin": window.location.origin
+runtime.command({
+    action: 'localData',
+    data: ['blacklist', 'blacklistPattern']
+}, function(response) {
+    if (checkBlackList(response.data)) {
+        runtime.command({
+            action: 'setSurfingkeysIcon',
+            status: true
         });
-    };
-    runtime.runtime_handlers['toggleBlacklist'] = function(msg, sender, response) {
-        Normal.toggleBlacklist(msg.origin);
-        response({
-            "all": runtime.settings.blacklist.hasOwnProperty('.*'),
-            "this": runtime.settings.blacklist.hasOwnProperty(window.location.origin),
-            "origin": window.location.origin
-        });
-    };
+    }
+});
 
-    runtime.command({
-        action: 'setSurfingkeysIcon',
-        status: Events.isBlacklisted()
-    });
+runtime.on('settingsUpdated', function(response) {
+    if ('blacklist' in response.settings) {
+        runtime.command({
+            action: 'setSurfingkeysIcon',
+            status: checkBlackList(response.settings)
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function(e) {
+
     runtime.command({
         action: 'tabURLAccessed',
         title: document.title,
         url: window.location.href
     });
-});
 
-document.addEventListener('DOMContentLoaded', function(e) {
     var fakeBody = $('body[createdBySurfingkeys=1]');
     if (fakeBody.length) {
         fakeBody.remove();

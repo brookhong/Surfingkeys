@@ -1,32 +1,12 @@
-var settingsDeferred = $.Deferred();
 var runtime = window.runtime || (function() {
     var self = {
         successById: {},
-        actions: {},
+        conf: {},       // local part from settings
         runtime_handlers: {}
-    };
+    }, actions = {};
     var _port = chrome.runtime.connect({
         name: 'main'
     });
-    self.actions['initSettings'] = function(response) {
-        self.settings = response.settings;
-        self.extensionURLRoot = response.extensionURLRoot;
-        settingsDeferred.resolve(self.settings);
-    };
-    self.actions['ace_editor_saved'] = function(response) {
-        Normal.onEditorSaved(response.data);
-        if (runtime.settings.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
-            Normal.elementBehindEditor.focus();
-            Insert.enter();
-        }
-    };
-    self.actions['omnibar_query_entered'] = function(response) {
-        runtime.updateHistory('OmniQuery', response.query);
-        Normal.onOmniQuery(response.query);
-    };
-    self.actions['getPageText'] = function(response) {
-        return document.body.innerText;
-    };
     _port.onDisconnect.addListener(function(evt) {
         if (window === top) {
             console.log('reload triggered by runtime disconnection.');
@@ -40,24 +20,34 @@ var runtime = window.runtime || (function() {
             var f = self.successById[_message.id];
             delete self.successById[_message.id];
             f(_message);
-        } else if (self.actions[_message.action]) {
+        } else if (actions[_message.action]) {
             var result = {
                 id: _message.id,
                 action: _message.action
             };
-            result.data = self.actions[_message.action](_message);
-            if (_message.ack) {
-                _port.postMessage(result);
-            }
+            actions[_message.action].forEach(function(a) {
+                result.data = a.call(null, _message);
+                if (_message.ack) {
+                    _port.postMessage(result);
+                }
+            });
         } else {
             console.log("[unexpected runtime message] " + JSON.stringify(_message))
         }
     });
 
+    self.on = function(message, cb) {
+        if ( !(message in actions) ) {
+            actions[message] = [];
+        }
+        actions[message].push(cb);
+    };
+
     self.command = function(args, successById) {
         args.id = generateQuickGuid();
         if (successById) {
             self.successById[args.id] = successById;
+            // request background to hold _sendResponse for a while to send back result
             args.ack = true;
         }
         _port.postMessage(args);
@@ -73,49 +63,35 @@ var runtime = window.runtime || (function() {
         args.toContent = true;
         self.command(args, successById);
     };
-    self.setUserData = function(name, value) {
-        var userData = self.settings.userData || {};
-        userData[name] = value;
-        self.command({
-            action: 'updateSettings',
-            settings: {userData: userData}
-        });
-    };
-    self.getUserData = function(name, defValue) {
-        var userData = self.settings.userData || {};
-        return userData[name] || defValue;
-    };
-    self.appendUserData = function(name, value) {
-        var ud = self.getUserData(name, []);
-        if (ud.indexOf(value) === -1) {
-            ud.push(value);
-            self.setUserData(name, ud);
-        }
-    };
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';
-        var list = self.settings[prop] || [];
-        var toUpdate = {};
-        if (cmd.constructor.name === "Array") {
-            toUpdate[prop] = cmd;
-            self.command({
-                action: 'updateSettings',
-                settings: toUpdate
-            });
-        } else if (cmd.length) {
-            list = list.filter(function(c) {
-                return c.length && c !== cmd;
-            });
-            list.unshift(cmd);
-            if (list.length > 50) {
-                list.pop();
+        runtime.command({
+            action: 'localData',
+            data: prop
+        }, function(response) {
+            var list = response.data[prop] || [];
+            var toUpdate = {};
+            if (cmd.constructor.name === "Array") {
+                toUpdate[prop] = cmd;
+                self.command({
+                    action: 'updateSettings',
+                    settings: toUpdate
+                });
+            } else if (cmd.length) {
+                list = list.filter(function(c) {
+                    return c.length && c !== cmd;
+                });
+                list.unshift(cmd);
+                if (list.length > 50) {
+                    list.pop();
+                }
+                toUpdate[prop] = list;
+                self.command({
+                    action: 'updateSettings',
+                    settings: toUpdate
+                });
             }
-            toUpdate[prop] = list;
-            self.command({
-                action: 'updateSettings',
-                settings: toUpdate
-            });
-        }
+        });
     };
 
     chrome.runtime.onMessage.addListener(function(msg, sender, response) {

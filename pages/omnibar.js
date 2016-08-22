@@ -141,7 +141,7 @@ var Omnibar = (function(ui) {
      *
      */
     self.listURLs = function(items, showFolder) {
-        var sliced = items.slice(0, (runtime.settings.omnibarMaxResults || 20));
+        var sliced = items.slice(0, (runtime.conf.omnibarMaxResults || 20));
         var query = Omnibar.input.val().trim();
         var rxp = query.length ? (new RegExp(query.replace(/\s+/, "\|"), 'gi')) : null;
         self.listResults(sliced, function(b) {
@@ -584,24 +584,29 @@ var OpenVIMarks = (function() {
     self.onOpen = function() {
         var query = Omnibar.input.val();
         var urls = [];
-        for (var m in runtime.settings.marks) {
-            var markInfo = runtime.settings.marks[m];
-            if (typeof(markInfo) === "string") {
-                markInfo = {
-                    url: markInfo,
-                    scrollLeft: 0,
-                    scrollTop: 0
+        runtime.command({
+            action: 'localData',
+            data: 'marks'
+        }, function(response) {
+            for (var m in response.data.marks) {
+                var markInfo = response.data.marks[m];
+                if (typeof(markInfo) === "string") {
+                    markInfo = {
+                        url: markInfo,
+                        scrollLeft: 0,
+                        scrollTop: 0
+                    }
+                }
+                if (query === "" || markInfo.url.indexOf(query) !== -1) {
+                    urls.push({
+                        title: m,
+                        type: '♡',
+                        url: markInfo.url
+                    });
                 }
             }
-            if (query === "" || markInfo.url.indexOf(query) !== -1) {
-                urls.push({
-                    title: m,
-                    type: '♡',
-                    url: markInfo.url
-                });
-            }
-        }
-        Omnibar.listURLs(urls, false);
+            Omnibar.listURLs(urls, false);
+        });
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = self.onOpen;
@@ -660,14 +665,19 @@ var Commands = (function() {
 
     self.onOpen = function() {
         historyInc = -1;
-        var candidates = runtime.settings.cmdHistory;
-        if (candidates.length) {
-            Omnibar.listResults(candidates, function(c) {
-                return $('<li/>').data('cmd', c).html(c);
-            });
-            Omnibar.focusedItem = 0;
-            Omnibar.input.val(candidates[0]);
-        }
+        runtime.command({
+            action: 'localData',
+            data: 'cmdHistory'
+        }, function(response) {
+            var candidates = response.data.cmdHistory;
+            if (candidates.length) {
+                Omnibar.listResults(candidates, function(c) {
+                    return $('<li/>').data('cmd', c).html(c);
+                });
+                Omnibar.focusedItem = 0;
+                Omnibar.input.val(candidates[0]);
+            }
+        });
     };
     self.onInput = function() {
         var cmd = Omnibar.input.val();

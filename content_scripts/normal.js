@@ -16,7 +16,9 @@ var Mode = (function() {
             if (!event.hasOwnProperty('sk_suppressed')) {
                 var ret = handler(event);
                 if (ret === "stopEventPropagation") {
-                    window.stopEventPropagation(event, true);
+                    event.stopImmediatePropagation();
+                    event.preventDefault();
+                    this.stopKeyupPropagation = true;
                 }
             }
         };
@@ -187,9 +189,9 @@ var Normal = (function(mode) {
     });
     self.addEventListener('keyup', function(event) {
         Normal.surfingkeysHold = 0;
-        if (window.stopKeyupPropagation) {
+        if (self.stopKeyupPropagation) {
             event.stopImmediatePropagation();
-            window.stopKeyupPropagation = false;
+            self.stopKeyupPropagation = false;
         }
     });
     self.addEventListener('pushState', function(event) {
@@ -205,15 +207,8 @@ var Normal = (function(mode) {
     });
 
     self.toggleBlacklist = function(domain) {
-        if (runtime.settings.blacklist.hasOwnProperty(domain)) {
-            delete runtime.settings.blacklist[domain];
-        } else {
-            runtime.settings.blacklist[domain] = 1;
-        }
-        RUNTIME('updateSettings', {
-            settings: {
-                blacklist: runtime.settings.blacklist
-            }
+        RUNTIME('toggleBlacklist', {
+            domain: domain
         });
     };
 
@@ -233,7 +228,7 @@ var Normal = (function(mode) {
 
     function initScroll(elm) {
         elm.skScrollBy = function(x, y, d) {
-            if (runtime.settings.smoothScroll) {
+            if (runtime.conf.smoothScroll) {
                 elm.smoothScrollBy(x, y, d);
             } else {
                 elm.scrollLeft = elm.scrollLeft + x;
@@ -666,7 +661,7 @@ var Normal = (function(mode) {
         // lastKeys in format: <keys in normal mode>[,(<mode name>\t<keys in this mode>)*], examples
         // ['se']
         // ['f', 'Hints\tBA']
-        lastKeys = runtime.settings.lastKeys;
+        lastKeys = runtime.conf.lastKeys;
         self.feedkeys(lastKeys[0]);
         var modeKeys = lastKeys.slice(1);
         for (var i = 0; i < modeKeys.length; i++) {
@@ -690,16 +685,13 @@ var Normal = (function(mode) {
         } else {
             // global mark
             url = url || window.location.href;
-            runtime.settings.marks[mark] = {
+            var mo = {};
+            mo[mark] = {
                 url: url,
                 scrollLeft: document.body.scrollLeft,
                 scrollTop: document.body.scrollTop
             };
-            RUNTIME('updateSettings', {
-                settings: {
-                    marks: runtime.settings.marks
-                }
-            });
+            RUNTIME('addVIMark', {mark: mo});
             self.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
         }
     };
@@ -709,8 +701,8 @@ var Normal = (function(mode) {
             var markInfo = localMarks[mark];
             document.body.scrollLeft = markInfo.scrollLeft;
             document.body.scrollTop = markInfo.scrollTop;
-        } else if (runtime.settings.marks.hasOwnProperty(mark)) {
-            var markInfo = runtime.settings.marks[mark];
+        } else if (runtime.conf.marks.hasOwnProperty(mark)) {
+            var markInfo = runtime.conf.marks[mark];
             if (typeof(markInfo) === "string") {
                 markInfo = {
                     url: markInfo,

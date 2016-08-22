@@ -169,7 +169,7 @@ var Hints = (function(mode) {
         style.appendTo(holder);
         if (cssSelector === "") {
             cssSelector = "a, button, select:visible, input:visible, textarea:visible";
-            if (!runtime.settings.hintsThreshold || $('*').length < runtime.settings.hintsThreshold) {
+            if (!runtime.conf.hintsThreshold || $('*').length < runtime.conf.hintsThreshold) {
                 // to avoid bad performance when there are too many clickable elements.
                 cssSelector += ", *:visible:css(cursor=pointer)";
             }

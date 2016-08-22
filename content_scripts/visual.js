@@ -132,7 +132,7 @@ var Visual = (function(mode) {
         code: function() {
             var pos = [selection.anchorNode, selection.anchorOffset];
             Normal.writeClipboard(selection.toString());
-            if (runtime.settings.afterYank === 1) {
+            if (runtime.conf.afterYank === 1) {
                 selection.setPosition(pos[0], pos[1]);
                 showCursor();
             }
@@ -402,9 +402,8 @@ var Visual = (function(mode) {
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
             showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
-        } else if (runtime.settings.findHistory.length) {
-            var query = runtime.settings.findHistory[0];
-            highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+        } else if (runtime.conf.lastQuery) {
+            highlight(new RegExp(runtime.conf.lastQuery, "g" + (caseSensitive ? "" : "i")));
             _visualEnter(query);
         }
     };
@@ -417,17 +416,17 @@ var Visual = (function(mode) {
         }, 1);
     };
 
-    runtime.actions['visualUpdate'] = function(message) {
+    runtime.on('visualUpdate', function(message) {
         hideCursor();
         clear();
         var query = message.query;
         if (query.length > 0 && (query[0].charCodeAt(0) > 0x7f || query.length > 2)) {
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         }
-    };
-    runtime.actions['visualClear'] = function(message) {
+    });
+    runtime.on('visualClear', function(message) {
         clear();
-    };
+    });
 
     function _visualEnter(query) {
         if (matches.length) {
@@ -439,8 +438,8 @@ var Visual = (function(mode) {
             showStatus(3, "Pattern not found: {0}".format(query), 1000);
         }
     }
-    runtime.actions['visualEnter'] = function(message) {
+    runtime.on('visualEnter', function(message) {
         _visualEnter(message.query);
-    };
+    });
     return self;
 })(Mode);

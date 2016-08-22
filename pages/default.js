@@ -27,10 +27,9 @@ imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     }, element.localName);
 });
 function toggleProxySite(host) {
-    var operation = (settings.autoproxy_hosts.hasOwnProperty(host)) ? 'remove' : 'add';
     RUNTIME('updateProxy', {
         host: host,
-        operation: operation
+        operation: "toggle"
     });
     return true;
 }
@@ -59,17 +58,24 @@ map('spb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
 map('spd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
 map('sps', ':setProxyMode system', 0, '#13set proxy mode `system`');
 command('proxyInfo', '#13show proxy info', function() {
-    var infos = [ {name: 'mode', value: runtime.settings.proxyMode} ];
-    if (runtime.settings.proxyMode === "byhost") {
-        infos.push({name: 'proxy', value: runtime.settings.proxy});
-        infos.push({name: 'hosts', value: Object.keys(runtime.settings.autoproxy_hosts).join(', ')});
-    } else if (runtime.settings.proxyMode === "always") {
-        infos.push({name: 'proxy', value: runtime.settings.proxy});
-    }
-    infos = infos.map(function(s) {
-        return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
+    runtime.command({
+        action: 'localData',
+        data: ['proxyMode', 'proxy', 'autoproxy_hosts']
+    }, function(response) {
+
+        var infos = [ {name: 'mode', value: response.data.proxyMode} ];
+        if (response.data.proxyMode === "byhost") {
+            infos.push({name: 'proxy', value: response.data.proxy});
+            infos.push({name: 'hosts', value: Object.keys(response.data.autoproxy_hosts).join(', ')});
+        } else if (response.data.proxyMode === "always") {
+            infos.push({name: 'proxy', value: response.data.proxy});
+        }
+        infos = infos.map(function(s) {
+            return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
+        });
+        Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
+
     });
-    Normal.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
 });
 map('spi', ':proxyInfo');
 command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
@@ -129,7 +135,7 @@ command('quit', '#5quit chrome', function() {
 map('ZQ', ':quit');
 mapkey(".", '#0Repeat last action', Normal.repeatLast, {repeatIgnore: true});
 mapkey("<Ctrl-2>", '#0Show last action', function() {
-    Normal.showPopup(htmlEncode(settings.lastKeys.join('\n')));
+    Normal.showPopup(htmlEncode(runtime.conf.lastKeys.join('\n')));
 }, {repeatIgnore: true});
 mapkey('ZZ', '#5Save session and quit', function() {
     RUNTIME('createSession', {
@@ -299,7 +305,11 @@ mapkey('ys', "#7Copy current page's source", function() {
     Normal.writeClipboard(aa.outerHTML);
 });
 mapkey('yj', "#7Copy current settings", function() {
-    Normal.writeClipboard(JSON.stringify(settings, null, 4));
+    runtime.command({
+        action: 'getSettings'
+    }, function(response) {
+        Normal.writeClipboard(JSON.stringify(response.settings, null, 4));
+    });
 });
 mapkey('yd', "#7Copy current downloading URL", function() {
     runtime.command({
@@ -347,10 +357,10 @@ mapkey('g?', '#4Reload current page without query string(all parts after questio
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
 mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
-mapkey('se', '#11Edit Settings', 'tabOpenLink(runtime.extensionURLRoot + "pages/options.html")');
+mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
 mapkey('si', '#12Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
-mapkey('sm', '#11Preview markdown', 'tabOpenLink(runtime.extensionURLRoot + "pages/github-markdown.html")');
+mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/github-markdown.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Normal.showEditor(window.location.href, function(data) {
         tabOpenLink(data);

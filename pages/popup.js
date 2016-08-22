@@ -1,43 +1,32 @@
 var disableAll = document.getElementById('disableAll'),
-    settings = document.getElementById('settings'),
-    activeTab = null,
-    surfingkeysStatus = {};
+    lnkSettings = document.getElementById('lnkSettings');
 
-function onSurfingkeysStatus(status) {
-    if (status) {
-        surfingkeysStatus = status;
-        disableAll.textContent = status.all ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
-    }
+function updateStatus(blacklist) {
+    var disabled = blacklist.hasOwnProperty('.*');
+    disableAll.textContent = disabled ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
+    runtime.command({
+        action: 'setSurfingkeysIcon',
+        status: disabled
+    });
 }
 
-function toggleBlacklist(origin) {
-    chrome.tabs.sendMessage(
-        activeTab.id, {
-            target: 'content_runtime',
-            origin: origin,
-            subject: 'toggleBlacklist'
-        },
-        onSurfingkeysStatus);
-}
-
-chrome.tabs.query({
-    active: true,
-    currentWindow: true
-}, function(tabs) {
-    activeTab = tabs[0];
-    chrome.tabs.sendMessage(
-        activeTab.id, {
-            target: 'content_runtime',
-            subject: 'getBlacklist'
-        },
-        onSurfingkeysStatus);
+runtime.command({
+    action: 'localData',
+    data: 'blacklist'
+}, function(response) {
+    updateStatus(response.data.blacklist);
 });
 
 disableAll.addEventListener('click', function() {
-    toggleBlacklist('.*');
+    runtime.command({
+        action: 'toggleBlacklist',
+        domain: ".*"
+    }, function(response) {
+        updateStatus(response.blacklist);
+    });
 });
 
-settings.addEventListener('click', function() {
+lnkSettings.addEventListener('click', function() {
     chrome.runtime.sendMessage({
         action: 'openLink',
         tab: {
@@ -46,3 +35,4 @@ settings.addEventListener('click', function() {
         url: chrome.extension.getURL('/pages/options.html')
     });
 });
+

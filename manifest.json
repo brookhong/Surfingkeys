@@ -57,7 +57,6 @@
             "content_scripts/normal.js",
             "content_scripts/visual.js",
             "content_scripts/hints.js",
-            "content_scripts/events.js",
             // endbuild
             "content_scripts/content_scripts.js",
             "pages/default.js"
@@ -79,6 +78,6 @@
         "pages/shadow.css",
         "pages/default.css"
     ],
-    "content_security_policy": "script-src 'unsafe-eval' 'sha256-lDGRdKgKO0PWPM8gzds75c6s6+XVZP1t+dfFrPEbXyk='; object-src 'self';",
+    "content_security_policy": "script-src 'unsafe-eval' 'sha256-jNQvOEIBE16jqoFcbLrv8oLxcfm2/tznTOaOlxs+skM='; object-src 'self';",
     "options_page": "pages/options.html"
 }

@@ -29,7 +29,6 @@ gulp.task('build_common_content_min', ['clean'], function() {
         "content_scripts/normal.js",
         "content_scripts/visual.js",
         "content_scripts/hints.js",
-        "content_scripts/events.js"
     ])
     .pipe(gp_concat('common_content.min.js'))
     .pipe(gp_uglify())
@@ -39,11 +38,11 @@ gulp.task('build_common_content_min', ['clean'], function() {
 gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
     gulp.src(['pages/frontend.html', 'pages/error.html', 'pages/options.html', 'pages/github-markdown.html'], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
-        .pipe(replace('sha256-lDGRdKgKO0PWPM8gzds75c6s6+XVZP1t+dfFrPEbXyk=', 'sha256-g8hZSMVxfGe/9E8KGWayP4wSYYmyR3rNoNJoxPobLcE='))
+        .pipe(replace('sha256-jNQvOEIBE16jqoFcbLrv8oLxcfm2/tznTOaOlxs+skM=', 'sha256-g8hZSMVxfGe/9E8KGWayP4wSYYmyR3rNoNJoxPobLcE='))
         .pipe(gulp.dest('dist'));
     gulp.src('manifest.json')
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '            "content_scripts/common_content.min.js",'))
-        .pipe(replace('sha256-lDGRdKgKO0PWPM8gzds75c6s6+XVZP1t+dfFrPEbXyk=', 'sha256-g8hZSMVxfGe/9E8KGWayP4wSYYmyR3rNoNJoxPobLcE='))
+        .pipe(replace('sha256-jNQvOEIBE16jqoFcbLrv8oLxcfm2/tznTOaOlxs+skM=', 'sha256-g8hZSMVxfGe/9E8KGWayP4wSYYmyR3rNoNJoxPobLcE='))
         .pipe(gulp.dest('dist'));
 });
 
