@@ -18,9 +18,14 @@ var frontendFrame = (function() {
             from: 'top'
         }, frontEndURL, [this.channel.port2]);
         self.contentWindow = this.contentWindow;
-        runtime.frontendCommand({
-            action: 'style',
-            css: runtime.settings.theme || ""
+        runtime.command({
+            action: 'localData',
+            data: 'theme'
+        }, function(response) {
+            runtime.frontendCommand({
+                action: 'style',
+                css: response.data.theme || ""
+            });
         });
         $(document).trigger("surfingkeys:frontendReady");
     }

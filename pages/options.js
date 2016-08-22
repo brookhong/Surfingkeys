@@ -7,7 +7,8 @@ defaultMappingsEditor.setReadOnly(true);
 defaultMappingsEditor.container.style.background="#f1f1f1";
 defaultMappingsEditor.$blockScrolling = Infinity;
 
-var mappingsEditor = (function(mode, elmId) {
+var mappingsEditor = null;
+function createMappingEditor(mode, elmId) {
     var self = ace.edit(elmId);
     self = $.extend(self, mode);
     self = $.extend(self, {name: "mappingsEditor", eventListeners: {}, mode: 'normal'});
@@ -61,27 +62,37 @@ var mappingsEditor = (function(mode, elmId) {
     };
 
     return self;
-})(Mode, 'mappings');
+}
 
-function renderSettings() {
-    if (runtime.settings.snippets.length) {
-        mappingsEditor.setValue(runtime.settings.snippets, -1);
-    } else {
-        mappingsEditor.setExampleValue();
-    }
-    $('#storage').val(runtime.settings.storage);
-    $('#localPath').val(runtime.settings.localPath);
+function renderSettings(rs) {
+    $('#storage').val(rs.storage);
+    $('#localPath').val(rs.localPath);
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
     $(mappingsEditor.container).css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
+    if (rs.snippets.length) {
+        mappingsEditor.setValue(rs.snippets, -1);
+    } else {
+        mappingsEditor.setExampleValue();
+    }
 }
-$.when(settingsDeferred).done(function (settings) {
-    renderSettings();
-    var old_handler = runtime.actions['settingsUpdated'];
-    runtime.actions['settingsUpdated'] = function(resp) {
-        old_handler(resp);
-        renderSettings();
-    };
+
+runtime.actions['settingsUpdated'] = function(resp) {
+    if ('snippets' in resp.settings) {
+        if (resp.settings.snippets.length) {
+            mappingsEditor.setValue(resp.settings.snippets, -1);
+        } else {
+            mappingsEditor.setExampleValue();
+        }
+    }
+    applySettings(resp.settings);
+};
+
+runtime.command({
+    action: 'getSettings'
+}, function(response) {
+    mappingsEditor = createMappingEditor(Mode, 'mappings');
+    renderSettings(response.settings);
 });
 
 $('#storage').change(function() {
@@ -96,8 +107,8 @@ $('#reset_button').click(function() {
         action: "resetSettings",
         useDefault: true
     }, function(response) {
-        runtime.settings = response.settings;
-        renderSettings();
+        renderSettings(response.settings);
+        applySettings(response.settings);
         Normal.showBanner('Settings reset', 300);
     });
 });
@@ -142,18 +153,19 @@ function saveSettings() {
         });
         Normal.showBanner('Loading settings from ' + localPath, 300);
     } else {
-        try {
-            var F = new Function(settingsCode);
-            F();
+        var delta = runUserScript(settingsCode);
+        if (delta.error === "") {
+
             RUNTIME('updateSettings', {
                 settings: {
                     snippets: settingsCode,
                     localPath: getURIPath($('#localPath').val())
                 }
             });
+
             Normal.showBanner('Settings saved', 300);
-        } catch (e) {
-            Normal.showBanner(e.toString(), 3000);
+        } else {
+            Normal.showBanner(delta.error, 9000);
         }
     }
 }

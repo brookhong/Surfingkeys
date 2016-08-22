@@ -122,8 +122,6 @@ var runtime = window.runtime || (function() {
         if (msg.target === 'content_runtime') {
             if (self.runtime_handlers[msg.subject]) {
                 self.runtime_handlers[msg.subject](msg, sender, response);
-            } else {
-                console.log("[unexpected runtime message] " + JSON.stringify(msg))
             }
         }
     });

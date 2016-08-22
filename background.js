@@ -319,7 +319,7 @@ var Service = (function() {
         }
     }
 
-    function _updateSettings(diffSettings, noack, afterSet) {
+    function _updateSettings(diffSettings, afterSet) {
         var toSet = diffSettings;
         extendSettings(diffSettings);
         chrome.storage.local.set(toSet, function() {
@@ -334,14 +334,12 @@ var Service = (function() {
                 }
             });
         }
-        if (!noack) {
-            activePorts.forEach(function(port) {
-                port.postMessage({
-                    action: 'settingsUpdated',
-                    settings: settings
-                });
+        activePorts.forEach(function(port) {
+            port.postMessage({
+                action: 'settingsUpdated',
+                settings: diffSettings
             });
-        }
+        });
     }
 
     function _loadSettingsFromUrl(url) {
@@ -647,7 +645,7 @@ var Service = (function() {
         });
     };
     self.updateSettings = function(message, sender, sendResponse) {
-        _updateSettings(message.settings, message.noack);
+        _updateSettings(message.settings);
     };
     self.changeSettingsStorage = function(message, sender, sendResponse) {
         settings.storage = message.storage;
@@ -849,11 +847,11 @@ var Service = (function() {
         }
         if (message.host) {
             if (message.operation === "add") {
-                message.host.split(',').forEach(function(host) {
+                message.host.split(/\s*[ ,\n]\s*/).forEach(function(host) {
                     settings.autoproxy_hosts[host] = 1;
                 });
             } else {
-                message.host.split(',').forEach(function(host) {
+                message.host.split(/\s*[ ,\n]\s*/).forEach(function(host) {
                     delete settings.autoproxy_hosts[host];
                 });
             }
@@ -911,6 +909,21 @@ var Service = (function() {
             chrome.tabs.remove(parseInt(uid), function() {
                 _response(message, sendResponse, {
                     response: "Done"
+                });
+            });
+        }
+    };
+    self.localData = function(message, sender, sendResponse) {
+        if (typeof(message.data) === "string") {
+            chrome.storage.local.get(message.data, function(data) {
+                _response(message, sendResponse, {
+                    data: data
+                });
+            });
+        } else {
+            chrome.storage.local.set(message.data, function() {
+                _response(message, sendResponse, {
+                    data: "Done"
                 });
             });
         }

@@ -161,6 +161,12 @@ function unmap(keystroke, domain) {
     }
 }
 
+function iunmap(keystroke, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        Insert.mappings.remove(keystroke);
+    }
+}
+
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
@@ -288,32 +294,37 @@ function httpRequest(args, onSuccess) {
     runtime.command(args, onSuccess);
 }
 
-var settings;
-function applySettings() {
+/*
+ * run user snippets, and return settings updated in snippets
+ */
+function runUserScript(snippets) {
+    var result = { settings: {}, error: "" };
     try {
-        var theInstructions = runtime.settings.snippets;
-        settings = runtime.settings;
-        var F = new Function(theInstructions);
-        F();
-        RUNTIME('updateSettings', {
-            noack: true,
-            settings: settings
-        });
+        var F = new Function('settings', snippets);
+        F(result.settings);
     } catch (e) {
-        if (window === top) {
-            console.log("reset Settings because of: " + e);
-            runtime.command({
-                action: "resetSettings",
-                useDefault: true
-            });
-        }
+        result.error = e.toString();
     }
+    return result;
+}
+
+function applySettings(rs) {
+    if (('snippets' in rs) && rs.snippets) {
+        var delta = runUserScript(rs.snippets);
+        if (!jQuery.isEmptyObject(delta.settings)) {
+            // overrides local settings from snippets
+            $.extend(runtime.settings, delta.settings);
+        } else if (delta.error !== "" && window === top) {
+            Normal.showPopup("Error found in settings: " + delta.error);
+        }
+        delete rs.snippets;
+    }
+    $.extend(runtime.settings, rs);
     $(document).trigger("surfingkeys:settingsApplied");
 }
 
 runtime.actions['settingsUpdated'] = function(response) {
-    runtime.settings = response.settings;
-    applySettings();
+    applySettings(response.settings);
 };
 
 runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
@@ -330,5 +341,5 @@ $(document).on('surfingkeys:settingsApplied', function(e) {
 });
 
 $.when(settingsDeferred).done(function (settings) {
-    applySettings();
+    applySettings(settings);
 });

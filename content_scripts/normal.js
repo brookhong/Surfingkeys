@@ -666,7 +666,7 @@ var Normal = (function(mode) {
         // lastKeys in format: <keys in normal mode>[,(<mode name>\t<keys in this mode>)*], examples
         // ['se']
         // ['f', 'Hints\tBA']
-        lastKeys = settings.lastKeys;
+        lastKeys = runtime.settings.lastKeys;
         self.feedkeys(lastKeys[0]);
         var modeKeys = lastKeys.slice(1);
         for (var i = 0; i < modeKeys.length; i++) {
