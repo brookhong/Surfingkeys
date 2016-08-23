@@ -121,12 +121,49 @@ var frontendUI = (function(mode) {
             }
         });
     });
+
     _usage.onShow = function(message) {
-        _usage.html(message.content);
+        var feature_groups = [
+            'Help',                  // 0
+            'Mouse Click',           // 1
+            'Scroll Page / Element', // 2
+            'Tabs',                  // 3
+            'Page Navigation',       // 4
+            'Sessions',              // 5
+            'Search selected with',  // 6
+            'Clipboard',             // 7
+            'Omnibar',               // 8
+            'Visual Mode',           // 9
+            'vim-like marks',        // 10
+            'Settings',              // 11
+            'Chrome URLs',           // 12
+            'Proxy',                 // 13
+            'Misc',                  // 14
+            'Insert Mode',           // 15
+        ];
+        var holder = $('<div/>');
+        var help_groups = feature_groups.map(function(){return [];});
+        [ Normal.mappings, Visual.mappings, Insert.mappings ].map(function(mappings) {
+            var words = mappings.getWords();
+            for (var i = 0; i < words.length; i++) {
+                var w = words[i];
+                var meta = mappings.find(w).meta[0];
+                var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
+                help_groups[meta.feature_group].push(item);
+            }
+        });
+        help_groups = help_groups.map(function(g, i) {
+            return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(feature_groups[i], g.join(''));
+        }).join("");
+        $(help_groups).appendTo(holder);
+        $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(holder);
+        _usage.html(holder.html());
     };
+
     runtime.on('showUsage', function(message) {
         showPopup(_usage, message);
     });
+
     _popup.onShow = function(message) {
         _popup.html(message.content);
     };

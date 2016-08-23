@@ -6,12 +6,15 @@ var command = function(cmd, annotation, jscode) {
     if (typeof(jscode) === 'string') {
         jscode = new Function(jscode);
     }
-    var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
-    Commands.items[cmd] = {
-        code: jscode,
-        feature_group: ag.feature_group,
-        annotation: annotation
+    var cmd_code = {
+        code: jscode
     };
+    if (typeof(frontendUI) !== "undefined") {
+        var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
+        cmd_code.feature_group = ag.feature_group;
+        cmd_code.annotation = ag.annotation;
+    }
+    Commands.items[cmd] = cmd_code;
 };
 
 function parseCommand(cmdline) {
@@ -35,12 +38,8 @@ function parseCommand(cmdline) {
     return tokens;
 }
 
-if (typeof(addSearchAlias) === 'undefined') {
-    addSearchAlias = function() {};
-}
-
-var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab'];
 RUNTIME = function(action, args) {
+    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab'];
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {
         // if the action can only be repeated in background, pass repeats to background with args,
@@ -85,6 +84,24 @@ function _parseAnnotation(ag) {
     return ag;
 }
 
+function createKeyTarget(code, ag, extra_chars, repeatIgnore) {
+    var keybound = {
+        code: code
+    };
+    if (extra_chars) {
+        keybound.extra_chars = extra_chars;
+    }
+    if (repeatIgnore) {
+        keybound.repeatIgnore = repeatIgnore;
+    }
+    if (ag) {
+        ag = _parseAnnotation(ag);
+        keybound.feature_group = ag.feature_group;
+        keybound.annotation = ag.annotation;
+    }
+    return keybound;
+}
+
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
     if (!options.domain || options.domain.test(window.location.origin)) {
@@ -92,17 +109,10 @@ function _mapkey(mode, keys, annotation, jscode, options) {
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
         }
-        var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
-        if (mode === Visual) {
-            ag.feature_group = 9;
-        }
-        mode.mappings.add(keys, {
-            code: jscode,
-            annotation: ag.annotation,
-            feature_group: ag.feature_group,
-            repeatIgnore: options.repeatIgnore,
-            extra_chars: options.extra_chars
-        });
+        // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
+        var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
+        var keybound = createKeyTarget(jscode, ag, options.extra_chars, options.repeatIgnore);
+        mode.mappings.add(keys, keybound);
     }
 }
 
@@ -126,28 +136,22 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var cmd = args.shift();
             if (Commands.items.hasOwnProperty(cmd)) {
                 var meta = Commands.items[cmd];
-                var ag = _parseAnnotation({annotation: new_annotation || meta.annotation, feature_group: meta.feature_group});
-                Normal.mappings.add(new_keystroke, {
-                    code: function() {
-                        meta.code.apply(meta.code, args);
-                    },
-                    annotation: ag.annotation,
-                    feature_group: ag.feature_group,
-                    extra_chars: 0
-                });
+                // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
+                var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
+                var keybound = createKeyTarget(function() {
+                    meta.code.apply(meta.code, args);
+                }, ag, meta.extra_chars, meta.repeatIgnore);
+                Normal.mappings.add(new_keystroke, keybound);
             }
         } else {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
                 var meta = old_map.meta[0];
-                var ag = _parseAnnotation({annotation: new_annotation || meta.annotation, feature_group: meta.feature_group});
+                // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
+                var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
+                var keybound = createKeyTarget(meta.code, ag, meta.extra_chars, meta.repeatIgnore);
                 Normal.mappings.remove(new_keystroke);
-                Normal.mappings.add(new_keystroke, {
-                    code: meta.code,
-                    annotation: ag.annotation,
-                    feature_group: ag.feature_group,
-                    extra_chars: meta.extra_chars
-                });
+                Normal.mappings.add(new_keystroke, keybound);
             } else if (old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke] = new_keystroke;
             }
@@ -168,7 +172,9 @@ function iunmap(keystroke, domain) {
 }
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
-    addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+    if (typeof(addSearchAlias) !== 'undefined') {
+        addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+    }
     mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
     vmapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
     mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '#6Search selected only in this site with ' + prompt, 'searchSelectedWith("{0}", true)'.format(search_url));
@@ -321,17 +327,25 @@ function applySettings(rs) {
         }
         delete rs.snippets;
     }
-    // $.extend(runtime.conf, rs);
 }
 
 runtime.on('settingsUpdated', function(response) {
-    applySettings(response.settings);
-    if ('blacklist' in response.settings) {
-        if (checkBlackList(response.settings)) {
+    var rs = response.settings;
+    applySettings(rs);
+    for (var k in rs) {
+        if (runtime.conf.hasOwnProperty(k)) {
+            runtime.conf[k] = rs[k];
+        }
+    }
+    if ('blacklist' in rs) {
+        if (checkBlackList(rs)) {
             Disabled.enter();
         } else {
             Disabled.exit();
         }
+    }
+    if ('findHistory' in rs) {
+        runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
 });
 runtime.on('ace_editor_saved', function(response) {
@@ -376,7 +390,6 @@ runtime.command({
     runtime.conf.afterYank = rs.afterYank;
     runtime.conf.smoothScroll = rs.smoothScroll;
     runtime.conf.lastKeys = rs.lastKeys;
-    runtime.conf.marks = rs.marks;
     runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
 
     applySettings(rs);

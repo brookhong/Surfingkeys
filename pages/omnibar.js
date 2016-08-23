@@ -148,7 +148,7 @@ var Omnibar = (function(ui) {
             var li = $('<li/>');
             if (b.hasOwnProperty('url')) {
                 b.title = (b.title && b.title !== "") ? b.title : b.url;
-                var type = b.type, additional = "", uid = "";
+                var type = b.type, additional = "", uid = b.uid;
                 if (!type) {
                     if (b.hasOwnProperty('lastVisitTime')) {
                         type = "☼";
@@ -601,6 +601,7 @@ var OpenVIMarks = (function() {
                     urls.push({
                         title: m,
                         type: '♡',
+                        uid: 'M' + m,
                         url: markInfo.url
                     });
                 }

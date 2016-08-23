@@ -306,42 +306,6 @@ var Normal = (function(mode) {
         return nodes;
     }
 
-    var feature_groups = [
-        'Help',                  // 0
-        'Mouse Click',           // 1
-        'Scroll Page / Element', // 2
-        'Tabs',                  // 3
-        'Page Navigation',       // 4
-        'Sessions',              // 5
-        'Search selected with',  // 6
-        'Clipboard',             // 7
-        'Omnibar',               // 8
-        'Visual Mode',           // 9
-        'vim-like marks',        // 10
-        'Settings',              // 11
-        'Chrome URLs',           // 12
-        'Proxy',                 // 13
-        'Misc',                  // 14
-        'Insert Mode',           // 15
-    ];
-    function renderMappings() {
-        var div = $("<div></div>");
-        var help_groups = feature_groups.map(function(){return [];});
-        [ Normal.mappings, Visual.mappings, Insert.mappings ].map(function(mappings) {
-            var words = mappings.getWords();
-            for (var i = 0; i < words.length; i++) {
-                var w = words[i];
-                var meta = mappings.find(w).meta[0];
-                var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
-                help_groups[meta.feature_group].push(item);
-            }
-        });
-        help_groups = help_groups.map(function(g, i) {
-            return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(feature_groups[i], g.join(''));
-        }).join("");
-        return $(help_groups);
-    }
-
     self.highlightElement = function(sn, duration) {
         var rc = sn.getBoundingClientRect();
         runtime.frontendCommand({
@@ -443,12 +407,8 @@ var Normal = (function(mode) {
     };
 
     self.showUsage = function() {
-        var _usage = $('<div/>');
-        renderMappings().appendTo(_usage);
-        $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(_usage);
         runtime.frontendCommand({
-            action: 'showUsage',
-            content: _usage.html(),
+            action: 'showUsage'
         });
     };
 
@@ -701,22 +661,30 @@ var Normal = (function(mode) {
             var markInfo = localMarks[mark];
             document.body.scrollLeft = markInfo.scrollLeft;
             document.body.scrollTop = markInfo.scrollTop;
-        } else if (runtime.conf.marks.hasOwnProperty(mark)) {
-            var markInfo = runtime.conf.marks[mark];
-            if (typeof(markInfo) === "string") {
-                markInfo = {
-                    url: markInfo,
-                    scrollLeft: 0,
-                    scrollTop: 0
-                }
-            }
-            markInfo.tab = {
-                tabbed: false,
-                active: true
-            };
-            RUNTIME("openLink", markInfo);
         } else {
-            self.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
+            runtime.command({
+                action: 'localData',
+                data: 'marks'
+            }, function(response) {
+                var marks = response.data.marks;
+                if (marks.hasOwnProperty(mark)) {
+                    var markInfo = marks[mark];
+                    if (typeof(markInfo) === "string") {
+                        markInfo = {
+                            url: markInfo,
+                            scrollLeft: 0,
+                            scrollTop: 0
+                        }
+                    }
+                    markInfo.tab = {
+                        tabbed: false,
+                        active: true
+                    };
+                    RUNTIME("openLink", markInfo);
+                } else {
+                    self.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
+                }
+            });
         }
     };
 

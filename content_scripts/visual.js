@@ -404,7 +404,7 @@ var Visual = (function(mode) {
             showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
         } else if (runtime.conf.lastQuery) {
             highlight(new RegExp(runtime.conf.lastQuery, "g" + (caseSensitive ? "" : "i")));
-            _visualEnter(query);
+            _visualEnter(runtime.conf.lastQuery);
         }
     };
 

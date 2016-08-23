@@ -924,6 +924,13 @@ var Service = (function() {
                     response: "Done"
                 });
             });
+        } else if (type === 'M') {
+            delete settings.marks[uid];
+            _updateSettings({marks: settings.marks}, function() {
+                _response(message, sendResponse, {
+                    response: "Done"
+                });
+            });
         }
     };
     self.localData = function(message, sender, sendResponse) {
