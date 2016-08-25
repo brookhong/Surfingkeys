@@ -191,8 +191,8 @@ mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: fa
 mapkey('S', '#4Go back in history', 'history.go(-1)');
 mapkey('D', '#4Go forward in history', 'history.go(1)');
 mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
-mapkey('t', '#8Open an URL', 'Normal.openOmnibar({type: "URLs", extra: "getTopSites"})');
-mapkey('go', '#8Open an URL in current tab', 'Normal.openOmnibar({type: "URLs", extra: "getTopSites", tabbed: false})');
+mapkey('t', '#8Open an URL', 'Normal.openOmnibar({type: "URLs", extra: "getAllSites"})');
+mapkey('go', '#8Open an URL in current tab', 'Normal.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false})');
 mapkey('ox', '#8Open recently closed URL', 'Normal.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
 mapkey('H', '#8Open opened URL in current tab', 'Normal.openOmnibar({type: "URLs", extra: "getTabURLs"})');
 mapkey('Q', '#8Open omnibar for word translation', function() {

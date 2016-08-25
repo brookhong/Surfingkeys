@@ -207,8 +207,7 @@ var Omnibar = (function(ui) {
 
     self.openFocused = function() {
         var ret = false, fi = self.resultsDiv.find('li.focused');
-        var url = fi.data('url'), uid = fi.data('uid');
-        var type = uid[0], uid = uid.substr(1);
+        var url = fi.data('url');
         if (url === undefined) {
             url = self.input.val();
             if (url.indexOf(':') === -1) {
@@ -223,6 +222,10 @@ var Omnibar = (function(ui) {
             }, function(ret) {
             });
         } else {
+            var type = "", uid = fi.data('uid');
+            if (uid) {
+                type = uid[0], uid = uid.substr(1);
+            }
             if (type === 'T') {
                 runtime.command({
                     action: 'focusTab',
@@ -506,27 +509,32 @@ var OpenURLs = (function() {
         prompt: '≫'
     }, all;
 
-    function _queryURLs(word) {
-        runtime.command({
-            action: self.action,
-            query: word
-        }, function(response) {
-            all = response.urls;
-            Omnibar.listURLs(response.urls, false);
-        });
-        if (self.action === "getTopSites") {
+    function _queryURLs() {
+        if (self.action === "getAllSites") {
             runtime.command({
-                action: 'getTabs',
-                query: ""
+                action: 'getTabs'
             }, function(response) {
-                all = all.concat(response.tabs);
-                Omnibar.listBookmarkFolders(function() {
-                    runtime.command({
-                        action: 'getAllURLs'
-                    }, function(response) {
-                        all = all.concat(response.urls);
+                all = response.tabs;
+                runtime.command({
+                    action: "getTopSites"
+                }, function(response) {
+                    all = all.concat(response.urls);
+                    Omnibar.listURLs(all, false);
+                    Omnibar.listBookmarkFolders(function() {
+                        runtime.command({
+                            action: 'getAllURLs'
+                        }, function(response) {
+                            all = all.concat(response.urls);
+                        });
                     });
                 });
+            });
+        } else {
+            runtime.command({
+                action: self.action
+            }, function(response) {
+                all = response.urls;
+                Omnibar.listURLs(response.urls, false);
             });
         }
     }
@@ -539,7 +547,7 @@ var OpenURLs = (function() {
         } else {
             self.prompt = '≫';
         }
-        _queryURLs("");
+        _queryURLs();
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
