@@ -1,8 +1,5 @@
 var frontendFrame = (function() {
-    var self = {
-        successById: {},
-        actions: {}
-    };
+    var self = {};
     var uiHost = document.createElement("div");
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
@@ -20,21 +17,24 @@ var frontendFrame = (function() {
         self.contentWindow = this.contentWindow;
         $(document).trigger("surfingkeys:frontendReady");
     }
+
+    self.setFrontFrame = function(response) {
+        ifr.css('height', response.frameHeight);
+        ifr.css('pointer-events', response.pointerEvents);
+        if (response.frameHeight === '0px') {
+            uiHost.blur();
+        }
+    };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
         ifr[0].channel.port1.onmessage = function(message) {
-            var response = message.data;
-            if (self.successById[response.id]) {
-                var f = self.successById[response.id];
-                delete self.successById[response.id];
-                f(response);
-            } else if (self.actions[response.action]) {
-                self.actions[response.action](response);
-            }
-            ifr.css('height', response.frameHeight);
-            ifr.css('pointer-events', response.pointerEvents);
-            if (response.frameHeight === '0px') {
-                uiHost.blur();
+            var _message = message.data;
+            if (_message.action && self.hasOwnProperty(_message.action)) {
+                var ret = self[_message.action](_message);
+                if (ret) {
+                    _message.data = ret;
+                    self.contentWindow.postMessage(_message, frontEndURL);
+                }
             }
         };
         ifr[0].removeEventListener("load", initPort, false);

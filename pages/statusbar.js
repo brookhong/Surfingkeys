@@ -26,7 +26,7 @@ var StatusBar = (function(ui) {
         }
         $(span[lastSpan]).css('border-right', '');
         ui.css('display', lastSpan === -1 ? 'none' : 'block');
-        frontendUI.flush();
+        Front.flush();
         if (duration) {
             timerHide = setTimeout(function() {
                 ui.css('display', 'none');
@@ -34,7 +34,7 @@ var StatusBar = (function(ui) {
         }
     };
     return self;
-})(frontendUI.statusBar);
+})(Front.statusBar);
 
 var Find = (function() {
     var self = {};
@@ -52,7 +52,7 @@ var Find = (function() {
         StatusBar.show(0, "/");
         StatusBar.show(1, input);
         input.on('input', function() {
-            runtime.contentCommand({
+            Front.visualCommand({
                 action: 'visualUpdate',
                 query: input.val()
             });
@@ -66,7 +66,7 @@ var Find = (function() {
         });
         input[0].onkeydown = function(event) {
             if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
-                runtime.contentCommand({
+                Front.visualCommand({
                     action: 'visualClear'
                 });
                 reset();
@@ -74,7 +74,7 @@ var Find = (function() {
                 var query = input.val();
                 reset();
                 runtime.updateHistory('find', query);
-                runtime.contentCommand({
+                Front.visualCommand({
                     action: 'visualEnter',
                     query: query
                 });
@@ -84,7 +84,7 @@ var Find = (function() {
                     historyInc = historyInc % findHistory.length;
                     var query = findHistory[historyInc];
                     input.val(query);
-                    runtime.contentCommand({
+                    Front.visualCommand({
                         action: 'visualUpdate',
                         query: query
                     });

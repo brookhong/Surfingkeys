@@ -306,20 +306,6 @@ var Normal = (function(mode) {
         return nodes;
     }
 
-    self.highlightElement = function(sn, duration) {
-        var rc = sn.getBoundingClientRect();
-        runtime.frontendCommand({
-            action: 'highlightElement',
-            duration: duration || 200,
-            rect: {
-                top: rc.top,
-                left: rc.left,
-                width: rc.width,
-                height: rc.height
-            }
-        });
-    };
-
     function isElementPartiallyInViewport(el) {
         var rect = el.getBoundingClientRect();
         var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
@@ -337,7 +323,16 @@ var Normal = (function(mode) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
             sn.scrollIntoViewIfNeeded();
-            self.highlightElement(sn);
+            var rc = sn.getBoundingClientRect();
+            Front.highlightElement({
+                duration: 200,
+                rect: {
+                    top: rc.top,
+                    left: rc.left,
+                    width: rc.width,
+                    height: rc.height
+                }
+            });
         }
     };
 
@@ -406,121 +401,10 @@ var Normal = (function(mode) {
         RUNTIME('nextFrame');
     };
 
-    self.showUsage = function() {
-        runtime.frontendCommand({
-            action: 'showUsage'
-        });
-    };
-
-    self.showPopup = function(content) {
-        runtime.frontendCommand({
-            action: 'showPopup',
-            content: content
-        });
-    };
-
-    self.showEditor = function(element, onWrite, type) {
-        var content, initial_line = 0;
-        if (typeof(element) === "string") {
-            content = element;
-            self.elementBehindEditor = document.body;
-        } else if (type === 'select') {
-            var selected = $(element).val();
-            var options = $(element).find('option').map(function(i) {
-                if ($(this).val() === selected) {
-                    initial_line = i;
-                }
-                return "{0} >< {1}".format($(this).text(), $(this).val());
-            }).toArray();
-            content = options.join('\n');
-            self.elementBehindEditor = element;
-        } else {
-            content = $(element).val();
-            self.elementBehindEditor = element;
-        }
-        self.onEditorSaved = onWrite;
-        runtime.frontendCommand({
-            action: 'showEditor',
-            type: type || "textarea",
-            initial_line: initial_line,
-            content: content
-        });
-    };
-
-    self.chooseTab = function() {
-        runtime.frontendCommand({
-            action: 'chooseTab'
-        });
-    };
-
-    self.openOmnibar = function(args) {
-        args.action = 'openOmnibar';
-        runtime.frontendCommand(args);
-    };
-
-    self.openOmniquery = function(args) {
-        self.onOmniQuery = function(query) {
-            httpRequest({
-                'url': args.url + query
-            }, function(res) {
-                var words = args.parseResult(res);
-
-                runtime.frontendCommand({
-                    action: 'updateOmnibarResult',
-                    words: words
-                });
-            });
-        };
-        self.openOmnibar(({type: "OmniQuery", extra: args.query}))
-    };
-
-    self.openFinder = function() {
-        runtime.frontendCommand({
-            action: "openFinder"
-        });
-    };
-
-    self.showBanner = function(msg, linger_time) {
-        runtime.frontendCommand({
-            action: "showBanner",
-            content: msg,
-            linger_time: linger_time
-        });
-    };
-
-    self.showBubble = function(pos, msg) {
-        runtime.frontendCommand({
-            action: "showBubble",
-            content: msg,
-            position: pos
-        });
-    };
-
-    self.hideBubble = function() {
-        runtime.frontendCommand({
-            action: 'hideBubble'
-        });
-    };
-
-    self.getContentFromClipboard = function(onReady) {
-        runtime.frontendCommand({
-            action: 'getContentFromClipboard'
-        }, onReady);
-    };
-
-    self.writeClipboard = function(text) {
-        runtime.frontendCommand({
-            action: 'writeClipboard',
-            content: text
-        });
-    };
-
     self.finish = function() {
         this.map_node = this.mappings;
         this.pendingMap = null;
-        runtime.frontendCommand({
-            action: 'hideKeystroke'
-        });
+        Front.hideKeystroke();
         if (this.repeats) {
             this.repeats = "";
         }
@@ -545,10 +429,7 @@ var Normal = (function(mode) {
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
-            runtime.frontendCommand({
-                action: 'showKeystroke',
-                key: key
-            });
+            Front.showKeystroke(key);
             ret = "stopEventPropagation";
         } else {
             this.map_node = this.map_node.find(key);
@@ -559,10 +440,7 @@ var Normal = (function(mode) {
                     var code = this.map_node.meta[0].code;
                     if (this.map_node.meta[0].extra_chars) {
                         this.pendingMap = code;
-                        runtime.frontendCommand({
-                            action: 'showKeystroke',
-                            key: key
-                        });
+                        Front.showKeystroke(key);
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta[0].word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
@@ -575,10 +453,7 @@ var Normal = (function(mode) {
                         }, 0);
                     }
                 } else {
-                    runtime.frontendCommand({
-                        action: 'showKeystroke',
-                        key: key
-                    });
+                    Front.showKeystroke(key);
                 }
                 ret = "stopEventPropagation";
             }
@@ -652,7 +527,7 @@ var Normal = (function(mode) {
                 scrollTop: document.body.scrollTop
             };
             RUNTIME('addVIMark', {mark: mo});
-            self.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
+            Front.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
         }
     };
 
@@ -682,7 +557,7 @@ var Normal = (function(mode) {
                     };
                     RUNTIME("openLink", markInfo);
                 } else {
-                    self.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
+                    Front.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
                 }
             });
         }
@@ -690,7 +565,7 @@ var Normal = (function(mode) {
 
     self.resetSettings = function() {
         RUNTIME("resetSettings");
-        self.showBanner("Settings reset.");
+        Front.showBanner("Settings reset.");
     };
 
     self.insertJS = function(code, onload) {

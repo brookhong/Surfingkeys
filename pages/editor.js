@@ -38,7 +38,7 @@ var AceEditor = (function(mode, elmId) {
                     if (q.toLowerCase() === 'y') {
                         document.activeElement.blur();
                         self.exit();
-                        frontendUI.hidePopup();
+                        Front.hidePopup();
                     }
                 }, {
                     bottom: true,
@@ -52,7 +52,7 @@ var AceEditor = (function(mode, elmId) {
             } else {
                 document.activeElement.blur();
                 self.exit();
-                frontendUI.hidePopup();
+                Front.hidePopup();
             }
         }
     });
@@ -112,7 +112,7 @@ var AceEditor = (function(mode, elmId) {
     var pageWordCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
             if (!wordsOnPage) {
-                runtime.contentCommand({
+                Front.contentCommand({
                     action: 'getPageText'
                 }, function(message) {
                     wordsOnPage = getWordsOnPage(message.data);
@@ -175,23 +175,23 @@ var AceEditor = (function(mode, elmId) {
         var vim = cm.constructor.Vim;
         vimDeferred.resolve(vim);
         vim.defineEx("write", "w", function(cm, input) {
-            runtime.contentCommand({
+            Front.contentCommand({
                 action: 'ace_editor_saved',
                 data: self._getValue()
             });
         });
         vim.defineEx("wq", "wq", function(cm, input) {
-            runtime.contentCommand({
+            Front.contentCommand({
                 action: 'ace_editor_saved',
                 data: self._getValue()
             });
-            frontendUI.hidePopup();
+            Front.hidePopup();
             // tell vim editor that command is done
             self.state.cm.signal('vim-command-done', '')
         });
         vim.map('<CR>', ':wq', 'normal')
         vim.defineEx("quit", "q", function(cm, input) {
-            frontendUI.hidePopup();
+            Front.hidePopup();
             self.state.cm.signal('vim-command-done', '')
         });
     });

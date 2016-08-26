@@ -5,7 +5,7 @@ Surfingkeys is another Chrome extension that provides keyboard-based navigation 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
-        Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
+        Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
 [Reference for editing your own settings](#edit-your-own-settings).
@@ -73,7 +73,7 @@ Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hin
 
     Hints.characters = 'yuiophjklnm'; // for right hand
 
-When hints are overlapped, press `Shift` to flip them.
+When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
 
 ## Surfingkeys modes
 
@@ -169,7 +169,7 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 If you prefer to use omnibar always, use below mapping:
 
-    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
+    mapkey(' ', 'Choose a tab with omnibar', 'Front.openOmnibar(OpenTabs)');
 
 which works same as:
 
@@ -392,8 +392,8 @@ By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/mark
 
 Just an example to map one keystroke to different functions on different sites,
 
-    mapkey('zz', 'Choose a tab', 'Normal.chooseTab()', {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', 'Normal.showUsage()', {domain: /google\.com/i});
+    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
 
 mapkey in visual mode
 

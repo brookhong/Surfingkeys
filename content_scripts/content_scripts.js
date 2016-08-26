@@ -2,20 +2,21 @@ if (typeof(Commands) === 'undefined') {
     Commands = { items: {} };
 }
 
-var command = function(cmd, annotation, jscode) {
+function command(cmd, annotation, jscode) {
     if (typeof(jscode) === 'string') {
         jscode = new Function(jscode);
     }
     var cmd_code = {
         code: jscode
     };
-    if (typeof(frontendUI) !== "undefined") {
+    if (Front.isProvider()) {
+        // annotations for commands ared used in frontend.html
         var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
         cmd_code.feature_group = ag.feature_group;
         cmd_code.annotation = ag.annotation;
     }
     Commands.items[cmd] = cmd_code;
-};
+}
 
 function parseCommand(cmdline) {
     var cmdline = cmdline.trim();
@@ -109,8 +110,8 @@ function _mapkey(mode, keys, annotation, jscode, options) {
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
         }
-        // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
-        var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
+        // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
+        var ag = (!Front.isProvider()) ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
         var keybound = createKeyTarget(jscode, ag, options.extra_chars, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
     }
@@ -136,8 +137,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var cmd = args.shift();
             if (Commands.items.hasOwnProperty(cmd)) {
                 var meta = Commands.items[cmd];
-                // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
-                var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
+                var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
                 var keybound = createKeyTarget(function() {
                     meta.code.apply(meta.code, args);
                 }, ag, meta.extra_chars, meta.repeatIgnore);
@@ -147,8 +147,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
                 var meta = old_map.meta[0];
-                // to save memory, we keep annotations only in frontendUI, where they are used to create usage message.
-                var ag = (typeof(frontendUI) === "undefined") ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
+                var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
                 var keybound = createKeyTarget(meta.code, ag, meta.extra_chars, meta.repeatIgnore);
                 Normal.mappings.remove(new_keystroke);
                 Normal.mappings.add(new_keystroke, keybound);
@@ -226,13 +225,13 @@ function tabOpenLink(str) {
 }
 
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-    Normal.getContentFromClipboard(function(response) {
+    Front.getContentFromClipboard(function(response) {
         var query = window.getSelection().toString() || response.data;
         if (onlyThisSite) {
             query += " site:" + window.location.hostname;
         }
         if (interactive) {
-            Normal.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
+            Front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
         } else {
             tabOpenLink(se + encodeURI(query));
         }
@@ -313,6 +312,14 @@ function runUserScript(snippets) {
 }
 
 function applySettings(rs) {
+    for (var k in rs) {
+        if (runtime.conf.hasOwnProperty(k)) {
+            runtime.conf[k] = rs[k];
+        }
+    }
+    if ('findHistory' in rs) {
+        runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
+    }
     if (('snippets' in rs) && rs.snippets) {
         var delta = runUserScript(rs.snippets);
         if (!jQuery.isEmptyObject(delta.settings)) {
@@ -323,20 +330,14 @@ function applySettings(rs) {
             }
             $.extend(runtime.conf, delta.settings);
         } else if (delta.error !== "" && window === top) {
-            Normal.showPopup("Error found in settings: " + delta.error);
+            Front.showPopup("Error found in settings: " + delta.error);
         }
-        delete rs.snippets;
     }
 }
 
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
-    for (var k in rs) {
-        if (runtime.conf.hasOwnProperty(k)) {
-            runtime.conf[k] = rs[k];
-        }
-    }
     if ('blacklist' in rs) {
         if (checkBlackList(rs)) {
             Disabled.enter();
@@ -344,38 +345,7 @@ runtime.on('settingsUpdated', function(response) {
             Disabled.exit();
         }
     }
-    if ('findHistory' in rs) {
-        runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
-    }
 });
-runtime.on('ace_editor_saved', function(response) {
-    Normal.onEditorSaved(response.data);
-    if (runtime.conf.focusOnSaved && isEditable(Normal.elementBehindEditor)) {
-        Normal.elementBehindEditor.focus();
-        Insert.enter();
-    }
-});
-runtime.on('omnibar_query_entered', function(response) {
-    runtime.updateHistory('OmniQuery', response.query);
-    Normal.onOmniQuery(response.query);
-});
-runtime.on('getPageText', function(response) {
-    return document.body.innerText;
-});
-
-runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
-    if (msg.frameId === window.frameId) {
-        window.focus();
-        document.body.scrollIntoViewIfNeeded();
-        Normal.highlightElement(window.frameElement || document.body, 500);
-
-        if (Mode.stack().length === 0) {
-            // if mode stack is empty, enter normal mode automatically
-            Normal.enter();
-            GetBackFocus.enter();
-        }
-    }
-};
 
 function checkBlackList(sb) {
     return sb.blacklist[window.location.origin] || sb.blacklist['.*']
@@ -386,11 +356,6 @@ runtime.command({
     action: 'getSettings'
 }, function(response) {
     var rs = response.settings;
-    runtime.conf.hintsThreshold = rs.hintsThreshold;
-    runtime.conf.afterYank = rs.afterYank;
-    runtime.conf.smoothScroll = rs.smoothScroll;
-    runtime.conf.lastKeys = rs.lastKeys;
-    runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
 
     applySettings(rs);
 

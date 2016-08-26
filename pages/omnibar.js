@@ -94,14 +94,14 @@ var Omnibar = (function(ui) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
-            frontendUI.hidePopup();
+            Front.hidePopup();
             event.preventDefault();
         } else if (event.sk_keyName === Mode.specialKeys["<Ctrl-d>"]) {
             deleteFocused();
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
-            handler.onEnter() && frontendUI.hidePopup();
+            handler.onEnter() && Front.hidePopup();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
             expandAlias(self.input.val()) && event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
@@ -290,7 +290,7 @@ var Omnibar = (function(ui) {
     };
 
     return self;
-})(frontendUI.omnibar);
+})(Front.omnibar);
 
 var OpenBookmarks = (function() {
     var self = {
@@ -458,7 +458,7 @@ var AddBookmark = (function() {
             action: 'createBookmark',
             page: self.page
         }, function(response) {
-            Normal.showBanner("Bookmark created at {0}.".format(selectedFolder.title + self.page.path.join('/')));
+            Front.showBanner("Bookmark created at {0}.".format(selectedFolder.title + self.page.path.join('/')));
         });
         return true;
     };
@@ -744,14 +744,14 @@ var OmniQuery = (function() {
     self.onOpen = function(arg) {
         if (arg) {
             Omnibar.input.val(arg);
-            runtime.contentCommand({
+            Front.contentCommand({
                 action: 'omnibar_query_entered',
                 query: arg
             });
         }
     };
     self.onEnter = function() {
-        runtime.contentCommand({
+        Front.contentCommand({
             action: 'omnibar_query_entered',
             query: Omnibar.input.val()
         });

@@ -5,7 +5,7 @@ Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
-        Normal.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
+        Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
 [配置参考](#配置参考).
@@ -74,7 +74,7 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 
     Hints.characters = 'yuiophjklnm'; // for right hand
 
-当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。
+当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。按住空格键可隐藏拨号盘，松开恢复。
 
 ## Surfingkeys支持的模式
 
@@ -167,7 +167,7 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 如果你希望一直用搜索栏来选择标签页，可使用如下设置:
 
-    mapkey(' ', 'Choose a tab with omnibar', 'Normal.openOmnibar(OpenTabs)');
+    mapkey(' ', 'Choose a tab with omnibar', 'Front.openOmnibar(OpenTabs)');
 
 效果相当于：
 
@@ -388,8 +388,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
-    mapkey('zz', 'Choose a tab', 'Normal.chooseTab()', 0, /github\.com/i);
-    mapkey('zz', 'Show usage', 'Normal.showUsage()', 0, /google\.com/i);
+    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', 0, /github\.com/i);
+    mapkey('zz', 'Show usage', 'Front.showUsage()', 0, /google\.com/i);
 
 可视化模式下的mapkey
 

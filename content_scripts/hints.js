@@ -6,6 +6,8 @@ var Hints = (function(mode) {
         var hints = holder.find('>div');
         if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
             hide();
+        } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
+            holder.hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.shiftKey) {
             flip();
         } else if (hints.length > 0) {
@@ -27,6 +29,11 @@ var Hints = (function(mode) {
             handleHint();
         }
         return "stopEventPropagation";
+    });
+    self.addEventListener('keyup', function(event) {
+        if (event.keyCode === KeyboardUtils.keyCodes.space) {
+            holder.show();
+        }
     });
 
     var prefix = "",
@@ -165,7 +172,7 @@ var Hints = (function(mode) {
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
-        holder.html('');
+        holder.show().html('');
         style.appendTo(holder);
         if (cssSelector === "") {
             cssSelector = "a, button, select:visible, input:visible, textarea:visible";

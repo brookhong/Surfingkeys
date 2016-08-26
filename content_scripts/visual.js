@@ -9,12 +9,11 @@ var Visual = (function(mode) {
                 selection.collapse(selection.anchorNode, selection.anchorOffset);
                 showCursor();
             } else {
-                hideCursor();
-                clear();
+                self.visualClear();
                 self.exit();
             }
             state--;
-            showStatus(2, status[state]);
+            Front.showStatus(2, status[state]);
             updated = "stopEventPropagation";
         } else if (event.sk_keyName.length) {
             updated = Normal._handleMapKey.call(self, event.sk_keyName);
@@ -45,7 +44,7 @@ var Visual = (function(mode) {
                 }
                 break;
         }
-        showStatus(2, status[state]);
+        Front.showStatus(2, status[state]);
     });
 
     self.mappings = new Trie('', Trie.SORT_NONE);
@@ -131,7 +130,7 @@ var Visual = (function(mode) {
         feature_group: 9,
         code: function() {
             var pos = [selection.anchorNode, selection.anchorOffset];
-            Normal.writeClipboard(selection.toString());
+            Front.writeClipboard(selection.toString());
             if (runtime.conf.afterYank === 1) {
                 selection.setPosition(pos[0], pos[1]);
                 showCursor();
@@ -161,15 +160,6 @@ var Visual = (function(mode) {
         status = ['', 'Caret', 'Range'],
         mark_template = $('<surfingkeys_mark>')[0],
         cursor = $('<div class="surfingkeys_cursor"></div>')[0];
-
-    function showStatus(pos, msg, duration) {
-        runtime.frontendCommand({
-            action: "showStatus",
-            content: msg,
-            duration: duration,
-            position: pos
-        });
-    }
 
     function getStartPos() {
         var node = null,
@@ -301,15 +291,20 @@ var Visual = (function(mode) {
         $(cursor).html('');
     }
 
+    function createMatchMark(node, pos, len) {
+        var mark = mark_template.cloneNode(false);
+        var found = node.splitText(pos);
+        found.splitText(len);
+        mark.appendChild(found.cloneNode(true));
+        found.parentNode.replaceChild(mark, found);
+        return mark;
+    }
+
     function highlight(pattern) {
         getTextNodes(document.body, pattern).forEach(function(node) {
             var mtches = node.data.match(pattern);
             mtches.forEach(function(match) {
-                var mark = mark_template.cloneNode(false);
-                var found = node.splitText(node.data.indexOf(match));
-                found.splitText(match.length);
-                mark.appendChild(found.cloneNode(true));
-                found.parentNode.replaceChild(mark, found);
+                var mark = createMatchMark(node, node.data.indexOf(match), match.length);
                 matches.push(mark);
                 node = mark.nextSibling;
             });
@@ -321,14 +316,15 @@ var Visual = (function(mode) {
                 var br = matches[i].getBoundingClientRect();
                 if (br.top > 0 && br.left > 0) {
                     currentOccurrence = i;
-                    showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+                    Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
                     break;
                 }
             }
         }
     }
 
-    function clear() {
+    self.visualClear = function() {
+        hideCursor();
         var nodes = matches;
         for (var i = 0; i < nodes.length; i++) {
             if (nodes[i].parentNode) {
@@ -336,31 +332,8 @@ var Visual = (function(mode) {
             }
         }
         matches = [];
-        showStatus(3, '');
+        Front.showStatus(3, '');
     }
-
-    self.onQuery = function(message) {
-        hideCursor();
-        clear();
-        var query = message.query;
-        if (query.length > 0 && (query[0].charCodeAt(0) > 0x7f || query.length > 2)) {
-            highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
-        }
-    };
-
-    self.onClear = function(message) {
-        clear();
-    };
-
-    self.onEnter = function(message) {
-        if (matches.length) {
-            state = 1;
-            select(matches[currentOccurrence]);
-            showStatus(2, status[state]);
-        } else {
-            showStatus(3, "Pattern not found: {0}".format(message.query));
-        }
-    };
 
     self.toggle = function() {
         switch (state) {
@@ -380,7 +353,7 @@ var Visual = (function(mode) {
                 break;
         }
         state = (state + 1) % 3;
-        showStatus(2, status[state]);
+        Front.showStatus(2, status[state]);
     };
 
     self.star = function() {
@@ -391,7 +364,7 @@ var Visual = (function(mode) {
                 query = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset);
             }
             runtime.updateHistory('find', query);
-            clear();
+            self.visualClear();
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
             showCursor();
         }
@@ -401,10 +374,10 @@ var Visual = (function(mode) {
         if (matches.length) {
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
-            showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+            Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
         } else if (runtime.conf.lastQuery) {
             highlight(new RegExp(runtime.conf.lastQuery, "g" + (caseSensitive ? "" : "i")));
-            _visualEnter(runtime.conf.lastQuery);
+            self.visualEnter(runtime.conf.lastQuery);
         }
     };
 
@@ -416,30 +389,60 @@ var Visual = (function(mode) {
         }, 1);
     };
 
-    runtime.on('visualUpdate', function(message) {
-        hideCursor();
-        clear();
-        var query = message.query;
-        if (query.length > 0 && (query[0].charCodeAt(0) > 0x7f || query.length > 2)) {
-            highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+    function visualUpdateForContentWindow(query) {
+        self.visualClear();
+
+        // always find from the beginning
+        selection.setPosition(document.body.firstChild, 0);
+        var scrollTop = document.body.scrollTop,
+            posToStartFind = [selection.anchorNode, selection.anchorOffset];
+
+        if (window.find(query, caseSensitive)) {
+            if (document.body.scrollTop !== scrollTop) {
+                // set new start position if there is no occurrence in current view.
+                scrollTop = document.body.scrollTop;
+                posToStartFind = [selection.anchorNode, selection.anchorOffset];
+            }
+            var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
+            matches.push(mark);
+            selection.setPosition(mark.nextSibling, 0);
+
+            while(document.body.scrollTop === scrollTop && window.find(query, caseSensitive)) {
+                var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
+                matches.push(mark);
+                selection.setPosition(mark.nextSibling, 0);
+            }
+            document.body.scrollTop = scrollTop;
+            selection.setPosition(posToStartFind[0], posToStartFind[1]);
         }
-    });
-    runtime.on('visualClear', function(message) {
-        clear();
+
+    }
+    runtime.on('visualUpdate', function(message) {
+        // for finding in content window, we use window.find for a better performance.
+        visualUpdateForContentWindow(message.query);
     });
 
-    function _visualEnter(query) {
+    // this is only for finding in frontend.html, like in usage popover.
+    self.visualUpdate = function(query) {
+        self.visualClear();
+        highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+    };
+
+    runtime.on('visualClear', self.visualClear);
+
+    self.visualEnter = function (query) {
+        highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
             state = 1;
-            showStatus(2, status[state]);
+            Front.showStatus(2, status[state]);
             select(matches[currentOccurrence]);
             self.enter();
         } else {
-            showStatus(3, "Pattern not found: {0}".format(query), 1000);
+            Front.showStatus(3, "Pattern not found: {0}".format(query), 1000);
         }
-    }
+    };
     runtime.on('visualEnter', function(message) {
-        _visualEnter(message.query);
+        self.visualEnter(message.query);
     });
     return self;
 })(Mode);

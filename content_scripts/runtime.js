@@ -1,7 +1,13 @@
 var runtime = window.runtime || (function() {
     var self = {
-        successById: {},
-        conf: {},       // local part from settings
+        conf: {
+            // local part from settings
+            hintsThreshold: 10000,
+            afterYank: 1,
+            smoothScroll: true,
+            lastKeys: "",
+            lastQuery: ""
+        },
         runtime_handlers: {}
     }, actions = {};
     var _port = chrome.runtime.connect({
@@ -15,10 +21,11 @@ var runtime = window.runtime || (function() {
             }, 100);
         }
     });
+    var callbacks = {};
     _port.onMessage.addListener(function(_message) {
-        if (self.successById[_message.id]) {
-            var f = self.successById[_message.id];
-            delete self.successById[_message.id];
+        if (callbacks[_message.id]) {
+            var f = callbacks[_message.id];
+            delete callbacks[_message.id];
             f(_message);
         } else if (actions[_message.action]) {
             var result = {
@@ -43,25 +50,14 @@ var runtime = window.runtime || (function() {
         actions[message].push(cb);
     };
 
-    self.command = function(args, successById) {
+    self.command = function(args, cb) {
         args.id = generateQuickGuid();
-        if (successById) {
-            self.successById[args.id] = successById;
+        if (cb) {
+            callbacks[args.id] = cb;
             // request background to hold _sendResponse for a while to send back result
             args.ack = true;
         }
         _port.postMessage(args);
-    };
-    self.frontendCommand = function(args, successById) {
-        args.toFrontend = true;
-        if (window === top) {
-            createFrontEnd();
-        }
-        self.command(args, successById);
-    };
-    self.contentCommand = function(args, successById) {
-        args.toContent = true;
-        self.command(args, successById);
     };
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';

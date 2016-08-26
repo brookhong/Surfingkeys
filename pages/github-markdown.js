@@ -15,11 +15,11 @@ function previewMarkdown(mk) {
 }
 
 $(document).on('surfingkeys:frontendReady', function(e) {
-    Normal.getContentFromClipboard(function(response) {
+    Front.getContentFromClipboard(function(response) {
         previewMarkdown(response.data);
     });
 });
 
 mapkey('sm', 'Edit markdown source', function() {
-    Normal.showEditor(markdown_code, previewMarkdown, 'markdown');
+    Front.showEditor(markdown_code, previewMarkdown, 'markdown');
 });
