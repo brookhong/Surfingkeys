@@ -189,10 +189,12 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
 
 For example,
 
-    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(args) {
+        // args is an array of arguments
         RUNTIME('updateProxy', {
-            mode: mode
+            mode: args[0]
         });
+        // return true to close Omnibar for Commands, false to keep Omnibar on
         return true;
     });
 

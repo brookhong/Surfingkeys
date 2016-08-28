@@ -593,11 +593,11 @@ var OpenVIMarks = (function() {
         var query = Omnibar.input.val();
         var urls = [];
         runtime.command({
-            action: 'localData',
-            data: 'marks'
+            action: 'getSettings',
+            key: 'marks'
         }, function(response) {
-            for (var m in response.data.marks) {
-                var markInfo = response.data.marks[m];
+            for (var m in response.settings.marks) {
+                var markInfo = response.settings.marks[m];
                 if (typeof(markInfo) === "string") {
                     markInfo = {
                         url: markInfo,
@@ -675,10 +675,10 @@ var Commands = (function() {
     self.onOpen = function() {
         historyInc = -1;
         runtime.command({
-            action: 'localData',
-            data: 'cmdHistory'
+            action: 'getSettings',
+            key: 'cmdHistory'
         }, function(response) {
-            var candidates = response.data.cmdHistory;
+            var candidates = response.settings.cmdHistory;
             if (candidates.length) {
                 Omnibar.listResults(candidates, function(c) {
                     return $('<li/>').data('cmd', c).html(c);
@@ -712,7 +712,7 @@ var Commands = (function() {
             var cmd = args.shift();
             if (self.items.hasOwnProperty(cmd)) {
                 var code = self.items[cmd].code;
-                ret = code.apply(code, args);
+                ret = code.call(code, args);
             } else {
                 var out;
                 try {

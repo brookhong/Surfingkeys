@@ -47,10 +47,10 @@ var frontendFrame = (function() {
 })();
 
 runtime.command({
-    action: 'localData',
-    data: ['blacklist', 'blacklistPattern']
+    action: 'getSettings',
+    key: ['blacklist', 'blacklistPattern']
 }, function(response) {
-    if (checkBlackList(response.data)) {
+    if (checkBlackList(response.settings)) {
         runtime.command({
             action: 'setSurfingkeysIcon',
             status: true

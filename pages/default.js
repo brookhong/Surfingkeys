@@ -39,17 +39,20 @@ mapkey('cp', '#13Toggle proxy for current site', function() {
         toggleProxySite(host);
     }
 });
-command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(endpoint, type) {
-    var proxy = (type || "PROXY") + " " + endpoint;
+command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(args) {
+    // args is an array of arguments
+    var proxy = ((args.length > 1) ? args[1] : "PROXY") + " " + args[0];
+    console.log(proxy);
     RUNTIME('updateProxy', {
         proxy: proxy
     });
     return true;
 });
-command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(mode) {
+command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
     RUNTIME('updateProxy', {
-        mode: mode
+        mode: args[0]
     });
+    // return true to close Omnibar for Commands, false to keep Omnibar on
     return true;
 });
 // create shortcuts for the command with different parameters
@@ -57,18 +60,19 @@ map('spa', ':setProxyMode always', 0, '#13set proxy mode `always`');
 map('spb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
 map('spd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
 map('sps', ':setProxyMode system', 0, '#13set proxy mode `system`');
+map('spc', ':setProxyMode clear', 0, '#13set proxy mode `clear`');
 command('proxyInfo', '#13show proxy info', function() {
     runtime.command({
-        action: 'localData',
-        data: ['proxyMode', 'proxy', 'autoproxy_hosts']
+        action: 'getSettings',
+        key: ['proxyMode', 'proxy', 'autoproxy_hosts']
     }, function(response) {
 
-        var infos = [ {name: 'mode', value: response.data.proxyMode} ];
-        if (response.data.proxyMode === "byhost") {
-            infos.push({name: 'proxy', value: response.data.proxy});
-            infos.push({name: 'hosts', value: Object.keys(response.data.autoproxy_hosts).join(', ')});
-        } else if (response.data.proxyMode === "always") {
-            infos.push({name: 'proxy', value: response.data.proxy});
+        var infos = [ {name: 'mode', value: response.settings.proxyMode} ];
+        if (response.settings.proxyMode === "byhost") {
+            infos.push({name: 'proxy', value: response.settings.proxy});
+            infos.push({name: 'hosts', value: Object.keys(response.settings.autoproxy_hosts).join(', ')});
+        } else if (response.settings.proxyMode === "always") {
+            infos.push({name: 'proxy', value: response.settings.proxy});
         }
         infos = infos.map(function(s) {
             return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
@@ -78,21 +82,27 @@ command('proxyInfo', '#13show proxy info', function() {
     });
 });
 map('spi', ':proxyInfo');
-command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(host) {
+command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(args) {
+    var host = args.join('');
+    console.log(host);
     RUNTIME('updateProxy', {
         host: host,
         operation: 'add'
     });
     return true;
 });
-command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible directly.', function(host) {
+command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible directly.', function(args) {
+    var host = args.join('');
     RUNTIME('updateProxy', {
         host: host,
         operation: 'remove'
     });
     return true;
 });
-command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', toggleProxySite);
+command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', function(args) {
+    var hosts = args.join('');
+    return toggleProxySite(hosts);
+});
 mapkey('sfr', '#13show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'
@@ -108,8 +118,8 @@ mapkey('sfr', '#13show failed web requests of current page', function() {
         }
     });
 });
-command('feedkeys', 'feed mapkeys', function(keys) {
-    Normal.feedkeys(keys);
+command('feedkeys', 'feed mapkeys', function(args) {
+    Normal.feedkeys(args[0]);
 });
 map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
 map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
@@ -214,8 +224,8 @@ mapkey('ab', '#8Bookmark current page to selected folder', function() {
 mapkey('oh', '#8Open URL from history', 'Front.openOmnibar({type: "History"})');
 mapkey('om', '#8Open URL from vim-like marks', 'Front.openOmnibar({type: "VIMarks"})');
 mapkey(':', '#8Open commands', 'Front.openOmnibar({type: "Commands"})');
-command('clearHistory', 'clearHistory <find|cmd|...>', function(type) {
-    runtime.updateHistory(type, []);
+command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
+    runtime.updateHistory(args[0], []);
 });
 command('listSession', 'list session', function() {
     runtime.command({
@@ -226,20 +236,20 @@ command('listSession', 'list session', function() {
         });
     });
 });
-command('createSession', 'createSession [name]', function(name) {
+command('createSession', 'createSession [name]', function(args) {
     RUNTIME('createSession', {
-        name: name
+        name: args[0]
     });
 });
-command('deleteSession', 'deleteSession [name]', function(name) {
+command('deleteSession', 'deleteSession [name]', function(args) {
     RUNTIME('deleteSession', {
-        name: name
+        name: args[0]
     });
     return true; // to close omnibar after the command executed.
 });
-command('openSession', 'openSession [name]', function(name) {
+command('openSession', 'openSession [name]', function(args) {
     RUNTIME('openSession', {
-        name: name
+        name: args[0]
     });
 });
 mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');

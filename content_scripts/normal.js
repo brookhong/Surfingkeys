@@ -538,10 +538,10 @@ var Normal = (function(mode) {
             document.body.scrollTop = markInfo.scrollTop;
         } else {
             runtime.command({
-                action: 'localData',
-                data: 'marks'
+                action: 'getSettings',
+                key: 'marks'
             }, function(response) {
-                var marks = response.data.marks;
+                var marks = response.settings.marks;
                 if (marks.hasOwnProperty(mark)) {
                     var markInfo = marks[mark];
                     if (typeof(markInfo) === "string") {

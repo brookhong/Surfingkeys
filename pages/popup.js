@@ -11,10 +11,10 @@ function updateStatus(blacklist) {
 }
 
 runtime.command({
-    action: 'localData',
-    data: 'blacklist'
+    action: 'getSettings',
+    key: 'blacklist'
 }, function(response) {
-    updateStatus(response.data.blacklist);
+    updateStatus(response.settings.blacklist);
 });
 
 disableAll.addEventListener('click', function() {

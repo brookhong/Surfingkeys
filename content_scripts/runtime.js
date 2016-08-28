@@ -2,6 +2,7 @@ var runtime = window.runtime || (function() {
     var self = {
         conf: {
             // local part from settings
+            focusOnSaved: true,
             hintsThreshold: 10000,
             afterYank: 1,
             smoothScroll: true,
@@ -18,7 +19,7 @@ var runtime = window.runtime || (function() {
             console.log('reload triggered by runtime disconnection.');
             setTimeout(function() {
                 window.location.reload();
-            }, 100);
+            }, 500);
         }
     });
     var callbacks = {};
@@ -62,10 +63,10 @@ var runtime = window.runtime || (function() {
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';
         runtime.command({
-            action: 'localData',
-            data: prop
+            action: 'getSettings',
+            key: prop
         }, function(response) {
-            var list = response.data[prop] || [];
+            var list = response.settings[prop] || [];
             var toUpdate = {};
             if (cmd.constructor.name === "Array") {
                 toUpdate[prop] = cmd;

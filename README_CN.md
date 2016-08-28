@@ -187,10 +187,12 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 例如，
 
-    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(mode) {
+    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(args) {
+        // args is an array of arguments
         RUNTIME('updateProxy', {
-            mode: mode
+            mode: args[0]
         });
+        // return true to close Omnibar for Commands, false to keep Omnibar on
         return true;
     });
 

@@ -139,7 +139,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 var meta = Commands.items[cmd];
                 var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
                 var keybound = createKeyTarget(function() {
-                    meta.code.apply(meta.code, args);
+                    meta.code.call(meta.code, args);
                 }, ag, meta.extra_chars, meta.repeatIgnore);
                 Normal.mappings.add(new_keystroke, keybound);
             }

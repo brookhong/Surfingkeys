@@ -640,15 +640,31 @@ var Service = (function() {
         message.url = 'view-source:' + sender.tab.url;
         self.openLink(message, sender, sendResponse);
     };
+    function getSubSettings(keys) {
+        var subset;
+        if (!keys) {
+            // if null/undefined/""
+            subset = settings;
+        } else {
+            if ( !(keys instanceof Array) ) {
+                keys = [ keys ];
+            }
+            subset = {};
+            keys.forEach(function(k) {
+                subset[k] = settings[k];
+            });
+        }
+        return subset;
+    }
     self.getSettings = function(message, sender, sendResponse) {
         if (settingsReady) {
             _response(message, sendResponse, {
-                settings: settings
+                settings: getSubSettings(message.key)
             });
         } else {
             document.addEventListener("settingsReady", function(e) {
                 _response(message, sendResponse, {
-                    settings: settings
+                    settings: getSubSettings(message.key)
                 });
             });
         }
@@ -855,16 +871,21 @@ var Service = (function() {
             settings.proxyMode = message.mode;
         }
         if (message.host) {
+            var hosts = message.host.split(/\s*[ ,\n]\s*/);
             if (message.operation === "toggle") {
-                message.operation = (settings.autoproxy_hosts.hasOwnProperty(message.host)) ? 'remove' : 'add';
-            }
-
-            if (message.operation === "add") {
-                message.host.split(/\s*[ ,\n]\s*/).forEach(function(host) {
+                hosts.forEach(function(host) {
+                    if (settings.autoproxy_hosts.hasOwnProperty(host)) {
+                        delete settings.autoproxy_hosts[host];
+                    } else {
+                        settings.autoproxy_hosts[host] = 1;
+                    }
+                });
+            } else if (message.operation === "add") {
+                hosts.forEach(function(host) {
                     settings.autoproxy_hosts[host] = 1;
                 });
             } else {
-                message.host.split(/\s*[ ,\n]\s*/).forEach(function(host) {
+                hosts.forEach(function(host) {
                     delete settings.autoproxy_hosts[host];
                 });
             }

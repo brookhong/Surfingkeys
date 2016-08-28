@@ -96,7 +96,10 @@ var Front = (function(mode) {
         self.flush();
         self.pointerEvents = "all";
         _display.onShow && _display.onShow(args);
-        window.focus();
+        if (_editor !== td) {
+            // don't set focus for editor, as it may lead frontend.html hold focus.
+            window.focus();
+        }
     }
 
     self.highlightElement = function(message) {
@@ -271,8 +274,11 @@ var Front = (function(mode) {
         _bubble.find('div.sk_arrow').css('left', left[1]);
         _bubble.css('top', pos.top - h - 12).css('left', left[0]);
     });
-    runtime.on('hideBubble', function(message) {
+    self.hideBubble = function() {
         _bubble.hide();
+    };
+    runtime.on('hideBubble', function(message) {
+        self.hideBubble();
         self.flush();
     });
 
@@ -390,9 +396,6 @@ runtime.command({
     applySettings(rs);
 
     Normal.enter();
-});
-runtime.on('settingsUpdated', function(response) {
-    applySettings(response.settings);
 });
 
 $(document).on('surfingkeys:themeChanged', function(evt, theme) {

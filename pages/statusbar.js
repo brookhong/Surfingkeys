@@ -59,10 +59,10 @@ var Find = (function() {
         });
         var findHistory = [];
         runtime.command({
-            action: 'localData',
-            data: 'findHistory'
+            action: 'getSettings',
+            key: 'findHistory'
         }, function(response) {
-            findHistory = response.data.findHistory;
+            findHistory = response.settings.findHistory;
         });
         input[0].onkeydown = function(event) {
             if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
