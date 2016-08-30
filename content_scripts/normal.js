@@ -177,8 +177,7 @@ var Normal = (function(mode) {
         if (isEditable(event.target)) {
             Insert.enter();
         } else if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
-            self.finish();
-            handled = "stopEventPropagation";
+            handled = self.finish();
         } else if (event.sk_keyName === Mode.specialKeys["<Alt-s>"]) {
             self.toggleBlacklist(window.location.origin);
             handled = "stopEventPropagation";
@@ -402,12 +401,17 @@ var Normal = (function(mode) {
     };
 
     self.finish = function() {
-        this.map_node = this.mappings;
-        this.pendingMap = null;
-        Front.hideKeystroke();
-        if (this.repeats) {
-            this.repeats = "";
+        var ret = "";
+        if (this.map_node !== this.mappings || this.pendingMap != null || this.repeats) {
+            this.map_node = this.mappings;
+            this.pendingMap = null;
+            Front.hideKeystroke();
+            if (this.repeats) {
+                this.repeats = "";
+            }
+            ret = "stopEventPropagation";
         }
+        return ret;
     };
 
     self._handleMapKey = function(key) {

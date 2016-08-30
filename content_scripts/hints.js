@@ -215,7 +215,7 @@ var Hints = (function(mode) {
             elements.each(function(i) {
                 var pos = $(this).offset(),
                     z = getZIndex(this);
-                var link = $('<div/>').css('top', pos.top - bof.top).css('left', pos.left - bof.left + $(this).width() / 2)
+                var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', Math.max(pos.left - bof.left + $(this).width() / 2, 0))
                     .css('z-index', z + 9999)
                     .data('z-index', z + 9999)
                     .data('label', hintLabels[i])

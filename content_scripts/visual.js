@@ -389,6 +389,16 @@ var Visual = (function(mode) {
         }, 1);
     };
 
+    function findNextTextNodeBy(query, caseSensitive) {
+        var found = false;
+        while(window.find(query, caseSensitive)) {
+            if (selection.anchorNode.splitText) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
     function visualUpdateForContentWindow(query) {
         self.visualClear();
 
@@ -397,7 +407,7 @@ var Visual = (function(mode) {
         var scrollTop = document.body.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
 
-        if (window.find(query, caseSensitive)) {
+        if (findNextTextNodeBy(query, caseSensitive)) {
             if (document.body.scrollTop !== scrollTop) {
                 // set new start position if there is no occurrence in current view.
                 scrollTop = document.body.scrollTop;
@@ -407,7 +417,7 @@ var Visual = (function(mode) {
             matches.push(mark);
             selection.setPosition(mark.nextSibling, 0);
 
-            while(document.body.scrollTop === scrollTop && window.find(query, caseSensitive)) {
+            while(document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive)) {
                 var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
                 matches.push(mark);
                 selection.setPosition(mark.nextSibling, 0);
