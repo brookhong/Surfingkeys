@@ -173,7 +173,6 @@ var Hints = (function(mode) {
             behaviours[attr] = attrs[attr];
         }
         holder.show().html('');
-        style.appendTo(holder);
         if (cssSelector === "") {
             cssSelector = "a, button, select:visible, input:visible, textarea:visible";
             if (!runtime.conf.hintsThreshold || $('*').length < runtime.conf.hintsThreshold) {
@@ -212,6 +211,7 @@ var Hints = (function(mode) {
         if (elements.length > 0) {
             var hintLabels = self.genLabels(elements.length);
             var bof = self.coordinate();
+            style.appendTo(holder);
             elements.each(function(i) {
                 var pos = $(this).offset(),
                     z = getZIndex(this);
