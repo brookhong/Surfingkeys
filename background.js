@@ -2,16 +2,19 @@ var Service = (function() {
     var self = {}, onResponseById = {};
 
     var activePorts = [],
-        frontEndPorts = {},
+        tabHistory = [],
+        tabHistoryIndex = 0,
+        historyTabAction = false,
+        frontEndURL = chrome.extension.getURL('/pages/frontend.html');
+
+    // data by tab id
+    var frontEndPorts = {},
         contentPorts = {},
         tabActivated = {},
         tabMessages = {},
         frameIncs = {},
         tabURLs = {},
-        tabHistory = [],
-        tabHistoryIndex = 0,
-        historyTabAction = false,
-        frontEndURL = chrome.extension.getURL('/pages/frontend.html');
+        tabErrors = {};
 
     var settings = {
         useLocalMarkdownAPI: true,                         // use local js to parse markdown own, or use github markdown API
@@ -97,7 +100,6 @@ var Service = (function() {
         }
     }
 
-    var tabErrors = {};
     function handleMessage(_message, _sender, _sendResponse, _port) {
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
@@ -220,10 +222,13 @@ var Service = (function() {
     });
 
     function removeTab(tabId) {
-        delete contentPorts[tabId];
         delete frontEndPorts[tabId];
+        delete contentPorts[tabId];
+        delete tabActivated[tabId];
+        delete tabMessages[tabId];
+        delete tabURLs[tabId];
         delete tabErrors[tabId];
-        unRegisterFrame(tabId);
+        delete frameIncs[tabId];
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
         });
@@ -240,7 +245,7 @@ var Service = (function() {
     }
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
-            unRegisterFrame(tabId);
+            delete frameIncs[tabId];
         }
         _setScrollPos_bg(tabId);
     });
@@ -297,11 +302,6 @@ var Service = (function() {
         });
     };
 
-    function unRegisterFrame(tabId) {
-        if (frameIncs.hasOwnProperty(tabId)) {
-            delete frameIncs[tabId];
-        }
-    }
 
     function _updateSettings(diffSettings, afterSet) {
         extendObject(settings, diffSettings);

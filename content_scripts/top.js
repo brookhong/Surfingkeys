@@ -80,8 +80,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
         fakeBody.remove();
         frontendFrame.contentWindow = null;
     }
-    createFrontEnd();
     setTimeout(function() {
+        // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
+        createFrontEnd();
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
             if (c.regex.test(window.location.href)) {
