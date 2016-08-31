@@ -47,7 +47,7 @@ var Visual = (function(mode) {
         Front.showStatus(2, status[state]);
     });
 
-    self.mappings = new Trie('', Trie.SORT_NONE);
+    self.mappings = new Trie();
     self.map_node = self.mappings;
     self.repeats = "";
     self.mappings.add("l", {
@@ -272,7 +272,7 @@ var Visual = (function(mode) {
     }
 
     function modifySelection() {
-        var sel = self.map_node.meta[0].annotation.split(" ");
+        var sel = self.map_node.meta.annotation.split(" ");
         var alter = (state === 2) ? "extend" : "move";
         hideCursor();
         var prevPos = [selection.focusNode, selection.focusOffset];

@@ -144,7 +144,7 @@ var GetBackFocus = (function(mode) {
 var Insert = (function(mode) {
     var self = $.extend({name: "Insert", eventListeners: {}}, mode);
 
-    self.mappings = new Trie('', Trie.SORT_NONE);
+    self.mappings = new Trie();
     self.map_node = self.mappings;
 
     self.addEventListener('keydown', function(event) {
@@ -211,7 +211,7 @@ var Normal = (function(mode) {
         });
     };
 
-    self.mappings = new Trie('', Trie.SORT_NONE);
+    self.mappings = new Trie();
     self.map_node = self.mappings;
     self.repeats = "";
     self.surfingkeysHold = 0;
@@ -421,7 +421,7 @@ var Normal = (function(mode) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
                 finish();
             } else {
-                this.setLastKeys && this.setLastKeys(this.map_node.meta[0].word + key);
+                this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
                 var pf = this.pendingMap.bind(this);
                 setTimeout(function() {
                     pf(key);
@@ -437,16 +437,16 @@ var Normal = (function(mode) {
             ret = "stopEventPropagation";
         } else {
             this.map_node = this.map_node.find(key);
-            if (this.map_node === null) {
+            if (!this.map_node) {
                 finish();
             } else {
-                if (this.map_node.meta.length) {
-                    var code = this.map_node.meta[0].code;
-                    if (this.map_node.meta[0].extra_chars) {
+                if (this.map_node.meta) {
+                    var code = this.map_node.meta.code;
+                    if (this.map_node.meta.extra_chars) {
                         this.pendingMap = code;
                         Front.showKeystroke(key);
                     } else {
-                        this.setLastKeys && this.setLastKeys(this.map_node.meta[0].word);
+                        this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
@@ -474,7 +474,7 @@ var Normal = (function(mode) {
     };
 
     self.setLastKeys = function(key) {
-        if (!this.map_node.meta[0].repeatIgnore) {
+        if (!this.map_node.meta.repeatIgnore) {
             lastKeys = [key];
             saveLastKeys();
         }

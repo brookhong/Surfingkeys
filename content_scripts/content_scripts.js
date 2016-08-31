@@ -146,7 +146,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
         } else {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
-                var meta = old_map.meta[0];
+                var meta = old_map.meta;
                 var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
                 var keybound = createKeyTarget(meta.code, ag, meta.extra_chars, meta.repeatIgnore);
                 Normal.mappings.remove(new_keystroke);

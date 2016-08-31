@@ -22,9 +22,9 @@ var Front = (function(mode) {
                 if (!_tabs.trie) {
                     self.hidePopup();
                     _tabs.trie = null;
-                } else if (_tabs.trie.meta.length) {
+                } else if (_tabs.trie.meta) {
                     RUNTIME('focusTab', {
-                        tab_id: _tabs.trie.meta[0]
+                        tab_id: _tabs.trie.meta
                     });
                     self.hidePopup();
                     _tabs.trie = null;
@@ -116,7 +116,7 @@ var Front = (function(mode) {
     _tabs.onShow = function(tabs) {
         var tabs_fg = _tabs.find('div.sk_tabs_fg');
         tabs_fg.html("");
-        _tabs.trie = new Trie('', Trie.SORT_NONE);
+        _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
         var tabstr = "<div class=sk_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
         var items = tabs.forEach(function(t, i) {
@@ -179,7 +179,7 @@ var Front = (function(mode) {
             var words = mappings.getWords();
             for (var i = 0; i < words.length; i++) {
                 var w = words[i];
-                var meta = mappings.find(w).meta[0];
+                var meta = mappings.find(w).meta;
                 var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
                 help_groups[meta.feature_group].push(item);
             }
