@@ -46,27 +46,6 @@ var frontendFrame = (function() {
     return self;
 })();
 
-runtime.command({
-    action: 'getSettings',
-    key: ['blacklist', 'blacklistPattern']
-}, function(response) {
-    if (checkBlackList(response.settings)) {
-        runtime.command({
-            action: 'setSurfingkeysIcon',
-            status: true
-        });
-    }
-});
-
-runtime.on('settingsUpdated', function(response) {
-    if ('blacklist' in response.settings) {
-        runtime.command({
-            action: 'setSurfingkeysIcon',
-            status: checkBlackList(response.settings)
-        });
-    }
-});
-
 document.addEventListener('DOMContentLoaded', function(e) {
 
     runtime.command({

@@ -7,6 +7,7 @@ var runtime = window.runtime || (function() {
             afterYank: 1,
             smoothScroll: true,
             lastKeys: "",
+            blacklist: {},
             lastQuery: ""
         },
         runtime_handlers: {}

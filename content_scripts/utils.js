@@ -72,7 +72,8 @@ String.prototype.format = function() {
         modifierKeys: {
             16: "Shift",
             17: "Ctrl",
-            18: "Alt"
+            18: "Alt",
+            91: "Meta"
         },
         keyNames: {
             8:   'Backspace',
@@ -135,6 +136,12 @@ String.prototype.format = function() {
                             }
                             var unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
                             character = String.fromCharCode(parseInt(unicodeKeyInHex));
+                            character = event.shiftKey ? character : character.toLowerCase();
+                        }
+                    } else {
+                        // Alt-s is ß under Mac
+                        if (character.charCodeAt(0) > 127 && event.keyCode < 127) {
+                            character = String.fromCharCode(event.keyCode);
                             character = event.shiftKey ? character : character.toLowerCase();
                         }
                     }

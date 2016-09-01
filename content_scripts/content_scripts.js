@@ -338,12 +338,18 @@ function applySettings(rs) {
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
-    if ('blacklist' in rs) {
-        if (checkBlackList(rs)) {
-            Disabled.enter();
-        } else {
-            Disabled.exit();
-        }
+    var disabled = checkBlackList(runtime.conf);
+    if (disabled) {
+        Disabled.enter();
+    } else {
+        Disabled.exit();
+    }
+
+    if (window === top) {
+        runtime.command({
+            action: 'setSurfingkeysIcon',
+            status: disabled
+        });
     }
 });
 
@@ -361,11 +367,19 @@ runtime.command({
 
     Normal.enter();
 
-    if (checkBlackList(rs)) {
+    var disabled = checkBlackList(runtime.conf);
+    if (disabled) {
         Disabled.enter();
     } else {
         document.addEventListener('DOMContentLoaded', function(e) {
             GetBackFocus.enter();
+        });
+    }
+
+    if (window === top) {
+        runtime.command({
+            action: 'setSurfingkeysIcon',
+            status: disabled
         });
     }
 });
