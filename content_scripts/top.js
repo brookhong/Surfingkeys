@@ -20,8 +20,10 @@ var frontendFrame = (function() {
 
     self.setFrontFrame = function(response) {
         ifr.css('height', response.frameHeight);
-        ifr.css('pointer-events', response.pointerEvents);
-        if (response.frameHeight === '0px') {
+        if (response.pointerEvents) {
+            ifr.css('pointer-events', response.pointerEvents);
+        }
+        if (response.hostBlur) {
             uiHost.blur();
         }
     };

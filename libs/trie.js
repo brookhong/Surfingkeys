@@ -38,6 +38,7 @@ var Trie = (function() {
                 }
             }
 
+            meta.word = word;
             node.meta = meta;
         },
 

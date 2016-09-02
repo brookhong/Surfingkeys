@@ -38,19 +38,35 @@ var Front = (function(mode) {
     self.postMessage = function(to, message) {
         self.ports[to].postMessage(message);
     };
-    self.pointerEvents = "none";
-    self.flush = function() {
+    /*
+     * set attributes of frame element in top window
+     *      pointerEvents   whether the iframe can be target of mouse events
+     *      hostBlur        whether to blur from the iframe
+     *
+     */
+    self.flush = function(pointerEvents, hostBlur) {
+        var height;
+        if ($('body>div:visible').length > 0) {
+            height = '100%';
+        } else {
+            height = '0px';
+            // blur host anyway if height is 0px
+            hostBlur = true;
+        }
         self.postMessage('top', {
             action: 'setFrontFrame',
-            pointerEvents: self.pointerEvents,
-            frameHeight: getFrameHeight()
+            pointerEvents: pointerEvents,
+            hostBlur: hostBlur,
+            frameHeight: height
         });
     };
     self.visualCommand = function(args) {
-        if (self.pointerEvents === "none") {
-            Front.contentCommand(args);
-        } else {
+        if (_usage.is(':visible')) {
+            // visual mode in frontend.html
             Visual[args.action](args.query);
+        } else {
+            // visual mode for all content windows
+            Front.contentCommand(args);
         }
     };
 
@@ -66,23 +82,13 @@ var Front = (function(mode) {
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
 
-    var displays = [self.omnibar, frameElement, _usage, _tabs, banner, _bubble, _popup, _editor, self.statusBar, keystroke];
-    function getFrameHeight() {
-        for (var i = 0; i < displays.length; i++) {
-            if (displays[i].is(':visible')) {
-                return '100%';
-            }
-        }
-        return '0px';
-    }
     var _display;
     self.hidePopup = function() {
         if (_display && _display.is(':visible')) {
             _display.hide();
-            self.flush();
+            self.flush("none", true);
             _display.onHide && _display.onHide();
             self.exit();
-            self.pointerEvents = "none";
         }
     };
     function showPopup(td, args) {
@@ -93,8 +99,7 @@ var Front = (function(mode) {
         }
         _display = td;
         _display.show();
-        self.flush();
-        self.pointerEvents = "all";
+        self.flush("all", false);
         _display.onShow && _display.onShow(args);
         if (_editor !== td) {
             // don't set focus for editor, as it may lead frontend.html hold focus.

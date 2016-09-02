@@ -359,15 +359,20 @@ var Visual = (function(mode) {
     self.star = function() {
         if (selection.focusNode && selection.focusNode.nodeValue) {
             hideCursor();
-            var query = selection.toString();
-            if (query.length === 0) {
-                query = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset);
-            }
+            var query = self.getWordUnderCursor();
             runtime.updateHistory('find', query);
             self.visualClear();
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
             showCursor();
         }
+    };
+
+    self.getWordUnderCursor = function() {
+        var word = selection.toString();
+        if (word.length === 0 && selection.focusNode && selection.focusNode.nodeValue) {
+            word = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset);
+        }
+        return word;
     };
 
     self.next = function(backward) {

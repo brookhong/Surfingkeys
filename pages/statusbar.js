@@ -26,7 +26,7 @@ var StatusBar = (function(ui) {
         }
         $(span[lastSpan]).css('border-right', '');
         ui.css('display', lastSpan === -1 ? 'none' : 'block');
-        Front.flush();
+        Front.flush("none", false);
         if (duration) {
             timerHide = setTimeout(function() {
                 ui.css('display', 'none');

@@ -176,7 +176,16 @@ var Front = (function() {
         if (msg.frameId === window.frameId) {
             window.focus();
             document.body.scrollIntoViewIfNeeded();
-            self.highlightElement(window.frameElement || document.body, 500);
+            var rc = (window.frameElement || document.body).getBoundingClientRect();
+            self.highlightElement({
+                duration: 500,
+                rect: {
+                    top: rc.top,
+                    left: rc.left,
+                    width: rc.width,
+                    height: rc.height
+                }
+            });
 
             if (Mode.stack().length === 0) {
                 // if mode stack is empty, enter normal mode automatically

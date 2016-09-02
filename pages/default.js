@@ -195,10 +195,10 @@ mapkey('E', '#3Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', '#3Go one tab right', 'RUNTIME("nextTab")');
 mapkey('<Alt-p>', '#3pin/unpin current tab', 'RUNTIME("togglePinTab")');
 mapkey('<Alt-m>', '#3mute/unmute current tab', 'RUNTIME("muteTab")');
-mapkey('B', '#4Go one tab history back', 'RUNTIME("historyTab", {backward: true})');
-mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: false})');
-mapkey('S', '#4Go back in history', 'history.go(-1)');
-mapkey('D', '#4Go forward in history', 'history.go(1)');
+mapkey('B', '#4Go one tab history back', 'RUNTIME("historyTab", {backward: true})', {repeatIgnore: true});
+mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: false})', {repeatIgnore: true});
+mapkey('S', '#4Go back in history', 'history.go(-1)', {repeatIgnore: true});
+mapkey('D', '#4Go forward in history', 'history.go(1)', {repeatIgnore: true});
 mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
 mapkey('t', '#8Open an URL', 'Front.openOmnibar({type: "URLs", extra: "getAllSites"})');
 mapkey('go', '#8Open an URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false})');
@@ -207,6 +207,7 @@ mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs"
 mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
         url: "https://api.shanbay.com/bdc/search/?word=",
+        query: Visual.getWordUnderCursor(),
         parseResult: function(res) {
             var res = eval("a=" + res.text);
             return [res.data.definition || res.msg];
