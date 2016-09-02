@@ -1,5 +1,5 @@
 var Visual = (function(mode) {
-    var self = $.extend({name: "Visual", eventListeners: {}}, mode);
+    var self = $.extend({name: "Visual", eventListeners: {}, _style: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
         var updated = "";
@@ -459,5 +459,12 @@ var Visual = (function(mode) {
     runtime.on('visualEnter', function(message) {
         self.visualEnter(message.query);
     });
+
+    self.style = function (element, style) {
+        self._style[element] = style;
+
+        cursor.setAttribute('style', self._style.cursor || '');
+        mark_template.setAttribute('style', self._style.marks || '');
+    };
     return self;
 })(Mode);

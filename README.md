@@ -456,6 +456,17 @@ works like
     Omnibar.listWords(<array of words>)
     Omnibar.html(<any html snippets>)
 
+### Styling
+
+Change the style of the link hints:
+
+    Hints.style('border: solid 3px #552a48; color:#efe1eb; background: initial; background-color: #552a48;');
+
+Change the style of the search marks and cursor:
+
+    Visual.style('marks', 'background-color: #89a1e2;');
+    Visual.style('cursor', 'background-color: #9065b7;');
+
 ## Build
 
     npm install
