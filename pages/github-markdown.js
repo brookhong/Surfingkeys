@@ -1,8 +1,8 @@
-var markdown_code = "";
+var markdown_code = "", useLocalMarkdownAPI = true;
 
 function previewMarkdown(mk) {
     markdown_code = mk;
-    if (runtime.conf.useLocalMarkdownAPI) {
+    if (useLocalMarkdownAPI) {
         $('.markdown-body').html(marked(mk));
     } else {
         httpRequest({
@@ -13,6 +13,13 @@ function previewMarkdown(mk) {
         });
     }
 }
+
+runtime.command({
+    action: 'getSettings',
+    key: 'useLocalMarkdownAPI'
+}, function(response) {
+    useLocalMarkdownAPI = response.settings.useLocalMarkdownAPI;
+});
 
 $(document).on('surfingkeys:frontendReady', function(e) {
     Front.getContentFromClipboard(function(response) {

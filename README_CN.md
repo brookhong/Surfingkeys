@@ -390,8 +390,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
-    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', 0, /github\.com/i);
-    mapkey('zz', 'Show usage', 'Front.showUsage()', 0, /google\.com/i);
+    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
 
 可视化模式下的mapkey
 

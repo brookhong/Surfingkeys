@@ -395,7 +395,6 @@ runtime.command({
     action: 'getSettings'
 }, function(response) {
     var rs = response.settings;
-    runtime.conf.useLocalMarkdownAPI = rs.useLocalMarkdownAPI;
     runtime.conf.tabsThreshold = rs.tabsThreshold;
     runtime.conf.omnibarMaxResults = rs.omnibarMaxResults;
     applySettings(rs);

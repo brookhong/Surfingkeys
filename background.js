@@ -317,6 +317,9 @@ var Service = (function() {
                 }
             });
         }
+    }
+    function _updateAndPostSettings(diffSettings, afterSet) {
+        _updateSettings(diffSettings, afterSet);
         activePorts.forEach(function(port) {
             port.postMessage({
                 action: 'settingsUpdated',
@@ -331,7 +334,7 @@ var Service = (function() {
         } else {
             settings.blacklist[message.domain] = 1;
         }
-        _updateSettings({blacklist: settings.blacklist}, function() {
+        _updateAndPostSettings({blacklist: settings.blacklist}, function() {
             _response(message, sendResponse, {
                 blacklist: settings.blacklist
             });
@@ -340,25 +343,25 @@ var Service = (function() {
 
     self.addVIMark = function(message, sender, sendResponse) {
         extendObject(settings.marks, message.mark);
-        _updateSettings({marks: settings.marks});
+        _updateAndPostSettings({marks: settings.marks});
     };
 
     function _loadSettingsFromUrl(url) {
         var s = request(url);
         s.then(function(resp) {
-            _updateSettings({localPath: url, snippets: resp}, false);
+            _updateAndPostSettings({localPath: url, snippets: resp});
         });
     };
 
     self.resetSettings = function(message, sender, sendResponse) {
         if (message.useDefault) {
-            _updateSettings({localPath: "", snippets: ""}, false, _response.bind(_response, message, sendResponse, {
+            _updateAndPostSettings({localPath: "", snippets: ""}, _response.bind(_response, message, sendResponse, {
                 settings: settings
             }));
         } else if (settings.localPath) {
             _loadSettingsFromUrl(settings.localPath);
         } else {
-            _updateSettings({snippets: ""}, false);
+            _updateAndPostSettings({snippets: ""});
         }
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
@@ -670,7 +673,13 @@ var Service = (function() {
         }
     };
     self.updateSettings = function(message, sender, sendResponse) {
-        _updateSettings(message.settings);
+        if (message.scope === "snippets") {
+            // For settings from snippets, don't broadcast the update
+            // neither persist into storage
+            extendObject(settings, message.settings);
+        } else {
+            _updateAndPostSettings(message.settings);
+        }
     };
     self.changeSettingsStorage = function(message, sender, sendResponse) {
         settings.storage = message.storage;
@@ -758,9 +767,9 @@ var Service = (function() {
             }
             settings.sessions[message.name] = {};
             settings.sessions[message.name]['tabs'] = tabg;
-            _updateSettings({
+            _updateAndPostSettings({
                 sessions: settings.sessions
-            }, false, (message.quitAfterSaved ? _quit : undefined));
+            }, (message.quitAfterSaved ? _quit : undefined));
         });
     };
     self.getSessions = function(message, sender, sendResponse) {
@@ -802,9 +811,9 @@ var Service = (function() {
     };
     self.deleteSession = function(message, sender, sendResponse) {
         delete settings.sessions[message.name];
-        _updateSettings({
+        _updateAndPostSettings({
             sessions: settings.sessions
-        }, false);
+        });
     };
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
         chrome.downloads.erase({"urlRegex": ".*"});
@@ -894,7 +903,7 @@ var Service = (function() {
             autoproxy_hosts: settings.autoproxy_hosts,
             proxyMode: settings.proxyMode,
             proxy: settings.proxy
-        }, false);
+        });
         if (message.mode === 'clear') {
             chrome.proxy.settings.clear({scope: 'regular'});
         } else {
@@ -947,7 +956,7 @@ var Service = (function() {
             });
         } else if (type === 'M') {
             delete settings.marks[uid];
-            _updateSettings({marks: settings.marks}, function() {
+            _updateAndPostSettings({marks: settings.marks}, function() {
                 _response(message, sendResponse, {
                     response: "Done"
                 });

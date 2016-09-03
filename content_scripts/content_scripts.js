@@ -323,12 +323,25 @@ function applySettings(rs) {
     if (('snippets' in rs) && rs.snippets) {
         var delta = runUserScript(rs.snippets);
         if (!jQuery.isEmptyObject(delta.settings)) {
-            // overrides local settings from snippets
             if ('theme' in delta.settings) {
                 $(document).trigger("surfingkeys:themeChanged", [delta.settings.theme]);
                 delete delta.settings.theme;
             }
-            $.extend(runtime.conf, delta.settings);
+            // overrides local settings from snippets
+            for (var k in delta.settings) {
+                if (runtime.conf.hasOwnProperty(k)) {
+                    runtime.conf[k] = delta.settings[k];
+                    delete delta.settings[k];
+                }
+            }
+            if (Object.keys(delta.settings).length > 0) {
+                // left settings are for background, need not broadcast the update, neither persist into storage
+                runtime.command({
+                    action: 'updateSettings',
+                    scope: "snippets",
+                    settings: delta.settings
+                });
+            }
         } else if (delta.error !== "" && window === top) {
             Front.showPopup("Error found in settings: " + delta.error);
         }
