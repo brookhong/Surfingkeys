@@ -396,7 +396,9 @@ var Visual = (function(mode) {
 
     function findNextTextNodeBy(query, caseSensitive) {
         var found = false;
-        while(window.find(query, caseSensitive)) {
+        var pos = [selection.anchorNode, selection.anchorOffset];
+        while(window.find(query, caseSensitive) && (selection.anchorNode != pos[0] || selection.anchorOffset != pos[1])) {
+            pos = [selection.anchorNode, selection.anchorOffset];
             if (selection.anchorNode.splitText) {
                 found = true;
                 break;
@@ -407,10 +409,15 @@ var Visual = (function(mode) {
     function visualUpdateForContentWindow(query) {
         self.visualClear();
 
-        // always find from the beginning
-        selection.setPosition(document.body.firstChild, 0);
         var scrollTop = document.body.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
+
+        if (findNextTextNodeBy(query, caseSensitive)) {
+            selection.setPosition(posToStartFind[0], posToStartFind[1]);
+        } else {
+            // start from beginning if no found from current position
+            selection.setPosition(document.body.firstChild, 0);
+        }
 
         if (findNextTextNodeBy(query, caseSensitive)) {
             if (document.body.scrollTop !== scrollTop) {

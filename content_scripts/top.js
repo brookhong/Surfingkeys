@@ -95,7 +95,7 @@ function _setScrollPos(x, y) {
 }
 
 function _prepareFrames() {
-    var frames = Array.prototype.slice.call(top.document.querySelectorAll('iframe')).map(function(f) {
+    var frames = Array.prototype.slice.call(top.document.querySelectorAll('frame,iframe')).map(function(f) {
         return f.contentWindow;
     });
     frames.unshift(top);
