@@ -28,7 +28,7 @@ var AceEditor = (function(mode, elmId) {
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
-        if (event.sk_keyName === Mode.specialKeys["<Esc>"]
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)
             && self.mode === 'normal' // vim in normal mode
             && (self.state.cm.state.vim.status === null || self.state.cm.state.vim.status === "") // and no pending normal operation
             && (!self.completer || !self.completer.activated) // and completion popup not opened

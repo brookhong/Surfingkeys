@@ -1,9 +1,13 @@
 var Mode = (function() {
     var self = {}, mode_stack = [];
     self.specialKeys = {
-        "<Alt-s>": "<Alt-s>",       // hotkey to toggleBlacklist
-        "<Ctrl-d>": "<Ctrl-d>",     // hotkey to delete from omnibar
-        "<Esc>": "<Esc>"
+        "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlacklist
+        "<Ctrl-d>": ["<Ctrl-d>"],     // hotkey to delete from omnibar
+        "<Esc>": ["<Esc>"]
+    };
+
+    self.isSpecialKeyOf = function(specialKey, keyToCheck) {
+        return (-1 !== self.specialKeys[specialKey].indexOf(keyToCheck));
     };
 
     self.addEventListener = function(evt, handler) {
@@ -90,7 +94,7 @@ var Disabled = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        if (event.sk_keyName === Mode.specialKeys["<Alt-s>"]) {
+        if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             Normal.toggleBlacklist(window.location.origin);
             self.exit();
             return "stopEventPropagation";
@@ -150,7 +154,7 @@ var Insert = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             document.activeElement.blur();
             self.exit();
             return "stopEventPropagation";
@@ -176,9 +180,9 @@ var Normal = (function(mode) {
         var handled;
         if (isEditable(event.target)) {
             Insert.enter();
-        } else if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+        } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             handled = self.finish();
-        } else if (event.sk_keyName === Mode.specialKeys["<Alt-s>"]) {
+        } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist(window.location.origin);
             handled = "stopEventPropagation";
         } else if (event.sk_keyName.length) {

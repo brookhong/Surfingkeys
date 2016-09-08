@@ -3,7 +3,7 @@ var Visual = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var updated = "";
-        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             if (state > 1) {
                 cursor.remove();
                 selection.collapse(selection.anchorNode, selection.anchorOffset);

@@ -65,7 +65,7 @@ var Find = (function() {
             findHistory = response.settings.findHistory;
         });
         input[0].onkeydown = function(event) {
-            if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+            if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 Front.visualCommand({
                     action: 'visualClear'
                 });

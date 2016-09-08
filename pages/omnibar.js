@@ -93,10 +93,10 @@ var Omnibar = (function(ui) {
         if (handler && handler.onKeydown) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
-        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             Front.hidePopup();
             event.preventDefault();
-        } else if (event.sk_keyName === Mode.specialKeys["<Ctrl-d>"]) {
+        } else if (Mode.isSpecialKeyOf("<Ctrl-d>", event.sk_keyName)) {
             deleteFocused();
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {

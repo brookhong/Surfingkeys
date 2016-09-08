@@ -13,7 +13,7 @@ var Front = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var handled = "";
-        if (event.sk_keyName === Mode.specialKeys["<Esc>"]) {
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
             handled = "stopEventPropagation";
         } else {

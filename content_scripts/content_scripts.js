@@ -152,7 +152,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 Normal.mappings.remove(new_keystroke);
                 Normal.mappings.add(new_keystroke, keybound);
             } else if (old_keystroke in Mode.specialKeys) {
-                Mode.specialKeys[old_keystroke] = new_keystroke;
+                Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
         }
     }
