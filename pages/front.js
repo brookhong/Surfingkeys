@@ -247,7 +247,7 @@ var Front = (function(mode) {
     };
     runtime.on('openFinder', self.openFinder);
     self.showBanner = function(message) {
-        banner.html(message.content).show();
+        banner.html(message).show();
         self.flush();
         banner.finish();
         banner.animate({
@@ -260,12 +260,14 @@ var Front = (function(mode) {
             self.flush();
         });
     };
-    runtime.on('showBanner', self.showBanner);
+    runtime.on('showBanner', function(message) {
+        self.showBanner(message.content);
+    });
     runtime.on('showBubble', function(message) {
         var pos = message.position;
         _bubble.find('div.sk_bubble_content').html(message.content);
         _bubble.show();
-        self.flush();
+        self.flush("none", true);
         var w = _bubble.width(),
             h = _bubble.height();
         var left = [pos.left - w / 2, w / 2];

@@ -30,7 +30,6 @@ var Service = (function() {
         userData: {},
         findHistory: [],
         cmdHistory: [],
-        version: chrome.runtime.getManifest().version,
         snippets: "",
         sessions: {},
         newTabPosition: 'right',
@@ -149,57 +148,49 @@ var Service = (function() {
     });
 
     chrome.storage.local.get(null, function(data) {
-        if (!data.version || parseFloat(data.version) < 0.11) {
-            if (JSON.stringify(data) !== '{}') {
-                chrome.storage.local.clear();
-                chrome.storage.sync.clear();
-            }
-            triggerEvent(document, "settingsReady");
-        } else {
-            extendObject(settings, data);
-            if (data.storage === 'sync') {
-                chrome.storage.sync.get(null, function(data) {
-                    if (chrome.runtime.lastError) {
-                        console.log(chrome.runtime.lastError);
-                    } else {
-                        extendObject(settings, data);
-                        settings.storage = "sync";
-                    }
-                    triggerEvent(document, "settingsReady");
-                });
-            } else {
-                triggerEvent(document, "settingsReady");
-            }
-            if (settings.proxyMode === 'clear') {
-                chrome.proxy.settings.clear({scope: 'regular'});
-            } else {
-                chrome.proxy.settings.get( {}, function(proxyInfo) {
-                    if (proxyInfo.levelOfControl === "controlled_by_this_extension" && proxyInfo.value.hasOwnProperty('pacScript')) {
-                        // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
-                        eval(proxyInfo.value.pacScript.data.substr(19));
-                    }
-                });
-            }
-            chrome.webRequest.onErrorOccurred.addListener(function(details) {
-                var tabId = details.tabId;
-                if (tabId !== -1 && (settings.interceptedErrors.hasOwnProperty("*") || details.error in settings.interceptedErrors)) {
-                    if (!tabErrors.hasOwnProperty(tabId)) {
-                        tabErrors[tabId] = [];
-                    }
-                    if (details.type === "main_frame") {
-                        tabErrors[tabId] = [];
-                        if (details.error !== "net::ERR_ABORTED") {
-                            chrome.tabs.update(tabId, {
-                                url: chrome.extension.getURL("pages/error.html")
-                            });
-                        }
-                    }
-                    tabErrors[tabId].push(details);
+        extendObject(settings, data);
+        if (data.storage === 'sync') {
+            chrome.storage.sync.get(null, function(data) {
+                if (chrome.runtime.lastError) {
+                    console.log(chrome.runtime.lastError);
+                } else {
+                    extendObject(settings, data);
+                    settings.storage = "sync";
                 }
-            }, {
-                urls: ["<all_urls>"]
+                triggerEvent(document, "settingsReady");
+            });
+        } else {
+            triggerEvent(document, "settingsReady");
+        }
+        if (settings.proxyMode === 'clear') {
+            chrome.proxy.settings.clear({scope: 'regular'});
+        } else {
+            chrome.proxy.settings.get( {}, function(proxyInfo) {
+                if (proxyInfo.levelOfControl === "controlled_by_this_extension" && proxyInfo.value.hasOwnProperty('pacScript')) {
+                    // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
+                    eval(proxyInfo.value.pacScript.data.substr(19));
+                }
             });
         }
+        chrome.webRequest.onErrorOccurred.addListener(function(details) {
+            var tabId = details.tabId;
+            if (tabId !== -1 && (settings.interceptedErrors.hasOwnProperty("*") || details.error in settings.interceptedErrors)) {
+                if (!tabErrors.hasOwnProperty(tabId)) {
+                    tabErrors[tabId] = [];
+                }
+                if (details.type === "main_frame") {
+                    tabErrors[tabId] = [];
+                    if (details.error !== "net::ERR_ABORTED") {
+                        chrome.tabs.update(tabId, {
+                            url: chrome.extension.getURL("pages/error.html")
+                        });
+                    }
+                }
+                tabErrors[tabId].push(details);
+            }
+        }, {
+            urls: ["<all_urls>"]
+        });
     });
 
     chrome.extension.onConnect.addListener(function(port) {

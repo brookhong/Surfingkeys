@@ -377,11 +377,11 @@ var OpenBookmarks = (function() {
             onFolderUp();
             eaten = true;
         } else if (event.ctrlKey && KeyboardUtils.isWordChar(event)) {
-            var focusedURL = Omnibar.resultsDiv.find('li.focused>div.url');
-            if (focusedURL.length) {
+            var fi = Omnibar.resultsDiv.find('li.focused');
+            if (fi.length) {
                 var mark_char = String.fromCharCode(event.keyCode);
                 // global marks always from here
-                Normal.addVIMark(mark_char, focusedURL.data('url'));
+                Normal.addVIMark(mark_char, fi.data('url'));
                 eaten = true;
             }
         }
