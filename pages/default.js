@@ -389,6 +389,13 @@ addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https:/
     var res = eval(response.text);
     Omnibar.listWords(res[1]);
 });
+addSearchAliasX('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
+    var res = eval(response.text);
+    res = res.map(function(r){
+        return r.phrase;
+    });
+    Omnibar.listWords(res);
+});
 addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=eval&wd=', function(response) {
     var res = eval(response.text);
     Omnibar.listWords(res.s);
