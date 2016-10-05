@@ -2004,6 +2004,7 @@ define("ace/keyboard/textinput", ["require", "exports", "module", "ace/lib/event
     var dom = require("../lib/dom");
     var lang = require("../lib/lang");
     var BROKEN_SETDATA = useragent.isChrome < 18;
+    var CHROME_COMPOSITION = useragent.isChrome >= 53;
     var USE_IE_MIME_TYPE = useragent.isIE;
 
     var TextInput = function(parentNode, host) {
@@ -2374,6 +2375,9 @@ define("ace/keyboard/textinput", ["require", "exports", "module", "ace/lib/event
             host.removeListener("mousedown", onCompositionEnd);
             if (e.type == "compositionend" && c.range) {
                 host.selection.setRange(c.range);
+            }
+            if (CHROME_COMPOSITION) {
+                 onInput();
             }
         };
 
