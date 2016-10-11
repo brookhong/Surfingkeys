@@ -408,9 +408,10 @@ var Service = (function() {
     };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
-        chrome.tabs.query({
+        var queryInfo = message.queryInfo || {
             windowId: tab.windowId
-        }, function(tabs) {
+        };
+        chrome.tabs.query(queryInfo, function(tabs) {
             tabs = _filterByTitleOrUrl(tabs, message.query);
             if (message.query && message.query.length) {
                 tabs = tabs.filter(function(b) {

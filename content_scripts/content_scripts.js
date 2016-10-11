@@ -146,11 +146,8 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
         } else {
             var old_map = Normal.mappings.find(old_keystroke);
             if (old_map) {
-                var meta = old_map.meta;
-                var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
-                var keybound = createKeyTarget(meta.code, ag, meta.extra_chars, meta.repeatIgnore);
                 Normal.mappings.remove(new_keystroke);
-                Normal.mappings.add(new_keystroke, keybound);
+                Normal.mappings.add(new_keystroke, old_map.meta);
             } else if (old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
@@ -161,6 +158,20 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
 function unmap(keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
         Normal.mappings.remove(keystroke);
+    }
+}
+
+function unmapAllExcept(keystrokes, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        var _mappings = new Trie();
+        for (var i = 0, il = keystrokes.length; i < il; i++) {
+            var node = Normal.mappings.find(keystrokes[i]);
+            if (node) {
+                _mappings.add(keystrokes[i], node.meta);
+            }
+        }
+        delete Normal.mappings;
+        Normal.mappings = _mappings;
     }
 }
 
@@ -390,6 +401,7 @@ runtime.command({
     }
 
     if (window === top) {
+        // this block being put here instead of top.js is to ensure sequence.
         runtime.command({
             action: 'setSurfingkeysIcon',
             status: disabled

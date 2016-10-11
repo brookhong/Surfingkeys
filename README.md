@@ -421,6 +421,18 @@ mapkey in visual mode
 |**keystroke**                   | string, the existing keystroke that will be removed.|
 |**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this settings works.|
 
+### remove all keystroke mappings
+
+    unmapAllExcept(keystrokes, [domain_pattern])
+
+| parameter  | explanation |
+|:---------------| :-----|
+|**keystrokes**                  | array of string, the existing keystrokes that will be removed.|
+|**domain_pattern**              | regex[optional], a Javascript regex pattern to identify the domains that this settings works.|
+
+Example,
+
+    unmapAllExcept(['f', '/', '?']);
 
 ### Add search alias to omnibar
 

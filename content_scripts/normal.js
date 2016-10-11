@@ -67,13 +67,22 @@ var Mode = (function() {
         // console.log('enter {0}, {1}'.format(this.name, modes));
     };
 
-    self.exit = function() {
+    self.exit = function(peek) {
         var pos = mode_stack.indexOf(this);
         if (pos !== -1) {
-            pos++;
-            var popup = mode_stack.slice(0, pos);
-            popModes(popup);
-            mode_stack = mode_stack.slice(pos);
+            if (peek) {
+                // for peek exit, we need push modes above this back to the stack.
+                popModes(mode_stack);
+                mode_stack.splice(pos, 1);
+                pushModes(mode_stack);
+            } else {
+                // otherwise, we just pop all modes above this inclusively.
+                pos++;
+                var popup = mode_stack.slice(0, pos);
+                popModes(popup);
+                mode_stack = mode_stack.slice(pos);
+            }
+
             // var modes = mode_stack.map(function(m) {
                 // return m.name;
             // }).join('->');

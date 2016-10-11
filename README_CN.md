@@ -417,6 +417,18 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 |**keystroke**                   | 字符串，将要删除的按键。|
 |**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该操作会生效。|
 
+### 删除所有按键映射
+
+    unmapAllExcept(keystrokes, [domain_pattern])
+
+| 参数  | 含义 |
+|:---------------| :-----|
+|**keystrokes**                  | 字符串数组，将要删除的按键。|
+|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该操作会生效。|
+
+示例,
+
+    unmapAllExcept(['f', '/', '?']);
 
 ### 在搜索栏里添加搜索别名
 

@@ -384,6 +384,9 @@ mapkey(';p', '#7Paste html on current page', function() {
     });
 });
 mapkey(';q', '#14Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
+mapkey('gt', '', function() {
+    searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
+});
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response.text);
