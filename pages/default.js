@@ -208,6 +208,7 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
         url: "https://api.shanbay.com/bdc/search/?word=",
         query: Visual.getWordUnderCursor(),
+        style: "opacity: 0.8;",
         parseResult: function(res) {
             var res = eval("a=" + res.text);
             return [res.data.definition || res.msg];
