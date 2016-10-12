@@ -46,20 +46,25 @@ var Mode = (function() {
 
     }
 
-    self.enter = function() {
+    self.enter = function(priority) {
         // we need clear the modes stack first to make sure eventListeners of this mode added at first.
         popModes(mode_stack);
 
         var pos = mode_stack.indexOf(this);
+        this.priority = priority || mode_stack.length;
 
         if (pos === -1) {
             // push this mode into stack
             mode_stack.unshift(this);
-        } else {
+        } else if (pos > 0) {
             // pop up all the modes over this
-            mode_stack = mode_stack.slice(pos);
+            // mode_stack = mode_stack.slice(pos);
+            Front.showPopup(this.name + "@ : " + Mode.stack().map(function(u) { return u.name; }).join(','));
         }
 
+        mode_stack.sort(function(a,b) {
+            return (a.priority < b.priority) ? 1 : ((b.priority < a.priority) ? -1 : 0);
+        } );
         pushModes(mode_stack);
         // var modes = mode_stack.map(function(m) {
             // return m.name;

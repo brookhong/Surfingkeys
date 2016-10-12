@@ -9,21 +9,21 @@ var TopHooker = (function(mode) {
         }, 0);
     });
 
-    self.enter = function() {
-        mode.enter.call(self);
+    self.enter = function(priority) {
+        mode.enter.call(self, priority);
     };
 
     self.addEventListener('mousedown', function(event) {
-        self.exit(true);
+        self.exit();
     });
 
     self.addEventListener('keydown', function(event) {
-        self.exit(true);
+        self.exit();
     });
 
     return self;
 })(Mode);
-TopHooker.enter();
+TopHooker.enter(9999);
 
 var frontendFrame = (function() {
     var self = {};
