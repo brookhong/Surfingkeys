@@ -204,9 +204,23 @@ mapkey('t', '#8Open an URL', 'Front.openOmnibar({type: "URLs", extra: "getAllSit
 mapkey('go', '#8Open an URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false})');
 mapkey('ox', '#8Open recently closed URL', 'Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
 mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getTabURLs"})');
+// mapkey('Q', '#8Open omnibar for word translation', function() {
+//     Front.openOmniquery({
+//         url: "https://api.shanbay.com/bdc/search/?word=",
+//         query: Visual.getWordUnderCursor(),
+//         parseResult: function(res) {
+//             var res = eval("a=" + res.text);
+//             return [res.data.definition || res.msg];
+//         }
+//     });
+// });
+
 mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
-        url: "https://api.shanbay.com/bdc/search/?word=",
+        parseUrl: function(query){
+            var url = "https://api.shanbay.com/bdc/search/?word=";
+            return url + query;
+        },
         query: Visual.getWordUnderCursor(),
         parseResult: function(res) {
             var res = eval("a=" + res.text);
@@ -214,6 +228,7 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
         }
     });
 });
+
 mapkey('b', '#8Open a bookmark', 'Front.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', '#8Bookmark current page to selected folder', function() {
     var page = {

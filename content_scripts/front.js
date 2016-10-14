@@ -75,11 +75,30 @@ var Front = (function() {
         frontendCommand(args);
     };
 
+    // var onOmniQuery;
+    // self.openOmniquery = function(args) {
+    //     onOmniQuery = function(query) {
+    //         httpRequest({
+    //             'url': args.url + query
+    //         }, function(res) {
+    //             var words = args.parseResult(res);
+
+    //             frontendCommand({
+    //                 action: 'updateOmnibarResult',
+    //                 words: words
+    //             });
+    //         });
+    //     };
+    //     self.openOmnibar(({type: "OmniQuery", extra: args.query}))
+    // };
+
+    //For more complicated API like Baidufanyi
+    
     var onOmniQuery;
     self.openOmniquery = function(args) {
         onOmniQuery = function(query) {
             httpRequest({
-                'url': args.url + query
+                'url': args.parseUrl(query)
             }, function(res) {
                 var words = args.parseResult(res);
 
