@@ -174,6 +174,11 @@ var Insert = (function(mode) {
             return "stopEventPropagation";
         } else if (!isEditable(event.target)) {
             self.exit();
+        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {
+            setTimeout(function() {
+                event.target.blur();
+                self.exit();
+            }, 0);
         } else if (event.sk_keyName.length) {
             return Normal._handleMapKey.call(self, event.sk_keyName);
         }

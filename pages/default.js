@@ -20,6 +20,14 @@
 //
 // ************************* WARNING *************************
 
+imapkey("<Ctrl-'>", '', function() {
+    var val = document.activeElement.value;
+    if (val[0] === '"') {
+        document.activeElement.value = val.substr(1, val.length - 2);
+    } else {
+        document.activeElement.value = '"' + val + '"';
+    }
+});
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = document.activeElement;
     Front.showEditor(element, function(data) {
