@@ -240,6 +240,8 @@ var Front = (function(mode) {
     });
     self.openOmnibar = function(message) {
         showPopup(self.omnibar, message);
+        var style = message.style || "";
+        self.omnibar.find('style').html("#sk_omnibar {" + style + "}");
     };
     runtime.on('openOmnibar', self.openOmnibar);
     self.openFinder = function() {
@@ -401,7 +403,6 @@ runtime.command({
     runtime.conf.omnibarMaxResults = rs.omnibarMaxResults;
     applySettings(rs);
 
-    Normal.enter();
 });
 
 $(document).on('surfingkeys:themeChanged', function(evt, theme) {

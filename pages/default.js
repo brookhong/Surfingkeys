@@ -222,6 +222,7 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
             return url + query;
         },
         query: Visual.getWordUnderCursor(),
+        style: "opacity: 0.8;",
         parseResult: function(res) {
             var res = eval("a=" + res.text);
             return [res.data.definition || res.msg];
@@ -399,6 +400,9 @@ mapkey(';p', '#7Paste html on current page', function() {
     });
 });
 mapkey(';q', '#14Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
+mapkey('gt', '', function() {
+    searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
+});
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response.text);

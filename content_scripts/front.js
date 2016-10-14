@@ -108,7 +108,7 @@ var Front = (function() {
                 });
             });
         };
-        self.openOmnibar(({type: "OmniQuery", extra: args.query}))
+        self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}))
     };
 
     self.openFinder = function() {
