@@ -218,7 +218,6 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
         }
     });
 });
-
 mapkey('b', '#8Open a bookmark', 'Front.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', '#8Bookmark current page to selected folder', function() {
     var page = {

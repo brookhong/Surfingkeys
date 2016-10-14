@@ -74,7 +74,7 @@ var Front = (function() {
         args.action = 'openOmnibar';
         frontendCommand(args);
     };
-    
+
     var onOmniQuery;
     self.openOmniquery = function(args) {
         onOmniQuery = function(query) {
