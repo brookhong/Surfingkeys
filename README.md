@@ -108,7 +108,8 @@ When focus is switched into any editable element by whatever means(`i` hints or 
 
 All mappings added with `imapkey` work in this mode.
 
-    `Ctrl - i` to open vim editor to edit.
+* `Ctrl - i` to open vim editor to edit.
+* `Ctrl - '` to toggle quotes in an input element, this is useful for search engines like google.
 
 ### Find
 

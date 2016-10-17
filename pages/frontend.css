@@ -70,7 +70,6 @@ body {
     display: inline-block;
     flex: 1;
     font-size: 20px;
-    height: 34px;
     margin-bottom: 0;
     padding: 0px 0px 0px 0.5rem;
     background: transparent;
@@ -80,6 +79,7 @@ body {
 #sk_omnibarSearchArea {
     display: flex;
     margin: 0.5rem 1rem;
+    padding-bottom: 0.3rem;
     border-bottom: 1px solid #999;
 }
 #sk_omnibarSearchResult {

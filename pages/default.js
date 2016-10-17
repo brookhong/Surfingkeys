@@ -215,6 +215,12 @@ mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs"
 mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
         url: "https://api.shanbay.com/bdc/search/?word=",
+        /*
+         * or
+        url: function(q) {
+            return "https://api.shanbay.com/bdc/search/?word=" + q
+        },
+        */
         query: Visual.getWordUnderCursor(),
         style: "opacity: 0.8;",
         parseResult: function(res) {
