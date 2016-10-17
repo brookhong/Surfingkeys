@@ -214,7 +214,10 @@ mapkey('ox', '#8Open recently closed URL', 'Front.openOmnibar({type: "URLs", ext
 mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getTabURLs"})');
 mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
-        url: "https://api.shanbay.com/bdc/search/?word=",
+        parseUrl: function(query){
+            var url = "https://api.shanbay.com/bdc/search/?word=";
+            return url + query;
+        },
         query: Visual.getWordUnderCursor(),
         style: "opacity: 0.8;",
         parseResult: function(res) {
