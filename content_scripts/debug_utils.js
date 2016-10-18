@@ -36,3 +36,10 @@ function stackTrace() {
     console.log(new Date().toLocaleString());
     console.log(err.stack.substr(6));
 }
+
+function time(fn) {
+    var start = new Date().getTime();
+
+    fn.call(fn);
+    console.log(new Date().getTime() - start);
+}

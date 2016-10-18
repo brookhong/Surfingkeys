@@ -85,6 +85,16 @@ var Hints = (function(mode) {
         lastMouseTarget = element;
     }
 
+    function isElementPartiallyInViewport(el) {
+        var rect = el.getBoundingClientRect();
+        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+
+        return rect.width && rect.height
+            && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
+            && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
+    }
+
     function refresh() {
         var matches = [];
         var hints = holder.find('>div');
@@ -174,11 +184,7 @@ var Hints = (function(mode) {
         }
         holder.show().html('');
         if (cssSelector === "") {
-            cssSelector = "a, button, select:visible, input:visible, textarea:visible";
-            if (!runtime.conf.hintsThreshold || $('*').length < runtime.conf.hintsThreshold) {
-                // to avoid bad performance when there are too many clickable elements.
-                cssSelector += ", *:visible:css(cursor=pointer)";
-            }
+            cssSelector = "a, button, select:visible, input:visible, textarea:visible, *:visible:css(cursor=pointer)";
         }
         var elements = $(document.body).find(cssSelector).filter(function(i) {
             var ret = null;
@@ -196,7 +202,8 @@ var Hints = (function(mode) {
                     }
                 }
                 var size = (r.width > 0 && r.height > 0);
-                if (!!r && r.bottom >= 0 && r.right >= 0 && r.top <= document.documentElement.clientHeight && r.left <= document.documentElement.clientWidth && size) {
+
+                if (isElementPartiallyInViewport(elm)) {
                     ret = elm;
                 }
             }

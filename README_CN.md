@@ -124,11 +124,11 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 用`t`打开搜索栏时，
 
-    `Ctrl - d` 可以从收藏夹或访问历史中删除选中项
+`Ctrl - d` 可以从收藏夹或访问历史中删除选中项。
 
 用`b`打开搜索栏时，
 
-    `Ctrl - <any letter>` 创建相应的类似vim的全局标示。
+`Ctrl - <any letter>` 创建相应的类似vim的全局标示。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 

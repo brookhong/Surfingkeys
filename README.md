@@ -124,13 +124,13 @@ The omnibar provides kinds of functions that need user input, for example,
 * Open search engines with `og` / `ow` ...
 * Open commands with `:`
 
-In omnibar opened with `t`
+In omnibar opened with `t`:
 
-    `Ctrl - d` to delete from bookmark or history
+`Ctrl - d` to delete from bookmark or history
 
-In omnibar opened with `b`
+In omnibar opened with `b`:
 
-    `Ctrl - <any letter>` to create vim-like global mark
+`Ctrl - <any letter>` to create vim-like global mark
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 

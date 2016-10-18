@@ -118,23 +118,17 @@ var Visual = (function(mode) {
     self.mappings.add("G", {
         annotation: "forward documentboundary",
         feature_group: 9,
-        code: function() {
-            hideCursor();
-            var nodes = getTextNodes(document.body, /./, -1);
-            selection.setPosition(nodes[0], nodes[0].data.length);
-            showCursor();
-            scrollIntoView();
-        }
+        code: modifySelection
     });
     self.mappings.add("gg", {
         annotation: "backward documentboundary",
         feature_group: 9,
         code: function() {
-            hideCursor();
-            var nodes = getTextNodes(document.body, /./, 1);
-            selection.setPosition(nodes[0], 0);
-            showCursor();
-            scrollIntoView();
+            // there may be some fixed-position div for navbar on top on some pages.
+            // so scrollIntoView can not send us top, as it's already in view.
+            // explicitly set scrollTop 0 here.
+            document.body.scrollTop = 0;
+            modifySelection();
         }
     });
     self.mappings.add("y", {
@@ -184,11 +178,13 @@ var Visual = (function(mode) {
             }
         }
         if (!node) {
-            var nodes = getTextNodes(document.body, /./);
-            var anodes = nodes.filter(function(i) {
-                return ($(i.parentNode).offset().top > (document.body.scrollTop + window.innerHeight / 3));
-            });
-            node = (anodes.length) ? anodes[0] : nodes[0];
+            var treeWalker = getTextNodes(document.body, /./, 0);
+            while(treeWalker.nextNode()) {
+                if ($(treeWalker.currentNode.parentNode).offset().top > (document.body.scrollTop + window.innerHeight / 3)) {
+                    node = treeWalker.currentNode;
+                    break;
+                }
+            }
         }
         return [node, offset];
     }
@@ -287,6 +283,8 @@ var Visual = (function(mode) {
             nodes.push(treeWalker.firstChild());
         } else if (flag === -1) {
             nodes.push(treeWalker.lastChild());
+        } else if (flag === 0) {
+            return treeWalker;
         } else {
             while(treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
         }
