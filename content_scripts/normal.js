@@ -328,17 +328,6 @@ var Normal = (function(mode) {
         return nodes;
     }
 
-    function isElementPartiallyInViewport(el) {
-        var rect = el.getBoundingClientRect();
-        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
-
-        var vertInView = (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0);
-        var horInView = (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0);
-
-        return (vertInView && horInView);
-    }
-
     self.changeScrollTarget = function() {
         scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
