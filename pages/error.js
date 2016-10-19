@@ -21,10 +21,10 @@ runtime.command({
         mapkey('r', 'reload', function() {
             window.location.href = tabError.url;
         });
-        mapkey('a', 'reload', function() {
+        mapkey('p', 'toggle proxy', function() {
             RUNTIME('updateProxy', {
                 host: host,
-                operation: 'add'
+                operation: 'toggle'
             });
         });
     }

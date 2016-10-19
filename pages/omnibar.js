@@ -211,7 +211,7 @@ var Omnibar = (function(ui) {
         if (url === undefined) {
             url = self.input.val();
             if (url.indexOf(':') === -1) {
-                url = "http://" + url;
+                url = SearchEngine.aliases[SearchEngine.default].url + url;
             }
         }
         if (/^javascript:/.test(url)) {
@@ -626,6 +626,7 @@ Omnibar.addHandler('VIMarks', OpenVIMarks);
 var SearchEngine = (function() {
     var self = {};
     self.aliases = {};
+    self.default = 'g';
 
     self.onOpen = function(arg) {
         $.extend(self, self.aliases[arg]);
