@@ -21,6 +21,7 @@ var Service = (function() {
         focusOnSaved: true,
         omnibarMaxResults: 20,
         tabsThreshold: 9,
+        hintsThreshold: 10000,
         repeatThreshold: 99,
         tabsMRUOrder: true,
         smoothScroll: true,

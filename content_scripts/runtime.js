@@ -3,6 +3,7 @@ var runtime = window.runtime || (function() {
         conf: {
             // local part from settings
             focusOnSaved: true,
+            hintsThreshold: 10000,
             afterYank: 1,
             smoothScroll: true,
             lastKeys: "",

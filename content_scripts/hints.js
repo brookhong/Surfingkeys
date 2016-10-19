@@ -184,7 +184,11 @@ var Hints = (function(mode) {
         }
         holder.show().html('');
         if (cssSelector === "") {
-            cssSelector = "a, button, select:visible, input:visible, textarea:visible, *:visible:css(cursor=pointer)";
+            cssSelector = "a, button, select, input, textarea";
+            if (!runtime.conf.hintsThreshold || $('*').length < runtime.conf.hintsThreshold) {
+                // to avoid bad performance when there are too many clickable elements.
+                cssSelector += ", *:css(cursor=pointer)";
+            }
         }
         var elements = $(document.body).find(cssSelector).filter(function(i) {
             var ret = null;
@@ -192,17 +196,15 @@ var Hints = (function(mode) {
             if ($(elm).attr('disabled') === undefined) {
                 var r = elm.getBoundingClientRect();
                 if (r.width === 0 || r.height === 0) {
+                    // use the first visible child instead
                     var children = $(elm).find('*').filter(function(j) {
                         var r = this.getBoundingClientRect();
                         return (r.width > 0 && r.height > 0);
                     });
                     if (children.length) {
                         elm = children[0];
-                        r = elm.getBoundingClientRect();
                     }
                 }
-                var size = (r.width > 0 && r.height > 0);
-
                 if (isElementPartiallyInViewport(elm)) {
                     ret = elm;
                 }
