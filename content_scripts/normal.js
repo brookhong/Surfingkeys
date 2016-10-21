@@ -217,8 +217,11 @@ var Normal = (function(mode) {
         }
     });
     self.addEventListener('pushState', function(event) {
-        Insert.exit();
-        GetBackFocus.enter();
+        if (typeof(TopHooker) === "undefined" || Mode.stack()[0] !== TopHooker) {
+            // only for that we are not having TopHooker mode.
+            Insert.exit();
+            GetBackFocus.enter();
+        }
     });
     self.addEventListener('mousedown', function(event) {
         if (isEditable(event.target)) {

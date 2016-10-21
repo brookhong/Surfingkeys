@@ -130,6 +130,9 @@ var Front = (function() {
         frontendCommand({
             action: 'writeClipboard',
             content: text
+        }, function(response) {
+            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
+            window.focus();
         });
     };
 
