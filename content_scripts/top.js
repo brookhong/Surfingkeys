@@ -1,7 +1,7 @@
 // Hook focus on top window on load
 // test with http://askubuntu.com/questions/529781/upgrade-from-gdb-7-7-to-7-8
-var TopHooker = (function(mode) {
-    var self = $.extend({name: "TopHooker", eventListeners: {}}, mode);
+var TopHook = (function(mode) {
+    var self = $.extend({name: "TopHook", eventListeners: {}}, mode);
 
     self.addEventListener('blur', function(event) {
         setTimeout(function() {
@@ -23,7 +23,7 @@ var TopHooker = (function(mode) {
 
     return self;
 })(Mode);
-TopHooker.enter(9999);
+TopHook.enter(9999);
 
 var frontendFrame = (function() {
     var self = {};

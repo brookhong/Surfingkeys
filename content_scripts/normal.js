@@ -217,8 +217,8 @@ var Normal = (function(mode) {
         }
     });
     self.addEventListener('pushState', function(event) {
-        if (typeof(TopHooker) === "undefined" || Mode.stack()[0] !== TopHooker) {
-            // only for that we are not having TopHooker mode.
+        if (typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook) {
+            // only for that we are not having TopHook mode.
             Insert.exit();
             GetBackFocus.enter();
         }

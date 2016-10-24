@@ -363,10 +363,13 @@ runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
     var disabled = checkBlackList(runtime.conf);
-    if (disabled) {
-        Disabled.enter();
-    } else {
-        Disabled.exit();
+    if (rs.hasOwnProperty('blacklist') || rs.hasOwnProperty('blacklistPattern')) {
+        // only toggle Disabled mode when blacklist is updated
+        if (disabled) {
+            Disabled.enter();
+        } else {
+            Disabled.exit();
+        }
     }
 
     if (window === top) {
