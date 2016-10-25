@@ -38,7 +38,9 @@ var Hints = (function(mode) {
 
     var prefix = "",
         lastMouseTarget = null,
-        behaviours = {},
+        behaviours = {
+            mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
+        },
         style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
@@ -112,10 +114,11 @@ var Hints = (function(mode) {
     }
 
     function hide() {
-        // reset default behaviours
+        // To reset default behaviours here is necessary, as some hint my be hit without creation, see clickOn in content_scripts.js
         behaviours = {
             active: true,
             tabbed: false,
+            mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         };
         holder.html("").remove();
@@ -177,6 +180,7 @@ var Hints = (function(mode) {
         attrs = $.extend({
             active: true,
             tabbed: false,
+            mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         }, attrs || {});
         for (var attr in attrs) {
@@ -274,7 +278,7 @@ var Hints = (function(mode) {
                 realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
                 element = realTargets.length ? realTargets[0] : element;
                 self.mouseoutLastElement();
-                dispatchMouseEvent(element, ['mouseover', 'mousedown', 'mouseup', 'click']);
+                dispatchMouseEvent(element, behaviours.mouseEvents);
             }
         }
     };
