@@ -123,7 +123,11 @@ var Front = (function() {
     self.getContentFromClipboard = function(onReady) {
         frontendCommand({
             action: 'getContentFromClipboard'
-        }, onReady);
+        }, function(response) {
+            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
+            window.focus();
+            onReady(response);
+        });
     };
 
     self.writeClipboard = function(text) {

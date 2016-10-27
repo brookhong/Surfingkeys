@@ -106,6 +106,7 @@ function createKeyTarget(code, ag, extra_chars, repeatIgnore) {
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
     if (!options.domain || options.domain.test(window.location.origin)) {
+        keys = encodeKeystroke(keys);
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
@@ -417,11 +418,14 @@ Normal.insertJS(function() {
         var orig = history[type];
         return function() {
             var rv = orig.apply(this, arguments);
-            var e = new Event(type);
+            var e = new NativeEventForSK(type);
             e.arguments = arguments;
             window.dispatchEvent(e);
             return rv;
         };
     };
+    // Hold Event at NativeEventForSK in case of it is overrided
+    // test with http://search.bilibili.com/
+    var NativeEventForSK = Event;
     history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
 });

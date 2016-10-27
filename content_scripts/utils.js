@@ -159,7 +159,7 @@ String.prototype.format = function() {
                     character = "<{0}>".format(character);
                 }
             }
-            return character;
+            return encodeKeystroke(character);
         },
         isWordChar: function(event) {
             return (event.keyCode < 123 && event.keyCode >= 97 || event.keyCode < 91 && event.keyCode >= 65 || event.keyCode < 58 && event.keyCode >= 48);
@@ -175,3 +175,64 @@ String.prototype.format = function() {
     root.keyCodes = KeyboardUtils.keyCodes;
 
 }).call(this);
+
+// <Ctrl-'>: ⠷: <Ctrl-'>
+// <Alt-i>: ⥹: <Alt-i>
+// <Ctrl-Alt-z>: ⪊: <Ctrl-Alt-z>
+// <Ctrl-Alt-Meta-h>: ⹸: <Ctrl-Alt-Meta-h>
+function encodeKeystroke(s) {
+    var code = s, groups = s.match(/<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(.)>/);
+    if (groups) {
+        var mod = 0;
+        if (s.indexOf("Ctrl-") !== -1) {
+            mod |= 1;
+        }
+        if (s.indexOf("Alt-") !== -1) {
+            mod |= 2;
+        }
+        if (s.indexOf("Meta-") !== -1) {
+            mod |= 4;
+        }
+        code = ((mod<<8) + 10000) + groups[1].charCodeAt(0);
+        code = String.fromCharCode(code);
+    }
+    return code;
+}
+
+function decodeKeystroke(s) {
+    var r = s.charCodeAt(0);
+    if (r > 10000) {
+        r = r - 10000;
+        var c = String.fromCharCode(r % 256);
+        r = r >> 8;
+        if (r & 4) {
+            c = "Meta-" + c;
+        }
+        if (r & 2) {
+            c = "Alt-" + c;
+        }
+        if (r & 1) {
+            c = "Ctrl-" + c;
+        }
+        r = "<" + c + ">";
+    } else {
+        r = s;
+    }
+    return r;
+}
+
+/*
+ * test code
+ *
+for ( var i = 0; i < 256; i++) {
+    var c = String.fromCharCode(i);
+    ["Ctrl-", ,"Alt-", ,"Meta-", ,"Ctrl-Alt-", ,"Ctrl-Meta-", ,"Alt-Meta-", ,"Ctrl-Alt-Meta-"].forEach(function(u) {
+        var keystr = "<" + u + c + ">";
+        var encoded = encodeKeystroke(keystr);
+        var decoded = decodeKeystroke(encoded);
+        if (keystr === decoded) {
+            console.log(keystr + ": " + encoded + ": " + decoded);
+        }
+    });
+}
+*/

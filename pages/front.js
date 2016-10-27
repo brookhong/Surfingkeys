@@ -185,6 +185,7 @@ var Front = (function(mode) {
             for (var i = 0; i < words.length; i++) {
                 var w = words[i];
                 var meta = mappings.find(w).meta;
+                w = decodeKeystroke(w);
                 var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
                 help_groups[meta.feature_group].push(item);
             }

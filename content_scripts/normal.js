@@ -591,7 +591,7 @@ var Normal = (function(mode) {
         var s = document.createElement('script');
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
-            s.innerText = "(" + code.toString() + ")(window);";
+            s.innerHTML = "(" + code.toString() + ")(window);";
         } else {
             s.src = code;
             s.onload = onload;

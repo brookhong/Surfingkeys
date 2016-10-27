@@ -79,6 +79,6 @@
         "pages/shadow.css",
         "pages/default.css"
     ],
-    "content_security_policy": "script-src 'unsafe-eval' 'sha256-jNQvOEIBE16jqoFcbLrv8oLxcfm2/tznTOaOlxs+skM='; object-src 'self';",
+    "content_security_policy": "script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE='; object-src 'self';",
     "options_page": "pages/options.html"
 }

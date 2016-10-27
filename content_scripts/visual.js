@@ -1,9 +1,41 @@
 var Visual = (function(mode) {
     var self = $.extend({name: "Visual", eventListeners: {}, _style: {}}, mode);
 
+    // f in visual mode
+    var visualf = false;
+
     self.addEventListener('keydown', function(event) {
         var updated = "";
-        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+        if (visualf) {
+            var exitf = false;
+            event.sk_suppressed = true;
+
+            if (KeyboardUtils.isWordChar(event)) {
+                hideCursor();
+                var lastPosBeforeF = [selection.focusNode, selection.focusOffset];
+                if (findNextTextNodeBy(event.sk_keyName, true)) {
+                    if (state === 1) {
+                        selection.setPosition(selection.focusNode, selection.focusOffset);
+                    } else {
+                        var found = [selection.focusNode, selection.focusOffset];
+                        selection.collapseToStart();
+                        selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
+                        selection.extend(found[0], found[1]);
+                    }
+                } else {
+                    selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
+                }
+                showCursor();
+                exitf = true;
+            } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+                exitf = true;
+            }
+
+            if (exitf) {
+                Front.showStatus(2, status[state]);
+                visualf = false;
+            }
+        } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             if (state > 1) {
                 cursor.remove();
                 selection.collapse(selection.anchorNode, selection.anchorOffset);
@@ -155,6 +187,21 @@ var Visual = (function(mode) {
         feature_group: 9,
         code: function() {
             Hints.dispatchMouseClick(selection.focusNode.parentNode);
+        }
+    });
+    self.mappings.add("zz", {
+        annotation: "make cursor at center of window.",
+        feature_group: 9,
+        code: function() {
+            document.body.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2
+        }
+    });
+    self.mappings.add("f", {
+        annotation: "Forward to next char.",
+        feature_group: 9,
+        code: function() {
+            Front.showStatus(2, "Visualf");
+            visualf = true;
         }
     });
 
@@ -347,9 +394,7 @@ var Visual = (function(mode) {
         hideCursor();
         var nodes = matches;
         for (var i = 0; i < nodes.length; i++) {
-            if (nodes[i].parentNode) {
-                nodes[i].parentNode.innerHTML = nodes[i].parentNode.innerHTML.replace(/<surfingkeys_mark[^>]*>([^<]+)<\/surfingkeys_mark>/gi, '$1');
-            }
+            nodes[i].outerHTML = nodes[i].outerText;
         }
         matches = [];
         Front.showStatus(3, '');
@@ -379,18 +424,24 @@ var Visual = (function(mode) {
     self.star = function() {
         if (selection.focusNode && selection.focusNode.nodeValue) {
             hideCursor();
+            var pos = [selection.focusNode, selection.focusOffset];
             var query = self.getWordUnderCursor();
             runtime.updateHistory('find', query);
             self.visualClear();
+            selection.setPosition(pos[0], pos[1]);
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
             showCursor();
         }
     };
 
     self.getWordUnderCursor = function() {
+        hideCursor();
         var word = selection.toString();
         if (word.length === 0 && selection.focusNode && selection.focusNode.nodeValue) {
-            word = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset);
+            word = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset - 1);
+        }
+        if (state > 0) {
+            showCursor();
         }
         return word;
     };
