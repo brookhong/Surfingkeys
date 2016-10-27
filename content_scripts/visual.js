@@ -1,9 +1,6 @@
 var Visual = (function(mode) {
     var self = $.extend({name: "Visual", eventListeners: {}, _style: {}}, mode);
 
-    // f in visual mode
-    var visualf = false;
-
     self.addEventListener('keydown', function(event) {
         var updated = "";
         if (visualf) {
@@ -11,21 +8,8 @@ var Visual = (function(mode) {
             event.sk_suppressed = true;
 
             if (KeyboardUtils.isWordChar(event)) {
-                hideCursor();
-                var lastPosBeforeF = [selection.focusNode, selection.focusOffset];
-                if (findNextTextNodeBy(event.sk_keyName, true)) {
-                    if (state === 1) {
-                        selection.setPosition(selection.focusNode, selection.focusOffset);
-                    } else {
-                        var found = [selection.focusNode, selection.focusOffset];
-                        selection.collapseToStart();
-                        selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
-                        selection.extend(found[0], found[1]);
-                    }
-                } else {
-                    selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
-                }
-                showCursor();
+                visualSeek(visualf, event.sk_keyName);
+                lastF = [visualf, event.sk_keyName];
                 exitf = true;
             } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 exitf = true;
@@ -33,7 +17,7 @@ var Visual = (function(mode) {
 
             if (exitf) {
                 Front.showStatus(2, status[state]);
-                visualf = false;
+                visualf = 0;
             }
         } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             if (state > 1) {
@@ -200,8 +184,34 @@ var Visual = (function(mode) {
         annotation: "Forward to next char.",
         feature_group: 9,
         code: function() {
-            Front.showStatus(2, "Visualf");
-            visualf = true;
+            Front.showStatus(2, "Visual forward");
+            visualf = 1;
+        }
+    });
+    self.mappings.add("F", {
+        annotation: "Backward to next char.",
+        feature_group: 9,
+        code: function() {
+            Front.showStatus(2, "Visual backward");
+            visualf = -1;
+        }
+    });
+    self.mappings.add(";", {
+        annotation: "Repeat latest f, F",
+        feature_group: 9,
+        code: function() {
+            if (lastF) {
+                visualSeek(lastF[0], lastF[1]);
+            }
+        }
+    });
+    self.mappings.add(",", {
+        annotation: "Repeat latest f, F in opposite direction",
+        feature_group: 9,
+        code: function() {
+            if (lastF) {
+                visualSeek(-lastF[0], lastF[1]);
+            }
         }
     });
 
@@ -213,6 +223,28 @@ var Visual = (function(mode) {
         status = ['', 'Caret', 'Range'],
         mark_template = $('<surfingkeys_mark>')[0],
         cursor = $('<div class="surfingkeys_cursor"></div>')[0];
+
+    // f in visual mode
+    var visualf = 0, lastF = null;
+
+    function visualSeek(dir, chr) {
+        hideCursor();
+        var lastPosBeforeF = [selection.focusNode, selection.focusOffset];
+        if (findNextTextNodeBy(chr, true, (dir === -1))) {
+            var fix = (dir === -1) ? -1 : 0;
+            if (state === 1) {
+                selection.setPosition(selection.focusNode, selection.focusOffset + fix);
+            } else {
+                var found = [selection.focusNode, selection.focusOffset + fix];
+                selection.collapseToStart();
+                selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
+                selection.extend(found[0], found[1]);
+            }
+        } else {
+            selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
+        }
+        showCursor();
+    }
 
     function getStartPos() {
         var node = null,
@@ -465,10 +497,10 @@ var Visual = (function(mode) {
         }, 1);
     };
 
-    function findNextTextNodeBy(query, caseSensitive) {
+    function findNextTextNodeBy(query, caseSensitive, backwards) {
         var found = false;
         var pos = [selection.anchorNode, selection.anchorOffset];
-        while(window.find(query, caseSensitive) && (selection.anchorNode != pos[0] || selection.anchorOffset != pos[1])) {
+        while(window.find(query, caseSensitive, backwards) && (selection.anchorNode != pos[0] || selection.anchorOffset != pos[1])) {
             pos = [selection.anchorNode, selection.anchorOffset];
             if (selection.anchorNode.splitText) {
                 found = true;
@@ -483,14 +515,14 @@ var Visual = (function(mode) {
         var scrollTop = document.body.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
 
-        if (findNextTextNodeBy(query, caseSensitive)) {
+        if (findNextTextNodeBy(query, caseSensitive, false)) {
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         } else {
             // start from beginning if no found from current position
             selection.setPosition(document.body.firstChild, 0);
         }
 
-        if (findNextTextNodeBy(query, caseSensitive)) {
+        if (findNextTextNodeBy(query, caseSensitive, false)) {
             if (document.body.scrollTop !== scrollTop) {
                 // set new start position if there is no occurrence in current view.
                 scrollTop = document.body.scrollTop;
@@ -500,7 +532,7 @@ var Visual = (function(mode) {
             matches.push(mark);
             selection.setPosition(mark.nextSibling, 0);
 
-            while(document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive)) {
+            while(document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive, false)) {
                 var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
                 matches.push(mark);
                 selection.setPosition(mark.nextSibling, 0);
