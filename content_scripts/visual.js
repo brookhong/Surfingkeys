@@ -134,7 +134,13 @@ var Visual = (function(mode) {
     self.mappings.add("G", {
         annotation: "forward documentboundary",
         feature_group: 9,
-        code: modifySelection
+        code: function() {
+            modifySelection();
+            if (matches.length) {
+                currentOccurrence = matches.length - 1;
+                Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+            }
+        }
     });
     self.mappings.add("gg", {
         annotation: "backward documentboundary",
@@ -144,6 +150,10 @@ var Visual = (function(mode) {
             // so scrollIntoView can not send us top, as it's already in view.
             // explicitly set scrollTop 0 here.
             document.body.scrollTop = 0;
+            currentOccurrence = 0;
+            if (matches.length) {
+                Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+            }
             modifySelection();
         }
     });
@@ -246,6 +256,18 @@ var Visual = (function(mode) {
         showCursor();
     }
 
+    function getTextNodeByY(y) {
+        var node = null;
+        var treeWalker = getTextNodes(document.body, /./, 0);
+        while (treeWalker.nextNode()) {
+            if ($(treeWalker.currentNode.parentNode).offset().top > (document.body.scrollTop + window.innerHeight * y)) {
+                node = treeWalker.currentNode;
+                break;
+            }
+        }
+        return node;
+    }
+
     function getStartPos() {
         var node = null,
             offset = 0;
@@ -257,13 +279,7 @@ var Visual = (function(mode) {
             }
         }
         if (!node) {
-            var treeWalker = getTextNodes(document.body, /./, 0);
-            while(treeWalker.nextNode()) {
-                if ($(treeWalker.currentNode.parentNode).offset().top > (document.body.scrollTop + window.innerHeight / 3)) {
-                    node = treeWalker.currentNode;
-                    break;
-                }
-            }
+            node = getTextNodeByY(0.3);
         }
         return [node, offset];
     }
@@ -365,7 +381,7 @@ var Visual = (function(mode) {
         } else if (flag === 0) {
             return treeWalker;
         } else {
-            while(treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
+            while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
         }
         return nodes;
     }
@@ -426,7 +442,9 @@ var Visual = (function(mode) {
         hideCursor();
         var nodes = matches;
         for (var i = 0; i < nodes.length; i++) {
-            nodes[i].outerHTML = nodes[i].outerText;
+            if (nodes[i].parentNode) {
+                nodes[i].parentNode.innerHTML = nodes[i].parentNode.innerHTML.replace(/<surfingkeys_mark[^>]*>([^<]+)<\/surfingkeys_mark>/gi, '$1');
+            }
         }
         matches = [];
         Front.showStatus(3, '');
@@ -499,9 +517,7 @@ var Visual = (function(mode) {
 
     function findNextTextNodeBy(query, caseSensitive, backwards) {
         var found = false;
-        var pos = [selection.anchorNode, selection.anchorOffset];
-        while(window.find(query, caseSensitive, backwards) && (selection.anchorNode != pos[0] || selection.anchorOffset != pos[1])) {
-            pos = [selection.anchorNode, selection.anchorOffset];
+        while (window.find(query, caseSensitive, backwards)) {
             if (selection.anchorNode.splitText) {
                 found = true;
                 break;
@@ -511,6 +527,9 @@ var Visual = (function(mode) {
     }
     function visualUpdateForContentWindow(query) {
         self.visualClear();
+
+        // set caret to top in view
+        selection.setPosition(getTextNodeByY(0), 0);
 
         var scrollTop = document.body.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
@@ -532,7 +551,7 @@ var Visual = (function(mode) {
             matches.push(mark);
             selection.setPosition(mark.nextSibling, 0);
 
-            while(document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive, false)) {
+            while (document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive, false)) {
                 var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
                 matches.push(mark);
                 selection.setPosition(mark.nextSibling, 0);

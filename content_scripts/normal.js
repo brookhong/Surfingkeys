@@ -7,7 +7,7 @@ var Mode = (function() {
     };
 
     self.isSpecialKeyOf = function(specialKey, keyToCheck) {
-        return (-1 !== self.specialKeys[specialKey].indexOf(keyToCheck));
+        return (-1 !== self.specialKeys[specialKey].indexOf(decodeKeystroke(keyToCheck)));
     };
 
     self.addEventListener = function(evt, handler) {
@@ -164,6 +164,60 @@ var Insert = (function(mode) {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
+    self.mappings.add(encodeKeystroke("<Ctrl-e>"), {
+        annotation: "Move the cursor to the end of the line",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            element.setSelectionRange(element.value.length, element.value.length);
+        }
+    });
+    self.mappings.add(encodeKeystroke("<Ctrl-f>"), {
+        annotation: "Move the cursor to the beginning of the line",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            element.setSelectionRange(0, 0);
+        }
+    });
+    self.mappings.add(encodeKeystroke("<Alt-b>"), {
+        annotation: "Move the cursor Backward 1 word",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            var pos = nextNonWord(element.value, -1, element.selectionStart);
+            element.setSelectionRange(pos, pos);
+        }
+    });
+    self.mappings.add(encodeKeystroke("<Alt-f>"), {
+        annotation: "Move the cursor Forward 1 word",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            var pos = nextNonWord(element.value, 1, element.selectionStart);
+            element.setSelectionRange(pos, pos);
+        }
+    });
+    self.mappings.add(encodeKeystroke("<Alt-w>"), {
+        annotation: "Delete a word backwards",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            var pos = deleteNextWord(element.value, -1, element.selectionStart);
+            element.value = pos[0];
+            element.setSelectionRange(pos[1], pos[1]);
+        }
+    });
+    self.mappings.add(encodeKeystroke("<Alt-d>"), {
+        annotation: "Delete a word forwards",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            var pos = deleteNextWord(element.value, 1, element.selectionStart);
+            element.value = pos[0];
+            element.setSelectionRange(pos[1], pos[1]);
+        }
+    });
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -188,6 +242,35 @@ var Insert = (function(mode) {
             self.exit();
         }
     });
+
+    function nextNonWord(str, dir, cur) {
+        var nonWord = /\W/;
+        for ( cur = cur + dir; ; ) {
+            if (cur < 0) {
+                cur = 0;
+                break;
+            } else if (cur >= str.length) {
+                cur = str.length;
+                break;
+            } else if (nonWord.test(str[cur])) {
+                break;
+            } else {
+                cur = cur + dir;
+            }
+        }
+        return cur;
+    }
+
+    function deleteNextWord(str, dir, cur) {
+        var pos = nextNonWord(str, dir, cur);
+        var s = str;
+        if (pos > cur) {
+            s = str.substr(0, cur) + str.substr(pos + 1);
+        } else if (pos < cur) {
+            s = str.substr(0, pos + 1) + str.substr(cur);
+        }
+        return [s, pos];
+    }
 
     return self;
 })(Mode);
@@ -217,11 +300,20 @@ var Normal = (function(mode) {
         }
     });
     self.addEventListener('pushState', function(event) {
-        if (typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook) {
-            // only for that we are not having TopHook mode.
-            Insert.exit();
-            GetBackFocus.enter();
-        }
+        runtime.command({
+            action: 'getSettings',
+            key: ['pushStateIgnored', 'blacklist', 'blacklistPattern']
+        }, function(response) {
+            var settings = response.settings;
+            if (!settings.pushStateIgnored[window.location.origin] && !checkBlackList(settings)) {
+                // test with https://inbox.google.com
+                if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
+                    // only for that we are not having TopHook mode.
+                    Insert.exit();
+                    GetBackFocus.enter();
+                }
+            }
+        });
     });
     self.addEventListener('mousedown', function(event) {
         if (isEditable(event.target)) {

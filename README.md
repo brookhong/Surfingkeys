@@ -102,6 +102,12 @@ All mappings added with `vmapkey` work in this mode, with some built-in mappings
 
 ![search_selected](https://cloud.githubusercontent.com/assets/288207/17644215/759f1e70-61b3-11e6-8bf8-0bdff7d0c933.gif)
 
+* `zz` make cursor at center of window.
+* `f` forward to next char.
+* `F` backward to next char.
+* `;` repeat latest f, F.
+* `,` repeat latest f, F in opposite direction.
+
 ### Insert mode
 
 When focus is switched into any editable element by whatever means(`i` hints or `f` hints or mouse click), Insert mode is on.
@@ -110,6 +116,12 @@ All mappings added with `imapkey` work in this mode.
 
 * `Ctrl - i` to open vim editor to edit.
 * `Ctrl - '` to toggle quotes in an input element, this is useful for search engines like google.
+* `Ctrl-e` move the cursor to the end of the line.
+* `Ctrl-f` move the cursor to the beginning of the line.
+* `Alt-b` move the cursor Backward 1 word.
+* `Alt-f` move the cursor Forward 1 word.
+* `Alt-w` delete a word backwards.
+* `Alt-d` delete a word forwards.
 
 ### Find
 

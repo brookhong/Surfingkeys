@@ -681,11 +681,10 @@ var Commands = (function() {
         }, function(response) {
             var candidates = response.settings.cmdHistory;
             if (candidates.length) {
+                Omnibar.focusedItem = candidates.length;
                 Omnibar.listResults(candidates, function(c) {
                     return $('<li/>').data('cmd', c).html(c);
                 });
-                Omnibar.focusedItem = 0;
-                Omnibar.input.val(candidates[0]);
             }
         });
     };

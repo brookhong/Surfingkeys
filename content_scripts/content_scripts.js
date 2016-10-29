@@ -240,7 +240,7 @@ function searchSelectedWith(se, onlyThisSite, interactive, alias) {
     Front.getContentFromClipboard(function(response) {
         var query = window.getSelection().toString() || response.data;
         if (onlyThisSite) {
-            query += " site:" + window.location.hostname;
+            query = "site:" + window.location.hostname + " " + query;
         }
         if (interactive) {
             Front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});

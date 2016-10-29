@@ -38,6 +38,10 @@ var Service = (function() {
         proxyMode: 'clear',
         proxy: "DIRECT",
         interceptedErrors: {},
+        pushStateIgnored: {
+            'https://inbox.google.com': 1,
+            'https://vk.com': 1
+        },
         storage: 'local'
     };
     var newTabUrl = "chrome://newtab/";

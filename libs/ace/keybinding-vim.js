@@ -72,7 +72,11 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
     CodeMirror.addClass = CodeMirror.rmClass =
         CodeMirror.e_stop = function() {};
     CodeMirror.keyName = function(e) {
-        if (e.key) return e.key;
+        if (e.key) {
+            // WebKit returns ArrowUp/ArrowDown/ArrowLeft/ArrowRight
+            var ek = e.key.replace(/^Arrow/, '');
+            return ek;
+        }
         var key = (KEYS[e.keyCode] || "");
         if (key.length == 1) key = key.toUpperCase();
         key = event.getModifierString(e).replace(/(^|-)\w/g, function(m) {
@@ -5290,6 +5294,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             cm.openDialog(template, onClose, {
                 bottom: true,
                 value: options.value,
+                closeOnBlur: false,
                 onKeyDown: options.onKeyDown,
                 onKeyUp: options.onKeyUp,
                 selectValueOnOpen: false

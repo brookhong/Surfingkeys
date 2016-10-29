@@ -101,6 +101,12 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 ![search_selected](https://cloud.githubusercontent.com/assets/288207/17644215/759f1e70-61b3-11e6-8bf8-0bdff7d0c933.gif)
 
+* `zz` 让光标位于窗口中间行。
+* `f` 往前查找下一个字符。
+* `F` 往后查找下一个字符。
+* `;` 重复最后的`f`/`F`操作。
+* `,` 反向重复最后的`f`/`F`操作。
+
 ### Insert mode
 
 当输入焦点定位到各类输入框时（无论你是通过`i`或`f`选择定位还是鼠标点击定位的），就进入该模式。
@@ -108,6 +114,12 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 * `Ctrl - i` 打开vim编辑器。
 * `Ctrl - '` 把输入框里的内容用双引号引起来或去除双引号，方便在搜索引擎页面上搜索时使用。
+* `Ctrl-e`移动光标到行尾。
+* `Ctrl-f` 移动光标到行首。
+* `Alt-b` 移动光标到后一个词。
+* `Alt-f` 移动光标到前一个词。
+* `Alt-w` 往后删除一个词。
+* `Alt-d` 往前删除一个词。
 
 ### 查找
 
