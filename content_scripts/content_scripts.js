@@ -142,13 +142,14 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 var keybound = createKeyTarget(function() {
                     meta.code.call(meta.code, args);
                 }, ag, meta.extra_chars, meta.repeatIgnore);
-                Normal.mappings.add(new_keystroke, keybound);
+                Normal.mappings.add(encodeKeystroke(new_keystroke), keybound);
             }
         } else {
-            var old_map = Normal.mappings.find(old_keystroke);
+            var old_map = Normal.mappings.find(encodeKeystroke(old_keystroke));
             if (old_map) {
-                Normal.mappings.remove(new_keystroke);
-                Normal.mappings.add(new_keystroke, old_map.meta);
+                var nks = encodeKeystroke(new_keystroke);
+                Normal.mappings.remove(nks);
+                Normal.mappings.add(nks, old_map.meta);
             } else if (old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
@@ -158,6 +159,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
 
 function unmap(keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
+        keystroke = encodeKeystroke(keystroke);
         Normal.mappings.remove(keystroke);
     }
 }
@@ -166,9 +168,10 @@ function unmapAllExcept(keystrokes, domain) {
     if (!domain || domain.test(window.location.origin)) {
         var _mappings = new Trie();
         for (var i = 0, il = keystrokes.length; i < il; i++) {
-            var node = Normal.mappings.find(keystrokes[i]);
+            var ks = encodeKeystroke(keystrokes[i]);
+            var node = Normal.mappings.find(ks);
             if (node) {
-                _mappings.add(keystrokes[i], node.meta);
+                _mappings.add(ks, node.meta);
             }
         }
         delete Normal.mappings;
@@ -178,7 +181,7 @@ function unmapAllExcept(keystrokes, domain) {
 
 function iunmap(keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        Insert.mappings.remove(keystroke);
+        Insert.mappings.remove(encodeKeystroke(keystroke));
     }
 }
 
