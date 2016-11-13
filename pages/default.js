@@ -363,7 +363,7 @@ mapkey('ob', '#8Open Search with alias b', 'Front.openOmnibar({type: "SearchEngi
 mapkey('og', '#8Open Search with alias g', 'Front.openOmnibar({type: "SearchEngine", extra: "g"})');
 mapkey('ow', '#8Open Search with alias w', 'Front.openOmnibar({type: "SearchEngine", extra: "w"})');
 mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
-mapkey('ga', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://help/")');
+mapkey('ga', '#12Open Chrome About', 'tabOpenLink("chrome://help/")');
 mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
 mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
 mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');

@@ -228,6 +228,10 @@ var Hints = (function(mode) {
             elements.each(function(i) {
                 var pos = $(this).offset(),
                     z = getZIndex(this);
+                if (pos.top === 0 && pos.left === 0) {
+                    // work around for svg elements, https://github.com/jquery/jquery/issues/3182
+                    pos = this.getBoundingClientRect();
+                }
                 var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', Math.max(pos.left - bof.left + $(this).width() / 2, 0))
                     .css('z-index', z + 9999)
                     .data('z-index', z + 9999)
