@@ -121,6 +121,12 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `Alt-w` 往后删除一个词。
 * `Alt-d` 往前删除一个词。
 
+`imap` 和 `iunmap`：
+
+    imap(',,', "<Esc>");        // 按两次逗号退出当前输入框。
+    imap(';;', "<Ctrl-'>");     // 按两次分号切换双引号。
+
+
 ### 查找
 
 查找不是模式，但是它会让你自动进入visual mode. 按`/`打开查找栏，输入你要查找的文字，你会看到所有匹配的文字会被高亮。按回车完成查找，这时你会自动进入visual mode -- `Caret`。按`n`定位下一个，`N`定位前一个。
@@ -414,6 +420,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
     map(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
+    imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
+
 | 参数  | 含义 |
 |:---------------| :-----|
 |**new_keystroke**               | 字符串，将要使用的按键。|
@@ -424,6 +432,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 ### 删除一个按键映射
 
     unmap(keystroke, [domain_pattern])
+
+    iunmap(keystroke, [domain_pattern])
 
 | 参数  | 含义 |
 |:---------------| :-----|

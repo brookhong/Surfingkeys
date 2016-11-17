@@ -218,6 +218,14 @@ var Insert = (function(mode) {
             element.setSelectionRange(pos[1], pos[1]);
         }
     });
+    self.mappings.add(encodeKeystroke("<Esc>"), {
+        annotation: "Exit insert mode.",
+        feature_group: 15,
+        code: function() {
+            document.activeElement.blur();
+            self.exit();
+        }
+    });
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -234,7 +242,12 @@ var Insert = (function(mode) {
                 self.exit();
             }, 0);
         } else if (event.sk_keyName.length) {
-            return Normal._handleMapKey.call(self, event.sk_keyName);
+            return Normal._handleMapKey.call(self, event.sk_keyName, function(last) {
+                var pw = last.getPrefixWord();
+                if (pw) {
+                    document.activeElement.value += pw;
+                }
+            });
         }
     });
     self.addEventListener('focus', function(event) {
@@ -521,7 +534,7 @@ var Normal = (function(mode) {
         return ret;
     };
 
-    self._handleMapKey = function(key) {
+    self._handleMapKey = function(key, beforeFinish) {
         var ret = "";
         var finish = self.finish.bind(this);
         if (this.pendingMap) {
@@ -543,8 +556,10 @@ var Normal = (function(mode) {
             Front.showKeystroke(key);
             ret = "stopEventPropagation";
         } else {
+            var last = this.map_node;
             this.map_node = this.map_node.find(key);
             if (!this.map_node) {
+                beforeFinish && beforeFinish(last);
                 finish();
             } else {
                 if (this.map_node.meta) {

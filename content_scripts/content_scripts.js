@@ -179,6 +179,17 @@ function unmapAllExcept(keystrokes, domain) {
     }
 }
 
+function imap(new_keystroke, old_keystroke, domain, new_annotation) {
+    if (!domain || domain.test(window.location.origin)) {
+        var old_map = Insert.mappings.find(encodeKeystroke(old_keystroke));
+        if (old_map) {
+            var nks = encodeKeystroke(new_keystroke);
+            Insert.mappings.remove(nks);
+            Insert.mappings.add(nks, old_map.meta);
+        }
+    }
+}
+
 function iunmap(keystroke, domain) {
     if (!domain || domain.test(window.location.origin)) {
         Insert.mappings.remove(encodeKeystroke(keystroke));

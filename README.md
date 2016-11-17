@@ -123,6 +123,11 @@ All mappings added with `imapkey` work in this mode.
 * `Alt-w` delete a word backwards.
 * `Alt-d` delete a word forwards.
 
+`imap` and `iunmap` for insert mode.
+
+    imap(',,', "<Esc>");        // press comma twice to leave current input box.
+    imap(';;', "<Ctrl-'>");     // press semicolon twice to toggle quote.
+
 ### Find
 
 `Find` is not actually a mode, it just another way to enter visual mode. Press `/` to open find bar, which sits at almost the same position with Mode indicator, type something there. All occurrences of your input will be highlighted. Press `Enter` to finish the finding, and you're in `Caret` visual mode now, press `n` to find next, `N` to find previous.
@@ -418,6 +423,8 @@ mapkey in visual mode
 
     map(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
+    imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
+
 | parameter  | explanation |
 |:---------------| :-----|
 |**new_keystroke**               | string, the new keystroke that will be used.|
@@ -428,6 +435,8 @@ mapkey in visual mode
 ### remove a keystroke mapping
 
     unmap(keystroke, [domain_pattern])
+
+    iunmap(keystroke, [domain_pattern])
 
 | parameter  | explanation |
 |:---------------| :-----|

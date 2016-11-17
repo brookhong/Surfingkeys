@@ -75,6 +75,24 @@ var Trie = (function() {
                 }
             }
             return ret;
+        },
+
+        getPrefixWord: function() {
+            var fullWord = "", futureWord = this.stem, node = this;
+            while (fullWord === "") {
+                var keys = Object.keys(node);
+                for (var i = 0; i < keys.length; i++) {
+                    if (keys[i] === 'meta') {
+                        fullWord = node.meta.word;
+                        break;
+                    } else if (keys[i] !== 'stem') {
+                        futureWord = futureWord + keys[i];
+                        node = node[keys[i]];
+                        break;
+                    }
+                }
+            }
+            return fullWord.substr(0, fullWord.length - futureWord.length + 1);
         }
     };
 

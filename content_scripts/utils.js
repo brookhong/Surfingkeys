@@ -176,12 +176,15 @@ String.prototype.format = function() {
 
 }).call(this);
 
+// <Esc>: ✐: <Esc>
+// <Alt-Space>: ⤑: <Alt-Space>
+// <Ctrl-Alt-F7>: ⨘: <Ctrl-Alt-F7>
 // <Ctrl-'>: ⠷: <Ctrl-'>
 // <Alt-i>: ⥹: <Alt-i>
 // <Ctrl-Alt-z>: ⪊: <Ctrl-Alt-z>
 // <Ctrl-Alt-Meta-h>: ⹸: <Ctrl-Alt-Meta-h>
 function encodeKeystroke(s) {
-    var code = s, groups = s.match(/<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(.)>/);
+    var code = s, groups = s.match(/<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(.+)>/);
     if (groups) {
         var mod = 0;
         if (s.indexOf("Ctrl-") !== -1) {
@@ -193,17 +196,29 @@ function encodeKeystroke(s) {
         if (s.indexOf("Meta-") !== -1) {
             mod |= 4;
         }
-        code = ((mod<<8) + 10000) + groups[1].charCodeAt(0);
+        if (groups[1].length > 1) {
+            code = encodeKeystroke.specialKeys.indexOf(groups[1]);
+        } else {
+            code = groups[1].charCodeAt(0);
+        }
+
+        code = ((mod<<8) + 10000) + code;
         code = String.fromCharCode(code);
     }
     return code;
 }
+encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete'];
 
 function decodeKeystroke(s) {
     var r = s.charCodeAt(0);
-    if (r > 10000) {
+    if (r >= 10000) {
         r = r - 10000;
-        var c = String.fromCharCode(r % 256);
+        var c;
+        if (r % 256 < encodeKeystroke.specialKeys.length) {
+            c = encodeKeystroke.specialKeys[r % 256];
+        } else {
+            c = String.fromCharCode(r % 256);
+        }
         r = r >> 8;
         if (r & 4) {
             c = "Meta-" + c;
@@ -224,13 +239,25 @@ function decodeKeystroke(s) {
 /*
  * test code
  *
-for ( var i = 0; i < 256; i++) {
+
+for ( var i = 0; i < encodeKeystroke.specialKeys.length; i++) {
+    var c = encodeKeystroke.specialKeys[i];
+    ["","Ctrl-", ,"Alt-", ,"Meta-", ,"Ctrl-Alt-", ,"Ctrl-Meta-", ,"Alt-Meta-", ,"Ctrl-Alt-Meta-"].forEach(function(u) {
+        var keystr = "<" + u + c + ">";
+        var encoded = encodeKeystroke(keystr);
+        var decoded = decodeKeystroke(encoded);
+        if (keystr !== decoded) {
+            console.log(keystr + ": " + encoded + ": " + decoded);
+        }
+    });
+}
+for ( var i = 32; i < 256; i++) {
     var c = String.fromCharCode(i);
     ["Ctrl-", ,"Alt-", ,"Meta-", ,"Ctrl-Alt-", ,"Ctrl-Meta-", ,"Alt-Meta-", ,"Ctrl-Alt-Meta-"].forEach(function(u) {
         var keystr = "<" + u + c + ">";
         var encoded = encodeKeystroke(keystr);
         var decoded = decodeKeystroke(encoded);
-        if (keystr === decoded) {
+        if (keystr !== decoded) {
             console.log(keystr + ": " + encoded + ": " + decoded);
         }
     });
