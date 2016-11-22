@@ -229,25 +229,47 @@ function walkPageUrl(step) {
     }
 }
 
-function tabOpenLink(str) {
-    var urls = str.trim().split('\n').slice(0, 10).forEach(function(url) {
-        url = url.trim();
-        if (url.length > 0) {
-            if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-                if (/^[\w-]+?:\/\//i.test(url)) {
-                    url = url
-                } else {
-                    url = "http://" + url;
-                }
-            }
-            RUNTIME("openLink", {
-                tab: {
-                    tabbed: true
-                },
-                url: url
-            });
-        }
+function tabOpenLink(str, simultaneousness) {
+    simultaneousness = simultaneousness || 5;
+
+    var urls;
+    if (str.constructor.name === "Array") {
+        urls = str
+    } else if (str.constructor.name === "jQuery") {
+        urls = str.map(function() {
+            return this.href;
+        }).toArray();
+    } else {
+        urls = str.trim().split('\n');
+    }
+
+    urls = urls.map(function(u) {
+        return u.trim();
+    }).filter(function(u) {
+        return u.length > 0;
     });
+    // open the first batch links immediately
+    urls.slice(0, simultaneousness).forEach(function(url) {
+        if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
+            if (/^[\w-]+?:\/\//i.test(url)) {
+                url = url
+            } else {
+                url = "http://" + url;
+            }
+        }
+        RUNTIME("openLink", {
+            tab: {
+                tabbed: true
+            },
+            url: url
+        });
+    });
+    // queue the left for later opening when there is one tab closed.
+    if (urls.length > simultaneousness) {
+        RUNTIME("queueURLs", {
+            urls: urls.slice(simultaneousness)
+        });
+    }
 }
 
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {

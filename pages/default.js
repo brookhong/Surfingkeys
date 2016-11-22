@@ -270,6 +270,15 @@ command('openSession', 'openSession [name]', function(args) {
         name: args[0]
     });
 });
+command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
+    runtime.command({
+        action: 'getQueueURLs'
+    }, function(response) {
+        Omnibar.listResults(response.queueURLs, function(s) {
+            return $('<li/>').html(s);
+        });
+    });
+});
 mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');
 mapkey('/', '#9Find in current page', 'Front.openFinder()');
 mapkey('*', '#9Find selected text in current page', function() {

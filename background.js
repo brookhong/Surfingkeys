@@ -227,6 +227,12 @@ var Service = (function() {
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
         });
+        if (_queueURLs.length) {
+            chrome.tabs.create({
+                active: false,
+                url: _queueURLs.shift()
+            });
+        }
     }
     chrome.tabs.onRemoved.addListener(removeTab);
     function _setScrollPos_bg(tabId) {
@@ -974,6 +980,16 @@ var Service = (function() {
                 });
             });
         }
+    };
+
+    var _queueURLs = [];
+    self.queueURLs = function(message, sender, sendResponse) {
+        _queueURLs = _queueURLs.concat(message.urls);
+    };
+    self.getQueueURLs = function(message, sender, sendResponse) {
+        _response(message, sendResponse, {
+            queueURLs: _queueURLs
+        });
     };
 
     return self;
