@@ -198,10 +198,15 @@ body {
 #sk_banner {
     padding: 0.5rem;
     position: fixed;
-    left: 0px;
+    left: 10%;
     top: -3rem;
     z-index: 2147483000;
-    width: 100%;
+    width: 80%;
+    border-radius: 0px 0px 4px 4px;
+    border: 1px solid #ffc356;
+    border-top-style: none;
+    text-align: center;
+    background: rgb(255, 233, 182);
 }
 div.sk_tabs {
     position: fixed;

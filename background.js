@@ -41,8 +41,7 @@ var Service = (function() {
         pushStateIgnored: {
             'https://inbox.google.com': 1,
             'https://vk.com': 1
-        },
-        storage: 'local'
+        }
     };
     var newTabUrl = "chrome://newtab/";
 
@@ -145,27 +144,32 @@ var Service = (function() {
         obj.dispatchEvent(event);
     }
 
-    var settingsReady = false;
-
-    document.addEventListener("settingsReady", function(e) {
-        settingsReady = true;
-    });
-
-    chrome.storage.local.get(null, function(data) {
-        extendObject(settings, data);
-        if (data.storage === 'sync') {
-            chrome.storage.sync.get(null, function(data) {
-                if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError);
+    function loadSettings(keys, cb) {
+        chrome.storage.local.get(null, function(localSet) {
+            var localSavedAt = localSet.savedAt || 0;
+            chrome.storage.sync.get(null, function(syncSet) {
+                var syncSavedAt = syncSet.savedAt || 0;
+                if (localSavedAt > syncSavedAt) {
+                    extendObject(settings, localSet);
+                    chrome.storage.sync.set(localSet, function() {
+                        var subset = getSubSettings(keys);
+                        if (chrome.runtime.lastError) {
+                            subset.error = chrome.runtime.lastError.message;
+                        }
+                        cb(subset);
+                    });
+                } else if (localSavedAt < syncSavedAt) {
+                    extendObject(settings, syncSet);
+                    cb(getSubSettings(keys));
+                    chrome.storage.local.set(syncSet);
                 } else {
-                    extendObject(settings, data);
-                    settings.storage = "sync";
+                    extendObject(settings, localSet);
+                    cb(getSubSettings(keys));
                 }
-                triggerEvent(document, "settingsReady");
             });
-        } else {
-            triggerEvent(document, "settingsReady");
-        }
+        });
+    }
+    loadSettings(null, function() {
         if (settings.proxyMode === 'clear') {
             chrome.proxy.settings.clear({scope: 'regular'});
         } else {
@@ -306,18 +310,17 @@ var Service = (function() {
 
     function _updateSettings(diffSettings, afterSet) {
         extendObject(settings, diffSettings);
+        diffSettings.savedAt = new Date().getTime();
         chrome.storage.local.set(diffSettings, function() {
             if (afterSet) {
                 afterSet();
             }
         });
-        if (settings.storage === 'sync') {
-            chrome.storage.sync.set(diffSettings, function() {
-                if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError);
-                }
-            });
-        }
+        chrome.storage.sync.set(diffSettings, function() {
+            if (chrome.runtime.lastError) {
+                var error = chrome.runtime.lastError.message;
+            }
+        });
     }
     function _updateAndPostSettings(diffSettings, afterSet) {
         _updateSettings(diffSettings, afterSet);
@@ -662,17 +665,11 @@ var Service = (function() {
         return subset;
     }
     self.getSettings = function(message, sender, sendResponse) {
-        if (settingsReady) {
+        loadSettings(message.key, function(data) {
             _response(message, sendResponse, {
-                settings: getSubSettings(message.key)
+                settings: data
             });
-        } else {
-            document.addEventListener("settingsReady", function(e) {
-                _response(message, sendResponse, {
-                    settings: getSubSettings(message.key)
-                });
-            });
-        }
+        });
     };
     self.updateSettings = function(message, sender, sendResponse) {
         if (message.scope === "snippets") {
@@ -681,17 +678,6 @@ var Service = (function() {
             extendObject(settings, message.settings);
         } else {
             _updateAndPostSettings(message.settings);
-        }
-    };
-    self.changeSettingsStorage = function(message, sender, sendResponse) {
-        settings.storage = message.storage;
-        chrome.storage.local.set(settings);
-        if (settings.storage === 'sync') {
-            chrome.storage.sync.set(settings, function() {
-                if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError);
-                }
-            });
         }
     };
     self.setSurfingkeysIcon = function(message, sender, sendResponse) {

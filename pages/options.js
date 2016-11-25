@@ -69,7 +69,6 @@ function createMappingEditor(mode, elmId) {
 
 var localPathSaved = "";
 function renderSettings(rs) {
-    $('#storage').val(rs.storage);
     $('#localPath').val(rs.localPath);
     localPathSaved = rs.localPath;
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
@@ -97,13 +96,9 @@ runtime.command({
 }, function(response) {
     mappingsEditor = createMappingEditor(Mode, 'mappings');
     renderSettings(response.settings);
-});
-
-$('#storage').change(function() {
-    var storage = $(this).val();
-    RUNTIME("changeSettingsStorage", {
-        storage: storage
-    });
+    if ('error' in response.settings) {
+        Front.showBanner("Settings sync may not work thoroughly because of: " + response.settings.error, 5000);
+    }
 });
 
 $('#reset_button').click(function() {

@@ -167,6 +167,7 @@ function unmap(keystroke, domain) {
 function unmapAllExcept(keystrokes, domain) {
     if (!domain || domain.test(window.location.origin)) {
         var _mappings = new Trie();
+        keystrokes = keystrokes || [];
         for (var i = 0, il = keystrokes.length; i < il; i++) {
             var ks = encodeKeystroke(keystrokes[i]);
             var node = Normal.mappings.find(ks);
@@ -176,6 +177,7 @@ function unmapAllExcept(keystrokes, domain) {
         }
         delete Normal.mappings;
         Normal.mappings = _mappings;
+        Normal.map_node = _mappings;
     }
 }
 
@@ -315,28 +317,31 @@ function clickOn(links, force) {
     }
 }
 
-function getFormData(form) {
-    var unindexed_array = $(form).serializeArray();
-    var indexed_array = {};
+function getFormData(form, format) {
+    if (format === "json") {
+        var unindexed_array = $(form).serializeArray();
+        var indexed_array = {};
 
-    $.map(unindexed_array, function(n, i){
-        var nn = n['name'];
-        var vv = n['value'];
-        if (indexed_array.hasOwnProperty(nn)) {
-            var p = indexed_array[nn];
-            if (p.constructor.name === "Array") {
-                p.push(vv);
+        $.map(unindexed_array, function(n, i){
+            var nn = n['name'];
+            var vv = n['value'];
+            if (indexed_array.hasOwnProperty(nn)) {
+                var p = indexed_array[nn];
+                if (p.constructor.name === "Array") {
+                    p.push(vv);
+                } else {
+                    indexed_array[nn] = [];
+                    indexed_array[nn].push(p);
+                    indexed_array[nn].push(vv);
+                }
             } else {
-                indexed_array[nn] = [];
-                indexed_array[nn].push(p);
-                indexed_array[nn].push(vv);
+                indexed_array[nn] = vv;
             }
-        } else {
-            indexed_array[nn] = vv;
-        }
-    });
-
-    return indexed_array;
+        });
+        return indexed_array;
+    } else {
+        return $(form).serialize();
+    }
 }
 
 function httpRequest(args, onSuccess) {

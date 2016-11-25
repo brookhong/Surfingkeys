@@ -563,7 +563,9 @@ var Visual = (function(mode) {
     }
     runtime.on('visualUpdate', function(message) {
         // for finding in content window, we use window.find for a better performance.
-        visualUpdateForContentWindow(message.query);
+        if (message.query.length > 3 || $('*').length < 10000) {
+            visualUpdateForContentWindow(message.query);
+        }
     });
 
     // this is only for finding in frontend.html, like in usage popover.

@@ -26,9 +26,6 @@ textarea {
     padding-right: 8px;
     border-right: 1px solid #000;
 }
-.nextLabelInLine {
-    padding-left: 40px;
-}
 .infoPointer {
     cursor: pointer;
     padding: 0px 2px;
@@ -48,13 +45,8 @@ textarea {
         </style>
     </head>
     <body>
-        <label for="storage">Where to store your settings:</label>
-        <select id="storage" name="storage">
-            <option value="local" selected="selected">chrome.storage.local</option>
-            <option value="sync">chrome.storage.sync</option>
-        </select>
-        <label for="localPath" class='nextLabelInLine'>Load settings from:</label>
-        <input type="text" value="" id="localPath" name="localPath" size=36>
+        <label for="localPath">Load settings from:</label>
+        <input type="text" value="" id="localPath" name="localPath" size=72>
         <span class=infoPointer for=localPathHelp>?</span>
         <div class=info id='localPathHelp'>You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/982147a8085481db9f45/raw/0699039b5beaeeaf10a52bb95c9be25fb3d6afd1/gistfile1.txt">https://gist.githubusercontent.com/brookhong/982147a8085481db9f45/raw/0699039b5beaeeaf10a52bb95c9be25fb3d6afd1/gistfile1.txt</a>. If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</div>
         <div id="save_container">
