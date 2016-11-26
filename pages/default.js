@@ -364,7 +364,9 @@ mapkey('yl', "#7Copy current page's title", 'Front.writeClipboard(document.title
 mapkey('yf', '#7Copy form data in JSON on current page', function() {
     var aa = [];
     $('form').each(function() {
-        aa.push(getFormData(this, "json"));
+        var fd = {};
+        fd[(this.method || "get") + "::" + this.action] = getFormData(this, "json");
+        aa.push(fd);
     });
     Front.writeClipboard(JSON.stringify(aa, null, 4));
 });
@@ -372,7 +374,7 @@ mapkey('yp', '#7Copy form data for POST on current page', function() {
     var aa = [];
     $('form').each(function() {
         var fd = {};
-        fd[this.name] = getFormData(this);
+        fd[(this.method || "get") + "::" + this.action] = getFormData(this);
         aa.push(fd);
     });
     Front.writeClipboard(JSON.stringify(aa, null, 4));

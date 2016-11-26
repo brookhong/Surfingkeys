@@ -958,6 +958,14 @@ var Service = (function() {
                     data: "Done"
                 });
             });
+            // broadcast the change also, such as lastKeys
+            // we would set lastKeys in sync to avoid breaching chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE
+            activePorts.forEach(function(port) {
+                port.postMessage({
+                    action: 'settingsUpdated',
+                    settings: message.data
+                });
+            });
         } else {
             // string or array of string keys
             chrome.storage.local.get(message.data, function(data) {
