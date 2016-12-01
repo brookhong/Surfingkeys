@@ -120,27 +120,3 @@ function _setScrollPos(x, y) {
         document.body.scrollTop = y;
     });
 }
-
-function _prepareFrames() {
-    var frames = Array.prototype.slice.call(top.document.querySelectorAll('frame,iframe')).map(function(f) {
-        return f.contentWindow;
-    });
-    frames.unshift(top);
-    frames = frames.map(function(f) {
-        try {
-            f.frameId = f.frameId || generateQuickGuid();
-            if (f.frameElement) {
-                var rc = f.frameElement.getBoundingClientRect();
-                if (rc.width * rc.height === 0) {
-                    return null;
-                }
-            }
-        } catch (e) {
-            return null;
-        }
-        return f.frameId;
-    });
-    return frames.filter(function(f) {
-        return f !== null;
-    });
-}

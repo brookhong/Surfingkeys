@@ -12,7 +12,7 @@ var Service = (function() {
         contentPorts = {},
         tabActivated = {},
         tabMessages = {},
-        frameIncs = {},
+        frames = {},
         tabURLs = {},
         tabErrors = {};
 
@@ -103,6 +103,13 @@ var Service = (function() {
     }
 
     function handleMessage(_message, _sender, _sendResponse, _port) {
+        var tid = _sender.tab.id;
+        if (!frames.hasOwnProperty(tid)) {
+            frames[tid] = {index: 0, list: []};
+        }
+        if (_message.windowId && frames[tid].list.indexOf(_message.windowId) === -1) {
+            frames[tid].list.push(_message.windowId);
+        }
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
                 if (_message.repeats > settings.repeatThreshold) {
@@ -111,18 +118,18 @@ var Service = (function() {
                 self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
                 try {
-                    frontEndPorts[_sender.tab.id].postMessage(_message);
-                    contentPorts[_sender.tab.id] = _port;
+                    frontEndPorts[tid].postMessage(_message);
+                    contentPorts[tid] = _port;
                     if (_message.ack) {
                         onResponseById[_message.id] = _sendResponse;
                     }
                 } catch (e) {
-                    chrome.tabs.executeScript(_sender.tab.id, {
+                    chrome.tabs.executeScript(tid, {
                         code: "createFrontEnd()"
                     });
                 }
             } else if (_message.toContent) {
-                contentPorts[_sender.tab.id].postMessage(_message);
+                contentPorts[tid].postMessage(_message);
                 if (_message.ack) {
                     onResponseById[_message.id] = _sendResponse;
                 }
@@ -227,7 +234,7 @@ var Service = (function() {
         delete tabMessages[tabId];
         delete tabURLs[tabId];
         delete tabErrors[tabId];
-        delete frameIncs[tabId];
+        delete frames[tabId];
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
         });
@@ -250,7 +257,7 @@ var Service = (function() {
     }
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
-            delete frameIncs[tabId];
+            delete frames[tabId];
         }
         _setScrollPos_bg(tabId);
     });
@@ -696,21 +703,17 @@ var Service = (function() {
     };
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
-        chrome.tabs.executeScript(tid, {
-            code: "_prepareFrames()"
-        }, function(results) {
-            var frames = results[0];
-            if (!frameIncs.hasOwnProperty(tid)) {
-                frameIncs[tid] = 0;
-            }
-            frameIncs[tid]++;
-            frameIncs[tid] = frameIncs[tid] % frames.length;
+        if (frames.hasOwnProperty(tid)) {
+            var framesInTab = frames[tid];
+            framesInTab.index ++;
+            framesInTab.index = framesInTab.index % framesInTab.list.length;
+
             chrome.tabs.sendMessage(tid, {
                 subject: "focusFrame",
                 target: 'content_runtime',
-                frameId: frames[frameIncs[tid]]
+                frameId: framesInTab.list[framesInTab.index]
             });
-        });
+        }
     };
     self.moveTab = function(message, sender, sendResponse) {
         chrome.tabs.query({

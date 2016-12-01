@@ -43,7 +43,6 @@ var Mode = (function() {
                 window.addEventListener(evt, m.eventListeners[evt], true);
             }
         });
-
     }
 
     self.enter = function(priority) {
