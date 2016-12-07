@@ -455,16 +455,30 @@ var Normal = (function(mode) {
             || $(el).css('overflow-' + direction) === 'scroll');
     }
 
+    // set scrollIndex to the highest node
+    function initScrollIndex() {
+        scrollIndex = 0;
+        var maxHeight = 0;
+        scrollNodes.forEach(function(n, i) {
+            var h = n.getBoundingClientRect().height;
+            if (h > maxHeight) {
+                scrollIndex = i;
+                maxHeight = h
+            }
+        });
+    }
+
     function getScrollableElements() {
         var nodes = [];
         var nodeIterator = document.createNodeIterator(
             document.body,
             NodeFilter.SHOW_ELEMENT, {
                 acceptNode: function(node) {
-                    return (self.hasScroll(node, 'y', 16) || self.hasScroll(node, 'x', 16)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    return ((self.hasScroll(node, 'y', 16) || self.hasScroll(node, 'x', 16)) && $(node).is(":visible")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                 }
             });
         for (var node; node = nodeIterator.nextNode(); nodes.push(node));
+
         return nodes;
     }
 
@@ -490,13 +504,7 @@ var Normal = (function(mode) {
     self.scroll = function(type) {
         if (!scrollNodes || scrollNodes.length === 0) {
             scrollNodes = getScrollableElements(100, 1.1);
-        } else {
-            scrollNodes = scrollNodes.filter(function(n) {
-                return $(n).is(":visible");
-            });
-            if (scrollIndex >= scrollNodes.length) {
-                scrollIndex = 0;
-            }
+            initScrollIndex();
         }
         if (scrollNodes.length === 0) {
             return;
