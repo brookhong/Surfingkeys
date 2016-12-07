@@ -144,13 +144,6 @@ var Service = (function() {
         }
     }
 
-    function triggerEvent(obj, evt) {
-        var event = document.createEvent("HTMLEvents");
-        event.initEvent(evt, true, true);
-        event.eventName = evt;
-        obj.dispatchEvent(event);
-    }
-
     function loadSettings(keys, cb) {
         chrome.storage.local.get(null, function(localSet) {
             var localSavedAt = localSet.savedAt || 0;

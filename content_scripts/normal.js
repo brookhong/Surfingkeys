@@ -179,6 +179,15 @@ var Insert = (function(mode) {
             element.setSelectionRange(0, 0);
         }
     });
+    self.mappings.add(encodeKeystroke("<Ctrl-u>"), {
+        annotation: "Delete all entered characters before the cursor",
+        feature_group: 15,
+        code: function() {
+            var element = document.activeElement;
+            element.value = element.value.substr(element.selectionStart);
+            element.setSelectionRange(0, 0);
+        }
+    });
     self.mappings.add(encodeKeystroke("<Alt-b>"), {
         annotation: "Move the cursor Backward 1 word",
         feature_group: 15,

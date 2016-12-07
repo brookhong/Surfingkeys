@@ -118,6 +118,7 @@ All mappings added with `imapkey` work in this mode.
 * `Ctrl - '` to toggle quotes in an input element, this is useful for search engines like google.
 * `Ctrl-e` move the cursor to the end of the line.
 * `Ctrl-f` move the cursor to the beginning of the line.
+* `Ctrl-u` delete all entered characters before the cursor.
 * `Alt-b` move the cursor Backward 1 word.
 * `Alt-f` move the cursor Forward 1 word.
 * `Alt-w` delete a word backwards.
