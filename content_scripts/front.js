@@ -175,6 +175,10 @@ var Front = (function() {
         onOmniQuery(response.query);
     });
 
+    runtime.on('getFocusFromFront', function(response) {
+        document.body.focus();
+    });
+
     runtime.on('getPageText', function(response) {
         return document.body.innerText;
     });

@@ -531,7 +531,11 @@ var Service = (function() {
     };
     self.closeTab = function(message, sender, sendResponse) {
         _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
-            chrome.tabs.remove(tabIds);
+            chrome.tabs.remove(tabIds, function() {
+                if ( settings.focusAfterClosed === "left" ) {
+                    _nextTab(sender.tab, -1);
+                }
+            });
         });
     };
     self.muteTab = function(message, sender, sendResponse) {

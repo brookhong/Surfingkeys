@@ -141,6 +141,9 @@ Surfingkeys有三种模式：normal，visual和insert。
 * 用`og`/`ob`等打开搜索引擎
 * 用`:`打开命令模式
 
+`Tab` 在结果列表中向下切换。
+`Shift-Tab` 在结果列表中向上切换。
+
 用`t`打开搜索栏时，
 
 `Ctrl - d` 可以从收藏夹或访问历史中删除选中项。
@@ -230,6 +233,10 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 所有可以滚动的对象都默认支持顺滑滚动，如下可以关掉顺滑特性：
 
     settings.smoothScroll = false;
+
+`j`/`k` 按一步70像素的距离滚动，你可以定制步长：
+
+    settings.scrollStepSize = 140;
 
 ## 会话管理
 

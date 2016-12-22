@@ -379,8 +379,7 @@ var Normal = (function(mode) {
     self.repeats = "";
     self.surfingkeysHold = 0;
 
-    var stepSize = 70,
-        scrollNodes, scrollIndex = 0,
+    var scrollNodes, scrollIndex = 0,
         lastKeys;
 
     function easeFn(t, b, c, d) {
@@ -412,7 +411,7 @@ var Normal = (function(mode) {
                     elm.scrollTop = easeFn(timestamp - start, y0, y, d);
                     if (self.surfingkeysHold !== 2 && (timestamp - start) < d) {
                         window.requestAnimationFrame(step);
-                    } else if (Math.abs(x) > stepSize || Math.abs(y) > stepSize) {
+                    } else if (Math.abs(x) > runtime.conf.scrollStepSize || Math.abs(y) > runtime.conf.scrollStepSize) {
                         // don't do fine tune for minor scroll
                         elm.scrollLeft = x0 + x;
                         elm.scrollTop = y0 + y;
@@ -438,16 +437,16 @@ var Normal = (function(mode) {
         };
     }
 
-    self.hasScroll = function(el, direction, barSize) {
-        var offset = (direction === 'y') ? 'scrollTop' : 'scrollLeft';
-        var result = el[offset];
+    function hasScroll(el, direction, barSize) {
+        var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
+        var result = el[offset[0]];
 
         if (result < barSize) {
             // set scroll offset to barSize, and verify if we can get scroll offset as barSize
-            var originOffset = el[offset];
-            el[offset] = barSize;
-            result = el[offset];
-            el[offset] = originOffset;
+            var originOffset = el[offset[0]];
+            el[offset[0]] = el.getBoundingClientRect()[offset[1]];
+            result = el[offset[0]];
+            el[offset[0]] = originOffset;
         }
         return result >= barSize && (
             el === document.body
@@ -474,7 +473,7 @@ var Normal = (function(mode) {
             document.body,
             NodeFilter.SHOW_ELEMENT, {
                 acceptNode: function(node) {
-                    return ((self.hasScroll(node, 'y', 16) || self.hasScroll(node, 'x', 16)) && $(node).is(":visible")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    return ((hasScroll(node, 'y', 16) || hasScroll(node, 'x', 16)) && $(node).is(":visible")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                 }
             });
         for (var node; node = nodeIterator.nextNode(); nodes.push(node));
@@ -516,10 +515,10 @@ var Normal = (function(mode) {
         var size = (scrollNode === document.body) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
         switch (type) {
             case 'down':
-                scrollNode.skScrollBy(0, stepSize, 500);
+                scrollNode.skScrollBy(0, runtime.conf.scrollStepSize, 500);
                 break;
             case 'up':
-                scrollNode.skScrollBy(0, -stepSize, 500);
+                scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize, 500);
                 break;
             case 'pageDown':
                 scrollNode.skScrollBy(0, size[1] / 2, 500);
@@ -540,10 +539,10 @@ var Normal = (function(mode) {
                 scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop, 500);
                 break;
             case 'left':
-                scrollNode.skScrollBy(-stepSize / 2, 0, 500);
+                scrollNode.skScrollBy(-runtime.conf.scrollStepSize / 2, 0, 500);
                 break;
             case 'right':
-                scrollNode.skScrollBy(stepSize / 2, 0, 500);
+                scrollNode.skScrollBy(runtime.conf.scrollStepSize / 2, 0, 500);
                 break;
             case 'leftmost':
                 scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0, 500);

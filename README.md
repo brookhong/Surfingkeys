@@ -142,6 +142,9 @@ The omnibar provides kinds of functions that need user input, for example,
 * Open search engines with `og` / `ow` ...
 * Open commands with `:`
 
+`Tab` to forward cycle through the candidates.
+`Shift-Tab` to backward cycle through the candidates.
+
 In omnibar opened with `t`:
 
 `Ctrl - d` to delete from bookmark or history
@@ -231,6 +234,10 @@ Besides commands, you can also run javascript code.
 Smooth scroll works for any scrollable element. It is on by defualt, to turn it off as below:
 
     settings.smoothScroll = false;
+
+`j`/`k` scrolls in one step with size as 70, you could change it as below:
+
+    settings.scrollStepSize = 140;
 
 ## Session management
 

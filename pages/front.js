@@ -88,6 +88,9 @@ var Front = (function(mode) {
             _display.hide();
             self.flush("none", true);
             _display.onHide && _display.onHide();
+            self.contentCommand({
+                action: 'getFocusFromFront'
+            });
             self.exit();
         }
     };
