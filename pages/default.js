@@ -406,7 +406,7 @@ mapkey('g?', '#4Reload current page without query string(all parts after questio
 mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
 mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
-mapkey('si', '#12Open Chrome Inpect', 'tabOpenLink("chrome://inspect/#devices")');
+mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/github-markdown.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Front.showEditor(window.location.href, function(data) {
