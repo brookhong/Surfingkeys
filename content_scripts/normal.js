@@ -369,8 +369,15 @@ var Normal = (function(mode) {
     });
 
     self.toggleBlacklist = function(domain) {
-        RUNTIME('toggleBlacklist', {
+        runtime.command({
+            action: 'toggleBlacklist',
             domain: domain
+        }, function(resp) {
+            if (checkBlackList(resp)) {
+                Front.showBanner('Surfingkeys turned OFF for ' + domain, 3000);
+            } else {
+                Front.showBanner('Surfingkeys turned ON for ' + domain, 3000);
+            }
         });
     };
 

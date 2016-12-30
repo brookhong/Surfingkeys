@@ -145,6 +145,18 @@ var Service = (function() {
     }
 
     function loadSettings(keys, cb) {
+        // temp wrapper to load snippets from localPath
+        var _cb = function(set) {
+            if (set.localPath) {
+                var s = request(set.localPath);
+                s.then(function(resp) {
+                    set.snippets = resp;
+                    cb(set);
+                });
+            } else {
+                cb(set);
+            }
+        };
         chrome.storage.local.get(null, function(localSet) {
             var localSavedAt = localSet.savedAt || 0;
             chrome.storage.sync.get(null, function(syncSet) {
@@ -156,15 +168,15 @@ var Service = (function() {
                         if (chrome.runtime.lastError) {
                             subset.error = chrome.runtime.lastError.message;
                         }
-                        cb(subset);
+                        _cb(subset);
                     });
                 } else if (localSavedAt < syncSavedAt) {
                     extendObject(settings, syncSet);
-                    cb(getSubSettings(keys));
+                    _cb(getSubSettings(keys));
                     chrome.storage.local.set(syncSet);
                 } else {
                     extendObject(settings, localSet);
-                    cb(getSubSettings(keys));
+                    _cb(getSubSettings(keys));
                 }
             });
         });
