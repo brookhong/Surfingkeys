@@ -142,6 +142,10 @@ The omnibar provides kinds of functions that need user input, for example,
 * Open search engines with `og` / `ow` ...
 * Open commands with `:`
 
+`Enter` to open selected item and close omnibar.
+`Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+`Shift-Enter` to open selected item in current tab and close omnibar. If you'd like to open in current tab by default, please use `go`.
+
 `Tab` to forward cycle through the candidates.
 `Shift-Tab` to backward cycle through the candidates.
 
@@ -289,7 +293,7 @@ When Surfingkeys is turned off on some site by `Alt-s`, the status will be persi
         "https://github.com": 1
     },
 
-`Alt-s` once more will remove it from settings.blacklist. By the way, `yj` to dump all settings into clipboard.
+`Alt-s` once more will remove it from settings.blacklist. The data settings are not always presented in snippets, you could use `yj` to dump all settings into clipboard, then paste it in your text editor to check out.
 
 Another way to disable Surfingkeys is to use `settings.blacklistPattern`, please refer to [regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
 

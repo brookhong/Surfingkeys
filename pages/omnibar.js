@@ -101,6 +101,7 @@ var Omnibar = (function(ui) {
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
+            handler.tabbed = Omnibar.tabbed ^ event.shiftKey;
             handler.onEnter() && Front.hidePopup();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
             expandAlias(self.input.val()) && event.preventDefault();
@@ -235,7 +236,7 @@ var Omnibar = (function(ui) {
                 runtime.command({
                     action: "openLink",
                     tab: {
-                        tabbed: Omnibar.tabbed,
+                        tabbed: this.tabbed,
                         active: this.activeTab
                     },
                     url: url
@@ -650,7 +651,7 @@ var SearchEngine = (function() {
         runtime.command({
             action: "openLink",
             tab: {
-                tabbed: Omnibar.tabbed
+                tabbed: this.tabbed
             },
             url: url
         });

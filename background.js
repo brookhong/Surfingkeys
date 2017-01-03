@@ -103,12 +103,16 @@ var Service = (function() {
     }
 
     function handleMessage(_message, _sender, _sendResponse, _port) {
-        var tid = _sender.tab.id;
-        if (!frames.hasOwnProperty(tid)) {
-            frames[tid] = {index: 0, list: []};
-        }
-        if (_message.windowId && frames[tid].list.indexOf(_message.windowId) === -1) {
-            frames[tid].list.push(_message.windowId);
+        var tid = 0;
+        // no tab set if message is from pages/popup.html
+        if (_sender.tab) {
+            tid = _sender.tab.id;
+            if (!frames.hasOwnProperty(tid)) {
+                frames[tid] = {index: 0, list: []};
+            }
+            if (_message.windowId && frames[tid].list.indexOf(_message.windowId) === -1) {
+                frames[tid].list.push(_message.windowId);
+            }
         }
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {

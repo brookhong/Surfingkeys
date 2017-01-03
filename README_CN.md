@@ -141,6 +141,10 @@ Surfingkeys有三种模式：normal，visual和insert。
 * 用`og`/`ob`等打开搜索引擎
 * 用`:`打开命令模式
 
+`Enter` 打开选中项并关闭搜索栏。
+`Ctrl-Enter` 打开选中项，但不关闭搜索栏，你可以继续选中打开。
+`Shift-Enter` 在当前标签页打开选中项并关闭搜索栏。如果你希望默认就在当前标签页打开，可以使用`go`。
+
 `Tab` 在结果列表中向下切换。
 `Shift-Tab` 在结果列表中向上切换。
 
@@ -288,7 +292,7 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
         "https://github.com": 1
     },
 
-再按一次`Alt-s`会从settings.blacklist中删除该站点。另外，`yj`可以把当前设置复制到系统剪贴板。
+再按一次`Alt-s`会从settings.blacklist中删除该站点。这类状态并不保存在设置脚本里，你可以按`yj`把当前所有设置复制到系统剪贴板，然后粘贴到文本编辑器里查看。
 
 另一个禁用Surfingkeys的方法是用`settings.blacklistPattern`，请参考[regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
 
