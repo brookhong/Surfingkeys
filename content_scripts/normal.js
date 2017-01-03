@@ -50,7 +50,9 @@ var Mode = (function() {
         popModes(mode_stack);
 
         var pos = mode_stack.indexOf(this);
-        this.priority = priority || mode_stack.length;
+        if (!this.priority) {
+            this.priority = priority || mode_stack.length;
+        }
 
         if (pos === -1) {
             // push this mode into stack
@@ -103,6 +105,9 @@ var Mode = (function() {
 
 var Disabled = (function(mode) {
     var self = $.extend({name: "Disabled", eventListeners: {}}, mode);
+
+    // Disabled has higher priority than others.
+    self.priority = 99;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -369,16 +374,19 @@ var Normal = (function(mode) {
     });
 
     self.toggleBlacklist = function(domain) {
-        runtime.command({
-            action: 'toggleBlacklist',
-            domain: domain
-        }, function(resp) {
-            if (checkBlackList(resp)) {
-                Front.showBanner('Surfingkeys turned OFF for ' + domain, 3000);
-            } else {
-                Front.showBanner('Surfingkeys turned ON for ' + domain, 3000);
-            }
-        });
+        if (chrome.extension.getURL('').indexOf(domain) !== 0) {
+            // can not blacklist URLs from this extension.
+            runtime.command({
+                action: 'toggleBlacklist',
+                domain: domain
+            }, function(resp) {
+                if (checkBlackList(resp)) {
+                    Front.showBanner('Surfingkeys turned OFF for ' + domain, 3000);
+                } else {
+                    Front.showBanner('Surfingkeys turned ON for ' + domain, 3000);
+                }
+            });
+        }
     };
 
     self.mappings = new Trie();

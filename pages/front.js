@@ -253,9 +253,9 @@ var Front = (function(mode) {
     };
     runtime.on('openFinder', self.openFinder);
     self.showBanner = function(message, linger_time) {
+        banner.finish();
         banner.html(message).show();
         self.flush();
-        banner.finish();
         banner.animate({
             "top": "0"
         }, 300);
