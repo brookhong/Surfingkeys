@@ -423,8 +423,10 @@ runtime.on('settingsUpdated', function(response) {
 });
 
 function checkBlackList(sb) {
-    return sb.blacklist[window.location.origin] || sb.blacklist['.*']
-        || (sb.blacklistPattern && typeof(sb.blacklistPattern.test) === "function" && sb.blacklistPattern.test(window.location.href));
+    return chrome.extension.getURL('').indexOf(window.location.origin) !== 0 && (
+        sb.blacklist[window.location.origin] || sb.blacklist['.*']
+        || (sb.blacklistPattern && typeof(sb.blacklistPattern.test) === "function" && sb.blacklistPattern.test(window.location.href))
+    );
 }
 
 runtime.command({

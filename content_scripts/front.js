@@ -137,6 +137,7 @@ var Front = (function() {
         }, function(response) {
             // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
             window.focus();
+            Front.showBanner("Copied.");
         });
     };
 

@@ -250,10 +250,13 @@ var Insert = (function(mode) {
         } else if (!isEditable(event.target)) {
             self.exit();
         } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {
+            // leave time 300ms for origin event handler of the input widget
             setTimeout(function() {
-                event.target.blur();
+                if (document.activeElement === event.target) {
+                    event.target.blur();
+                }
                 self.exit();
-            }, 0);
+            }, 300);
         } else if (event.sk_keyName.length) {
             return Normal._handleMapKey.call(self, event.sk_keyName, function(last) {
                 var pw = last.getPrefixWord();
