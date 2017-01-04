@@ -1,15 +1,23 @@
 var runtime = window.runtime || (function() {
     var self = {
         conf: {
-            // local part from settings
-            focusOnSaved: true,
-            scrollStepSize: 70,
-            hintsThreshold: 10000,
-            afterYank: 1,
-            smoothScroll: true,
             lastKeys: "",
-            blacklist: {},
-            lastQuery: ""
+            // local part from settings
+            useLocalMarkdownAPI: true,                         // use local js to parse markdown own, or use github markdown API
+            focusOnSaved: true,
+            omnibarMaxResults: 20,
+            tabsThreshold: 9,
+            hintsThreshold: 10000,
+            smoothScroll: true,
+            afterYank: 1,
+            scrollStepSize: 70,
+            nextLinkRegex: /((>>|next)+)/i,
+            prevLinkRegex: /((<<|prev(ious)?)+)/i,
+            lastQuery: "",
+            pushStateIgnored: {
+                'https://inbox.google.com': 1,
+                'https://vk.com': 1
+            }
         },
         runtime_handlers: {}
     }, actions = {};

@@ -17,31 +17,19 @@ var Service = (function() {
         tabErrors = {};
 
     var settings = {
-        useLocalMarkdownAPI: true,                         // use local js to parse markdown own, or use github markdown API
-        focusOnSaved: true,
-        omnibarMaxResults: 20,
-        tabsThreshold: 9,
-        hintsThreshold: 10000,
         repeatThreshold: 99,
         tabsMRUOrder: true,
-        smoothScroll: true,
         blacklist: {},
         marks: {},
-        userData: {},
         findHistory: [],
         cmdHistory: [],
         snippets: "",
         sessions: {},
         newTabPosition: 'right',
-        afterYank: 1,
         autoproxy_hosts: {},
         proxyMode: 'clear',
         proxy: "DIRECT",
-        interceptedErrors: {},
-        pushStateIgnored: {
-            'https://inbox.google.com': 1,
-            'https://vk.com': 1
-        }
+        interceptedErrors: {}
     };
     var newTabUrl = "chrome://newtab/";
 

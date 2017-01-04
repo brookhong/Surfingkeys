@@ -402,11 +402,7 @@ window.addEventListener('message', function(event) {
 runtime.command({
     action: 'getSettings'
 }, function(response) {
-    var rs = response.settings;
-    runtime.conf.tabsThreshold = rs.tabsThreshold;
-    runtime.conf.omnibarMaxResults = rs.omnibarMaxResults;
-    applySettings(rs);
-
+    applySettings(response.settings);
 });
 
 $(document).on('surfingkeys:themeChanged', function(evt, theme) {
