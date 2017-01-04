@@ -227,7 +227,17 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
         style: "opacity: 0.8;",
         parseResult: function(res) {
             var res = eval("a=" + res.text);
-            return [res.data.definition || res.msg];
+            if (res.data.definition) {
+                var tmp = [];
+                for (var reg in res.data.pronunciations) {
+                    tmp.push(`[${reg}] ${res.data.pronunciations[reg]}`);
+                    tmp.push(`<audio src="${res.data[reg+'_audio']}" controls></audio>`);
+                }
+                tmp.push(res.data.definition);
+                return [ `<pre>${tmp.join('\n')}</pre>` ];
+            } else {
+                return [ res.msg ];
+            }
         }
     });
 });
