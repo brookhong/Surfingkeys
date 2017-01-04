@@ -142,12 +142,12 @@ The omnibar provides kinds of functions that need user input, for example,
 * Open search engines with `og` / `ow` ...
 * Open commands with `:`
 
-`Enter` to open selected item and close omnibar.
-`Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
-`Shift-Enter` to open selected item in current tab and close omnibar. If you'd like to open in current tab by default, please use `go`.
-
-`Tab` to forward cycle through the candidates.
-`Shift-Tab` to backward cycle through the candidates.
+### key bindings in Omnibar
+* `Enter` to open selected item and close omnibar.
+* `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+* `Shift-Enter` to open selected item in current tab and close omnibar. If you'd like to open in current tab by default, please use `go`.
+* `Tab` to forward cycle through the candidates.
+* `Shift-Tab` to backward cycle through the candidates.
 
 In omnibar opened with `t`:
 
@@ -155,7 +155,7 @@ In omnibar opened with `t`:
 
 In omnibar opened with `b`:
 
-`Ctrl - <any letter>` to create vim-like global mark
+`Ctrl - Shift - <any letter>` to create vim-like global mark
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 

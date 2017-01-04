@@ -198,6 +198,11 @@ function iunmap(keystroke, domain) {
     }
 }
 
+AceVimMappings = [];
+function aceVimMap(lhs, rhs, ctx) {
+    AceVimMappings.push(arguments);
+}
+
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     if (typeof(addSearchAlias) !== 'undefined') {
         addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);

@@ -377,7 +377,7 @@ var OpenBookmarks = (function() {
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && self.inFolder.length && !$(this).val().length) {
             onFolderUp();
             eaten = true;
-        } else if (event.ctrlKey && KeyboardUtils.isWordChar(event)) {
+        } else if (event.ctrlKey && event.shiftKey && KeyboardUtils.isWordChar(event)) {
             var fi = Omnibar.resultsDiv.find('li.focused');
             if (fi.length) {
                 var mark_char = String.fromCharCode(event.keyCode);

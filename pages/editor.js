@@ -194,6 +194,9 @@ var AceEditor = (function(mode, elmId) {
             Front.hidePopup();
             self.state.cm.signal('vim-command-done', '')
         });
+        AceVimMappings.forEach(function(a) {
+            vim.map.apply(vim, a);
+        });
     });
     self.container.style.background="#f1f1f1";
     self.$blockScrolling = Infinity;

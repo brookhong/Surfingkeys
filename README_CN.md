@@ -141,12 +141,12 @@ Surfingkeys有三种模式：normal，visual和insert。
 * 用`og`/`ob`等打开搜索引擎
 * 用`:`打开命令模式
 
-`Enter` 打开选中项并关闭搜索栏。
-`Ctrl-Enter` 打开选中项，但不关闭搜索栏，你可以继续选中打开。
-`Shift-Enter` 在当前标签页打开选中项并关闭搜索栏。如果你希望默认就在当前标签页打开，可以使用`go`。
-
-`Tab` 在结果列表中向下切换。
-`Shift-Tab` 在结果列表中向上切换。
+### 搜索栏按键
+* `Enter` 打开选中项并关闭搜索栏。
+* `Ctrl-Enter` 打开选中项，但不关闭搜索栏，你可以继续选中打开。
+* `Shift-Enter` 在当前标签页打开选中项并关闭搜索栏。如果你希望默认就在当前标签页打开，可以使用`go`。
+* `Tab` 在结果列表中向下切换。
+* `Shift-Tab` 在结果列表中向上切换。
 
 用`t`打开搜索栏时，
 
@@ -154,7 +154,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 用`b`打开搜索栏时，
 
-`Ctrl - <any letter>` 创建相应的类似vim的全局标示。
+`Ctrl - Shift - <any letter>` 创建相应的类似vim的全局标示。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
