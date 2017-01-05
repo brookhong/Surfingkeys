@@ -358,7 +358,7 @@ var Normal = (function(mode) {
         return handled;
     });
     self.addEventListener('keyup', function(event) {
-        Normal.surfingkeysHold = 0;
+        self.scrollOptions[5] = false;
         if (self.stopKeyupPropagation) {
             event.stopImmediatePropagation();
             self.stopKeyupPropagation = false;
@@ -407,7 +407,7 @@ var Normal = (function(mode) {
     self.mappings = new Trie();
     self.map_node = self.mappings;
     self.repeats = "";
-    self.surfingkeysHold = 0;
+    self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
 
     var scrollNodes, scrollIndex = 0,
         lastKeys;
@@ -418,8 +418,9 @@ var Normal = (function(mode) {
     }
 
     function initScroll(elm) {
-        elm.skScrollBy = function(x, y, d) {
+        elm.skScrollBy = function(x, y) {
             if (runtime.conf.smoothScroll) {
+                var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
             } else {
                 elm.scrollLeft = elm.scrollLeft + x;
@@ -427,42 +428,33 @@ var Normal = (function(mode) {
             }
         };
         elm.smoothScrollBy = function(x, y, d) {
-            // surfingkeysHold:
-            // 0 - smoothScroll not started
-            // 1 - smoothScroll just started
-            // 2 - smoothScroll transfered to normal scroll because user holds the key
-            if (self.surfingkeysHold === 0) {
-                var x0 = elm.scrollLeft,
-                    y0 = elm.scrollTop,
-                    start = window.performance.now();
+            if (!self.scrollOptions[5]) {
+                // scrollOptions: prop, step, duration, previousTimestamp, delta, keyHeld
+                self.scrollOptions = y ? ['scrollTop', y, d, 0, 0, true] : ['scrollLeft', x, d, 0, 0, true];
+                function step(t) {
+                    var so = self.scrollOptions;
+                    if (so[3] === 0) {
+                        // init previousTimestamp in first step
+                        so[3] = t;
+                        return window.requestAnimationFrame(step);
+                    }
+                    var old = elm[so[0]], delta = (t - so[3]) * so[1] / so[2];
+                    elm[so[0]] += delta;
+                    so[3] = t;
+                    so[4] += delta;
 
-                function step(timestamp) {
-                    elm.scrollLeft = easeFn(timestamp - start, x0, x, d);
-                    elm.scrollTop = easeFn(timestamp - start, y0, y, d);
-                    if (self.surfingkeysHold !== 2 && (timestamp - start) < d) {
-                        window.requestAnimationFrame(step);
-                    } else if (Math.abs(x) > runtime.conf.scrollStepSize || Math.abs(y) > runtime.conf.scrollStepSize) {
-                        // don't do fine tune for minor scroll
-                        elm.scrollLeft = x0 + x;
-                        elm.scrollTop = y0 + y;
+                    var keyHeld = so[5];
+                    if (elm[so[0]] === old) {
+                        // boundary hit
+                        so[5] = false;
+                    } else if (!keyHeld && Math.abs(so[4]) >= Math.abs(so[1])) {
+                        // step completed
+                        so[5] = false;
+                    } else {
+                        return window.requestAnimationFrame(step);
                     }
                 }
-
-                window.requestAnimationFrame(step);
-                self.surfingkeysHold++;
-            } else if (self.surfingkeysHold === 1) {
-                // smoothScroll already started, hold key to keep scroll
-                // use no easeFn to keep fixed speed
-                function holdStep(timestamp) {
-                    elm.scrollLeft = elm.scrollLeft + x / 4;
-                    elm.scrollTop = elm.scrollTop + y / 4;
-                    if (self.surfingkeysHold === 2) {
-                        window.requestAnimationFrame(holdStep);
-                    }
-                }
-
-                window.requestAnimationFrame(holdStep);
-                self.surfingkeysHold++;
+                return window.requestAnimationFrame(step);
             }
         };
     }
@@ -545,40 +537,40 @@ var Normal = (function(mode) {
         var size = (scrollNode === document.body) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
         switch (type) {
             case 'down':
-                scrollNode.skScrollBy(0, runtime.conf.scrollStepSize, 500);
+                scrollNode.skScrollBy(0, runtime.conf.scrollStepSize);
                 break;
             case 'up':
-                scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize, 500);
+                scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize);
                 break;
             case 'pageDown':
-                scrollNode.skScrollBy(0, size[1] / 2, 500);
+                scrollNode.skScrollBy(0, size[1] / 2);
                 break;
             case 'fullPageDown':
-                scrollNode.skScrollBy(0, size[1], 500);
+                scrollNode.skScrollBy(0, size[1]);
                 break;
             case 'pageUp':
-                scrollNode.skScrollBy(0, -size[1] / 2, 500);
+                scrollNode.skScrollBy(0, -size[1] / 2);
                 break;
             case 'fullPageUp':
-                scrollNode.skScrollBy(0, -size[1], 500);
+                scrollNode.skScrollBy(0, -size[1]);
                 break;
             case 'top':
-                scrollNode.skScrollBy(0, -scrollNode.scrollTop, 500);
+                scrollNode.skScrollBy(0, -scrollNode.scrollTop);
                 break;
             case 'bottom':
-                scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop, 500);
+                scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop);
                 break;
             case 'left':
-                scrollNode.skScrollBy(-runtime.conf.scrollStepSize / 2, 0, 500);
+                scrollNode.skScrollBy(-runtime.conf.scrollStepSize / 2, 0);
                 break;
             case 'right':
-                scrollNode.skScrollBy(runtime.conf.scrollStepSize / 2, 0, 500);
+                scrollNode.skScrollBy(runtime.conf.scrollStepSize / 2, 0);
                 break;
             case 'leftmost':
-                scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0, 500);
+                scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0);
                 break;
             case 'rightmost':
-                scrollNode.skScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0, 500);
+                scrollNode.skScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0);
                 break;
             default:
                 break;
