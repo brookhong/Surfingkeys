@@ -232,7 +232,16 @@ var Hints = (function(mode) {
                     // work around for svg elements, https://github.com/jquery/jquery/issues/3182
                     pos = this.getBoundingClientRect();
                 }
-                var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', Math.max(pos.left - bof.left + $(this).width() / 2, 0))
+                var left;
+                if (runtime.conf.hintAlign === "right") {
+                    left = pos.left - bof.left + $(this).width();
+                } else if (runtime.conf.hintAlign === "left") {
+                    left = pos.left - bof.left;
+                } else {
+                    left = pos.left - bof.left + $(this).width() / 2;
+                }
+                left = Math.max(left, 0);
+                var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)
                     .css('z-index', z + 9999)
                     .data('z-index', z + 9999)
                     .data('label', hintLabels[i])

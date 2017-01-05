@@ -13,6 +13,7 @@ var runtime = window.runtime || (function() {
             scrollStepSize: 70,
             nextLinkRegex: /((>>|next)+)/i,
             prevLinkRegex: /((<<|prev(ious)?)+)/i,
+            hintAlign: "center",
             lastQuery: "",
             pushStateIgnored: {
                 'https://inbox.google.com': 1,

@@ -45,6 +45,18 @@ var Mode = (function() {
         });
     }
 
+    function showError(modeName, modeList) {
+        var issueTitle = encodeURI("Mode {0} pushed into mode stack again.".format(modeName));
+        var issueBody = "%23%23+Error+details%0d%0d{0}%0d%0d%23%23+Context%0d%0d%2a%2aPlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2a%2a".format(encodeURI("Modes in stack: {0}".format(modeList)));
+
+        var error = `<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2>
+
+<p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>
+`.format(issueTitle, issueBody);
+
+        Front.showPopup(error);
+    }
+
     self.enter = function(priority) {
         // we need clear the modes stack first to make sure eventListeners of this mode added at first.
         popModes(mode_stack);
@@ -60,7 +72,7 @@ var Mode = (function() {
         } else if (pos > 0) {
             // pop up all the modes over this
             // mode_stack = mode_stack.slice(pos);
-            Front.showPopup(this.name + "@ : " + Mode.stack().map(function(u) { return u.name; }).join(','));
+            showError(this.name, Mode.stack().map(function(u) { return u.name; }).join(','));
         }
 
         mode_stack.sort(function(a,b) {
@@ -355,11 +367,11 @@ var Normal = (function(mode) {
     self.addEventListener('pushState', function(event) {
         runtime.command({
             action: 'getSettings',
-            key: ['pushStateIgnored', 'blacklist', 'blacklistPattern']
+            key: ['blacklist', 'blacklistPattern']
         }, function(response) {
             var settings = response.settings;
-            if (!settings.pushStateIgnored[window.location.origin] && !checkBlackList(settings)) {
-                // test with https://inbox.google.com
+            if (!runtime.conf.pushStateIgnored[window.location.origin] && !checkBlackList(settings)) {
+                // #124 test with https://inbox.google.com
                 if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
                     // only for that we are not having TopHook mode.
                     Insert.exit();

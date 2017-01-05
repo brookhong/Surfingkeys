@@ -409,21 +409,21 @@ function applySettings(rs) {
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
-    var disabled = checkBlackList(runtime.conf);
     if (rs.hasOwnProperty('blacklist') || rs.hasOwnProperty('blacklistPattern')) {
+        var disabled = checkBlackList(rs);
         // only toggle Disabled mode when blacklist is updated
         if (disabled) {
             Disabled.enter();
         } else {
             Disabled.exit();
         }
-    }
 
-    if (window === top) {
-        runtime.command({
-            action: 'setSurfingkeysIcon',
-            status: disabled
-        });
+        if (window === top) {
+            runtime.command({
+                action: 'setSurfingkeysIcon',
+                status: disabled
+            });
+        }
     }
 });
 
@@ -443,7 +443,7 @@ runtime.command({
 
     Normal.enter();
 
-    var disabled = checkBlackList(runtime.conf);
+    var disabled = checkBlackList(rs);
     if (disabled) {
         Disabled.enter();
     } else {
