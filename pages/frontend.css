@@ -207,6 +207,9 @@ body {
     border-top-style: none;
     text-align: center;
     background: rgb(255, 233, 182);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 div.sk_tabs {
     position: fixed;

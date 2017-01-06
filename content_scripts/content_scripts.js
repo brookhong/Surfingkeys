@@ -85,13 +85,10 @@ function _parseAnnotation(ag) {
     return ag;
 }
 
-function createKeyTarget(code, ag, extra_chars, repeatIgnore) {
+function createKeyTarget(code, ag, repeatIgnore) {
     var keybound = {
         code: code
     };
-    if (extra_chars) {
-        keybound.extra_chars = extra_chars;
-    }
     if (repeatIgnore) {
         keybound.repeatIgnore = repeatIgnore;
     }
@@ -113,7 +110,7 @@ function _mapkey(mode, keys, annotation, jscode, options) {
         }
         // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
         var ag = (!Front.isProvider()) ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
-        var keybound = createKeyTarget(jscode, ag, options.extra_chars, options.repeatIgnore);
+        var keybound = createKeyTarget(jscode, ag, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
     }
 }
@@ -141,7 +138,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
                 var keybound = createKeyTarget(function() {
                     meta.code.call(meta.code, args);
-                }, ag, meta.extra_chars, meta.repeatIgnore);
+                }, ag, meta.repeatIgnore);
                 Normal.mappings.add(encodeKeystroke(new_keystroke), keybound);
             }
         } else {

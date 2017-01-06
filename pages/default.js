@@ -20,7 +20,7 @@
 //
 // ************************* WARNING *************************
 
-imapkey("<Ctrl-'>", '', function() {
+imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', function() {
     var val = document.activeElement.value;
     if (val[0] === '"') {
         document.activeElement.value = val.substr(1, val.length - 2);
@@ -152,8 +152,10 @@ command('quit', '#5quit chrome', function() {
 });
 map('ZQ', ':quit');
 mapkey(".", '#0Repeat last action', Normal.repeatLast, {repeatIgnore: true});
-mapkey("<Ctrl-2>", '#0Show last action', function() {
-    Front.showPopup(htmlEncode(runtime.conf.lastKeys.join('\n')));
+mapkey("sql", '#0Show last action', function() {
+    Front.showPopup(htmlEncode(runtime.conf.lastKeys.map(function(k) {
+        return decodeKeystroke(k);
+    }).join(' → ')));
 }, {repeatIgnore: true});
 mapkey('ZZ', '#5Save session and quit', function() {
     RUNTIME('createSession', {
@@ -230,11 +232,11 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
             if (res.data.definition) {
                 var tmp = [];
                 for (var reg in res.data.pronunciations) {
-                    tmp.push(`[${reg}] ${res.data.pronunciations[reg]}`);
-                    tmp.push(`<audio src="${res.data[reg+'_audio']}" controls></audio>`);
+                    tmp.push('[{0}] {1}'.format(reg, res.data.pronunciations[reg]));
+                    tmp.push('<audio src="{0}" controls></audio>'.format(res.data[reg+'_audio']));
                 }
                 tmp.push(res.data.definition);
-                return [ `<pre>${tmp.join('\n')}</pre>` ];
+                return [ '<pre>{0}</pre>'.format(tmp.join('\n')) ];
             } else {
                 return [ res.msg ];
             }
@@ -303,11 +305,14 @@ vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
 });
 mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
-mapkey('<Ctrl-1>', '#0show pressed key', function(key) {
+mapkey('sqk', '#0show pressed key', function(key) {
     Front.showPopup(htmlEncode(decodeKeystroke(key)));
-}, {extra_chars: 1});
-mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark, {extra_chars: 1});
-mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark, {extra_chars: 1});
+});
+mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
+mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
+mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
+    Normal.jumpVIMark(mark, true);
+});
 mapkey('<<', '#3Move current tab to left', function() {
     RUNTIME('moveTab', {
         step: -1

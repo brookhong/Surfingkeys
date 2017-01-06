@@ -75,6 +75,10 @@ Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hin
 
 When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
 
+Hints are placed in center of target links, you could add below line in your settings to let them aligned left.
+
+    settings.hintAlign = "left";
+
 ## Surfingkeys modes
 
 There are three modes in Surfingkeys: normal, visual and insert.
@@ -416,9 +420,8 @@ By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/mark
 |:---------------| :-----|
 |**keystroke**                   | string, any keystroke to trigger the action|
 |**help_string**                 | string, a help message to describe the action, which will displayed in help opened by `u`.|
-|**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function.|
+|**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function. If the function needs an argument, next pressed key will be fed to the function.|
 |**options**                     | object, properties listed below|
-|**extra_chars**                 | boolean[optional], whether the next key input is used as parameter of action_code, please see `m` or `'` for example.|
 |**domain**                      | regex[optional], a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com.|
 |**repeatIgnore**                | boolean[optional], whether this keystroke will be repeat by dot command.|
 

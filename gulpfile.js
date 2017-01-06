@@ -3,6 +3,7 @@ var gulp = require('gulp'),
     gp_concat = require('gulp-concat'),
     clean = require('gulp-clean'),
     zip = require('gulp-zip'),
+    gulpUtil = require('gulp-util'),
     gp_uglify = require('gulp-uglify');
 
 gulp.task('clean', function () {
@@ -31,7 +32,7 @@ gulp.task('build_common_content_min', ['clean'], function() {
         "content_scripts/hints.js",
     ])
     .pipe(gp_concat('common_content.min.js'))
-    .pipe(gp_uglify())
+    .pipe(gp_uglify().on('error', gulpUtil.log))
     .pipe(gulp.dest('dist/content_scripts'));
 });
 
@@ -62,7 +63,7 @@ gulp.task('copy-js-files', ['clean'], function() {
         'libs/marked.min.js',
         'pages/*.js'
     ], {base: "."})
-    .pipe(gp_uglify())
+    .pipe(gp_uglify().on('error', gulpUtil.log))
     .pipe(gulp.dest('dist'));
 });
 

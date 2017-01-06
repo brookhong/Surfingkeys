@@ -137,7 +137,7 @@ var Front = (function() {
         }, function(response) {
             // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
             window.focus();
-            Front.showBanner("Copied.");
+            Front.showBanner("Copied: " + text);
         });
     };
 
@@ -150,7 +150,7 @@ var Front = (function() {
     self.showKeystroke = function(key) {
         frontendCommand({
             action: 'showKeystroke',
-            key: key
+            key: decodeKeystroke(key)
         });
     };
 

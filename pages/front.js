@@ -254,7 +254,7 @@ var Front = (function(mode) {
     runtime.on('openFinder', self.openFinder);
     self.showBanner = function(message, linger_time) {
         banner.finish();
-        banner.html(message).show();
+        banner.html(htmlEncode(message)).show();
         self.flush();
         banner.animate({
             "top": "0"
@@ -353,7 +353,7 @@ var Front = (function(mode) {
         keystroke.show();
         self.flush();
         var keys = keystroke.html() + key;
-        keystroke.html(keys);
+        keystroke.html(htmlEncode(keys));
         if (keystroke.css('right') !== '0px') {
             keystroke.animate({
                 right: 0

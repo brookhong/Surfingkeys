@@ -76,6 +76,10 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 
 当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。按住空格键可隐藏拨号盘，松开恢复。
 
+所有拨号放在目标链接的中间，你可以用下面的设置让它们靠左对齐：
+
+    settings.hintAlign = "left";
+
 ## Surfingkeys支持的模式
 
 Surfingkeys有三种模式：normal，visual和insert。
@@ -413,9 +417,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 |:---------------| :-----|
 |**keystroke**                   | 字符串，触发某个操作的按键|
 |**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
-|**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。|
+|**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
 |**options**                     | object, 字段属性如下 |
-|**extra_chars**                 | 布尔值[可选]，下一个按键是否为action_code的参数， 可以参考`m`或`'`的设置。|
 |**domain**                      | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
 |**repeatIgnore**                | 布尔值[可选]，是否可通过点命令重复该按键。|
 

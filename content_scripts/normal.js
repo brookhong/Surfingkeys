@@ -49,10 +49,7 @@ var Mode = (function() {
         var issueTitle = encodeURI("Mode {0} pushed into mode stack again.".format(modeName));
         var issueBody = "%23%23+Error+details%0d%0d{0}%0d%0d%23%23+Context%0d%0d%2a%2aPlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2a%2a".format(encodeURI("Modes in stack: {0}".format(modeList)));
 
-        var error = `<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2>
-
-<p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>
-`.format(issueTitle, issueBody);
+        var error = '<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2> <p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>'.format(issueTitle, issueBody);
 
         Front.showPopup(error);
     }
@@ -271,6 +268,8 @@ var Insert = (function(mode) {
             }, 300);
         } else if (event.sk_keyName.length) {
             return Normal._handleMapKey.call(self, event.sk_keyName, function(last) {
+                // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
+                // such as, to insert `,m` in case of mapkey `,,` defined.
                 var pw = last.getPrefixWord();
                 if (pw) {
                     var elm = document.activeElement, str = elm.value, pos = elm.selectionStart;
@@ -625,7 +624,8 @@ var Normal = (function(mode) {
             } else {
                 if (this.map_node.meta) {
                     var code = this.map_node.meta.code;
-                    if (this.map_node.meta.extra_chars) {
+                    if (code.length) {
+                        // bound function needs arguments
                         this.pendingMap = code;
                         Front.showKeystroke(key);
                     } else {
@@ -714,11 +714,11 @@ var Normal = (function(mode) {
                 scrollTop: document.body.scrollTop
             };
             RUNTIME('addVIMark', {mark: mo});
-            Front.showBanner("Mark '{0}' added for: {1}.".format(htmlEncode(mark), url));
+            Front.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
         }
     };
 
-    self.jumpVIMark = function(mark) {
+    self.jumpVIMark = function(mark, newTab) {
         if (localMarks.hasOwnProperty(mark)) {
             var markInfo = localMarks[mark];
             document.body.scrollLeft = markInfo.scrollLeft;
@@ -739,12 +739,12 @@ var Normal = (function(mode) {
                         }
                     }
                     markInfo.tab = {
-                        tabbed: false,
+                        tabbed: newTab,
                         active: true
                     };
                     RUNTIME("openLink", markInfo);
                 } else {
-                    Front.showBanner("No mark '{0}' defined.".format(htmlEncode(mark)));
+                    Front.showBanner("No mark '{0}' defined.".format(mark));
                 }
             });
         }
