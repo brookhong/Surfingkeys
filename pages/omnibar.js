@@ -26,7 +26,7 @@ var Omnibar = (function(ui) {
         self.input[0].focus();
     });
 
-    function expandAlias(alias) {
+    self.expandAlias = function(alias, val) {
         var eaten = false;
         if (lastHandler !== SearchEngine && alias.length && SearchEngine.aliases.hasOwnProperty(alias)) {
             lastHandler = handler;
@@ -34,22 +34,30 @@ var Omnibar = (function(ui) {
             $.extend(SearchEngine, SearchEngine.aliases[alias]);
             self.resultsDiv.html("");
             self.promptSpan.html(handler.prompt)
-            self.input.val('');
+            self.collapsingPoint = val;
+            self.input.val(val);
+            if (val.length) {
+                self.input.trigger('input');
+            }
             eaten = true;
         }
         return eaten;
-    }
+    };
 
-    function collapseAlias() {
+    self.collapseAlias = function() {
         var eaten = false;
-        if (lastHandler && handler !== lastHandler && self.input.val() === "") {
+        if (lastHandler && handler !== lastHandler && self.input.val() === self.collapsingPoint) {
             handler = lastHandler;
             lastHandler = null;
             self.promptSpan.html(handler.prompt)
+            if (self.collapsingPoint.length) {
+                self.input.val(self.collapsingPoint.substr(0, self.collapsingPoint.length - 1));
+                self.input.trigger('input');
+            }
             eaten = true;
         }
         return eaten;
-    }
+    };
 
     function rotateResult(backward) {
         var total = self.resultsDiv.find('li').length;
@@ -104,9 +112,9 @@ var Omnibar = (function(ui) {
             handler.tabbed = Omnibar.tabbed ^ event.shiftKey;
             handler.onEnter() && Front.hidePopup();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
-            expandAlias(self.input.val()) && event.preventDefault();
+            self.expandAlias(self.input.val(), '') && event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
-            collapseAlias() && event.preventDefault();
+            self.collapseAlias() && event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
             rotateResult(event.shiftKey);
             event.preventDefault();
@@ -212,7 +220,7 @@ var Omnibar = (function(ui) {
         if (url === undefined) {
             url = self.input.val();
             if (url.indexOf(':') === -1) {
-                url = SearchEngine.aliases[SearchEngine.default].url + url;
+                url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
             }
         }
         if (/^javascript:/.test(url)) {
@@ -552,8 +560,13 @@ var OpenURLs = (function() {
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(all, $(this).val());
-        Omnibar.listURLs(filtered, false);
+        var val = $(this).val();
+        var filtered = _filterByTitleOrUrl(all, val);
+        if (filtered.length === 0) {
+            Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
+        } else {
+            Omnibar.listURLs(filtered, false);
+        }
     };
     return self;
 })();
@@ -627,7 +640,6 @@ Omnibar.addHandler('VIMarks', OpenVIMarks);
 var SearchEngine = (function() {
     var self = {};
     self.aliases = {};
-    self.default = 'g';
 
     self.onOpen = function(arg) {
         $.extend(self, self.aliases[arg]);
