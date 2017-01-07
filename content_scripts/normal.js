@@ -26,6 +26,13 @@ var Mode = (function() {
                 }
             }
         };
+        if (this.name !== "Disabled" && !Disabled.eventListeners.hasOwnProperty(evt)) {
+            // Disabled mode listenes all events that are listened by any other mode,
+            // so that it could suppress any event.
+            Disabled.eventListeners[evt] = function(event) {
+                event.sk_suppressed = true;
+            };
+        }
         return this;
     };
 
@@ -70,6 +77,7 @@ var Mode = (function() {
             // pop up all the modes over this
             // mode_stack = mode_stack.slice(pos);
             showError(this.name, Mode.stack().map(function(u) { return u.name; }).join(','));
+            // stackTrace();
         }
 
         mode_stack.sort(function(a,b) {
