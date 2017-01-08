@@ -1,9 +1,10 @@
 var disableAll = document.getElementById('disableAll'),
+    version = "Surfingkeys " + chrome.runtime.getManifest().version,
     lnkSettings = document.getElementById('lnkSettings');
 
 function updateStatus(blacklist) {
     var disabled = blacklist.hasOwnProperty('.*');
-    disableAll.textContent = disabled ? 'Enable Surfingkeys' : 'Disable Surfingkeys';
+    disableAll.textContent = (disabled ? 'Enable ' : 'Disable ') + version;
     runtime.command({
         action: 'setSurfingkeysIcon',
         status: disabled

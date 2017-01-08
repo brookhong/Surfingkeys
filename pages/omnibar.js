@@ -143,6 +143,35 @@ var Omnibar = (function(ui) {
         });
     };
 
+    self.createURLItem = function(b, rxp) {
+        b.title = (b.title && b.title !== "") ? b.title : b.url;
+        var type = b.type, additional = "", uid = b.uid;
+        if (!type) {
+            if (b.hasOwnProperty('lastVisitTime')) {
+                type = "☼";
+                additional = "<span class=omnibar_timestamp>@ {0}</span>".format(timeStampString(b.lastVisitTime));
+                uid = "H" + b.url;
+            } else if(b.hasOwnProperty('dateAdded')) {
+                type = "☆";
+                additional = "<span class=omnibar_folder>@ {0}</span>".format(self.bookmarkFolders[b.parentId] || "");
+                uid = "B" + b.id;
+            } else if(b.hasOwnProperty('width')) {
+                type = "▓";
+                uid = "T" + b.id;
+            } else {
+                type = "▤";
+            }
+        }
+        var li = $('<li/>').html('<div class="title">{0} {1} {2}</div>'.format(
+            type,
+            self.highlight(rxp, htmlEncode(b.title)),
+            additional
+        ));
+        $('<div class="url">').html(self.highlight(rxp, b.url)).appendTo(li);
+        li.data('uid', uid).data('url', b.url);
+        return li;
+    };
+
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
      * @param {Array} items - Array of url items with title.
@@ -154,35 +183,11 @@ var Omnibar = (function(ui) {
         var query = Omnibar.input.val().trim();
         var rxp = query.length ? (new RegExp(query.replace(/\s+/, "\|"), 'gi')) : null;
         self.listResults(sliced, function(b) {
-            var li = $('<li/>');
+            var li;
             if (b.hasOwnProperty('url')) {
-                b.title = (b.title && b.title !== "") ? b.title : b.url;
-                var type = b.type, additional = "", uid = b.uid;
-                if (!type) {
-                    if (b.hasOwnProperty('lastVisitTime')) {
-                        type = "☼";
-                        additional = "<span class=omnibar_timestamp>@ {0}</span>".format(timeStampString(b.lastVisitTime));
-                        uid = "H" + b.url;
-                    } else if(b.hasOwnProperty('dateAdded')) {
-                        type = "☆";
-                        additional = "<span class=omnibar_folder>@ {0}</span>".format(self.bookmarkFolders[b.parentId] || "");
-                        uid = "B" + b.id;
-                    } else if(b.hasOwnProperty('width')) {
-                        type = "▓";
-                        uid = "T" + b.id;
-                    } else {
-                        type = "▤";
-                    }
-                }
-                li.html('<div class="title">{0} {1} {2}</div>'.format(
-                    type,
-                    self.highlight(rxp, htmlEncode(b.title)),
-                    additional
-                ));
-                $('<div class="url">').html(self.highlight(rxp, b.url)).appendTo(li);
-                li.data('uid', uid).data('url', b.url);
+                li = self.createURLItem(b, rxp);
             } else if (showFolder) {
-                li.html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
+                li = $('<li/>').html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
             }
             return li;
         });
