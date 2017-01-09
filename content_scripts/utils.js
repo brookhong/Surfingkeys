@@ -21,6 +21,13 @@ function isEditable(element) {
         || element.isContentEditable
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
 }
+function reportIssue(title, description) {
+    title = encodeURI(title);
+    description = "%23%23+Error+details%0d%0d{0}%0d%0d%23%23+Context%0d%0d%2a%2aPlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2a%2a".format(encodeURI(description));
+    var error = '<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2> <p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>'.format(title, description);
+
+    Front.showPopup(error);
+}
 
 String.prototype.format = function() {
     var formatted = this;
@@ -159,6 +166,9 @@ String.prototype.format = function() {
                     character = "<{0}>".format(character);
                 }
             }
+            if (decodeKeystroke(encodeKeystroke(character)) !== character) {
+                reportIssue("Unrecognized key event: {0}".format(character), JSON.stringify({keyCode: event.keyCode, key: event.key}));
+            }
             return encodeKeystroke(character);
         },
         isWordChar: function(event) {
@@ -207,7 +217,7 @@ function encodeKeystroke(s) {
     }
     return code;
 }
-encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete'];
+encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete', 'Dead'];
 
 function decodeKeystroke(s) {
     var r = s.charCodeAt(0);

@@ -194,7 +194,13 @@ var Hints = (function(mode) {
                 cssSelector += ", *:css(cursor=pointer), *[onclick]";
             }
         }
-        var elements = $(document.body).find(cssSelector).filter(function(i) {
+        var elements;
+        if (behaviours.tabbed) {
+            elements = $('a').regex(/^(?:(?!javascript:\/\/).)+.*$/, $.fn.attr, ['href']);
+        } else {
+            elements = $(document.body).find(cssSelector);
+        }
+        elements = elements.filter(function(i) {
             var ret = null;
             var elm = this;
             if ($(elm).attr('disabled') === undefined) {

@@ -149,11 +149,11 @@ var Omnibar = (function(ui) {
         if (!type) {
             if (b.hasOwnProperty('lastVisitTime')) {
                 type = "☼";
-                additional = "<span class=omnibar_timestamp>@ {0}</span>".format(timeStampString(b.lastVisitTime));
+                additional = "<span class=omnibar_timestamp># {0}</span>".format(timeStampString(b.lastVisitTime));
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
                 type = "☆";
-                additional = "<span class=omnibar_folder>@ {0}</span>".format(self.bookmarkFolders[b.parentId] || "");
+                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(self.bookmarkFolders[b.parentId] || "", timeStampString(b.dateAdded));
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
                 type = "▓";

@@ -155,7 +155,7 @@ var Service = (function() {
                 var syncSavedAt = syncSet.savedAt || 0;
                 if (localSavedAt > syncSavedAt) {
                     extendObject(settings, localSet);
-                    chrome.storage.sync.set(localSet, function() {
+                    _syncSave(localSet, function() {
                         var subset = getSubSettings(keys);
                         if (chrome.runtime.lastError) {
                             subset.error = chrome.runtime.lastError.message;
@@ -312,6 +312,13 @@ var Service = (function() {
     };
 
 
+    function _syncSave(data, cb) {
+        if (data.hasOwnProperty('localPath') && data.hasOwnProperty('snippets')) {
+            delete data.snippets;
+        }
+        chrome.storage.sync.set(data, cb);
+    }
+
     function _updateSettings(diffSettings, afterSet) {
         extendObject(settings, diffSettings);
         diffSettings.savedAt = new Date().getTime();
@@ -320,7 +327,7 @@ var Service = (function() {
                 afterSet();
             }
         });
-        chrome.storage.sync.set(diffSettings, function() {
+        _syncSave(diffSettings, function() {
             if (chrome.runtime.lastError) {
                 var error = chrome.runtime.lastError.message;
             }
