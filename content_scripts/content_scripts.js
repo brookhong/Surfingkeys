@@ -285,7 +285,7 @@ function searchSelectedWith(se, onlyThisSite, interactive, alias) {
         if (interactive) {
             Front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
         } else {
-            tabOpenLink(se + encodeURI(query));
+            tabOpenLink(se + encodeURIComponent(query));
         }
     });
 }

@@ -22,8 +22,8 @@ function isEditable(element) {
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
 }
 function reportIssue(title, description) {
-    title = encodeURI(title);
-    description = "%23%23+Error+details%0d%0d{0}%0d%0d%23%23+Context%0d%0d%2a%2aPlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2a%2a".format(encodeURI(description));
+    title = encodeURIComponent(title);
+    description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent));
     var error = '<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2> <p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>'.format(title, description);
 
     Front.showPopup(error);
@@ -60,6 +60,18 @@ String.prototype.format = function() {
     var KeyboardUtils, root;
 
     KeyboardUtils = {
+        keyCodesMac: {
+            Minus: ["-", "_"],
+            Equal: ["=", "+"],
+            BracketLeft: ["[", "{"],
+            BracketRight: ["]", "}"],
+            Backslash: ["\\", "|"],
+            Semicolon: [";", ":"],
+            Quote: ["'", "\""],
+            Comma: [",", "<"],
+            Period: [".", ">"],
+            Slash: ["/", "?"]
+        },
         keyCodes: {
             ESC: 27,
             backspace: 8,
@@ -146,10 +158,16 @@ String.prototype.format = function() {
                             character = event.shiftKey ? character : character.toLowerCase();
                         }
                     } else {
-                        // Alt-s is ß under Mac
-                        if (character.charCodeAt(0) > 127 && event.keyCode < 127) {
-                            character = String.fromCharCode(event.keyCode);
-                            character = event.shiftKey ? character : character.toLowerCase();
+                        if (character.charCodeAt(0) > 127   // Alt-s is ß under Mac
+                            || character === "Dead"         // Alt-i is Dead under Mac
+                        ) {
+                            if (event.keyCode < 127) {
+                                character = String.fromCharCode(event.keyCode);
+                                character = event.shiftKey ? character : character.toLowerCase();
+                            } else if (this.keyCodesMac.hasOwnProperty(event.code)) {
+                                // Alt-/ or Alt-?
+                                character = this.keyCodesMac[event.code][event.shiftKey ? 1 : 0];
+                            }
                         }
                     }
                 }
@@ -167,7 +185,16 @@ String.prototype.format = function() {
                 }
             }
             if (decodeKeystroke(encodeKeystroke(character)) !== character) {
-                reportIssue("Unrecognized key event: {0}".format(character), JSON.stringify({keyCode: event.keyCode, key: event.key}));
+                var keyStr = JSON.stringify({
+                    metaKey: event.metaKey,
+                    altKey: event.altKey,
+                    ctrlKey: event.ctrlKey,
+                    shiftKey: event.shiftKey,
+                    keyCode: event.keyCode,
+                    code: event.code,
+                    key: event.key
+                }, null, 4);
+                reportIssue("Unrecognized key event: {0}".format(character), keyStr);
             }
             return encodeKeystroke(character);
         },
@@ -217,7 +244,7 @@ function encodeKeystroke(s) {
     }
     return code;
 }
-encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete', 'Dead'];
+encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete'];
 
 function decodeKeystroke(s) {
     var r = s.charCodeAt(0);
