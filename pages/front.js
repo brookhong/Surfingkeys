@@ -17,7 +17,14 @@ var Front = (function(mode) {
             self.hidePopup();
             handled = "stopEventPropagation";
         } else {
-            if (_tabs.trie) {
+            if (self.showPressed) {
+                var s = htmlEncode(decodeKeystroke(event.sk_keyName));
+                if (!s) {
+                    s = "&nbsp;";
+                }
+                _popup.find("kbd").html(s);
+                handled = "stopEventPropagation";
+            } else if (_tabs.trie) {
                 _tabs.trie = _tabs.trie.find(event.sk_keyName);
                 if (!_tabs.trie) {
                     self.hidePopup();
@@ -91,6 +98,7 @@ var Front = (function(mode) {
             self.contentCommand({
                 action: 'getFocusFromFront'
             });
+            self.showPressed = false;
             self.exit();
         }
     };
@@ -216,6 +224,10 @@ var Front = (function(mode) {
     };
     runtime.on('showPopup', function(message) {
         self.showPopup(message.content);
+    });
+    runtime.on('showPressed', function(message) {
+        self.showPressed = true;
+        self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
     });
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {

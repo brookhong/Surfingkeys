@@ -35,6 +35,12 @@ var Front = (function() {
         });
     };
 
+    self.showPressed = function(content) {
+        frontendCommand({
+            action: 'showPressed'
+        });
+    };
+
     var onEditorSaved, elementBehindEditor;
     self.showEditor = function(element, onWrite, type) {
         var content, initial_line = 0;

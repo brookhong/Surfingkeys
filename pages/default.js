@@ -305,8 +305,8 @@ vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
 });
 mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
-mapkey('sqk', '#0show pressed key', function(key) {
-    Front.showPopup(htmlEncode(decodeKeystroke(key)));
+mapkey('spk', '#0show pressed key', function() {
+    Front.showPressed();
 });
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
