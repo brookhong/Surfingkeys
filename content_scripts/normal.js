@@ -369,7 +369,7 @@ var Normal = (function(mode) {
             key: ['blacklist', 'blacklistPattern']
         }, function(response) {
             var settings = response.settings;
-            if (!runtime.conf.pushStateIgnored[window.location.origin] && !checkBlackList(settings)) {
+            if (!runtime.conf.pushStateIgnored[window.location.origin]) {
                 // #124 test with https://inbox.google.com
                 if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
                     // only for that we are not having TopHook mode.
