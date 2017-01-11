@@ -423,6 +423,7 @@ mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
 mapkey('sr', '#11Reset Settings', 'Normal.resetSettings()');
 mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/github-markdown.html")');
+mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', 'tabOpenLink("/pages/mermaid.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Front.showEditor(window.location.href, function(data) {
         tabOpenLink(data);

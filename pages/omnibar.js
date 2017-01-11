@@ -45,15 +45,15 @@ var Omnibar = (function(ui) {
     };
 
     self.collapseAlias = function() {
-        var eaten = false;
-        if (lastHandler && handler !== lastHandler && self.input.val() === self.collapsingPoint) {
+        var eaten = false, val = self.input.val();
+        if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
             self.promptSpan.html(handler.prompt)
-            if (self.collapsingPoint.length) {
-                self.input.val(self.collapsingPoint.substr(0, self.collapsingPoint.length - 1));
-                self.input.trigger('input');
+            if (val.length) {
+                self.input.val(val.substr(0, val.length - 1));
             }
+            self.input.trigger('input');
             eaten = true;
         }
         return eaten;
