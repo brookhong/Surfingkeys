@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE='">
+        <meta charset="UTF-8">
+        <title>Mermaid diagram generator</title>
+        <link rel="stylesheet" href="../content_scripts/content_scripts.css">
+        <link rel="stylesheet" href="mermaid.css">
+    </head>
+    <body>
+        <!-- build:common_content -->
+        <script src="../libs/trie.js"></script>
+        <script src="../libs/jquery.js"></script>
+        <script src="../content_scripts/utils.js"></script>
+        <script src="../content_scripts/debug_utils.js"></script>
+        <script src="../content_scripts/runtime.js"></script>
+        <script src="../content_scripts/normal.js"></script>
+        <script src="../content_scripts/visual.js"></script>
+        <script src="../content_scripts/hints.js"></script>
+        <!-- endbuild -->
+        <script src="../content_scripts/front.js"></script>
+        <script src="../content_scripts/content_scripts.js"></script>
+        <script src="default.js"></script>
+        <script src="../content_scripts/top.js"></script>
+
+        <script src="../libs/webfontloader.js"></script>
+        <script src="../libs/mermaid.min.js"></script>
+        <script src="mermaid.js"></script>
+        <div class="mermaid">
+            sequenceDiagram
+
+            SomeRealBus->>AbstractBus: setGroup(busGroup)
+
+            AbstractBus->>QueueService: queueUrl = getQueueUrl(busGroup)
+
+            opt queueUrl == null
+            AbstractBus->>QueueService: createQueue(busGroup)
+            AbstractBus->>SomeRealBus: initialIndex = buildInitialIndex()
+            AbstractBus->>DistributedLockService: saveIndexToDistributedDB(initialIndex)
+            end
+
+
+            loop handle message from QueueService
+            AbstractBus->>QueueService: msg = receiveMessage(queueUrl)
+
+            alt msg == null
+            AbstractBus->>AbstractBus: break
+            else msg != null
+            AbstractBus->>SomeRealBus: handled = handleMessage(msg)
+            opt handled == true
+            AbstractBus->>QueueService: deleteMessage(queueUrl, msg.getReceiptHandle())
+            end
+            end
+            end
+
+
+            AbstractBus->>DistributedLockService: lockedInex = getLockedIndex(busGroup)
+
+            opt lockedInex != null
+            AbstractBus->>SomeRealBus: records = fetchRecordsSince(lockedInex)
+            loop records
+            AbstractBus->>QueueService: enqueue(queueUrl, record);
+            end
+            opt records.size() > 0
+            AbstractBus->>SomeRealBus: lockedIndex = buildLastIndex(lastRecord)
+            end
+            AbstractBus->>DistributedLockService: saveIndexToDistributedDB(lockedIndex)
+            AbstractBus->>DistributedLockService: releaseLockedIndex(lockedIndex)
+            end
+        </div>
+    </body>
+</html>

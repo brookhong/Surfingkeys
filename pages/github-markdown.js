@@ -15,6 +15,7 @@ function previewMarkdown(mk) {
 }
 
 $(document).on('surfingkeys:frontendReady', function(e) {
+    $('.markdown-body').css('height', window.innerHeight * 0.88);
     Front.getContentFromClipboard(function(response) {
         previewMarkdown(response.data);
     });
@@ -23,3 +24,5 @@ $(document).on('surfingkeys:frontendReady', function(e) {
 mapkey('sm', 'Edit markdown source', function() {
     Front.showEditor(markdown_code, previewMarkdown, 'markdown');
 });
+
+map('i', 'sm');
