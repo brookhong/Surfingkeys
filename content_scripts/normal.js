@@ -774,5 +774,59 @@ var Normal = (function(mode) {
         });
     };
 
+    self.captureFullPage = function() {
+        runtime.command({
+            action: 'getCaptureSize'
+        }, function(response) {
+            var scale = response.width / window.innerWidth;
+
+            var wh = window.innerHeight,
+                dh = document.body.scrollHeight,
+                rY = dh % wh;
+
+            var canvas = document.createElement( "canvas" );
+            canvas.width = document.body.scrollWidth * scale;
+            canvas.height = dh * scale;
+            var ctx = canvas.getContext( "2d" );
+
+            var dx = 0, dy = 0;
+            var img = document.createElement( "img" );
+
+            img.onload = function() {
+                ctx.drawImage(img, dx, dy);
+                if (document.body.scrollTop + wh >= dh) {
+                    // done
+                    Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
+                } else {
+                    if (document.body.scrollTop + 2 * wh < dh) {
+                        document.body.scrollTop += wh;
+                        dy += wh * scale;
+                    } else {
+                        document.body.scrollTop += rY;
+                        dy = document.body.scrollTop * scale;
+                    }
+                    // wait 1 second for scrollbar to hide
+                    setTimeout(function() {
+                        runtime.command({
+                            action: 'captureVisibleTab'
+                        }, function(response) {
+                            img.src = response.dataUrl;
+                        });
+                    }, 1000);
+                }
+            };
+
+            document.body.scrollTop = 0;
+            // wait 500 millisecond for keystrokes of Surfingkeys to hide
+            setTimeout(function() {
+                runtime.command({
+                    action: 'captureVisibleTab'
+                }, function(response) {
+                    img.src = response.dataUrl;
+                });
+            }, 500);
+        });
+    };
+
     return self;
 })(Mode);

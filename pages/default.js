@@ -385,6 +385,18 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
     });
     Front.writeClipboard(JSON.stringify(aa, null, 4));
 });
+mapkey('yg', '#7Capture current page', function() {
+    setTimeout(function() {
+        runtime.command({
+            action: 'captureVisibleTab'
+        }, function(response) {
+            Front.showPopup("<img src='{0}' />".format(response.dataUrl));
+        });
+    }, 500);
+});
+mapkey('yG', '#7Capture current full page', function() {
+    Normal.captureFullPage();
+});
 mapkey('yp', '#7Copy form data for POST on current page', function() {
     var aa = [];
     $('form').each(function() {

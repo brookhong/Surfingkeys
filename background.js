@@ -986,6 +986,25 @@ var Service = (function() {
             });
         }
     };
+    self.captureVisibleTab = function(message, sender, sendResponse) {
+        chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
+            _response(message, sendResponse, {
+                dataUrl: dataUrl
+            });
+        });
+    };
+    self.getCaptureSize = function(message, sender, sendResponse) {
+        var img = document.createElement( "img" );
+        img.onload = function() {
+            _response(message, sendResponse, {
+                width: img.width,
+                height: img.height
+            });
+        };
+        chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
+            img.src = dataUrl;
+        });
+    };
 
     var _queueURLs = [];
     self.queueURLs = function(message, sender, sendResponse) {

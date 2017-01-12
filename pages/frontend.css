@@ -145,6 +145,9 @@ body {
     z-index: 2147483298;
     padding: 1rem;
 }
+#sk_popup img {
+    width: 100%;
+}
 #sk_usage>div {
     display: inline-block;
     vertical-align: top;
