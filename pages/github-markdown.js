@@ -15,7 +15,6 @@ function previewMarkdown(mk) {
 }
 
 $(document).on('surfingkeys:frontendReady', function(e) {
-    $('.markdown-body').css('height', window.innerHeight * 0.88);
     Front.getContentFromClipboard(function(response) {
         previewMarkdown(response.data);
     });

@@ -1,5 +1,13 @@
 var source = "";
 
+mermaid.initialize({
+    startOnLoad: false
+});
+
+mermaid.parseError = function(err) {
+    Front.showBanner("Failed to generate diagram from clipboard, load default", 3000);
+    drawDiagram($('#sequenceDiagramExample').text());
+}
 function drawDiagram(code) {
     source = code;
     $('div.mermaid').removeAttr('data-processed').html(source);

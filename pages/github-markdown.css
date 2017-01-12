@@ -646,20 +646,6 @@
     border: 1px solid #4078c0;
 }
 
-kbd {
-    display: inline-block;
-    padding: 3px 5px;
-    font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    line-height: 10px;
-    color: #555;
-    vertical-align: middle;
-    background-color: #fcfcfc;
-    border: solid 1px #ccc;
-    border-bottom-color: #bbb;
-    border-radius: 3px;
-    box-shadow: inset 0 -1px 0 #bbb;
-}
-
 .markdown-body :checked+.radio-label {
     position: relative;
     z-index: 1;
