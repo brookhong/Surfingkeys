@@ -3,6 +3,7 @@ var Mode = (function() {
     self.specialKeys = {
         "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlacklist
         "<Ctrl-d>": ["<Ctrl-d>"],     // hotkey to delete from omnibar
+        "<Ctrl-D>": ["<Ctrl-D>"],     // hotkey to delete from omnibar
         "<Esc>": ["<Esc>"]
     };
 

@@ -90,6 +90,30 @@ var Omnibar = (function(ui) {
         }
     }
 
+    function deleteListed() {
+        var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
+            return $(li).data('uid');
+        }).filter(function(u) {
+            return u;
+        });
+        if (uids.length) {
+            runtime.command({
+                action: "removeURL",
+                uid: uids
+            }, function(ret) {
+                if (ret.response === "Done") {
+                    if (handler && handler.getResults) {
+                        handler.getResults(function(response) {
+                            self.input.trigger('input');
+                        });
+                    } else {
+                        self.input.trigger('input');
+                    }
+                }
+            });
+        }
+    }
+
     self.input = ui.find('input');
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
@@ -106,6 +130,9 @@ var Omnibar = (function(ui) {
             event.preventDefault();
         } else if (Mode.isSpecialKeyOf("<Ctrl-d>", event.sk_keyName)) {
             deleteFocused();
+            event.preventDefault();
+        } else if (Mode.isSpecialKeyOf("<Ctrl-D>", event.sk_keyName)) {
+            deleteListed();
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
@@ -494,9 +521,15 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 var OpenHistory = (function() {
     var self = {
         prompt: 'history≫'
-    }, all;
+    }, cached;
 
     self.onOpen = function(arg) {
+        self.getResults(function(response) {
+            Omnibar.listURLs(response.history, false);
+        });
+    };
+
+    self.getResults = function(cb) {
         runtime.command({
             action: 'getHistory',
             query: {
@@ -504,14 +537,14 @@ var OpenHistory = (function() {
                 text: ""
             }
         }, function(response) {
-            all = response.history;
-            Omnibar.listURLs(response.history, false);
+            cached = response.history;
+            cb && cb(response);
         });
     };
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(all, $(this).val());
+        var filtered = _filterByTitleOrUrl(cached, $(this).val());
         Omnibar.listURLs(filtered, false);
     };
     return self;
@@ -521,24 +554,25 @@ Omnibar.addHandler('History', OpenHistory);
 var OpenURLs = (function() {
     var self = {
         prompt: '≫'
-    }, all;
+    }, cached;
 
-    function _queryURLs() {
+    self.getResults = function(cb) {
         if (self.action === "getAllSites") {
             runtime.command({
                 action: 'getTabs'
             }, function(response) {
-                all = response.tabs;
+                cached = response.tabs;
                 runtime.command({
                     action: "getTopSites"
                 }, function(response) {
-                    all = all.concat(response.urls);
-                    Omnibar.listURLs(all, false);
+                    cached = cached.concat(response.urls);
+                    Omnibar.listURLs(cached, false);
                     Omnibar.listBookmarkFolders(function() {
                         runtime.command({
                             action: 'getAllURLs'
                         }, function(response) {
-                            all = all.concat(response.urls);
+                            cached = cached.concat(response.urls);
+                            cb && cb();
                         });
                     });
                 });
@@ -547,8 +581,9 @@ var OpenURLs = (function() {
             runtime.command({
                 action: self.action
             }, function(response) {
-                all = response.urls;
-                Omnibar.listURLs(response.urls, false);
+                cached = response.urls;
+                Omnibar.listURLs(cached, false);
+                cb && cb();
             });
         }
     }
@@ -561,12 +596,12 @@ var OpenURLs = (function() {
         } else {
             self.prompt = '≫';
         }
-        _queryURLs();
+        self.getResults();
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
         var val = $(this).val();
-        var filtered = _filterByTitleOrUrl(all, val);
+        var filtered = _filterByTitleOrUrl(cached, val);
         if (filtered.length === 0) {
             Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
         } else {
@@ -580,23 +615,24 @@ Omnibar.addHandler('URLs', OpenURLs);
 var OpenTabs = (function() {
     var self = {
         prompt: 'tabs≫'
-    }, all;
+    }, cached;
 
-    function listTabs(query) {
+    self.getResults = function (cb) {
         runtime.command({
             action: 'getTabs',
-            query: query
+            query: ''
         }, function(response) {
-            all = response.tabs;
+            cached = response.tabs;
             Omnibar.listURLs(response.tabs, false);
+            cb && cb();
         });
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onOpen = function() {
-        listTabs('');
+        self.getResults();
     };
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(all, $(this).val());
+        var filtered = _filterByTitleOrUrl(cached, $(this).val());
         Omnibar.listURLs(filtered, false);
     };
     return self;
