@@ -12,10 +12,9 @@ var Front = (function(mode) {
     };
 
     self.addEventListener('keydown', function(event) {
-        var handled = "";
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
-            handled = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else {
             if (self.showPressed) {
                 var s = htmlEncode(decodeKeystroke(event.sk_keyName));
@@ -23,7 +22,7 @@ var Front = (function(mode) {
                     s = "&nbsp;";
                 }
                 _popup.find("kbd").html(s);
-                handled = "stopEventPropagation";
+                event.sk_stopPropagation = true;
             } else if (_tabs.trie) {
                 _tabs.trie = _tabs.trie.find(event.sk_keyName);
                 if (!_tabs.trie) {
@@ -36,10 +35,9 @@ var Front = (function(mode) {
                     self.hidePopup();
                     _tabs.trie = null;
                 }
-                handled = "stopEventPropagation";
+                event.sk_stopPropagation = true;
             }
         }
-        return handled;
     });
 
     self.postMessage = function(to, message) {
@@ -188,6 +186,7 @@ var Front = (function(mode) {
             'Proxy',                 // 13
             'Misc',                  // 14
             'Insert Mode',           // 15
+            'Omnibar Mode',          // 16
         ];
         var holder = $('<div/>');
         var help_groups = feature_groups.map(function(){return [];});

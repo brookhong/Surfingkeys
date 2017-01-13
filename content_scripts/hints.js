@@ -2,7 +2,6 @@ var Hints = (function(mode) {
     var self = $.extend({name: "Hints", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        var updated = false;
         var hints = holder.find('>div');
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
@@ -13,13 +12,11 @@ var Hints = (function(mode) {
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 prefix = prefix.substr(0, prefix.length - 1);
-                updated = true;
             } else {
                 var key = String.fromCharCode(event.keyCode);
                 if (key !== '') {
                     if (self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
-                        updated = true;
                     } else {
                         // quit hints if user presses non-hint key
                         hide();
@@ -28,7 +25,7 @@ var Hints = (function(mode) {
             }
             handleHint();
         }
-        return "stopEventPropagation";
+        event.sk_stopPropagation = true;
     });
     self.addEventListener('keyup', function(event) {
         if (event.keyCode === KeyboardUtils.keyCodes.space) {

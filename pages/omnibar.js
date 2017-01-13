@@ -17,9 +17,68 @@ function _filterByTitleOrUrl(urls, query) {
     return urls;
 }
 
-var Omnibar = (function(ui) {
-    var self = {bookmarkFolders: {}};
-    var handlers = {};
+var Omnibar = (function(mode, ui) {
+    var self = $.extend({name: "Omnibar", eventListeners: {}}, mode);
+
+    self.addEventListener('keydown', function(event) {
+        if (event.sk_keyName.length) {
+            Normal._handleMapKey.call(self, event);
+        }
+        event.sk_suppressed = true;
+    });
+
+    self.mappings = new Trie();
+    self.map_node = self.mappings;
+
+    self.mappings.add(encodeKeystroke("<Ctrl-d>"), {
+        annotation: "Delete focused item from bookmark or history",
+        feature_group: 16,
+        code: function () {
+            var focusedItem = Omnibar.resultsDiv.find('li.focused');
+            var uid = focusedItem.data('uid');
+            if (uid) {
+                runtime.command({
+                    action: "removeURL",
+                    uid: uid
+                }, function(ret) {
+                    if (ret.response === "Done") {
+                        focusedItem.remove();
+                    }
+                });
+            }
+        }
+    });
+
+    self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
+        annotation: "Delete all listed item from bookmark or history.",
+        feature_group: 16,
+        code: function () {
+            var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
+                return $(li).data('uid');
+            }).filter(function(u) {
+                return u;
+            });
+            if (uids.length) {
+                runtime.command({
+                    action: "removeURL",
+                    uid: uids
+                }, function(ret) {
+                    if (ret.response === "Done") {
+                        if (handler && handler.getResults) {
+                            handler.getResults(function(response) {
+                                self.input.trigger('input');
+                            });
+                        } else {
+                            self.input.trigger('input');
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+    var handlers = {},
+        bookmarkFolders;
 
     var lastInput, handler, lastHandler = null;
     ui.on('click', function(event) {
@@ -75,45 +134,6 @@ var Omnibar = (function(ui) {
         }
     }
 
-    function deleteFocused() {
-        var focusedItem = Omnibar.resultsDiv.find('li.focused');
-        var uid = focusedItem.data('uid');
-        if (uid) {
-            runtime.command({
-                action: "removeURL",
-                uid: uid
-            }, function(ret) {
-                if (ret.response === "Done") {
-                    focusedItem.remove();
-                }
-            });
-        }
-    }
-
-    function deleteListed() {
-        var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
-            return $(li).data('uid');
-        }).filter(function(u) {
-            return u;
-        });
-        if (uids.length) {
-            runtime.command({
-                action: "removeURL",
-                uid: uids
-            }, function(ret) {
-                if (ret.response === "Done") {
-                    if (handler && handler.getResults) {
-                        handler.getResults(function(response) {
-                            self.input.trigger('input');
-                        });
-                    } else {
-                        self.input.trigger('input');
-                    }
-                }
-            });
-        }
-    }
-
     self.input = ui.find('input');
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
@@ -127,12 +147,6 @@ var Omnibar = (function(ui) {
         }
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             Front.hidePopup();
-            event.preventDefault();
-        } else if (Mode.isSpecialKeyOf("<Ctrl-d>", event.sk_keyName)) {
-            deleteFocused();
-            event.preventDefault();
-        } else if (Mode.isSpecialKeyOf("<Ctrl-D>", event.sk_keyName)) {
-            deleteListed();
             event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !event.ctrlKey;
@@ -180,7 +194,7 @@ var Omnibar = (function(ui) {
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
                 type = "☆";
-                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(self.bookmarkFolders[b.parentId] || "", timeStampString(b.dateAdded));
+                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId] || "", timeStampString(b.dateAdded));
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
                 type = "▓";
@@ -224,7 +238,7 @@ var Omnibar = (function(ui) {
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
         self.input[0].focus();
-        PassThrough.enter();
+        self.enter();
         if (args.pref) {
             self.input.val(args.pref);
         }
@@ -242,7 +256,7 @@ var Omnibar = (function(ui) {
         self.resultsDiv.html("");
         lastHandler = null;
         handler.onClose && handler.onClose();
-        PassThrough.exit();
+        self.exit();
         handler = null;
     };
 
@@ -322,16 +336,16 @@ var Omnibar = (function(ui) {
         runtime.command({
             action: 'getBookmarkFolders'
         }, function(response) {
-            self.bookmarkFolders = {};
+            bookmarkFolders = {};
             response.folders.forEach(function(f) {
-                self.bookmarkFolders[f.id] = f.title;
+                bookmarkFolders[f.id] = f.title;
             });
             cb && cb(response);
         });
     };
 
     return self;
-})(Front.omnibar);
+})(Mode, Front.omnibar);
 
 var OpenBookmarks = (function() {
     var self = {

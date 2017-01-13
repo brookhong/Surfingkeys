@@ -2,8 +2,6 @@ var Mode = (function() {
     var self = {}, mode_stack = [];
     self.specialKeys = {
         "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlacklist
-        "<Ctrl-d>": ["<Ctrl-d>"],     // hotkey to delete from omnibar
-        "<Ctrl-D>": ["<Ctrl-D>"],     // hotkey to delete from omnibar
         "<Esc>": ["<Esc>"]
     };
 
@@ -19,8 +17,8 @@ var Mode = (function() {
             }
 
             if (!event.hasOwnProperty('sk_suppressed')) {
-                var ret = handler(event);
-                if (ret === "stopEventPropagation") {
+                handler(event);
+                if (event.sk_stopPropagation) {
                     event.stopImmediatePropagation();
                     event.preventDefault();
                     this.stopKeyupPropagation = true;
@@ -125,7 +123,7 @@ var Disabled = (function(mode) {
         if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             Normal.toggleBlacklist(window.location.origin);
             self.exit();
-            return "stopEventPropagation";
+            event.sk_stopPropagation = true;
         }
     });
 
@@ -149,12 +147,11 @@ var GetBackFocus = (function(mode) {
     var self = $.extend({name: "GetBackFocus", eventListeners: {}}, mode);
 
     self.addEventListener('focus', function(event) {
-        var handled = "", elm = event.target;
+        var elm = event.target;
         if (isEditable(elm)) {
             elm.blur();
-            handled = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         }
-        return handled;
     });
 
     self.enter = function() {
@@ -256,7 +253,7 @@ var Insert = (function(mode) {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             document.activeElement.blur();
             self.exit();
-            return "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else if (!isEditable(event.target)) {
             self.exit();
         } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {
@@ -268,7 +265,7 @@ var Insert = (function(mode) {
                 self.exit();
             }, 300);
         } else if (event.sk_keyName.length) {
-            return Normal._handleMapKey.call(self, event.sk_keyName, function(last) {
+            Normal._handleMapKey.call(self, event, function(last) {
                 // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
                 // such as, to insert `,m` in case of mapkey `,,` defined.
                 var pw = last.getPrefixWord();
@@ -344,18 +341,18 @@ var Normal = (function(mode) {
     var self = $.extend({name: "Normal", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        var handled;
         if (isEditable(event.target)) {
             Insert.enter();
         } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-            handled = self.finish();
+            if (self.finish()) {
+                event.sk_stopPropagation = true;
+            }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist(window.location.origin);
-            handled = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
-            handled = self._handleMapKey(event.sk_keyName);
+            self._handleMapKey(event);
         }
-        return handled;
     });
     self.addEventListener('keyup', function(event) {
         self.scrollOptions[5] = false;
@@ -582,7 +579,7 @@ var Normal = (function(mode) {
     };
 
     self.finish = function() {
-        var ret = "";
+        var ret = false;
         if (this.map_node !== this.mappings || this.pendingMap != null || this.repeats) {
             this.map_node = this.mappings;
             this.pendingMap = null;
@@ -590,14 +587,14 @@ var Normal = (function(mode) {
             if (this.repeats) {
                 this.repeats = "";
             }
-            ret = "stopEventPropagation";
+            ret = true;
         }
         return ret;
     };
 
-    self._handleMapKey = function(key, beforeFinish) {
-        var ret = "";
-        var finish = self.finish.bind(this);
+    self._handleMapKey = function(event, beforeFinish) {
+        var finish = self.finish.bind(this),
+            key = event.sk_keyName;
         if (this.pendingMap) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
                 finish();
@@ -609,13 +606,13 @@ var Normal = (function(mode) {
                     finish();
                 }, 0);
             }
-            ret = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
             Front.showKeystroke(key);
-            ret = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else {
             var last = this.map_node;
             this.map_node = this.map_node.find(key);
@@ -643,16 +640,17 @@ var Normal = (function(mode) {
                 } else {
                     Front.showKeystroke(key);
                 }
-                ret = "stopEventPropagation";
+                event.sk_stopPropagation = true;
             }
         }
-        return ret;
     };
 
     self.feedkeys = function(keys) {
         setTimeout(function() {
+            var evt = new Event("keydown");
             for (var i = 0; i < keys.length; i ++) {
-                self._handleMapKey(keys[i]);
+                evt.sk_keyName = keys[i];
+                self._handleMapKey(evt);
             }
         }, 1);
     };

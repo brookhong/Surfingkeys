@@ -2,7 +2,6 @@ var Visual = (function(mode) {
     var self = $.extend({name: "Visual", eventListeners: {}, _style: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        var updated = "";
         if (visualf) {
             var exitf = false;
             event.sk_suppressed = true;
@@ -30,11 +29,10 @@ var Visual = (function(mode) {
             }
             state--;
             Front.showStatus(2, status[state]);
-            updated = "stopEventPropagation";
+            event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
-            updated = Normal._handleMapKey.call(self, event.sk_keyName);
+            Normal._handleMapKey.call(self, event);
         }
-        return updated;
     });
 
     self.addEventListener('click', function(event) {
@@ -509,8 +507,10 @@ var Visual = (function(mode) {
 
     self.feedkeys = function(keys) {
         setTimeout(function() {
+            var evt = new Event("keydown");
             for (var i = 0; i < keys.length; i ++) {
-                Normal._handleMapKey.call(self, keys[i]);
+                evt.sk_keyName = keys[i];
+                Normal._handleMapKey.call(self, evt);
             }
         }, 1);
     };
