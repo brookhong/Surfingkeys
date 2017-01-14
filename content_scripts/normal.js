@@ -779,6 +779,15 @@ var Normal = (function(mode) {
         }, function(response) {
             var scale = response.width / window.innerWidth;
 
+            elm.scrollTop = 0;
+            var lastScrollTop = -1;
+            // hide scrollbars
+            var overflowY = elm.style.overflowY;
+            elm.style.overflowY = "hidden";
+            // hide borders
+            var borderStyle = elm.style.borderStyle;
+            elm.style.borderStyle = "none";
+
             var dx = 0, dy = 0, sx, sy, sw, sh, rY, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
             if (elm === document.body) {
                 ww = window.innerWidth;
@@ -818,6 +827,8 @@ var Normal = (function(mode) {
                     Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                     // restore overflowY
                     elm.style.overflowY = overflowY;
+                    // restore borders
+                    elm.style.borderStyle = borderStyle;
                 } else {
                     lastScrollTop = elm.scrollTop;
                     if (elm.scrollTop + 2 * wh < dh) {
@@ -837,11 +848,6 @@ var Normal = (function(mode) {
                 }
             };
 
-            elm.scrollTop = 0;
-            var lastScrollTop = -1;
-            // hide scrollbars
-            var overflowY = elm.style.overflowY;
-            elm.style.overflowY = "hidden";
             // wait 500 millisecond for keystrokes of Surfingkeys to hide
             setTimeout(function() {
                 runtime.command({
