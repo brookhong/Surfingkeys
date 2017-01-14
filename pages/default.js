@@ -397,6 +397,9 @@ mapkey('yg', '#7Capture current page', function() {
 mapkey('yG', '#7Capture current full page', function() {
     Normal.captureFullPage();
 });
+mapkey('yS', '#7Capture scrolling element', function() {
+    Normal.captureScrollingElement();
+});
 mapkey('yp', '#7Copy form data for POST on current page', function() {
     var aa = [];
     $('form').each(function() {

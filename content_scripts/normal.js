@@ -773,38 +773,51 @@ var Normal = (function(mode) {
         });
     };
 
-    self.captureFullPage = function() {
+    function _captureElement(elm) {
         runtime.command({
             action: 'getCaptureSize'
         }, function(response) {
             var scale = response.width / window.innerWidth;
 
-            var wh = window.innerHeight,
-                dh = document.body.scrollHeight,
-                rY = dh % wh;
+            var dx = 0, dy = 0, sx, sy, sw, sh, rY, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
+            if (elm === document.body) {
+                ww = window.innerWidth;
+                wh = window.innerHeight;
+                sx = 0;
+                sy = 0;
+            } else {
+                var br = elm.getBoundingClientRect();
+                ww = br.width;
+                wh = br.height;
+                sx = br.left * scale;
+                sy = br.top * scale;
+            }
+            sw = ww * scale;
+            sh = wh * scale;
+            rY = dh % wh;
 
             var canvas = document.createElement( "canvas" );
-            canvas.width = document.body.scrollWidth * scale;
+            canvas.width = elm.scrollWidth * scale;
             canvas.height = dh * scale;
             var ctx = canvas.getContext( "2d" );
 
-            var dx = 0, dy = 0;
+            var br = elm.getBoundingClientRect();
             var img = document.createElement( "img" );
 
             img.onload = function() {
-                ctx.drawImage(img, dx, dy);
-                if (document.body.scrollTop + wh >= dh) {
+                ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
+                if (elm.scrollTop + wh >= dh) {
                     // done
                     Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                     // restore overflowY
-                    document.body.style.overflowY = overflowY;
+                    elm.style.overflowY = overflowY;
                 } else {
-                    if (document.body.scrollTop + 2 * wh < dh) {
-                        document.body.scrollTop += wh;
+                    if (elm.scrollTop + 2 * wh < dh) {
+                        elm.scrollTop += wh;
                         dy += wh * scale;
                     } else {
-                        document.body.scrollTop += rY;
-                        dy = document.body.scrollTop * scale;
+                        elm.scrollTop += rY;
+                        dy = elm.scrollTop * scale;
                     }
                     setTimeout(function() {
                         runtime.command({
@@ -816,10 +829,10 @@ var Normal = (function(mode) {
                 }
             };
 
-            document.body.scrollTop = 0;
+            elm.scrollTop = 0;
             // hide scrollbars
-            var overflowY = document.body.style.overflowY;
-            document.body.style.overflowY = "hidden";
+            var overflowY = elm.style.overflowY;
+            elm.style.overflowY = "hidden";
             // wait 500 millisecond for keystrokes of Surfingkeys to hide
             setTimeout(function() {
                 runtime.command({
@@ -828,7 +841,17 @@ var Normal = (function(mode) {
                     img.src = response.dataUrl;
                 });
             }, 500);
+
         });
+    }
+
+    self.captureFullPage = function() {
+        _captureElement(document.body);
+    };
+
+    self.captureScrollingElement = function() {
+        var scrollNode = scrollNodes[scrollIndex];
+        _captureElement(scrollNode);
     };
 
     return self;
