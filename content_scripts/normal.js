@@ -787,10 +787,17 @@ var Normal = (function(mode) {
                 sy = 0;
             } else {
                 var br = elm.getBoundingClientRect();
-                ww = br.width;
-                wh = br.height;
-                sx = br.left * scale;
-                sy = br.top * scale;
+                // visible rectangle
+                var rc = [
+                    Math.max(br.left, 0),
+                    Math.max(br.top, 0),
+                    Math.min(br.right, window.innerWidth),
+                    Math.min(br.bottom, window.innerHeight)
+                ];
+                ww = rc[2] - rc[0];
+                wh = rc[3] - rc[1];
+                sx = rc[0] * scale;
+                sy = rc[1] * scale;
             }
             sw = ww * scale;
             sh = wh * scale;
@@ -806,12 +813,13 @@ var Normal = (function(mode) {
 
             img.onload = function() {
                 ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
-                if (elm.scrollTop + wh >= dh) {
+                if (lastScrollTop === elm.scrollTop) {
                     // done
                     Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                     // restore overflowY
                     elm.style.overflowY = overflowY;
                 } else {
+                    lastScrollTop = elm.scrollTop;
                     if (elm.scrollTop + 2 * wh < dh) {
                         elm.scrollTop += wh;
                         dy += wh * scale;
@@ -830,6 +838,7 @@ var Normal = (function(mode) {
             };
 
             elm.scrollTop = 0;
+            var lastScrollTop = -1;
             // hide scrollbars
             var overflowY = elm.style.overflowY;
             elm.style.overflowY = "hidden";
