@@ -304,6 +304,9 @@ var Insert = (function(mode) {
             self.exit();
         }
     });
+    self.addEventListener('pushState', function(event) {
+        event.sk_suppressed = true;
+    });
 
     function nextNonWord(str, dir, cur) {
         var nonWord = /\W/;
@@ -367,13 +370,10 @@ var Normal = (function(mode) {
             key: ['blacklist', 'blacklistPattern']
         }, function(response) {
             var settings = response.settings;
-            if (!runtime.conf.pushStateIgnored[window.location.origin]) {
-                // #124 test with https://inbox.google.com
-                if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
-                    // only for that we are not having TopHook mode.
-                    Insert.exit();
-                    GetBackFocus.enter();
-                }
+            if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
+                // only for that we are not having TopHook mode.
+                Insert.exit();
+                GetBackFocus.enter();
             }
         });
     });
@@ -796,6 +796,8 @@ var Normal = (function(mode) {
                 if (document.body.scrollTop + wh >= dh) {
                     // done
                     Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
+                    // restore overflowY
+                    document.body.style.overflowY = overflowY;
                 } else {
                     if (document.body.scrollTop + 2 * wh < dh) {
                         document.body.scrollTop += wh;
@@ -804,18 +806,20 @@ var Normal = (function(mode) {
                         document.body.scrollTop += rY;
                         dy = document.body.scrollTop * scale;
                     }
-                    // wait 1 second for scrollbar to hide
                     setTimeout(function() {
                         runtime.command({
                             action: 'captureVisibleTab'
                         }, function(response) {
                             img.src = response.dataUrl;
                         });
-                    }, 1000);
+                    }, 100);
                 }
             };
 
             document.body.scrollTop = 0;
+            // hide scrollbars
+            var overflowY = document.body.style.overflowY;
+            document.body.style.overflowY = "hidden";
             // wait 500 millisecond for keystrokes of Surfingkeys to hide
             setTimeout(function() {
                 runtime.command({

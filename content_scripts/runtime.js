@@ -15,11 +15,7 @@ var runtime = window.runtime || (function() {
             prevLinkRegex: /((<<|prev(ious)?)+)/i,
             hintAlign: "center",
             defaultSearchEngine: "g",
-            lastQuery: "",
-            pushStateIgnored: {
-                'https://inbox.google.com': 1,
-                'https://vk.com': 1
-            }
+            lastQuery: ""
         },
         runtime_handlers: {}
     }, actions = {};

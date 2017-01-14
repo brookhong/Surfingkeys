@@ -179,7 +179,10 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.highlight = function(rxp, str) {
-        return rxp === null ? str : str.replace(rxp, function(m) {
+        if (str.substr(0, 11) === "data:image/") {
+            str = str.substr(0, 1024);
+        }
+        return (rxp === null) ? str : str.replace(rxp, function(m) {
             return "<span class=omnibar_highlight>" + m + "</span>";
         });
     };
