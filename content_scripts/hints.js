@@ -2,6 +2,7 @@ var Hints = (function(mode) {
     var self = $.extend({name: "Hints", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
+        var updated = false;
         var hints = holder.find('>div');
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
@@ -12,11 +13,23 @@ var Hints = (function(mode) {
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 prefix = prefix.substr(0, prefix.length - 1);
+                updated = true;
             } else {
                 var key = String.fromCharCode(event.keyCode);
-                if (key !== '') {
+                var casedKey = event.shiftKey ? key : key.toLowerCase();
+                
+                if (isMappedTo(casedKey, "j")) {
+                    Normal.scroll('down');
+                    self.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true});
+                    updated = true;
+                } else if (isMappedTo(casedKey, "k")) {
+                    Normal.scroll('up');
+                    self.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true});
+                    updated = true;
+                } else if (key !== '') {
                     if (self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
+                        updated = true;
                     } else {
                         // quit hints if user presses non-hint key
                         hide();
@@ -25,7 +38,7 @@ var Hints = (function(mode) {
             }
             handleHint();
         }
-        event.sk_stopPropagation = true;
+        return "stopEventPropagation";
     });
     self.addEventListener('keyup', function(event) {
         if (event.keyCode === KeyboardUtils.keyCodes.space) {
@@ -41,6 +54,15 @@ var Hints = (function(mode) {
         style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
+
+    function isMappedTo(keyPressed, keyToCheck) {
+        var mappingKeyPressed = Normal.mappings.find(encodeKeystroke(keyPressed));
+        var mappingKeyToCheck = Normal.mappings.find(encodeKeystroke(keyToCheck));
+
+        return mappingKeyPressed 
+            && mappingKeyPressed.meta
+            && mappingKeyPressed.meta.word === mappingKeyToCheck.meta.word;
+    }
 
     function getZIndex(node) {
         var z = 0;
