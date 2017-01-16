@@ -1,5 +1,5 @@
 var Hints = (function(mode) {
-    var self = $.extend({name: "Hints", eventListeners: {}, lastCreateAttrs: {}}, mode);
+    var self = $.extend({name: "Hints", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
         var hints = holder.find('>div');
@@ -18,10 +18,10 @@ var Hints = (function(mode) {
                 
                 if (isMappedTo(casedKey, "j")) {
                     Normal.scroll('down');
-                    self.create("", Hints.dispatchMouseClick, self.lastCreateAttrs);
+                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
                 } else if (isMappedTo(casedKey, "k")) {
                     Normal.scroll('up');
-                    self.create("", Hints.dispatchMouseClick, self.lastCreateAttrs);
+                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
                 } else if (key !== '') {
                     if (self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
@@ -49,6 +49,7 @@ var Hints = (function(mode) {
         style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
+    var _lastCreateAttrs = {};
 
     function isMappedTo(keyPressed, keyToCheck) {
         var mappingKeyPressed = Normal.mappings.find(encodeKeystroke(keyPressed));
@@ -56,6 +57,8 @@ var Hints = (function(mode) {
 
         return mappingKeyPressed 
             && mappingKeyPressed.meta
+            && mappingKeyToCheck
+            && mappingKeyToCheck.meta
             && mappingKeyPressed.meta.word === mappingKeyToCheck.meta.word;
     }
 
@@ -192,7 +195,7 @@ var Hints = (function(mode) {
 
     self.create = function(cssSelector, onHintKey, attrs) {
         // save last used attributes, which will be reused if the user scrolls while the hints are still open
-        self.lastCreateAttrs = attrs;
+        _lastCreateAttrs = attrs;
 
         attrs = $.extend({
             active: true,
