@@ -1,5 +1,5 @@
 var Hints = (function(mode) {
-    var self = $.extend({name: "Hints", eventListeners: {}}, mode);
+    var self = $.extend({name: "Hints", eventListeners: {}, lastCreateAttrs: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
         var hints = holder.find('>div');
@@ -18,10 +18,10 @@ var Hints = (function(mode) {
                 
                 if (isMappedTo(casedKey, "j")) {
                     Normal.scroll('down');
-                    self.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true});
+                    self.create("", Hints.dispatchMouseClick, self.lastCreateAttrs);
                 } else if (isMappedTo(casedKey, "k")) {
                     Normal.scroll('up');
-                    self.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true});
+                    self.create("", Hints.dispatchMouseClick, self.lastCreateAttrs);
                 } else if (key !== '') {
                     if (self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
@@ -191,6 +191,9 @@ var Hints = (function(mode) {
     };
 
     self.create = function(cssSelector, onHintKey, attrs) {
+        // save last used attributes, which will be reused if the user scrolls while the hints are still open
+        self.lastCreateAttrs = attrs;
+
         attrs = $.extend({
             active: true,
             tabbed: false,
