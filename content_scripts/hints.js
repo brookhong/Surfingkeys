@@ -14,7 +14,15 @@ var Hints = (function(mode) {
                 prefix = prefix.substr(0, prefix.length - 1);
             } else {
                 var key = String.fromCharCode(event.keyCode);
-                if (key !== '') {
+                var casedKey = event.shiftKey ? key : key.toLowerCase();
+                
+                if (isMappedTo(casedKey, "j")) {
+                    Normal.scroll('down');
+                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
+                } else if (isMappedTo(casedKey, "k")) {
+                    Normal.scroll('up');
+                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
+                } else if (key !== '') {
                     if (self.characters.indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key;
                     } else {
@@ -41,6 +49,18 @@ var Hints = (function(mode) {
         style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
+    var _lastCreateAttrs = {};
+
+    function isMappedTo(keyPressed, keyToCheck) {
+        var mappingKeyPressed = Normal.mappings.find(encodeKeystroke(keyPressed));
+        var mappingKeyToCheck = Normal.mappings.find(encodeKeystroke(keyToCheck));
+
+        return mappingKeyPressed 
+            && mappingKeyPressed.meta
+            && mappingKeyToCheck
+            && mappingKeyToCheck.meta
+            && mappingKeyPressed.meta.word === mappingKeyToCheck.meta.word;
+    }
 
     function getZIndex(node) {
         var z = 0;
@@ -174,6 +194,9 @@ var Hints = (function(mode) {
     };
 
     self.create = function(cssSelector, onHintKey, attrs) {
+        // save last used attributes, which will be reused if the user scrolls while the hints are still open
+        _lastCreateAttrs = attrs;
+
         attrs = $.extend({
             active: true,
             tabbed: false,
