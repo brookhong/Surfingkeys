@@ -13,6 +13,7 @@ var Hints = (function(mode) {
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 prefix = prefix.substr(0, prefix.length - 1);
+                handleHint();
             } else {
                 var key = event.sk_keyName;
                 if (key !== '') {

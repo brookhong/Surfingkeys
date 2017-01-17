@@ -406,6 +406,13 @@ var Normal = (function(mode) {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
+    self.mappings.add(encodeKeystroke("<Alt-s>"), {
+        annotation: "Toggle Surfingkeys for current site",
+        feature_group: 0,
+        code: function() {
+        }
+    });
+
     self.repeats = "";
     self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
 
@@ -480,15 +487,18 @@ var Normal = (function(mode) {
 
     // set scrollIndex to the highest node
     function initScrollIndex() {
-        scrollIndex = 0;
-        var maxHeight = 0;
-        scrollNodes.forEach(function(n, i) {
-            var h = n.getBoundingClientRect().height;
-            if (h > maxHeight) {
-                scrollIndex = i;
-                maxHeight = h
-            }
-        });
+        if (!scrollNodes || scrollNodes.length === 0) {
+            scrollNodes = getScrollableElements(100, 1.1);
+            scrollIndex = 0;
+            var maxHeight = 0;
+            scrollNodes.forEach(function(n, i) {
+                var h = n.getBoundingClientRect().height;
+                if (h > maxHeight) {
+                    scrollIndex = i;
+                    maxHeight = h
+                }
+            });
+        }
     }
 
     function getScrollableElements() {
@@ -525,10 +535,7 @@ var Normal = (function(mode) {
     };
 
     self.scroll = function(type) {
-        if (!scrollNodes || scrollNodes.length === 0) {
-            scrollNodes = getScrollableElements(100, 1.1);
-            initScrollIndex();
-        }
+        initScrollIndex();
         if (scrollNodes.length === 0) {
             return;
         }
@@ -785,15 +792,18 @@ var Normal = (function(mode) {
             var scale = response.width / window.innerWidth;
 
             elm.scrollTop = 0;
-            var lastScrollTop = -1;
+            elm.scrollLeft = 0;
+            var lastScrollTop = -1, lastScrollLeft = -1;
             // hide scrollbars
             var overflowY = elm.style.overflowY;
             elm.style.overflowY = "hidden";
+            var overflowX = elm.style.overflowX;
+            elm.style.overflowX = "hidden";
             // hide borders
             var borderStyle = elm.style.borderStyle;
             elm.style.borderStyle = "none";
 
-            var dx = 0, dy = 0, sx, sy, sw, sh, rY, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
+            var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
             if (elm === document.body) {
                 ww = window.innerWidth;
                 wh = window.innerHeight;
@@ -815,10 +825,9 @@ var Normal = (function(mode) {
             }
             sw = ww * scale;
             sh = wh * scale;
-            rY = dh % wh;
 
             var canvas = document.createElement( "canvas" );
-            canvas.width = elm.scrollWidth * scale;
+            canvas.width = dw * scale;
             canvas.height = dh * scale;
             var ctx = canvas.getContext( "2d" );
 
@@ -828,19 +837,41 @@ var Normal = (function(mode) {
             img.onload = function() {
                 ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
                 if (lastScrollTop === elm.scrollTop) {
-                    // done
-                    Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
-                    // restore overflowY
-                    elm.style.overflowY = overflowY;
-                    // restore borders
-                    elm.style.borderStyle = borderStyle;
+                    if (lastScrollLeft === elm.scrollLeft) {
+                        // done
+                        Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
+                        // restore overflow
+                        elm.style.overflowY = overflowY;
+                        elm.style.overflowX = overflowX;
+                        // restore borders
+                        elm.style.borderStyle = borderStyle;
+                    } else {
+                        lastScrollTop = -1;
+                        elm.scrollTop = 0;
+                        dy = 0;
+                        lastScrollLeft = elm.scrollLeft;
+                        if (elm.scrollLeft + 2 * ww < dw) {
+                            elm.scrollLeft += ww;
+                            dx += ww * scale;
+                        } else {
+                            elm.scrollLeft += dw % ww;
+                            dx = elm.scrollLeft * scale;
+                        }
+                        setTimeout(function() {
+                            runtime.command({
+                                action: 'captureVisibleTab'
+                            }, function(response) {
+                                img.src = response.dataUrl;
+                            });
+                        }, 100);
+                    }
                 } else {
                     lastScrollTop = elm.scrollTop;
                     if (elm.scrollTop + 2 * wh < dh) {
                         elm.scrollTop += wh;
                         dy += wh * scale;
                     } else {
-                        elm.scrollTop += rY;
+                        elm.scrollTop += dh % wh;
                         dy = elm.scrollTop * scale;
                     }
                     setTimeout(function() {
@@ -870,7 +901,11 @@ var Normal = (function(mode) {
     };
 
     self.captureScrollingElement = function() {
-        var scrollNode = scrollNodes[scrollIndex];
+        var scrollNode = document.body;
+        initScrollIndex();
+        if (scrollNodes.length > 0) {
+            scrollNode = scrollNodes[scrollIndex];
+        }
         _captureElement(scrollNode);
     };
 
