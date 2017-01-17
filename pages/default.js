@@ -228,7 +228,7 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
         query: Visual.getWordUnderCursor(),
         style: "opacity: 0.8;",
         parseResult: function(res) {
-            var res = eval("a=" + res.text);
+            var res = JSON.parse(res.text);
             if (res.data.definition) {
                 var tmp = [];
                 for (var reg in res.data.pronunciations) {

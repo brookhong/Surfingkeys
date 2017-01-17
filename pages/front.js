@@ -53,6 +53,7 @@ var Front = (function(mode) {
         var height;
         if ($('body>div:visible').length > 0) {
             height = '100%';
+            pointerEvents = 'all';
         } else {
             height = '0px';
             // blur host anyway if height is 0px

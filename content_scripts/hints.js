@@ -3,6 +3,7 @@ var Hints = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var hints = holder.find('>div');
+        event.sk_stopPropagation = true;
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
@@ -13,27 +14,23 @@ var Hints = (function(mode) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 prefix = prefix.substr(0, prefix.length - 1);
             } else {
-                var key = String.fromCharCode(event.keyCode);
-                var casedKey = event.shiftKey ? key : key.toLowerCase();
-                
-                if (isMappedTo(casedKey, "j")) {
-                    Normal.scroll('down');
-                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
-                } else if (isMappedTo(casedKey, "k")) {
-                    Normal.scroll('up');
-                    self.create("", Hints.dispatchMouseClick, _lastCreateAttrs);
-                } else if (key !== '') {
-                    if (self.characters.indexOf(key.toLowerCase()) !== -1) {
-                        prefix = prefix + key;
+                var key = event.sk_keyName;
+                if (key !== '') {
+                    if (self.characters.indexOf(key) !== -1) {
+                        prefix = prefix + key.toUpperCase();
+                        handleHint();
                     } else {
-                        // quit hints if user presses non-hint key
-                        hide();
+                        if (self.scrollKeys.indexOf(key) === -1) {
+                            // quit hints if user presses non-hint key and no keys for scrolling
+                            hide();
+                        } else {
+                            // pass on the key to next mode in stack
+                            event.sk_stopPropagation = false;
+                        }
                     }
                 }
             }
-            handleHint();
         }
-        event.sk_stopPropagation = true;
     });
     self.addEventListener('keyup', function(event) {
         if (event.keyCode === KeyboardUtils.keyCodes.space) {
@@ -49,18 +46,8 @@ var Hints = (function(mode) {
         style = $("<style></style>"),
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
+    self.scrollKeys = '0jkhlG$';
     var _lastCreateAttrs = {};
-
-    function isMappedTo(keyPressed, keyToCheck) {
-        var mappingKeyPressed = Normal.mappings.find(encodeKeystroke(keyPressed));
-        var mappingKeyToCheck = Normal.mappings.find(encodeKeystroke(keyToCheck));
-
-        return mappingKeyPressed 
-            && mappingKeyPressed.meta
-            && mappingKeyToCheck
-            && mappingKeyToCheck.meta
-            && mappingKeyPressed.meta.word === mappingKeyToCheck.meta.word;
-    }
 
     function getZIndex(node) {
         var z = 0;
@@ -158,6 +145,27 @@ var Hints = (function(mode) {
         }
     }
 
+    function onScrollStarted(evt) {
+        holder.html("").remove();
+        prefix = "";
+    }
+
+    function onScrollDone(evt) {
+        createHints("", Hints.dispatchMouseClick, _lastCreateAttrs);
+    }
+
+    self.enter = function() {
+        mode.enter.call(self);
+        $(document).on('surfingkeys:scrollStarted', onScrollStarted);
+        $(document).on('surfingkeys:scrollDone', onScrollDone);
+    };
+
+    self.exit = function() {
+        mode.exit.call(self);
+        $(document).off('surfingkeys:scrollStarted', onScrollStarted);
+        $(document).off('surfingkeys:scrollDone', onScrollDone);
+    };
+
     self.genLabels = function(M) {
         if (M <= self.characters.length) {
             return self.characters.slice(0, M).toUpperCase().split('');
@@ -193,10 +201,7 @@ var Hints = (function(mode) {
         return ordinate;
     };
 
-    self.create = function(cssSelector, onHintKey, attrs) {
-        // save last used attributes, which will be reused if the user scrolls while the hints are still open
-        _lastCreateAttrs = attrs;
-
+    function createHints(cssSelector, onHintKey, attrs) {
         attrs = $.extend({
             active: true,
             tabbed: false,
@@ -288,9 +293,21 @@ var Hints = (function(mode) {
                 bcr = h.getBoundingClientRect();
             }
             holder.appendTo('body');
+        }
+
+        return elements.length;
+    }
+
+    self.create = function(cssSelector, onHintKey, attrs) {
+        // save last used attributes, which will be reused if the user scrolls while the hints are still open
+        _lastCreateAttrs = attrs;
+
+        var hintTotal = createHints(cssSelector, onHintKey, attrs);
+        if (hintTotal) {
             self.enter();
         }
-        if (elements.length === 1) {
+
+        if (hintTotal === 1) {
             handleHint();
         }
     };

@@ -25,6 +25,8 @@ var Omnibar = (function(mode, ui) {
             Normal._handleMapKey.call(self, event);
         }
         event.sk_suppressed = true;
+    }).addEventListener('mousedown', function(event) {
+        event.sk_suppressed = true;
     });
 
     self.mappings = new Trie();

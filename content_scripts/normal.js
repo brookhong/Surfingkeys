@@ -357,6 +357,9 @@ var Normal = (function(mode) {
             self._handleMapKey(event);
         }
     });
+    self.addEventListener('blur', function(event) {
+        self.scrollOptions[5] = false;
+    });
     self.addEventListener('keyup', function(event) {
         self.scrollOptions[5] = false;
         if (self.stopKeyupPropagation) {
@@ -420,8 +423,10 @@ var Normal = (function(mode) {
                 var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
             } else {
+                $(document).trigger("surfingkeys:scrollStarted");
                 elm.scrollLeft = elm.scrollLeft + x;
                 elm.scrollTop = elm.scrollTop + y;
+                $(document).trigger("surfingkeys:scrollDone");
             }
         };
         elm.smoothScrollBy = function(x, y, d) {
@@ -433,6 +438,7 @@ var Normal = (function(mode) {
                     if (so[3] === 0) {
                         // init previousTimestamp in first step
                         so[3] = t;
+                        $(document).trigger("surfingkeys:scrollStarted");
                         return window.requestAnimationFrame(step);
                     }
                     var old = elm[so[0]], delta = (t - so[3]) * so[1] / so[2];
@@ -441,12 +447,11 @@ var Normal = (function(mode) {
                     so[4] += delta;
 
                     var keyHeld = so[5];
-                    if (elm[so[0]] === old) {
-                        // boundary hit
+                    if (elm[so[0]] === old // boundary hit
+                        || (!keyHeld && Math.abs(so[4]) >= Math.abs(so[1])) // step completed
+                    ) {
                         so[5] = false;
-                    } else if (!keyHeld && Math.abs(so[4]) >= Math.abs(so[1])) {
-                        // step completed
-                        so[5] = false;
+                        $(document).trigger("surfingkeys:scrollDone");
                     } else {
                         return window.requestAnimationFrame(step);
                     }
