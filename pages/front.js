@@ -191,7 +191,11 @@ var Front = (function(mode) {
         ];
         var holder = $('<div/>');
         var help_groups = feature_groups.map(function(){return [];});
-        [ Normal.mappings, Visual.mappings, Insert.mappings ].map(function(mappings) {
+        [ Normal.mappings,
+            Visual.mappings,
+            Insert.mappings,
+            Omnibar.mappings
+        ].map(function(mappings) {
             var words = mappings.getWords();
             for (var i = 0; i < words.length; i++) {
                 var w = words[i];

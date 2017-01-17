@@ -26,3 +26,7 @@ mapkey('<Ctrl-Alt-d>', 'Edit mermaid source', function() {
 });
 
 map('i', '<Ctrl-Alt-d>');
+
+mapkey('yy', 'Generate image', function() {
+    Normal.captureElement($('div.content')[0]);
+});

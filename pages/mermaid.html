@@ -32,6 +32,7 @@
             <ul>
                 <li><kbd>r</kbd> to refresh this page to reload source from clipboard.</li>
                 <li><kbd>i</kbd> or <kbd>&lt;Ctrl-Alt-d&gt;</kbd> to open vim editor to edit source.</li>
+                <li><kbd>yy</kbd> to generate image.</li>
             </ul>
         </div>
         <div class="content">
@@ -40,44 +41,40 @@
         </div>
         <script type="text/template" id="sequenceDiagramExample">
 sequenceDiagram
-            SomeRealBus->>AbstractBus: setGroup(busGroup)
+    Normal->>runtime: command
 
-            AbstractBus->>QueueService: queueUrl = getQueueUrl(busGroup)
+    runtime->>background: getCaptureSize
 
-            opt queueUrl == null
-            AbstractBus->>QueueService: createQueue(busGroup)
-            AbstractBus->>SomeRealBus: initialIndex = buildInitialIndex()
-            AbstractBus->>DistributedLockService: saveIndexToDistributedDB(initialIndex)
+    runtime->>Normal: onResponse
+
+    Normal->>Normal: initialize
+    Normal->>canvas: createCanvas
+    Normal->>img: createImage
+
+    loop captureScrollingElement
+
+        Normal->>runtime: command
+
+        runtime->>background: captureVisibleTab
+
+        runtime->>Normal: setImgSrc
+
+        Normal->>img: setSrc
+
+        img->>img: onload
+
+        img->>canvas: drawImage
+
+        alt lastScrollTop === elm.scrollTop
+            alt lastScrollLeft === elm.scrollLeft
+                Normal->>Front: showImage
+            else
+                Normal->>Normal: pan to left
             end
-
-
-            loop handle message from QueueService
-            AbstractBus->>QueueService: msg = receiveMessage(queueUrl)
-
-            alt msg == null
-            AbstractBus->>AbstractBus: break
-            else msg != null
-            AbstractBus->>SomeRealBus: handled = handleMessage(msg)
-            opt handled == true
-            AbstractBus->>QueueService: deleteMessage(queueUrl, msg.getReceiptHandle())
-            end
-            end
-            end
-
-
-            AbstractBus->>DistributedLockService: lockedInex = getLockedIndex(busGroup)
-
-            opt lockedInex != null
-            AbstractBus->>SomeRealBus: records = fetchRecordsSince(lockedInex)
-            loop records
-            AbstractBus->>QueueService: enqueue(queueUrl, record);
-            end
-            opt records.size() > 0
-            AbstractBus->>SomeRealBus: lockedIndex = buildLastIndex(lastRecord)
-            end
-            AbstractBus->>DistributedLockService: saveIndexToDistributedDB(lockedIndex)
-            AbstractBus->>DistributedLockService: releaseLockedIndex(lockedIndex)
-            end
+        else
+            Normal->>Normal: pan to down
+        end
+    end
         </script>
     </body>
 </html>

@@ -785,7 +785,7 @@ var Normal = (function(mode) {
         });
     };
 
-    function _captureElement(elm) {
+    self.captureElement = function(elm) {
         runtime.command({
             action: 'getCaptureSize'
         }, function(response) {
@@ -894,10 +894,10 @@ var Normal = (function(mode) {
             }, 500);
 
         });
-    }
+    };
 
     self.captureFullPage = function() {
-        _captureElement(document.body);
+        self.captureElement(document.body);
     };
 
     self.captureScrollingElement = function() {
@@ -906,7 +906,7 @@ var Normal = (function(mode) {
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
         }
-        _captureElement(scrollNode);
+        self.captureElement(scrollNode);
     };
 
     return self;
