@@ -368,17 +368,11 @@ var Normal = (function(mode) {
         }
     });
     self.addEventListener('pushState', function(event) {
-        runtime.command({
-            action: 'getSettings',
-            key: ['blacklist', 'blacklistPattern']
-        }, function(response) {
-            var settings = response.settings;
-            if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
-                // only for that we are not having TopHook mode.
-                Insert.exit();
-                GetBackFocus.enter();
-            }
-        });
+        if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
+            // only for that we are not having TopHook mode.
+            Insert.exit();
+            GetBackFocus.enter();
+        }
     });
     self.addEventListener('mousedown', function(event) {
         if (isEditable(event.target)) {

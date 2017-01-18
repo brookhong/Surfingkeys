@@ -30,3 +30,12 @@ map('i', '<Ctrl-Alt-d>');
 mapkey('yy', 'Generate image', function() {
     Normal.captureElement($('div.content')[0]);
 });
+
+unmap('f');
+mapkey('fh', 'Set handwriting font', function() {
+    $('div.mermaid').css('font-family', 'danielbd');
+});
+
+mapkey('fn', 'Set normal font', function() {
+    $('div.mermaid').css('font-family', $('body').css('font-family'));
+});

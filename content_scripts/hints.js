@@ -315,9 +315,11 @@ var Hints = (function(mode) {
 
     self.dispatchMouseClick = function(element, event) {
         if (isEditable(element)) {
-            element.focus();
             self.exit();
             Insert.enter();
+            // Enter Insert mode before element focused, so that pushState could be suppressed.
+            // #196 http://www.inoreader.com/all_articles
+            element.focus();
         } else {
             if (!behaviours.multipleHits) {
                 self.exit();

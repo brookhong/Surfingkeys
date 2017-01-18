@@ -184,7 +184,9 @@ function imap(new_keystroke, old_keystroke, domain, new_annotation) {
         if (old_map) {
             var nks = encodeKeystroke(new_keystroke);
             Insert.mappings.remove(nks);
-            Insert.mappings.add(nks, old_map.meta);
+            // meta.word need to be new
+            var meta = $.extend({}, old_map.meta);
+            Insert.mappings.add(nks, meta);
         }
     }
 }
@@ -406,7 +408,7 @@ function applySettings(rs) {
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
-    if (rs.hasOwnProperty('blacklist') || rs.hasOwnProperty('blacklistPattern')) {
+    if (rs.hasOwnProperty('blacklist') || runtime.conf.blacklistPattern) {
         var disabled = checkBlackList(rs);
         // only toggle Disabled mode when blacklist is updated
         if (disabled) {
@@ -427,7 +429,7 @@ runtime.on('settingsUpdated', function(response) {
 function checkBlackList(sb) {
     return chrome.extension.getURL('').indexOf(window.location.origin) !== 0 && (
         sb.blacklist[window.location.origin] || sb.blacklist['.*']
-        || (sb.blacklistPattern && typeof(sb.blacklistPattern.test) === "function" && sb.blacklistPattern.test(window.location.href))
+        || (runtime.conf.blacklistPattern && typeof(runtime.conf.blacklistPattern.test) === "function" && runtime.conf.blacklistPattern.test(window.location.href))
     );
 }
 
