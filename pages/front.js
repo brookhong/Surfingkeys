@@ -17,11 +17,25 @@ var Front = (function(mode) {
             event.sk_stopPropagation = true;
         } else {
             if (self.showPressed) {
-                var s = htmlEncode(decodeKeystroke(event.sk_keyName));
-                if (!s) {
-                    s = "&nbsp;";
+                if (event.sk_keyName.length > 1) {
+                    var keyStr = JSON.stringify({
+                        metaKey: event.metaKey,
+                        altKey: event.altKey,
+                        ctrlKey: event.ctrlKey,
+                        shiftKey: event.shiftKey,
+                        keyCode: event.keyCode,
+                        code: event.code,
+                        composed: event.composed,
+                        key: event.key
+                    }, null, 4);
+                    reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
+                } else {
+                    var s = htmlEncode(decodeKeystroke(event.sk_keyName));
+                    if (!s) {
+                        s = "&nbsp;";
+                    }
+                    _popup.find("kbd").html(s);
                 }
-                _popup.find("kbd").html(s);
                 event.sk_stopPropagation = true;
             } else if (_tabs.trie) {
                 _tabs.trie = _tabs.trie.find(event.sk_keyName);
@@ -305,10 +319,10 @@ var Front = (function(mode) {
     });
     self.hideBubble = function() {
         _bubble.hide();
+        self.flush();
     };
     runtime.on('hideBubble', function(message) {
         self.hideBubble();
-        self.flush();
     });
 
     self.showStatus = function(pos, content, duration) {

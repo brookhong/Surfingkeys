@@ -92,7 +92,10 @@ String.prototype.format = function() {
             16: "Shift",
             17: "Ctrl",
             18: "Alt",
-            91: "Meta"
+            91: "Meta",
+            92: "Meta",
+            93: "ContextMenu",
+            229: "Process"
         },
         keyNames: {
             8:   'Backspace',
@@ -190,20 +193,10 @@ String.prototype.format = function() {
                     character = "<{0}>".format(character);
                 }
             }
-            if (decodeKeystroke(encodeKeystroke(character)) !== character) {
-                var keyStr = JSON.stringify({
-                    metaKey: event.metaKey,
-                    altKey: event.altKey,
-                    ctrlKey: event.ctrlKey,
-                    shiftKey: event.shiftKey,
-                    keyCode: event.keyCode,
-                    code: event.code,
-                    composed: event.composed,
-                    key: event.key
-                }, null, 4);
-                reportIssue("Unrecognized key event: {0}".format(character), keyStr);
+            if (decodeKeystroke(encodeKeystroke(character)) === character) {
+                character = encodeKeystroke(character);
             }
-            return encodeKeystroke(character);
+            return character;
         },
         isWordChar: function(event) {
             return (event.keyCode < 123 && event.keyCode >= 97 || event.keyCode < 91 && event.keyCode >= 65 || event.keyCode < 58 && event.keyCode >= 48);
