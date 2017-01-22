@@ -40,6 +40,7 @@ var Hints = (function(mode) {
     });
 
     var prefix = "",
+        alreadyOpened = [],
         lastMouseTarget = null,
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
@@ -69,6 +70,7 @@ var Hints = (function(mode) {
             if (onhint) {
                 onhint.call(window, link, event);
                 if (behaviours.multipleHits) {
+                    alreadyOpened.push(prefix);
                     prefix = "";
                     refresh();
                 } else {
@@ -107,6 +109,9 @@ var Hints = (function(mode) {
         var hints = holder.find('>div');
         hints.each(function(i) {
             var label = $(this).data('label');
+            if (alreadyOpened.indexOf(label) >= 0) {
+                $(this).addClass('sk_visited');
+            }
             if (label.indexOf(prefix) === 0) {
                 $(this).html(label.substr(prefix.length)).css('opacity', 1);
                 $('<span/>').css('opacity', 0.2).html(prefix).prependTo(this);
@@ -126,6 +131,7 @@ var Hints = (function(mode) {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         };
+        alreadyOpened = [];
         holder.html("").remove();
         prefix = "";
         self.exit();

@@ -19,3 +19,7 @@ div.surfingkeys_cursor {
     border-radius: 3px;
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
 }
+#sk_hints>div.sk_visited {
+    text-decoration: line-through;
+    font-style: italic;
+}
