@@ -418,13 +418,17 @@ var Front = (function(mode) {
     return self;
 })(Mode);
 
-var addSearchAlias = function(alias, prompt, url, suggestionURL, listSuggestion) {
+function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
     SearchEngine.aliases[alias] = {
         prompt: prompt + "≫",
         url: url,
         suggestionURL: suggestionURL,
         listSuggestion: listSuggestion
     };
+}
+
+function removeSearchAlias(alias) {
+    delete SearchEngine.aliases[alias];
 }
 
 window.addEventListener('message', function(event) {

@@ -197,6 +197,12 @@ function iunmap(keystroke, domain) {
     }
 }
 
+function vunmap(keystroke, domain) {
+    if (!domain || domain.test(window.location.origin)) {
+        Visual.mappings.remove(encodeKeystroke(keystroke));
+    }
+}
+
 AceVimMappings = [];
 function aceVimMap(lhs, rhs, ctx) {
     AceVimMappings.push(arguments);
@@ -225,6 +231,23 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
         vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', function() {
             searchSelectedWith(search_url, true, true, alias);
         });
+    }
+}
+
+function removeSearchAliasX(alias, search_leader_key, only_this_site_key) {
+    if (typeof(removeSearchAlias) !== 'undefined') {
+        removeSearchAlias(alias);
+    }
+    unmap((search_leader_key || 's') + alias);
+    vunmap((search_leader_key || 's') + alias);
+    unmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
+    vunmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
+    var capitalAlias = alias.toUpperCase();
+    if (capitalAlias !== alias) {
+        unmap((search_leader_key || 's') + capitalAlias);
+        vunmap((search_leader_key || 's') + capitalAlias);
+        unmap((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias);
+        vunmap((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias);
     }
 }
 
