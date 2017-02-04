@@ -165,7 +165,7 @@ body {
     border-bottom: 2px solid #888;
 }
 #sk_usage span.annotation {
-    padding-left: 8px;
+    padding-left: 32px;
     line-height: 22px;
 }
 #sk_usage * {

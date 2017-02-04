@@ -215,8 +215,10 @@ var Front = (function(mode) {
                 var w = words[i];
                 var meta = mappings.find(w).meta;
                 w = decodeKeystroke(w);
-                var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
-                help_groups[meta.feature_group].push(item);
+                if (meta.annotation.length) {
+                    var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
+                    help_groups[meta.feature_group].push(item);
+                }
             }
         });
         help_groups = help_groups.map(function(g, i) {
