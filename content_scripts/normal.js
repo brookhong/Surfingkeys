@@ -361,11 +361,13 @@ var Normal = (function(mode) {
         self.scrollOptions[5] = false;
     });
     self.addEventListener('keyup', function(event) {
-        self.scrollOptions[5] = false;
-        if (self.stopKeyupPropagation) {
-            event.stopImmediatePropagation();
-            self.stopKeyupPropagation = false;
-        }
+        setTimeout(function() {
+            self.scrollOptions[5] = false;
+            if (self.stopKeyupPropagation) {
+                event.stopImmediatePropagation();
+                self.stopKeyupPropagation = false;
+            }
+        }, 0);
     });
     self.addEventListener('pushState', function(event) {
         if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
