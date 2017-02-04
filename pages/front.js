@@ -429,12 +429,6 @@ window.addEventListener('message', function(event) {
     Front.handleMessage(event);
 }, true);
 
-runtime.command({
-    action: 'getSettings'
-}, function(response) {
-    applySettings(response.settings);
-});
-
 $(document).on('surfingkeys:themeChanged', function(evt, theme) {
     $('#sk_theme').html(theme);
 });
