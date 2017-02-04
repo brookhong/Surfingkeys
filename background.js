@@ -561,6 +561,29 @@ var Service = (function() {
     self.duplicateTab = function(message, sender, sendResponse) {
         chrome.tabs.duplicate(sender.tab.id);
     };
+    self.newWindow = function(message, sender, sendResponse) {
+        chrome.tabs.query({}, function(tabs) {
+            var tabInWindow = {};
+            tabs.forEach(function(t) {
+                tabInWindow[t.windowId] = tabInWindow[t.windowId] || [];
+                tabInWindow[t.windowId].push(t.id);
+            });
+            if (tabInWindow[sender.tab.windowId] && tabInWindow[sender.tab.windowId].length === 1) {
+                // if there is only one tab in current window,
+                // then move this tab into the window with most tabs.
+                var maximumTab = 0, windowWithMostTab;
+                for (var w in tabInWindow) {
+                    if (tabInWindow[w].length > maximumTab) {
+                        maximumTab = tabInWindow[w].length;
+                        windowWithMostTab = w;
+                    }
+                }
+                chrome.tabs.move(sender.tab.id, {windowId: parseInt(windowWithMostTab), index: -1});
+            } else {
+                chrome.windows.create({tabId: sender.tab.id});
+            }
+        });
+    };
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
