@@ -433,31 +433,33 @@ function checkBlackList(sb) {
     );
 }
 
-runtime.command({
-    action: 'getSettings'
-}, function(response) {
-    var rs = response.settings;
+$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+    runtime.command({
+        action: 'getSettings'
+    }, function(response) {
+        var rs = response.settings;
 
-    applySettings(rs);
+        applySettings(rs);
 
-    Normal.enter();
+        Normal.enter();
 
-    var disabled = checkBlackList(rs);
-    if (disabled) {
-        Disabled.enter();
-    } else {
-        document.addEventListener('DOMContentLoaded', function(e) {
-            GetBackFocus.enter();
-        });
-    }
+        var disabled = checkBlackList(rs);
+        if (disabled) {
+            Disabled.enter();
+        } else {
+            document.addEventListener('DOMContentLoaded', function(e) {
+                GetBackFocus.enter();
+            });
+        }
 
-    if (window === top) {
-        // this block being put here instead of top.js is to ensure sequence.
-        runtime.command({
-            action: 'setSurfingkeysIcon',
-            status: disabled
-        });
-    }
+        if (window === top) {
+            // this block being put here instead of top.js is to ensure sequence.
+            runtime.command({
+                action: 'setSurfingkeysIcon',
+                status: disabled
+            });
+        }
+    });
 });
 
 Normal.insertJS(function() {
