@@ -218,6 +218,24 @@ var Omnibar = (function(mode, ui) {
         return li;
     };
 
+    self.detectAndInsertURLItem = function(str) {
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)\.([^:\/\n]+)/i;
+        if (urlPat.test(str)) {
+            var url = str;
+            if (! /^https?:\/\//.test(str)) {
+                url = "http://" + str;
+            }
+            var li = self.createURLItem({
+                title: str,
+                url: url
+            }, new RegExp(str.replace(/\s+/, "\|"), 'gi'));
+            li.prependTo(self.resultsDiv.find('ul'));
+            self.focusedItem = 0;
+            self.resultsDiv.find('li.focused').removeClass('focused');
+            self.resultsDiv.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
+        }
+    };
+
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
      * @param {Array} items - Array of url items with title.
@@ -625,6 +643,7 @@ var OpenURLs = (function() {
             Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
         } else {
             Omnibar.listURLs(filtered, false);
+            Omnibar.detectAndInsertURLItem(val);
         }
     };
     return self;
@@ -718,8 +737,8 @@ var SearchEngine = (function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li:nth({0})'.format(Omnibar.focusedItem)).data('query'));
     };
     self.onEnter = function() {
-        var suggestion = Omnibar.resultsDiv.find('li.focused').data('query');
-        var url = self.url + (suggestion || Omnibar.input.val());
+        var fi = Omnibar.resultsDiv.find('li.focused');
+        var url = fi.data('url') || (self.url + (fi.data('query') || Omnibar.input.val()) );
         runtime.command({
             action: "openLink",
             tab: {
@@ -731,11 +750,15 @@ var SearchEngine = (function() {
     };
     self.onInput = function() {
         if (self.suggestionURL) {
+            var val = $(this).val();
             runtime.command({
                 action: 'request',
                 method: 'get',
-                url: self.suggestionURL + $(this).val()
-            }, self.listSuggestion);
+                url: self.suggestionURL + val
+            }, function(resp) {
+                self.listSuggestion(resp);
+                Omnibar.detectAndInsertURLItem(val);
+            });
         }
     };
     return self;
