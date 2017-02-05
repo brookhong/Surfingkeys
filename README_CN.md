@@ -505,7 +505,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 ## 编译
 
     npm install
-    ./node_modules/gulp/bin/gulp.js
+    npm run build
 
 ## Credits
 
