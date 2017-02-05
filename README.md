@@ -519,7 +519,7 @@ Change the style of the search marks and cursor:
 ## Build
 
     npm install
-    ./node_modules/gulp/bin/gulp.js
+    npm run build
 
 ## Credits
 
