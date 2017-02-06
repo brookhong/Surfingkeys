@@ -103,8 +103,7 @@ runtime.command({
 
 $('#reset_button').click(function() {
     runtime.command({
-        action: "resetSettings",
-        useDefault: true
+        action: "resetSettings"
     }, function(response) {
         renderSettings(response.settings);
         Front.showBanner('Settings reset', 300);

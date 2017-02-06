@@ -757,11 +757,6 @@ var Normal = (function(mode) {
         }
     };
 
-    self.resetSettings = function() {
-        RUNTIME("resetSettings");
-        Front.showBanner("Settings reset.");
-    };
-
     self.insertJS = function(code, onload) {
         var s = document.createElement('script');
         s.type = 'text/javascript';

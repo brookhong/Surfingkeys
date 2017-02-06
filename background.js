@@ -16,22 +16,7 @@ var Service = (function() {
         tabURLs = {},
         tabErrors = {};
 
-    var settings = {
-        repeatThreshold: 99,
-        tabsMRUOrder: true,
-        blacklist: {},
-        marks: {},
-        findHistory: [],
-        cmdHistory: [],
-        snippets: "",
-        sessions: {},
-        newTabPosition: 'right',
-        autoproxy_hosts: {},
-        proxyMode: 'clear',
-        proxy: "DIRECT",
-        interceptedErrors: {}
-    };
-    var newTabUrl = "chrome://newtab/";
+    var settings, newTabUrl = "chrome://newtab/";
 
     function request(url, headers, data) {
         headers = headers || {};
@@ -173,7 +158,26 @@ var Service = (function() {
             });
         });
     }
-    loadSettings(null, function() {
+
+    function _initSettings() {
+        settings = {
+            repeatThreshold: 99,
+            tabsMRUOrder: true,
+            blacklist: {},
+            marks: {},
+            findHistory: [],
+            cmdHistory: [],
+            snippets: "",
+            sessions: {},
+            newTabPosition: 'right',
+            autoproxy_hosts: {},
+            proxyMode: 'clear',
+            proxy: "DIRECT",
+            interceptedErrors: {}
+        };
+    }
+
+    function _applySettings() {
         if (settings.proxyMode === 'clear') {
             chrome.proxy.settings.clear({scope: 'regular'});
         } else {
@@ -203,7 +207,10 @@ var Service = (function() {
         }, {
             urls: ["<all_urls>"]
         });
-    });
+    }
+
+    _initSettings();
+    loadSettings(null, _applySettings);
 
     chrome.extension.onConnect.addListener(function(port) {
         var sender = port.sender;
@@ -369,15 +376,15 @@ var Service = (function() {
     };
 
     self.resetSettings = function(message, sender, sendResponse) {
-        if (message.useDefault) {
-            _updateAndPostSettings({localPath: "", snippets: ""}, _response.bind(_response, message, sendResponse, {
-                settings: settings
-            }));
-        } else if (settings.localPath) {
-            _loadSettingsFromUrl(settings.localPath);
-        } else {
-            _updateAndPostSettings({snippets: ""});
-        }
+        chrome.storage.local.clear();
+        chrome.storage.sync.clear();
+        _initSettings();
+        loadSettings(null, function(data) {
+            _applySettings();
+            _response(message, sendResponse, {
+                settings: data
+            });
+        });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
         _loadSettingsFromUrl(message.url);
