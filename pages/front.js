@@ -222,7 +222,11 @@ var Front = (function(mode) {
             }
         });
         help_groups = help_groups.map(function(g, i) {
-            return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(feature_groups[i], g.join(''));
+            if (g.length) {
+                return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(feature_groups[i], g.join(''));
+            } else {
+                return "";
+            }
         }).join("");
         $(help_groups).appendTo(holder);
         $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(holder);

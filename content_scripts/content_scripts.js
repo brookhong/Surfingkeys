@@ -163,18 +163,24 @@ function unmap(keystroke, domain) {
 
 function unmapAllExcept(keystrokes, domain) {
     if (!domain || domain.test(window.location.origin)) {
-        var _mappings = new Trie();
-        keystrokes = keystrokes || [];
-        for (var i = 0, il = keystrokes.length; i < il; i++) {
-            var ks = encodeKeystroke(keystrokes[i]);
-            var node = Normal.mappings.find(ks);
-            if (node) {
-                _mappings.add(ks, node.meta);
-            }
+        var modes = [Normal, Visual, Insert];
+        if (typeof(Omnibar) !== 'undefined') {
+            modes.push(Omnibar);
         }
-        delete Normal.mappings;
-        Normal.mappings = _mappings;
-        Normal.map_node = _mappings;
+        modes.forEach(function(mode) {
+            var _mappings = new Trie();
+            keystrokes = keystrokes || [];
+            for (var i = 0, il = keystrokes.length; i < il; i++) {
+                var ks = encodeKeystroke(keystrokes[i]);
+                var node = mode.mappings.find(ks);
+                if (node) {
+                    _mappings.add(ks, node.meta);
+                }
+            }
+            delete mode.mappings;
+            mode.mappings = _mappings;
+            mode.map_node = _mappings;
+        });
     }
 }
 
