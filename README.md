@@ -29,6 +29,8 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * [VIM editor](#vim-editor)
 * [Dot to repeat previous action](#dot-to-repeat-previous-action)
 * [Markdown preview](#markdown-preview)
+* [Capture page](#capture-page)
+* [Mermaid diagram generator](#mermaid-diagram-generator)
 * [Edit your own settings](#edit-your-own-settings)
 * [Build](#build)
 * [License](#license)
@@ -136,6 +138,12 @@ All mappings added with `imapkey` work in this mode.
 ### Find
 
 `Find` is not actually a mode, it just another way to enter visual mode. Press `/` to open find bar, which sits at almost the same position with Mode indicator, type something there. All occurrences of your input will be highlighted. Press `Enter` to finish the finding, and you're in `Caret` visual mode now, press `n` to find next, `N` to find previous.
+
+### Show pressed keys
+
+This is helper mode for you to see what keys Surfingkeys recognized when you press one. It helps you when you don't know how to specify the keys that you need map.
+
+`spk` to open it.
 
 ## Omnibar
 
@@ -410,6 +418,19 @@ By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/mark
 
     settings.useLocalMarkdownAPI = false;
 
+## Capture page
+
+* `yg` to capture current page.
+* `yG` to capture current full page if it is scrollable.
+* `yS` to capture current scroll target.
+
+## Mermaid diagram generator
+
+[Mermaid](https://github.com/knsv/mermaid) is a great tool to generate diagrams and flowcharts from text in a similar manner as markdown.
+Surfingkeys provides a simple frontend to generate diagrams from text in clipboard, and a vim editor to edit it.
+
+`Ctrl-Alt-d` to open it.
+
 ## Edit your own settings
 
 ### Map a keystroke to some action
@@ -449,9 +470,17 @@ mapkey in visual mode
 
 ### remove a keystroke mapping
 
+Normal mode,
+
     unmap(keystroke, [domain_pattern])
 
+Insert mode,
+
     iunmap(keystroke, [domain_pattern])
+
+Visual mode,
+
+    vunmap(keystroke, [domain_pattern])
 
 | parameter  | explanation |
 |:---------------| :-----|
@@ -500,6 +529,11 @@ works like
     mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
     vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
 
+    removeSearchAliasX(alias, search_leader_key, only_this_site_key);
+
+to remove search alias and key bindings to it.
+
+
 ### Omnibar helpers
 
     Omnibar.listWords(<array of words>)
@@ -515,6 +549,39 @@ Change the style of the search marks and cursor:
 
     Visual.style('marks', 'background-color: #89a1e2;');
     Visual.style('cursor', 'background-color: #9065b7;');
+
+### Create mapping in vim editor
+
+    aceVimMap(lhs, rhs, ctx)
+
+For example,
+
+    aceVimMap('jk', '<Esc>', 'insert');
+
+### Properties list
+
+| key | default value | explanation |
+|:---------------|:-----|:-----|
+| Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
+| Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
+| settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
+| settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
+| settings.omnibarMaxResults | 20 | How many results will be listed out for Omnibar. |
+| settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
+| settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
+| settings.smoothScroll | true | Whether to use smooth scrolling when pressing keys like `j`/`k`/`e`/`d` to scroll page or elements. |
+| settings.collapseAfterYank | true | Whether to collapse selection to beginning after yanking text in visual mode. |
+| settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
+| settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indiate next page. |
+| settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indiate previous page. |
+| settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
+| settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
+| settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
+| settings.focusAfterClosed | "right" | Which side of tab will be focused after current tab closed. ["left", "right"] |
+| settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
+| settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used. |
+| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
+| settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 
 ## Build
 

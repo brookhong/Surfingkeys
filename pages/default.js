@@ -50,7 +50,6 @@ mapkey('cp', '#13Toggle proxy for current site', function() {
 command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(args) {
     // args is an array of arguments
     var proxy = ((args.length > 1) ? args[1] : "PROXY") + " " + args[0];
-    console.log(proxy);
     RUNTIME('updateProxy', {
         proxy: proxy
     });
@@ -78,7 +77,7 @@ command('proxyInfo', '#13show proxy info', function() {
         var infos = [ {name: 'mode', value: response.settings.proxyMode} ];
         if (response.settings.proxyMode === "byhost") {
             infos.push({name: 'proxy', value: response.settings.proxy});
-            infos.push({name: 'hosts', value: Object.keys(response.settings.autoproxy_hosts).join(', ')});
+            infos.push({name: 'hosts', value: response.settings.autoproxy_hosts.join(', ')});
         } else if (response.settings.proxyMode === "always") {
             infos.push({name: 'proxy', value: response.settings.proxy});
         }
@@ -92,7 +91,6 @@ command('proxyInfo', '#13show proxy info', function() {
 map('spi', ':proxyInfo');
 command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(args) {
     var host = args.join('');
-    console.log(host);
     RUNTIME('updateProxy', {
         host: host,
         operation: 'add'
@@ -259,9 +257,10 @@ command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
 });
 command('listSession', 'list session', function() {
     runtime.command({
-        action: 'getSessions'
+        action: 'getSettings',
+        key: 'sessions'
     }, function(response) {
-        Omnibar.listResults(Object.keys(response.sessions), function(s) {
+        Omnibar.listResults(Object.keys(response.settings.sessions), function(s) {
             return $('<li/>').html(s);
         });
     });
@@ -358,7 +357,8 @@ mapkey('ys', "#7Copy current page's source", function() {
 });
 mapkey('yj', "#7Copy current settings", function() {
     runtime.command({
-        action: 'getSettings'
+        action: 'getSettings',
+        key: "RAW"
     }, function(response) {
         Front.writeClipboard(JSON.stringify(response.settings, null, 4));
     });

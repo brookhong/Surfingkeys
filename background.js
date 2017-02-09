@@ -16,7 +16,15 @@ var Service = (function() {
         tabURLs = {},
         tabErrors = {};
 
-    var settings, newTabUrl = "chrome://newtab/";
+    var newTabUrl = "chrome://newtab/";
+
+    var conf = {
+        focusAfterClosed: "right",
+        repeatThreshold: 99,
+        tabsMRUOrder: true,
+        newTabPosition: 'default',
+        interceptedErrors: []
+    };
 
     function request(url, headers, data) {
         headers = headers || {};
@@ -89,8 +97,8 @@ var Service = (function() {
         }
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
-                if (_message.repeats > settings.repeatThreshold) {
-                    _message.repeats = settings.repeatThreshold;
+                if (_message.repeats > conf.repeatThreshold) {
+                    _message.repeats = conf.repeatThreshold;
                 }
                 self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
@@ -121,9 +129,63 @@ var Service = (function() {
         }
     }
 
+    function getSubSettings(set, keys) {
+        var subset;
+        if (!keys) {
+            // if null/undefined/""
+            subset = set;
+        } else {
+            if ( !(keys instanceof Array) ) {
+                keys = [ keys ];
+            }
+            subset = {};
+            keys.forEach(function(k) {
+                subset[k] = set[k];
+            });
+        }
+        return subset;
+    }
+
+    function loadRawSettings(keys, cb, defaultSet) {
+        var rawSet = defaultSet || {};
+        chrome.storage.local.get(null, function(localSet) {
+            var localSavedAt = localSet.savedAt || 0;
+            chrome.storage.sync.get(null, function(syncSet) {
+                var syncSavedAt = syncSet.savedAt || 0;
+                if (localSavedAt > syncSavedAt) {
+                    extendObject(rawSet, localSet);
+                    _save(chrome.storage.sync, localSet, function() {
+                        var subset = getSubSettings(rawSet, keys);
+                        if (chrome.runtime.lastError) {
+                            subset.error = chrome.runtime.lastError.message;
+                        }
+                        cb(subset);
+                    });
+                } else if (localSavedAt < syncSavedAt) {
+                    extendObject(rawSet, syncSet);
+                    cb(getSubSettings(rawSet, keys));
+                    _save(chrome.storage.local, syncSet);
+                } else {
+                    extendObject(rawSet, localSet);
+                    cb(getSubSettings(rawSet, keys));
+                }
+            });
+        });
+    }
+
     function loadSettings(keys, cb) {
-        // temp wrapper to load snippets from localPath
-        var _cb = function(set) {
+        var tmpSet = {
+            blacklist: {},
+            marks: {},
+            findHistory: [],
+            cmdHistory: [],
+            sessions: {},
+            autoproxy_hosts: [],
+            proxyMode: 'clear',
+            proxy: "DIRECT",
+        };
+
+        loadRawSettings(keys, function(set) {
             if (set.localPath) {
                 var s = request(set.localPath);
                 s.then(function(resp) {
@@ -133,84 +195,60 @@ var Service = (function() {
             } else {
                 cb(set);
             }
-        };
-        chrome.storage.local.get(null, function(localSet) {
-            var localSavedAt = localSet.savedAt || 0;
-            chrome.storage.sync.get(null, function(syncSet) {
-                var syncSavedAt = syncSet.savedAt || 0;
-                if (localSavedAt > syncSavedAt) {
-                    extendObject(settings, localSet);
-                    _syncSave(localSet, function() {
-                        var subset = getSubSettings(keys);
-                        if (chrome.runtime.lastError) {
-                            subset.error = chrome.runtime.lastError.message;
-                        }
-                        _cb(subset);
-                    });
-                } else if (localSavedAt < syncSavedAt) {
-                    extendObject(settings, syncSet);
-                    _cb(getSubSettings(keys));
-                    chrome.storage.local.set(syncSet);
-                } else {
-                    extendObject(settings, localSet);
-                    _cb(getSubSettings(keys));
-                }
-            });
+        }, tmpSet);
+    }
+
+    function dictFromArray(arry, val) {
+        var dict = {};
+        arry.forEach(function(h) {
+            dict[h] = val;
         });
+        return dict;
     }
 
-    function _initSettings() {
-        settings = {
-            repeatThreshold: 99,
-            tabsMRUOrder: true,
-            blacklist: {},
-            marks: {},
-            findHistory: [],
-            cmdHistory: [],
-            snippets: "",
-            sessions: {},
-            newTabPosition: 'right',
-            autoproxy_hosts: {},
-            proxyMode: 'clear',
-            proxy: "DIRECT",
-            interceptedErrors: {}
-        };
-    }
-
-    function _applySettings() {
-        if (settings.proxyMode === 'clear') {
+    function _applyProxySettings(proxyConf) {
+        if (!proxyConf.proxyMode || proxyConf.proxyMode === 'clear') {
             chrome.proxy.settings.clear({scope: 'regular'});
         } else {
-            chrome.proxy.settings.get( {}, function(proxyInfo) {
-                if (proxyInfo.levelOfControl === "controlled_by_this_extension" && proxyInfo.value.hasOwnProperty('pacScript')) {
-                    // get settings.autoproxy_hosts/settings.proxy/settings.proxyMode from pacScript
-                    eval(proxyInfo.value.pacScript.data.substr(19));
+            var autoproxy_pattern = proxyConf.autoproxy_hosts.filter(function(a) {
+                return a.indexOf('*') !== -1;
+            }).join('|');
+            var config = {
+                mode: (proxyConf.proxyMode === "always" || proxyConf.proxyMode === "byhost") ? "pac_script" : proxyConf.proxyMode,
+                pacScript: {
+                    data: "var pacGlobal = {}; pacGlobal.hosts = " + JSON.stringify(dictFromArray(proxyConf.autoproxy_hosts, 1))
+                    + ", pacGlobal.autoproxy_pattern = '" + autoproxy_pattern
+                    + "', pacGlobal.proxyMode = '" + proxyConf.proxyMode
+                    + "', pacGlobal.proxy = '" + proxyConf.proxy + "'; "
+                    + FindProxyForURL.toString()
                 }
+            };
+            chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
             });
         }
-        chrome.webRequest.onErrorOccurred.addListener(function(details) {
-            var tabId = details.tabId;
-            if (tabId !== -1 && (settings.interceptedErrors.hasOwnProperty("*") || details.error in settings.interceptedErrors)) {
-                if (!tabErrors.hasOwnProperty(tabId)) {
-                    tabErrors[tabId] = [];
-                }
-                if (details.type === "main_frame") {
-                    tabErrors[tabId] = [];
-                    if (details.error !== "net::ERR_ABORTED") {
-                        chrome.tabs.update(tabId, {
-                            url: chrome.extension.getURL("pages/error.html")
-                        });
-                    }
-                }
-                tabErrors[tabId].push(details);
-            }
-        }, {
-            urls: ["<all_urls>"]
-        });
     }
 
-    _initSettings();
-    loadSettings(null, _applySettings);
+    loadSettings(null, _applyProxySettings);
+
+    chrome.webRequest.onErrorOccurred.addListener(function(details) {
+        var tabId = details.tabId;
+        if (tabId !== -1 && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
+            if (!tabErrors.hasOwnProperty(tabId)) {
+                tabErrors[tabId] = [];
+            }
+            if (details.type === "main_frame") {
+                tabErrors[tabId] = [];
+                if (details.error !== "net::ERR_ABORTED") {
+                    chrome.tabs.update(tabId, {
+                        url: chrome.extension.getURL("pages/error.html")
+                    });
+                }
+            }
+            tabErrors[tabId].push(details);
+        }
+    }, {
+        urls: ["<all_urls>"]
+    });
 
     chrome.extension.onConnect.addListener(function(port) {
         var sender = port.sender;
@@ -319,53 +357,56 @@ var Service = (function() {
     };
 
 
-    function _syncSave(data, cb) {
-        if (data.hasOwnProperty('localPath') && data.hasOwnProperty('snippets')) {
+    function _save(storage, data, cb) {
+        if (data.localPath) {
             delete data.snippets;
         }
-        chrome.storage.sync.set(data, cb);
+        storage.set(data, cb);
     }
 
     function _updateSettings(diffSettings, afterSet) {
-        extendObject(settings, diffSettings);
         diffSettings.savedAt = new Date().getTime();
-        chrome.storage.local.set(diffSettings, function() {
+        _save(chrome.storage.local, diffSettings, function() {
             if (afterSet) {
                 afterSet();
             }
         });
-        _syncSave(diffSettings, function() {
+        _save(chrome.storage.sync, diffSettings, function() {
             if (chrome.runtime.lastError) {
                 var error = chrome.runtime.lastError.message;
             }
         });
     }
     function _updateAndPostSettings(diffSettings, afterSet) {
-        _updateSettings(diffSettings, afterSet);
         activePorts.forEach(function(port) {
             port.postMessage({
                 action: 'settingsUpdated',
                 settings: diffSettings
             });
         });
+        _updateSettings(diffSettings, afterSet);
     }
 
     self.toggleBlacklist = function(message, sender, sendResponse) {
-        if (settings.blacklist.hasOwnProperty(message.domain)) {
-            delete settings.blacklist[message.domain];
-        } else {
-            settings.blacklist[message.domain] = 1;
-        }
-        _updateAndPostSettings({blacklist: settings.blacklist}, function() {
-            _response(message, sendResponse, {
-                blacklist: settings.blacklist
+        loadSettings('blacklist', function(data) {
+            if (data.blacklist.hasOwnProperty(message.domain)) {
+                delete data.blacklist[message.domain];
+            } else {
+                data.blacklist[message.domain] = 1;
+            }
+            _updateAndPostSettings({blacklist: data.blacklist}, function() {
+                _response(message, sendResponse, {
+                    blacklist: data.blacklist
+                });
             });
         });
     };
 
     self.addVIMark = function(message, sender, sendResponse) {
-        extendObject(settings.marks, message.mark);
-        _updateAndPostSettings({marks: settings.marks});
+        loadSettings('marks', function(data) {
+            extendObject(data.marks, message.mark);
+            _updateAndPostSettings({marks: data.marks});
+        });
     };
 
     function _loadSettingsFromUrl(url) {
@@ -378,9 +419,8 @@ var Service = (function() {
     self.resetSettings = function(message, sender, sendResponse) {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
-        _initSettings();
         loadSettings(null, function(data) {
-            _applySettings();
+            _applyProxySettings();
             _response(message, sendResponse, {
                 settings: data
             });
@@ -452,7 +492,7 @@ var Service = (function() {
             tabs = tabs.filter(function(b) {
                 return b.id !== tab.id;
             });
-            if (settings.tabsMRUOrder) {
+            if (conf.tabsMRUOrder) {
                 tabs.sort(function(a, b) {
                     return tabActivated[b.id] - tabActivated[a.id];
                 });
@@ -550,7 +590,7 @@ var Service = (function() {
     self.closeTab = function(message, sender, sendResponse) {
         _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
             chrome.tabs.remove(tabIds, function() {
-                if ( settings.focusAfterClosed === "left" ) {
+                if ( conf.focusAfterClosed === "left" ) {
                     _nextTab(sender.tab, -1);
                 }
             });
@@ -648,7 +688,7 @@ var Service = (function() {
         if (message.tab.tabbed) {
             var newTabPosition;
             if (sender.tab) {
-                switch (settings.newTabPosition) {
+                switch (conf.newTabPosition) {
                     case 'left':
                         newTabPosition = sender.tab.index;
                         break;
@@ -693,24 +733,13 @@ var Service = (function() {
         message.url = 'view-source:' + sender.tab.url;
         self.openLink(message, sender, sendResponse);
     };
-    function getSubSettings(keys) {
-        var subset;
-        if (!keys) {
-            // if null/undefined/""
-            subset = settings;
-        } else {
-            if ( !(keys instanceof Array) ) {
-                keys = [ keys ];
-            }
-            subset = {};
-            keys.forEach(function(k) {
-                subset[k] = settings[k];
-            });
-        }
-        return subset;
-    }
     self.getSettings = function(message, sender, sendResponse) {
-        loadSettings(message.key, function(data) {
+        var pf = loadSettings;
+        if (message.key === "RAW") {
+            pf = loadRawSettings;
+            message.key = "";
+        }
+        pf(message.key, function(data) {
             _response(message, sendResponse, {
                 settings: data
             });
@@ -720,7 +749,11 @@ var Service = (function() {
         if (message.scope === "snippets") {
             // For settings from snippets, don't broadcast the update
             // neither persist into storage
-            extendObject(settings, message.settings);
+            for (var k in message.settings) {
+                if (conf.hasOwnProperty(k)) {
+                    conf[k] = message.settings[k];
+                }
+            }
         } else {
             _updateAndPostSettings(message.settings);
         }
@@ -776,72 +809,73 @@ var Service = (function() {
         _quit();
     };
     self.createSession = function(message, sender, sendResponse) {
-        chrome.tabs.query({}, function(tabs) {
-            var tabGroup = {};
-            tabs.forEach(function(tab) {
-                if (tab && tab.index !== void 0) {
-                    if (!tabGroup.hasOwnProperty(tab.windowId)) {
-                        tabGroup[tab.windowId] = [];
+        loadSettings('sessions', function(data) {
+            chrome.tabs.query({}, function(tabs) {
+                var tabGroup = {};
+                tabs.forEach(function(tab) {
+                    if (tab && tab.index !== void 0) {
+                        if (!tabGroup.hasOwnProperty(tab.windowId)) {
+                            tabGroup[tab.windowId] = [];
+                        }
+                        if (tab.url !== newTabUrl) {
+                            tabGroup[tab.windowId].push(tab.url);
+                        }
                     }
-                    if (tab.url !== newTabUrl) {
-                        tabGroup[tab.windowId].push(tab.url);
+                });
+                var tabg = [];
+                for (var k in tabGroup) {
+                    if (tabGroup[k].length) {
+                        tabg.push(tabGroup[k]);
                     }
                 }
+                data.sessions[message.name] = {};
+                data.sessions[message.name]['tabs'] = tabg;
+                _updateAndPostSettings({
+                    sessions: data.sessions
+                }, (message.quitAfterSaved ? _quit : undefined));
             });
-            var tabg = [];
-            for (var k in tabGroup) {
-                if (tabGroup[k].length) {
-                    tabg.push(tabGroup[k]);
-                }
-            }
-            settings.sessions[message.name] = {};
-            settings.sessions[message.name]['tabs'] = tabg;
-            _updateAndPostSettings({
-                sessions: settings.sessions
-            }, (message.quitAfterSaved ? _quit : undefined));
-        });
-    };
-    self.getSessions = function(message, sender, sendResponse) {
-        _response(message, sendResponse, {
-            sessions: settings.sessions
         });
     };
     self.openSession = function(message, sender, sendResponse) {
-        if (settings.sessions.hasOwnProperty(message.name)) {
-            var urls = settings.sessions[message.name]['tabs'];
-            urls[0].forEach(function(url) {
-                chrome.tabs.create({
-                    url: url,
-                    active: false,
-                    pinned: false
-                });
-            });
-            for (var i = 1; i < urls.length; i++) {
-                var a = urls[i];
-                chrome.windows.create({}, function(win) {
-                    a.forEach(function(url) {
-                        chrome.tabs.create({
-                            windowId: win.id,
-                            url: url,
-                            active: false,
-                            pinned: false
-                        });
+        loadSettings('sessions', function(data) {
+            if (data.sessions.hasOwnProperty(message.name)) {
+                var urls = data.sessions[message.name]['tabs'];
+                urls[0].forEach(function(url) {
+                    chrome.tabs.create({
+                        url: url,
+                        active: false,
+                        pinned: false
                     });
                 });
+                for (var i = 1; i < urls.length; i++) {
+                    var a = urls[i];
+                    chrome.windows.create({}, function(win) {
+                        a.forEach(function(url) {
+                            chrome.tabs.create({
+                                windowId: win.id,
+                                url: url,
+                                active: false,
+                                pinned: false
+                            });
+                        });
+                    });
+                }
+                chrome.tabs.query({
+                    url: newTabUrl
+                }, function(tabs) {
+                    chrome.tabs.remove(tabs.map(function(t) {
+                        return t.id
+                    }))
+                });
             }
-            chrome.tabs.query({
-                url: newTabUrl
-            }, function(tabs) {
-                chrome.tabs.remove(tabs.map(function(t) {
-                    return t.id
-                }))
-            });
-        }
+        });
     };
     self.deleteSession = function(message, sender, sendResponse) {
-        delete settings.sessions[message.name];
-        _updateAndPostSettings({
-            sessions: settings.sessions
+        loadSettings('sessions', function(data) {
+            delete data.sessions[message.name];
+            _updateAndPostSettings({
+                sessions: data.sessions
+            });
         });
     };
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
@@ -885,16 +919,16 @@ var Service = (function() {
 
     function FindProxyForURL(url, host) {
         var lastPos;
-        if (settings.proxyMode === "always") {
-            return settings.proxy;
+        if (pacGlobal.proxyMode === "always") {
+            return pacGlobal.proxy;
         }
-        var pp = new RegExp(settings.autoproxy_pattern);
+        var pp = new RegExp(pacGlobal.autoproxy_pattern);
         do {
-            if (settings.autoproxy_hosts.hasOwnProperty(host)) {
-                return settings.proxy;
+            if (pacGlobal.hosts.hasOwnProperty(host)) {
+                return pacGlobal.proxy;
             }
-            if (settings.autoproxy_pattern.length && pp.test(host)) {
-                return settings.proxy;
+            if (pacGlobal.autoproxy_pattern.length && pp.test(host)) {
+                return pacGlobal.proxy;
             }
             lastPos = host.indexOf('.') + 1;
             host = host.slice(lastPos);
@@ -902,56 +936,42 @@ var Service = (function() {
         return 'DIRECT';
     }
     self.updateProxy = function(message, sender, sendResponse) {
-        if (message.proxy) {
-            settings.proxy = message.proxy;
-        }
-        if (message.mode) {
-            settings.proxyMode = message.mode;
-        }
-        if (message.host) {
-            var hosts = message.host.split(/\s*[ ,\n]\s*/);
-            if (message.operation === "toggle") {
-                hosts.forEach(function(host) {
-                    if (settings.autoproxy_hosts.hasOwnProperty(host)) {
-                        delete settings.autoproxy_hosts[host];
-                    } else {
-                        settings.autoproxy_hosts[host] = 1;
-                    }
-                });
-            } else if (message.operation === "add") {
-                hosts.forEach(function(host) {
-                    settings.autoproxy_hosts[host] = 1;
-                });
-            } else {
-                hosts.forEach(function(host) {
-                    delete settings.autoproxy_hosts[host];
-                });
+        loadSettings(['proxyMode', 'proxy', 'autoproxy_hosts'], function(proxyConf) {
+            if (message.proxy) {
+                proxyConf.proxy = message.proxy;
             }
-        }
-        _updateSettings({
-            autoproxy_hosts: settings.autoproxy_hosts,
-            proxyMode: settings.proxyMode,
-            proxy: settings.proxy
-        });
-        if (message.mode === 'clear') {
-            chrome.proxy.settings.clear({scope: 'regular'});
-        } else {
-            var autoproxy_pattern = Object.keys(settings.autoproxy_hosts).filter(function(a) {
-                return a.indexOf('*') !== -1;
-            }).join('|');
-            var config = {
-                mode: (settings.proxyMode === "always" || settings.proxyMode === "byhost") ? "pac_script" : settings.proxyMode,
-                pacScript: {
-                    data: "var settings = {}; settings.autoproxy_hosts = " + JSON.stringify(settings.autoproxy_hosts)
-                    + ", settings.autoproxy_pattern = '" + autoproxy_pattern
-                    + "', settings.proxyMode = '" + settings.proxyMode
-                    + "', settings.proxy = '" + settings.proxy + "'; "
-                    + FindProxyForURL.toString()
+            if (message.mode) {
+                proxyConf.proxyMode = message.mode;
+            }
+            if (message.host) {
+                var hostsDict = dictFromArray(proxyConf.autoproxy_hosts, 1);
+                var hosts = message.host.split(/\s*[ ,\n]\s*/);
+                if (message.operation === "toggle") {
+                    hosts.forEach(function(host) {
+                        if (hostsDict.indexOf(host)) {
+                            delete hostsDict[host];
+                        } else {
+                            hostsDict[host] = 1;
+                        }
+                    });
+                } else if (message.operation === "add") {
+                    hosts.forEach(function(host) {
+                        hostsDict[host] = 1;
+                    });
+                } else {
+                    hosts.forEach(function(host) {
+                        delete hostsDict[host];
+                    });
                 }
-            };
-            chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
+                proxyConf.autoproxy_hosts = Object.keys(hostsDict);
+            }
+            _updateSettings({
+                autoproxy_hosts: proxyConf.autoproxy_hosts,
+                proxyMode: proxyConf.proxyMode,
+                proxy: proxyConf.proxy
             });
-        }
+            _applyProxySettings(proxyConf);
+        });
     };
     self.setZoom = function(message, sender, sendResponse) {
         var tabId = sender.tab.id;
@@ -972,8 +992,10 @@ var Service = (function() {
         } else if (type === 'T') {
             chrome.tabs.remove(parseInt(uid), cb);
         } else if (type === 'M') {
-            delete settings.marks[uid];
-            _updateAndPostSettings({marks: settings.marks}, cb);
+            loadSettings('marks', function(data) {
+                delete data.marks[uid];
+                _updateAndPostSettings({marks: data.marks}, cb);
+            });
         }
     }
     self.removeURL = function(message, sender, sendResponse) {

@@ -161,7 +161,7 @@ var Visual = (function(mode) {
         code: function() {
             var pos = [selection.anchorNode, selection.anchorOffset];
             Front.writeClipboard(selection.toString());
-            if (runtime.conf.afterYank === 1) {
+            if (runtime.conf.collapseAfterYank) {
                 selection.setPosition(pos[0], pos[1]);
                 showCursor();
             }

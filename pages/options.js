@@ -74,7 +74,7 @@ function renderSettings(rs) {
     var h = $(window).height() - $('#save_container').outerHeight() * 4;
     $(mappingsEditor.container).css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
-    if (rs.snippets.length) {
+    if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
         mappingsEditor.setExampleValue();

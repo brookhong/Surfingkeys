@@ -9,7 +9,7 @@ var runtime = window.runtime || (function() {
             tabsThreshold: 9,
             hintsThreshold: 10000,
             smoothScroll: true,
-            afterYank: 1,
+            collapseAfterYank: true,
             scrollStepSize: 70,
             nextLinkRegex: /((>>|next)+)/i,
             prevLinkRegex: /((<<|prev(ious)?)+)/i,
