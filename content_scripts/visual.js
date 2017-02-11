@@ -517,9 +517,15 @@ var Visual = (function(mode) {
 
     function findNextTextNodeBy(query, caseSensitive, backwards) {
         var found = false;
+        // window.find sometimes does not move selection forward
+        var firstNode = null;
         while (window.find(query, caseSensitive, backwards)) {
             if (selection.anchorNode.splitText) {
                 found = true;
+                break;
+            } else if (firstNode === null) {
+                firstNode = selection.anchorNode;
+            } else if (firstNode === selection.anchorNode) {
                 break;
             }
         }
