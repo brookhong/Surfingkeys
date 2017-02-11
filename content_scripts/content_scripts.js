@@ -40,7 +40,7 @@ function parseCommand(cmdline) {
 }
 
 RUNTIME = function(action, args) {
-    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab'];
+    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom'];
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {
         // if the action can only be repeated in background, pass repeats to background with args,
