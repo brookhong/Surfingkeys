@@ -89,7 +89,7 @@ var Omnibar = (function(mode, ui) {
 
     self.expandAlias = function(alias, val) {
         var eaten = false;
-        if (lastHandler !== SearchEngine && alias.length && SearchEngine.aliases.hasOwnProperty(alias)) {
+        if (handler !== SearchEngine && alias.length && SearchEngine.aliases.hasOwnProperty(alias)) {
             lastHandler = handler;
             handler = SearchEngine;
             $.extend(SearchEngine, SearchEngine.aliases[alias]);

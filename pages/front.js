@@ -426,7 +426,7 @@ function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
     SearchEngine.aliases[alias] = {
         prompt: prompt + "≫",
         url: url,
-        suggestionURL: suggestionURL,
+        suggestionURL: suggestionURL || "",
         listSuggestion: listSuggestion
     };
 }
