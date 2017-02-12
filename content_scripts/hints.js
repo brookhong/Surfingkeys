@@ -92,16 +92,6 @@ var Hints = (function(mode) {
         lastMouseTarget = element;
     }
 
-    function isElementPartiallyInViewport(el) {
-        var rect = el.getBoundingClientRect();
-        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
-
-        return rect.width && rect.height
-            && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
-            && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
-    }
-
     function refresh() {
         var matches = [];
         var hints = holder.find('>div');
@@ -202,6 +192,51 @@ var Hints = (function(mode) {
         return ordinate;
     };
 
+    function placeHints(elements, onHintKey) {
+        holder.removeClass("hintsForTextNode");
+        holder.show().html('');
+        var hintLabels = self.genLabels(elements.length);
+        var bof = self.coordinate();
+        style.appendTo(holder);
+        elements.each(function(i) {
+            var pos = $(this).offset(),
+                z = getZIndex(this);
+            if (pos.top === 0 && pos.left === 0) {
+                // work around for svg elements, https://github.com/jquery/jquery/issues/3182
+                pos = this.getBoundingClientRect();
+            }
+            var left;
+            if (runtime.conf.hintAlign === "right") {
+                left = pos.left - bof.left + $(this).width();
+            } else if (runtime.conf.hintAlign === "left") {
+                left = pos.left - bof.left;
+            } else {
+                left = pos.left - bof.left + $(this).width() / 2;
+            }
+            left = Math.max(left, 0);
+            var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)
+                .css('z-index', z + 9999)
+                .data('z-index', z + 9999)
+                .data('label', hintLabels[i])
+                .data('link', this)
+                .data('onhint', onHintKey)
+                .html(hintLabels[i]);
+            holder.append(link);
+        });
+        var hints = holder.find('>div');
+        var bcr = hints[0].getBoundingClientRect();
+        for (var i = 1; i < hints.length; i++) {
+            var h = hints[i];
+            var tcr = h.getBoundingClientRect();
+            if (tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
+                var top = $(h).offset().top + $(h).height();
+                $(h).css('top', top);
+            }
+            bcr = h.getBoundingClientRect();
+        }
+        holder.appendTo('body');
+    }
+
     function createHints(cssSelector, onHintKey, attrs) {
         attrs = $.extend({
             active: true,
@@ -212,7 +247,6 @@ var Hints = (function(mode) {
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
-        holder.show().html('');
         if (cssSelector === "") {
             cssSelector = "a, button, select, input, textarea";
             if (!runtime.conf.hintsThreshold || $(cssSelector).length < runtime.conf.hintsThreshold) {
@@ -226,78 +260,31 @@ var Hints = (function(mode) {
         } else {
             elements = $(document.body).find(cssSelector);
         }
-        elements = elements.filter(function(i) {
-            var ret = null;
-            var elm = this;
-            if ($(elm).attr('disabled') === undefined) {
-                var r = elm.getBoundingClientRect();
-                if (r.width === 0 || r.height === 0) {
-                    // use the first visible child instead
-                    var children = $(elm).find('*').filter(function(j) {
-                        var r = this.getBoundingClientRect();
-                        return (r.width > 0 && r.height > 0);
-                    });
-                    if (children.length) {
-                        elm = children[0];
-                    }
-                }
-                if (isElementPartiallyInViewport(elm)) {
-                    ret = elm;
-                }
-            }
-            return ret !== null;
-        });
-        elements = elements.filter(function() {
+        elements = elements.filterInvisible().filter(function() {
             // filter out element which has his children covered
             return !$(this.children).toArray().some(function(element, index, array) {
                 return elements.toArray().indexOf(element) !== -1;
             });
         });
         if (elements.length > 0) {
-            var hintLabels = self.genLabels(elements.length);
-            var bof = self.coordinate();
-            style.appendTo(holder);
-            elements.each(function(i) {
-                var pos = $(this).offset(),
-                    z = getZIndex(this);
-                if (pos.top === 0 && pos.left === 0) {
-                    // work around for svg elements, https://github.com/jquery/jquery/issues/3182
-                    pos = this.getBoundingClientRect();
-                }
-                var left;
-                if (runtime.conf.hintAlign === "right") {
-                    left = pos.left - bof.left + $(this).width();
-                } else if (runtime.conf.hintAlign === "left") {
-                    left = pos.left - bof.left;
-                } else {
-                    left = pos.left - bof.left + $(this).width() / 2;
-                }
-                left = Math.max(left, 0);
-                var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)
-                    .css('z-index', z + 9999)
-                    .data('z-index', z + 9999)
-                    .data('label', hintLabels[i])
-                    .data('link', this)
-                    .data('onhint', onHintKey)
-                    .html(hintLabels[i]);
-                holder.append(link);
-            });
-            var hints = holder.find('>div');
-            var bcr = hints[0].getBoundingClientRect();
-            for (var i = 1; i < hints.length; i++) {
-                var h = hints[i];
-                var tcr = h.getBoundingClientRect();
-                if (tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
-                    var top = $(h).offset().top + $(h).height();
-                    $(h).css('top', top);
-                }
-                bcr = h.getBoundingClientRect();
-            }
-            holder.appendTo('body');
+            placeHints(elements, onHintKey);
         }
 
         return elements.length;
     }
+
+    self.createHintsForTextNode = function(onHintKey) {
+
+        var elements = $(getTextNodes(document.body, /./, 2));
+        elements = elements.filterInvisible();
+        if (elements.length > 0) {
+            placeHints(elements, onHintKey);
+            holder.addClass("hintsForTextNode");
+
+            self.enter();
+        }
+
+    };
 
     self.create = function(cssSelector, onHintKey, attrs) {
         // save last used attributes, which will be reused if the user scrolls while the hints are still open

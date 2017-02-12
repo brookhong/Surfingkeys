@@ -355,35 +355,6 @@ var Visual = (function(mode) {
         scrollIntoView();
     }
 
-    function getTextNodes(root, pattern, flag) {
-        var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
-        var treeWalker = document.createTreeWalker(
-            root,
-            NodeFilter.SHOW_TEXT, {
-                acceptNode: function(node) {
-                    if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
-                        return NodeFilter.FILTER_REJECT;
-                    var br = node.parentNode.getBoundingClientRect();
-                    if (br.width < 4 || br.height < 4) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }, false);
-
-        var nodes = [];
-        if (flag === 1) {
-            nodes.push(treeWalker.firstChild());
-        } else if (flag === -1) {
-            nodes.push(treeWalker.lastChild());
-        } else if (flag === 0) {
-            return treeWalker;
-        } else {
-            while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
-        }
-        return nodes;
-    }
-
     function modifySelection() {
         var sel = self.map_node.meta.annotation.split(" ");
         var alter = (state === 2) ? "extend" : "move";
@@ -452,21 +423,28 @@ var Visual = (function(mode) {
         switch (state) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
+                state = (state + 1) % 3;
+                Front.showStatus(2, status[state]);
                 break;
             case 2:
                 hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
                 self.exit();
+                state = (state + 1) % 3;
+                Front.showStatus(2, status[state]);
                 break;
             default:
-                var pos = getStartPos();
-                selection.setPosition(pos[0], pos[1]);
-                showCursor();
-                self.enter();
+                Hints.createHintsForTextNode(function(element, event) {
+                    setTimeout(function() {
+                        selection.setPosition(element, 0);
+                        showCursor();
+                        self.enter();
+                        state = (state + 1) % 3;
+                        Front.showStatus(2, status[state]);
+                    }, 0);
+                });
                 break;
         }
-        state = (state + 1) % 3;
-        Front.showStatus(2, status[state]);
     };
 
     self.star = function() {

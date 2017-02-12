@@ -29,6 +29,37 @@ function reportIssue(title, description) {
     Front.showPopup(error);
 }
 
+function getTextNodes(root, pattern, flag) {
+    var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
+    var treeWalker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT, {
+            acceptNode: function(node) {
+                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
+                    return NodeFilter.FILTER_REJECT;
+                var br = node.parentNode.getBoundingClientRect();
+                if (br.width < 4 || br.height < 4) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }, false);
+
+    var nodes = [];
+    if (flag === 1) {
+        nodes.push(treeWalker.firstChild());
+    } else if (flag === -1) {
+        nodes.push(treeWalker.lastChild());
+    } else if (flag === 0) {
+        return treeWalker;
+    } else if (flag === 2) {
+        while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode.parentNode);
+    } else {
+        while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
+    }
+    return nodes;
+}
+
 String.prototype.format = function() {
     var formatted = this;
     for (var i = 0; i < arguments.length; i++) {
@@ -54,6 +85,40 @@ String.prototype.format = function() {
             return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
         });
     };
+
+    function isElementPartiallyInViewport(el) {
+        var rect = el.getBoundingClientRect();
+        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+
+        return rect.width && rect.height
+            && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
+            && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
+    }
+
+    $.fn.filterInvisible = function() {
+        return this.filter(function(i) {
+            var ret = null;
+            var elm = this;
+            if ($(elm).attr('disabled') === undefined) {
+                var r = elm.getBoundingClientRect();
+                if (r.width === 0 || r.height === 0) {
+                    // use the first visible child instead
+                    var children = $(elm).find('*').filter(function(j) {
+                        var r = this.getBoundingClientRect();
+                        return (r.width > 0 && r.height > 0);
+                    });
+                    if (children.length) {
+                        elm = children[0];
+                    }
+                }
+                if (isElementPartiallyInViewport(elm)) {
+                    ret = elm;
+                }
+            }
+            return ret !== null;
+        });
+   };
 })(jQuery);
 
 (function() {
