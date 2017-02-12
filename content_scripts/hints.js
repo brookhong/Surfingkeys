@@ -256,12 +256,7 @@ var Hints = (function(mode) {
         } else {
             elements = $(document.body).find(cssSelector);
         }
-        elements = elements.filterInvisible().filter(function() {
-            // filter out element which has his children covered
-            return !$(this.children).toArray().some(function(element, index, array) {
-                return elements.toArray().indexOf(element) !== -1;
-            });
-        });
+        elements = elements.filterInvisible().filterChildren();
         if (elements.length > 0) {
             placeHints(elements);
         }

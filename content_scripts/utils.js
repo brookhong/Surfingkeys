@@ -91,7 +91,7 @@ String.prototype.format = function() {
         var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
         var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-        return rect.width && rect.height
+        return rect.width > 4 && rect.height > 4
             && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
             && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
     }
@@ -118,7 +118,16 @@ String.prototype.format = function() {
             }
             return ret !== null;
         });
-   };
+    };
+    $.fn.filterChildren = function() {
+        var elements = this;
+        return this.filter(function() {
+            // filter out element which has his children covered
+            return !$(this.children).toArray().some(function(element, index, array) {
+                return elements.toArray().indexOf(element) !== -1;
+            });
+        });
+    };
 })(jQuery);
 
 (function() {
