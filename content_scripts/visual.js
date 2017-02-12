@@ -434,7 +434,7 @@ var Visual = (function(mode) {
                 Front.showStatus(2, status[state]);
                 break;
             default:
-                Hints.createHintsForTextNode(function(element, event) {
+                Hints.create("TEXT_NODES", function(element, event) {
                     setTimeout(function() {
                         selection.setPosition(element, 0);
                         showCursor();

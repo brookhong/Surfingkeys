@@ -48,7 +48,9 @@ var Hints = (function(mode) {
         holder = $('<div id=sk_hints/>');
     self.characters = 'asdfgqwertzxcvb';
     self.scrollKeys = '0jkhlG$';
-    var _lastCreateAttrs = {};
+    var _lastCreateAttrs = {},
+        _onHintKey = self.dispatchMouseClick,
+        _cssSelector = "";
 
     function getZIndex(node) {
         var z = 0;
@@ -64,18 +66,13 @@ var Hints = (function(mode) {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
-            var onhint = $(matches[0]).data('onhint');
             var link = $(matches[0]).data('link');
-            if (onhint) {
-                onhint.call(window, link, event);
-                if (behaviours.multipleHits) {
-                    prefix = "";
-                    refresh();
-                } else {
-                    hide();
-                }
+            _onHintKey(link, event);
+            if (behaviours.multipleHits) {
+                prefix = "";
+                refresh();
             } else {
-                self.dispatchMouseClick(link, event);
+                hide();
             }
         } else if (matches.length === 0) {
             hide();
@@ -142,7 +139,7 @@ var Hints = (function(mode) {
     }
 
     function onScrollDone(evt) {
-        createHints("", Hints.dispatchMouseClick, _lastCreateAttrs);
+        createHints(_cssSelector, _lastCreateAttrs);
     }
 
     self.enter = function() {
@@ -192,7 +189,7 @@ var Hints = (function(mode) {
         return ordinate;
     };
 
-    function placeHints(elements, onHintKey) {
+    function placeHints(elements) {
         holder.removeClass("hintsForTextNode");
         holder.show().html('');
         var hintLabels = self.genLabels(elements.length);
@@ -219,7 +216,6 @@ var Hints = (function(mode) {
                 .data('z-index', z + 9999)
                 .data('label', hintLabels[i])
                 .data('link', this)
-                .data('onhint', onHintKey)
                 .html(hintLabels[i]);
             holder.append(link);
         });
@@ -237,7 +233,7 @@ var Hints = (function(mode) {
         holder.appendTo('body');
     }
 
-    function createHints(cssSelector, onHintKey, attrs) {
+    function createHintsForClick(cssSelector, attrs) {
         attrs = $.extend({
             active: true,
             tabbed: false,
@@ -267,36 +263,37 @@ var Hints = (function(mode) {
             });
         });
         if (elements.length > 0) {
-            placeHints(elements, onHintKey);
+            placeHints(elements);
         }
 
         return elements.length;
     }
 
-    self.createHintsForTextNode = function(onHintKey) {
+    function createHintsForTextNode() {
 
         var elements = $(getTextNodes(document.body, /./, 2));
         elements = elements.filterInvisible();
         if (elements.length > 0) {
-            placeHints(elements, onHintKey);
+            placeHints(elements);
             holder.addClass("hintsForTextNode");
 
-            self.enter();
         }
 
-    };
+        return elements.length;
+    }
+
+    function createHints(cssSelector, attrs) {
+        return (cssSelector === "TEXT_NODES") ? createHintsForTextNode() : createHintsForClick(cssSelector, attrs);
+    }
 
     self.create = function(cssSelector, onHintKey, attrs) {
         // save last used attributes, which will be reused if the user scrolls while the hints are still open
+        _cssSelector = cssSelector;
+        _onHintKey = onHintKey;
         _lastCreateAttrs = attrs;
 
-        var hintTotal = createHints(cssSelector, onHintKey, attrs);
-        if (hintTotal) {
+        if (createHints(cssSelector, attrs)) {
             self.enter();
-        }
-
-        if (hintTotal === 1) {
-            handleHint();
         }
     };
 
