@@ -29,6 +29,16 @@ function reportIssue(title, description) {
     Front.showPopup(error);
 }
 
+function isElementPartiallyInViewport(el) {
+    var rect = el.getBoundingClientRect();
+    var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+    var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+
+    return rect.width > 4 && rect.height > 4
+        && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
+        && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
+}
+
 function getTextNodes(root, pattern, flag) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
     var treeWalker = document.createTreeWalker(
@@ -85,16 +95,6 @@ String.prototype.format = function() {
             return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
         });
     };
-
-    function isElementPartiallyInViewport(el) {
-        var rect = el.getBoundingClientRect();
-        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
-
-        return rect.width > 4 && rect.height > 4
-            && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
-            && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
-    }
 
     $.fn.filterInvisible = function() {
         return this.filter(function(i) {

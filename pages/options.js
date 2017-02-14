@@ -97,7 +97,7 @@ runtime.command({
     mappingsEditor = createMappingEditor(Mode, 'mappings');
     renderSettings(response.settings);
     if ('error' in response.settings) {
-        Front.showBanner("Settings sync may not work thoroughly because of: " + response.settings.error, 5000);
+        Front.showBanner(response.settings.error, 5000);
     }
 });
 

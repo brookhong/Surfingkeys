@@ -157,7 +157,7 @@ var Service = (function() {
                     _save(chrome.storage.sync, localSet, function() {
                         var subset = getSubSettings(rawSet, keys);
                         if (chrome.runtime.lastError) {
-                            subset.error = chrome.runtime.lastError.message;
+                            subset.error = "Settings sync may not work thoroughly because of: " + chrome.runtime.lastError.message;
                         }
                         cb(subset);
                     });
@@ -190,6 +190,10 @@ var Service = (function() {
                 var s = request(set.localPath);
                 s.then(function(resp) {
                     set.snippets = resp;
+                    cb(set);
+                }).catch(function(po) {
+                    // failed to read snippets from localPath
+                    set.error = "Failed to read snippets from " + set.localPath;
                     cb(set);
                 });
             } else {

@@ -21,6 +21,11 @@ var TopHook = (function(mode) {
         self.exit();
     });
 
+    self.addEventListener('pushState', function(event) {
+        event.sk_suppressed = true;
+        Insert.exit();
+    });
+
     return self;
 })(Mode);
 TopHook.enter(9999);

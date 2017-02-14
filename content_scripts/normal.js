@@ -370,11 +370,8 @@ var Normal = (function(mode) {
         }, 0);
     });
     self.addEventListener('pushState', function(event) {
-        if ((typeof(TopHook) === "undefined" || Mode.stack()[0] !== TopHook)) {
-            // only for that we are not having TopHook mode.
-            Insert.exit();
-            GetBackFocus.enter();
-        }
+        Insert.exit();
+        GetBackFocus.enter();
     });
     self.addEventListener('mousedown', function(event) {
         if (isEditable(event.target)) {
@@ -485,15 +482,25 @@ var Normal = (function(mode) {
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
             scrollNodes = getScrollableElements(100, 1.1);
-            scrollIndex = 0;
-            var maxHeight = 0;
-            scrollNodes.forEach(function(n, i) {
-                var h = n.getBoundingClientRect().height;
-                if (h > maxHeight) {
-                    scrollIndex = i;
-                    maxHeight = h
+            while (scrollNodes.length) {
+                var maxHeight = 0;
+                scrollIndex = 0;
+                scrollNodes.forEach(function(n, i) {
+                    var h = n.getBoundingClientRect().height;
+                    if (h > maxHeight) {
+                        scrollIndex = i;
+                        maxHeight = h
+                    }
+                });
+                var sn = scrollNodes[scrollIndex];
+                sn.scrollIntoViewIfNeeded();
+                if (isElementPartiallyInViewport(sn)) {
+                    break;
+                } else {
+                    // remove the node that could not be scrolled into view.
+                    scrollNodes.splice(scrollIndex, 1);
                 }
-            });
+            }
         }
     }
 
@@ -517,6 +524,13 @@ var Normal = (function(mode) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
             sn.scrollIntoViewIfNeeded();
+            while (!isElementPartiallyInViewport(sn) && scrollNodes.length) {
+                // remove the node that could not be scrolled into view.
+                scrollNodes.splice(scrollIndex, 1);
+                scrollIndex = scrollIndex % scrollNodes.length;
+                sn = scrollNodes[scrollIndex];
+                sn.scrollIntoViewIfNeeded();
+            }
             var rc = sn.getBoundingClientRect();
             Front.highlightElement({
                 duration: 200,
