@@ -222,7 +222,7 @@ div.pressedKey kbd {
     text-overflow: ellipsis;
     overflow: hidden;
 }
-div.sk_tabs {
+#sk_tabs {
     position: fixed;
     top: 0;
     left: 0;
@@ -288,7 +288,7 @@ div.sk_tab_hint {
     border-radius: 3px;
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
 }
-div.sk_bubble {
+#sk_bubble {
     position: absolute;
     padding: 9px;
     border: 1px solid #999;
@@ -299,7 +299,7 @@ div.sk_bubble {
     z-index: 2147483000;
     font-size: 14px;
 }
-div.sk_bubble * {
+#sk_bubble * {
     color: #000 !important;
 }
 div.sk_arrowdown {

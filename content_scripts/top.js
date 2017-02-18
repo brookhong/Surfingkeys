@@ -55,7 +55,7 @@ var frontendFrame = (function() {
         if (response.pointerEvents) {
             ifr.css('pointer-events', response.pointerEvents);
         }
-        if (response.hostBlur) {
+        if (response.pointerEvents === "none") {
             uiHost.blur();
         }
     };

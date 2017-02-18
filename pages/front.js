@@ -57,27 +57,30 @@ var Front = (function(mode) {
     self.postMessage = function(to, message) {
         self.ports[to].postMessage(message);
     };
-    /*
-     * set attributes of frame element in top window
-     *      pointerEvents   whether the iframe can be target of mouse events
-     *      hostBlur        whether to blur from the iframe
-     *
-     */
-    self.flush = function(pointerEvents, hostBlur) {
-        var height;
-        if ($('body>div:visible').length > 0) {
-            height = '100%';
-            pointerEvents = 'all';
-        } else {
-            height = '0px';
-            // blur host anyway if height is 0px
-            hostBlur = true;
-        }
+    self.flush = function() {
+        var visibleDivs = $('body>div:visible').toArray();
+        var pointerEvents = visibleDivs.map(function(d) {
+            var id = $(d).attr('id');
+            if (id === "sk_bubble") {
+                // no pointerEvents for bubble
+                return false;
+            } else if (id === "sk_status") {
+                // only pointerEvents when input in statusBar
+                return $('#sk_status').find('input').length > 0;
+            } else {
+                // with pointerEvents for all other DIVs
+                return true;
+            }
+        });
+        // to make pointerEvents not empty
+        pointerEvents.push(false);
+        pointerEvents = pointerEvents.reduce(function(a, b) {
+            return a || b;
+        });
         self.postMessage('top', {
             action: 'setFrontFrame',
-            pointerEvents: pointerEvents,
-            hostBlur: hostBlur,
-            frameHeight: height
+            pointerEvents: pointerEvents ? "all" : "none",
+            frameHeight: visibleDivs.length > 0 ? "100%" : "0px"
         });
     };
     self.visualCommand = function(args) {
@@ -96,9 +99,9 @@ var Front = (function(mode) {
     var _usage = $('<div id=sk_usage class=sk_theme>').appendTo('body').hide();
     var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
-    var _tabs = $("<div class=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
+    var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body').hide();
-    var _bubble = $("<div class=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
+    var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
 
@@ -106,7 +109,7 @@ var Front = (function(mode) {
     self.hidePopup = function() {
         if (_display && _display.is(':visible')) {
             _display.hide();
-            self.flush("none", true);
+            self.flush();
             _display.onHide && _display.onHide();
             self.contentCommand({
                 action: 'getFocusFromFront'
@@ -123,7 +126,7 @@ var Front = (function(mode) {
         }
         _display = td;
         _display.show();
-        self.flush("all", false);
+        self.flush();
         _display.onShow && _display.onShow(args);
         if (_editor !== td) {
             // don't set focus for editor, as it may lead frontend.html hold focus.
@@ -309,7 +312,7 @@ var Front = (function(mode) {
         var pos = message.position;
         _bubble.find('div.sk_bubble_content').html(message.content);
         _bubble.show();
-        self.flush("none", true);
+        self.flush();
         var w = _bubble.width(),
             h = _bubble.height();
         var left = [pos.left - w / 2, w / 2];

@@ -26,7 +26,7 @@ var StatusBar = (function(ui) {
         }
         $(span[lastSpan]).css('border-right', '');
         ui.css('display', lastSpan === -1 ? 'none' : 'block');
-        Front.flush("none", false);
+        Front.flush();
         if (duration) {
             timerHide = setTimeout(function() {
                 ui.css('display', 'none');
@@ -49,8 +49,9 @@ var Find = (function() {
 
     self.open = function() {
         historyInc = -1;
-        StatusBar.show(0, "/");
+        // show input first to focus input
         StatusBar.show(1, input);
+        StatusBar.show(0, "/");
         input.on('input', function() {
             Front.visualCommand({
                 action: 'visualUpdate',
