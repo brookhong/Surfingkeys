@@ -167,7 +167,7 @@ var Front = (function() {
             duration: duration,
             position: pos
         });
-    }
+    };
 
     runtime.on('ace_editor_saved', function(response) {
         onEditorSaved(response.data);

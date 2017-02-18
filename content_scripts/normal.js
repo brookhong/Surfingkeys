@@ -79,6 +79,12 @@ var Mode = (function() {
             // return m.name;
         // }).join('->');
         // console.log('enter {0}, {1}'.format(this.name, modes));
+
+        self.showModeStatus();
+    };
+
+    self.showModeStatus = function() {
+        Front.showStatus(4, mode_stack[0].statusLine || mode_stack[0].name);
     };
 
     self.exit = function(peek) {
@@ -102,6 +108,7 @@ var Mode = (function() {
             // }).join('->');
             // console.log('exit {0}, {1}'.format(this.name, modes));
         }
+        self.showModeStatus();
     };
 
     self.stack = function() {

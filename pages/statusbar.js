@@ -29,7 +29,7 @@ var StatusBar = (function(ui) {
         Front.flush();
         if (duration) {
             timerHide = setTimeout(function() {
-                ui.css('display', 'none');
+                self.show(n, "");
             }, duration);
         }
     };
@@ -43,15 +43,15 @@ var Find = (function() {
     var historyInc;
     function reset() {
         input.val('');
-        StatusBar.show(-1, '');
+        StatusBar.show(0, "");
+        StatusBar.show(1, "");
         PassThrough.exit();
     }
 
     self.open = function() {
         historyInc = -1;
-        // show input first to focus input
-        StatusBar.show(1, input);
         StatusBar.show(0, "/");
+        StatusBar.show(1, input);
         input.on('input', function() {
             Front.visualCommand({
                 action: 'visualUpdate',
@@ -67,9 +67,6 @@ var Find = (function() {
         });
         input[0].onkeydown = function(event) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-                Front.visualCommand({
-                    action: 'visualClear'
-                });
                 reset();
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.val();

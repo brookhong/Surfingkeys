@@ -105,6 +105,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
     }, 0);
 });
 function createFrontEnd() {
+    if (!frontendFrame) {
+        return;
+    }
     var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
     if (!frontendReady) {
         if (!document.body) {

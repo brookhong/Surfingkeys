@@ -55,13 +55,15 @@ var Front = (function(mode) {
     });
 
     self.postMessage = function(to, message) {
-        self.ports[to].postMessage(message);
+        if (self.ports[to]) {
+            self.ports[to].postMessage(message);
+        }
     };
     self.flush = function() {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
             var id = $(d).attr('id');
-            if (id === "sk_bubble") {
+            if (id === "sk_keystroke" || id === "sk_bubble") {
                 // no pointerEvents for bubble
                 return false;
             } else if (id === "sk_status") {
@@ -77,6 +79,11 @@ var Front = (function(mode) {
         pointerEvents = pointerEvents.reduce(function(a, b) {
             return a || b;
         });
+        if (pointerEvents) {
+            window.focus();
+            var input = $('#sk_status').find('input').length ? $('#sk_status').find('input') : Omnibar.input;
+            input.focus();
+        }
         self.postMessage('top', {
             action: 'setFrontFrame',
             pointerEvents: pointerEvents ? "all" : "none",
