@@ -170,7 +170,9 @@ var Front = (function() {
     };
 
     runtime.on('ace_editor_saved', function(response) {
-        onEditorSaved(response.data);
+        if (response.data !== undefined) {
+            onEditorSaved(response.data);
+        }
         if (runtime.conf.focusOnSaved && isEditable(elementBehindEditor)) {
             elementBehindEditor.focus();
             window.focus();
@@ -181,10 +183,6 @@ var Front = (function() {
     runtime.on('omnibar_query_entered', function(response) {
         runtime.updateHistory('OmniQuery', response.query);
         onOmniQuery(response.query);
-    });
-
-    runtime.on('getFocusFromFront', function(response) {
-        document.body.focus();
     });
 
     runtime.on('getPageText', function(response) {

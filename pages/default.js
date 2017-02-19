@@ -424,12 +424,22 @@ mapkey('ge', '#12Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")')
 mapkey('gn', '#12Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
 mapkey('gs', '#12View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');
 mapkey('gu', '#4Go up one path in the URL', function() {
-    var url = location.href;
-    if (location.pathname.length > 1) {
-        url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
-        url = url.substr(0, url.lastIndexOf('/'));
+    var pathname = location.pathname;
+    if (pathname.length > 1) {
+        pathname = pathname.endsWith('/') ? pathname.substr(0, pathname.length - 1) : pathname;
+        var last = pathname.lastIndexOf('/'), repeats = RUNTIME.repeats;
+        RUNTIME.repeats = 1;
+        while (repeats-- > 1) {
+            var p = pathname.lastIndexOf('/', last - 1);
+            if (p === -1) {
+                break;
+            } else {
+                last = p;
+            }
+        }
+        pathname = pathname.substr(0, last);
     }
-    window.location.href = url;
+    window.location.href = location.origin + pathname;
 });
 mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');

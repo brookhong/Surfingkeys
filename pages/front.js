@@ -119,9 +119,6 @@ var Front = (function(mode) {
             _display.hide();
             self.flush();
             _display.onHide && _display.onHide();
-            self.contentCommand({
-                action: 'getFocusFromFront'
-            });
             self.showPressed = false;
             self.exit();
         }

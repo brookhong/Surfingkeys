@@ -26,6 +26,16 @@ var AceEditor = (function(mode, elmId) {
         };
     })();
 
+    self.exit = function(data) {
+        document.activeElement.blur();
+        mode.exit.call(self);
+        Front.hidePopup();
+        Front.contentCommand({
+            action: 'ace_editor_saved',
+            data: data
+        });
+    };
+
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)
@@ -36,9 +46,7 @@ var AceEditor = (function(mode, elmId) {
             if (isDirty()) {
                 dialog.open('<span style="font-family: monospace">Quit anyway? Y/n </span><input type="text"/>', function(q) {
                     if (q.toLowerCase() === 'y') {
-                        document.activeElement.blur();
                         self.exit();
-                        Front.hidePopup();
                     }
                 }, {
                     bottom: true,
@@ -50,9 +58,7 @@ var AceEditor = (function(mode, elmId) {
                     }
                 });
             } else {
-                document.activeElement.blur();
                 self.exit();
-                Front.hidePopup();
             }
         }
     });
@@ -181,17 +187,13 @@ var AceEditor = (function(mode, elmId) {
             });
         });
         vim.defineEx("wq", "wq", function(cm, input) {
-            Front.contentCommand({
-                action: 'ace_editor_saved',
-                data: self._getValue()
-            });
-            Front.hidePopup();
+            self.exit(self._getValue());
             // tell vim editor that command is done
             self.state.cm.signal('vim-command-done', '')
         });
         vim.map('<CR>', ':wq', 'normal')
         vim.defineEx("quit", "q", function(cm, input) {
-            Front.hidePopup();
+            self.exit();
             self.state.cm.signal('vim-command-done', '')
         });
         AceVimMappings.forEach(function(a) {

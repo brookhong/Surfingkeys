@@ -90,9 +90,13 @@ var Mode = (function() {
                 sl = mode_stack[0].name;
             }
             if (window !== top) {
-                var pathname = window.location.pathname.split('/');
-                if (pathname.length) {
-                    sl += " - frame: " + pathname[pathname.length - 1]
+                if (chrome.extension.getURL('').indexOf(window.location.origin) === 0) {
+                    sl += "✩";
+                } else {
+                    var pathname = window.location.pathname.split('/');
+                    if (pathname.length) {
+                        sl += " - frame: " + pathname[pathname.length - 1]
+                    }
                 }
             }
             Front.showStatus(0, sl);
@@ -367,12 +371,14 @@ var Normal = (function(mode) {
     var self = $.extend({name: "Normal", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        if (isEditable(event.target)) {
-            Insert.enter();
-        } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             if (self.finish()) {
                 event.sk_stopPropagation = true;
+            } else if (isEditable(event.target)) {
+                document.activeElement.blur();
             }
+        } else if (isEditable(event.target)) {
+            Insert.enter();
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist(window.location.origin);
             event.sk_stopPropagation = true;
@@ -382,6 +388,9 @@ var Normal = (function(mode) {
     });
     self.addEventListener('blur', function(event) {
         self.scrollOptions[5] = false;
+    });
+    self.addEventListener('focus', function(evt) {
+        Mode.showStatus();
     });
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
