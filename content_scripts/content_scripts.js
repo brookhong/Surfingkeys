@@ -441,7 +441,7 @@ runtime.on('settingsUpdated', function(response) {
         var disabled = checkBlackList(rs);
         // only toggle Disabled mode when blacklist is updated
         if (disabled) {
-            Disabled.enter();
+            Disabled.enter(0, true);
         } else {
             Disabled.exit();
         }
@@ -474,10 +474,10 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
 
         var disabled = checkBlackList(rs);
         if (disabled) {
-            Disabled.enter();
+            Disabled.enter(0, true);
         } else {
             document.addEventListener('DOMContentLoaded', function(e) {
-                GetBackFocus.enter();
+                GetBackFocus.enter(0, true);
             });
         }
 

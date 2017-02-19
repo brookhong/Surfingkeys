@@ -234,6 +234,8 @@ var Hints = (function(mode) {
     }
 
     function createHintsForClick(cssSelector, attrs) {
+        self.statusLine = "Hints to click";
+
         attrs = $.extend({
             active: true,
             tabbed: false,
@@ -265,6 +267,8 @@ var Hints = (function(mode) {
     }
 
     function createHintsForTextNode() {
+
+        self.statusLine = "Hints to select text";
 
         var elements = $(getTextNodes(document.body, /./, 2));
         elements = elements.filterInvisible();

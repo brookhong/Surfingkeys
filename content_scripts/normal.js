@@ -51,7 +51,7 @@ var Mode = (function() {
         });
     }
 
-    self.enter = function(priority) {
+    self.enter = function(priority, reentrant) {
         // we need clear the modes stack first to make sure eventListeners of this mode added at first.
         popModes(mode_stack);
 
@@ -63,7 +63,7 @@ var Mode = (function() {
         if (pos === -1) {
             // push this mode into stack
             mode_stack.unshift(this);
-        } else if (pos > 0) {
+        } else if (pos > 0 && !reentrant) {
             // pop up all the modes over this
             // mode_stack = mode_stack.slice(pos);
             var modeList = Mode.stack().map(function(u) { return u.name; }).join(',');
@@ -84,7 +84,13 @@ var Mode = (function() {
     };
 
     self.showModeStatus = function() {
-        Front.showStatus(4, mode_stack[0].statusLine || mode_stack[0].name);
+        if (mode_stack.length) {
+            var sl = mode_stack[0].statusLine;
+            if (sl === undefined) {
+                sl = mode_stack[0].name;
+            }
+            Front.showStatus(4, sl);
+        }
     };
 
     self.exit = function(peek) {
@@ -138,7 +144,11 @@ var Disabled = (function(mode) {
 })(Mode);
 
 var PassThrough = (function(mode) {
-    var self = $.extend({name: "PassThrough", eventListeners: {}}, mode);
+    var self = $.extend({
+        name: "PassThrough",
+        statusLine: "",
+        eventListeners: {}
+    }, mode);
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -378,7 +388,7 @@ var Normal = (function(mode) {
     });
     self.addEventListener('pushState', function(event) {
         Insert.exit();
-        GetBackFocus.enter();
+        GetBackFocus.enter(0, true);
     });
     self.addEventListener('mousedown', function(event) {
         if (isEditable(event.target)) {
