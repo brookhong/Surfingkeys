@@ -63,7 +63,8 @@ var Front = (function(mode) {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
             var id = $(d).attr('id');
-            if (id === "sk_keystroke" || id === "sk_bubble") {
+            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner"];
+            if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
             } else if (id === "sk_status") {

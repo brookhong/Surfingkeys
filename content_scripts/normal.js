@@ -89,6 +89,12 @@ var Mode = (function() {
             if (sl === undefined) {
                 sl = mode_stack[0].name;
             }
+            if (window !== top) {
+                var pathname = window.location.pathname.split('/');
+                if (pathname.length) {
+                    sl += " - frame: " + pathname[pathname.length - 1]
+                }
+            }
             Front.showStatus(0, sl);
         }
     };

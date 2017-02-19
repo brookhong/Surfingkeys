@@ -3,8 +3,8 @@ var StatusBar = (function(ui) {
 
     var timerHide = null;
 
-    // mode: 0,
-    // search: 1,
+    // mode: 0
+    // search: 1
     // searchResult: 2
     self.show = function(n, content, duration) {
         if (timerHide) {
