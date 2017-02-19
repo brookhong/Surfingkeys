@@ -15,7 +15,8 @@ var Visual = (function(mode) {
             }
 
             if (exitf) {
-                Front.showStatus(2, status[state]);
+                self.statusLine = self.name + " - " + status[state];
+                Mode.showStatus();
                 visualf = 0;
             }
         } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
@@ -28,7 +29,8 @@ var Visual = (function(mode) {
                 self.exit();
             }
             state--;
-            Front.showStatus(2, status[state]);
+            self.statusLine = self.name + " - " + status[state];
+            Mode.showStatus();
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             Normal._handleMapKey.call(self, event);
@@ -58,7 +60,8 @@ var Visual = (function(mode) {
                 }
                 break;
         }
-        Front.showStatus(2, status[state]);
+        self.statusLine = self.name + " - " + status[state];
+        Mode.showStatus();
     });
 
     self.mappings = new Trie();
@@ -136,7 +139,7 @@ var Visual = (function(mode) {
             modifySelection();
             if (matches.length) {
                 currentOccurrence = matches.length - 1;
-                Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+                Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
             }
         }
     });
@@ -150,7 +153,7 @@ var Visual = (function(mode) {
             document.body.scrollTop = 0;
             currentOccurrence = 0;
             if (matches.length) {
-                Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+                Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
             }
             modifySelection();
         }
@@ -192,7 +195,8 @@ var Visual = (function(mode) {
         annotation: "Forward to next char.",
         feature_group: 9,
         code: function() {
-            Front.showStatus(2, "Visual forward");
+            self.statusLine = self.name + " - " + status[state] + " - forward";
+            Mode.showStatus();
             visualf = 1;
         }
     });
@@ -200,7 +204,8 @@ var Visual = (function(mode) {
         annotation: "Backward to next char.",
         feature_group: 9,
         code: function() {
-            Front.showStatus(2, "Visual backward");
+            self.statusLine = self.name + " - " + status[state] + " - backward";
+            Mode.showStatus();
             visualf = -1;
         }
     });
@@ -400,7 +405,7 @@ var Visual = (function(mode) {
                 var br = matches[i].getBoundingClientRect();
                 if (br.top > 0 && br.left > 0) {
                     currentOccurrence = i;
-                    Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+                    Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
                     break;
                 }
             }
@@ -416,7 +421,7 @@ var Visual = (function(mode) {
             }
         }
         matches = [];
-        Front.showStatus(3, '');
+        Front.showStatus(2, '');
     }
 
     self.toggle = function() {
@@ -424,14 +429,16 @@ var Visual = (function(mode) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
                 state = (state + 1) % 3;
-                Front.showStatus(2, status[state]);
+                self.statusLine = self.name + " - " + status[state];
+                Mode.showStatus();
                 break;
             case 2:
                 hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
                 self.exit();
                 state = (state + 1) % 3;
-                Front.showStatus(2, status[state]);
+                self.statusLine = self.name + " - " + status[state];
+                Mode.showStatus();
                 break;
             default:
                 Hints.create("TEXT_NODES", function(element, event) {
@@ -440,7 +447,8 @@ var Visual = (function(mode) {
                         showCursor();
                         self.enter();
                         state = (state + 1) % 3;
-                        Front.showStatus(2, status[state]);
+                        self.statusLine = self.name + " - " + status[state];
+                        Mode.showStatus();
                     }, 0);
                 });
                 break;
@@ -476,7 +484,7 @@ var Visual = (function(mode) {
         if (matches.length) {
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
-            Front.showStatus(3, currentOccurrence + 1 + ' / ' + matches.length);
+            Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         } else if (runtime.conf.lastQuery) {
             highlight(new RegExp(runtime.conf.lastQuery, "g" + (caseSensitive ? "" : "i")));
             self.visualEnter(runtime.conf.lastQuery);
@@ -564,11 +572,12 @@ var Visual = (function(mode) {
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
             state = 1;
-            Front.showStatus(2, status[state]);
+            self.statusLine = self.name + " - " + status[state];
+            Mode.showStatus();
             select(matches[currentOccurrence]);
             self.enter();
         } else {
-            Front.showStatus(3, "Pattern not found: {0}".format(query), 1000);
+            Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }
     };
     runtime.on('visualEnter', function(message) {

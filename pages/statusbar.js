@@ -2,6 +2,10 @@ var StatusBar = (function(ui) {
     var self = {};
 
     var timerHide = null;
+
+    // mode: 0,
+    // search: 1,
+    // searchResult: 2
     self.show = function(n, content, duration) {
         if (timerHide) {
             clearTimeout(timerHide);
@@ -36,21 +40,30 @@ var StatusBar = (function(ui) {
     return self;
 })(Front.statusBar);
 
-var Find = (function() {
-    var self = {};
+var Find = (function(mode) {
+    var self = $.extend({
+        name: "Find",
+        statusLine: "/",
+        eventListeners: {}
+    }, mode);
+
+    self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+    }).addEventListener('mousedown', function(event) {
+        event.sk_suppressed = true;
+    });
 
     var input = $('<input id="sk_find" class="sk_theme"/>');
     var historyInc;
     function reset() {
         input.val('');
-        StatusBar.show(0, "");
         StatusBar.show(1, "");
-        PassThrough.exit();
+        self.exit();
     }
 
     self.open = function() {
         historyInc = -1;
-        StatusBar.show(0, "/");
         StatusBar.show(1, input);
         input.on('input', function() {
             Front.visualCommand({
@@ -90,7 +103,7 @@ var Find = (function() {
             }
         };
         input.focus();
-        PassThrough.enter();
+        self.enter();
     };
     return self;
-})();
+})(Mode);

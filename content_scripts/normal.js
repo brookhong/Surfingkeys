@@ -80,16 +80,16 @@ var Mode = (function() {
         // }).join('->');
         // console.log('enter {0}, {1}'.format(this.name, modes));
 
-        self.showModeStatus();
+        self.showStatus();
     };
 
-    self.showModeStatus = function() {
-        if (mode_stack.length) {
+    self.showStatus = function() {
+        if (mode_stack.length && document.hasFocus()) {
             var sl = mode_stack[0].statusLine;
             if (sl === undefined) {
                 sl = mode_stack[0].name;
             }
-            Front.showStatus(4, sl);
+            Front.showStatus(0, sl);
         }
     };
 
@@ -114,7 +114,7 @@ var Mode = (function() {
             // }).join('->');
             // console.log('exit {0}, {1}'.format(this.name, modes));
         }
-        self.showModeStatus();
+        self.showStatus();
     };
 
     self.stack = function() {
