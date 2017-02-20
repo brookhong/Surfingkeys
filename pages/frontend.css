@@ -112,7 +112,7 @@ body {
     display: none;
     position: fixed;
     bottom: 0;
-    left: 70%;
+    right: 10%;
     z-index: 2147483000;
     padding: 4px 8px 0 8px;
     border-radius: 4px 4px 0px 0px;

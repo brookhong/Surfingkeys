@@ -6,6 +6,7 @@ var StatusBar = (function(ui) {
     // mode: 0
     // search: 1
     // searchResult: 2
+    // proxy: 3
     self.show = function(n, content, duration) {
         if (timerHide) {
             clearTimeout(timerHide);
@@ -44,6 +45,7 @@ var Find = (function(mode) {
     var self = $.extend({
         name: "Find",
         statusLine: "/",
+        frontendOnly: true,
         eventListeners: {}
     }, mode);
 

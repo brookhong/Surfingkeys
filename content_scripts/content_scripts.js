@@ -432,6 +432,13 @@ function applySettings(rs) {
             Front.showPopup("Error found in settings: " + delta.error);
         }
     }
+    if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
+        if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
+            Front.showStatus(3, "{0}: {1}".format(rs.proxyMode, rs.proxy));
+        } else {
+            Front.showStatus(3, rs.proxyMode);
+        }
+    }
 }
 
 runtime.on('settingsUpdated', function(response) {

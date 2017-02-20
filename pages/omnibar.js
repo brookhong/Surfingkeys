@@ -18,7 +18,11 @@ function _filterByTitleOrUrl(urls, query) {
 }
 
 var Omnibar = (function(mode, ui) {
-    var self = $.extend({name: "Omnibar", eventListeners: {}}, mode);
+    var self = $.extend({
+        name: "Omnibar",
+        frontendOnly: true,
+        eventListeners: {}
+    }, mode);
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {

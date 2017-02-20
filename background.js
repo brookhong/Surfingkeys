@@ -969,7 +969,7 @@ var Service = (function() {
                 }
                 proxyConf.autoproxy_hosts = Object.keys(hostsDict);
             }
-            _updateSettings({
+            _updateAndPostSettings({
                 autoproxy_hosts: proxyConf.autoproxy_hosts,
                 proxyMode: proxyConf.proxyMode,
                 proxy: proxyConf.proxy

@@ -1,5 +1,10 @@
 var Front = (function(mode) {
-    var self = $.extend({name: "Front", eventListeners: {}, ports: {}}, mode);
+    var self = $.extend({
+        name: "Front",
+        frontendOnly: true,
+        eventListeners: {},
+        ports: {}
+    }, mode);
 
     // this object is implementation of UI, it's UI provider
     self.isProvider = function() {
@@ -63,7 +68,7 @@ var Front = (function(mode) {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
             var id = $(d).attr('id');
-            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner"];
+            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner", "sk_frame"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;

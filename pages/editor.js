@@ -2,7 +2,12 @@ var AceEditor = (function(mode, elmId) {
     $('#' + elmId).css('height', '30%');
     var self = ace.edit(elmId);
     self = $.extend(self, mode);
-    self = $.extend(self, {name: "AceEditor", eventListeners: {}, mode: 'normal'});
+    self = $.extend(self, {
+        name: "AceEditor",
+        frontendOnly: true,
+        eventListeners: {},
+        mode: 'normal'
+    });
 
     var originValue;
     function isDirty() {

@@ -161,10 +161,12 @@ var Front = (function() {
     };
 
     self.showStatus = function (pos, msg, duration) {
-        frontendCommand({
+        // don't createFrontEnd for showStatus, test on issues.xxxxxx.com
+        runtime.command({
             action: "showStatus",
             content: msg,
             duration: duration,
+            toFrontend: true,
             position: pos
         });
     };

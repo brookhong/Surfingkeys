@@ -91,7 +91,9 @@ var Mode = (function() {
             }
             if (window !== top) {
                 if (chrome.extension.getURL('').indexOf(window.location.origin) === 0) {
-                    sl += "✩";
+                    if (!mode_stack[0].frontendOnly) {
+                        sl += "✩";
+                    }
                 } else {
                     var pathname = window.location.pathname.split('/');
                     if (pathname.length) {
@@ -550,7 +552,7 @@ var Normal = (function(mode) {
         return nodes;
     }
 
-    self.changeScrollTarget = function() {
+    self.changeScrollTarget = function(silent) {
         scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
@@ -563,16 +565,18 @@ var Normal = (function(mode) {
                 sn = scrollNodes[scrollIndex];
                 sn.scrollIntoViewIfNeeded();
             }
-            var rc = sn.getBoundingClientRect();
-            Front.highlightElement({
-                duration: 200,
-                rect: {
-                    top: rc.top,
-                    left: rc.left,
-                    width: rc.width,
-                    height: rc.height
-                }
-            });
+            if (!silent) {
+                var rc = sn.getBoundingClientRect();
+                Front.highlightElement({
+                    duration: 200,
+                    rect: {
+                        top: rc.top,
+                        left: rc.left,
+                        width: rc.width,
+                        height: rc.height
+                    }
+                });
+            }
         }
     };
 
@@ -582,6 +586,10 @@ var Normal = (function(mode) {
             return;
         }
         var scrollNode = scrollNodes[scrollIndex];
+        if (!$(scrollNode).is(':visible')) {
+            self.changeScrollTarget(true);
+            scrollNode = scrollNodes[scrollIndex];
+        }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
         }
