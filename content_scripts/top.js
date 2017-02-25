@@ -9,10 +9,6 @@ var TopHook = (function(mode) {
         }, 0);
     });
 
-    self.enter = function(priority) {
-        mode.enter.call(self, priority);
-    };
-
     self.addEventListener('mousedown', function(event) {
         self.exit();
     });

@@ -162,11 +162,10 @@ var Omnibar = (function(mode, ui) {
             self.expandAlias(self.input.val(), '') && event.preventDefault();
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
             self.collapseAlias() && event.preventDefault();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
-            rotateResult(event.shiftKey);
-            event.preventDefault();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
-            rotateResult(event.keyCode === KeyboardUtils.keyCodes.upArrow);
+        } else if (event.keyCode === KeyboardUtils.keyCodes.tab
+            || event.keyCode === KeyboardUtils.keyCodes.upArrow
+            || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
+            rotateResult(event.shiftKey || event.keyCode === KeyboardUtils.keyCodes.upArrow);
             event.preventDefault();
         }
     };

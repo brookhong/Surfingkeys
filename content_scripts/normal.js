@@ -185,7 +185,7 @@ var GetBackFocus = (function(mode) {
     });
 
     self.enter = function() {
-        mode.enter.call(self);
+        mode.enter.apply(self, arguments);
         document.activeElement.blur();
     };
 
