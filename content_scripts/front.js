@@ -153,9 +153,10 @@ var Front = (function() {
         });
     };
 
-    self.showKeystroke = function(key) {
+    self.showKeystroke = function(key, mode) {
         frontendCommand({
             action: 'showKeystroke',
+            mode: mode,
             key: decodeKeystroke(key)
         });
     };

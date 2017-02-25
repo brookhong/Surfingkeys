@@ -1,5 +1,9 @@
 var Visual = (function(mode) {
-    var self = $.extend({name: "Visual", eventListeners: {}, _style: {}}, mode);
+    var self = $.extend({
+        name: "Visual",
+        eventListeners: {},
+        statusLine: "Visual"
+    }, mode);
 
     self.addEventListener('keydown', function(event) {
         if (visualf) {
@@ -568,11 +572,12 @@ var Visual = (function(mode) {
         self.visualEnter(message.query);
     });
 
+    var _style = {};
     self.style = function (element, style) {
-        self._style[element] = style;
+        _style[element] = style;
 
-        cursor.setAttribute('style', self._style.cursor || '');
-        mark_template.setAttribute('style', self._style.marks || '');
+        cursor.setAttribute('style', _style.cursor || '');
+        mark_template.setAttribute('style', _style.marks || '');
     };
     return self;
 })(Mode);

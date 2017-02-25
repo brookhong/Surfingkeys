@@ -68,7 +68,7 @@ var Front = (function(mode) {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
             var id = $(d).attr('id');
-            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner", "sk_frame"];
+            var divNoPointerEvents = ["sk_keystroke", "sk_richKeystroke", "sk_bubble", "sk_banner", "sk_frame"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
@@ -117,6 +117,7 @@ var Front = (function(mode) {
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
+    var _richKeystroke = $('<div id=sk_richKeystroke class=sk_theme>').appendTo('body').hide();
 
     var _display;
     self.hidePopup = function() {
@@ -389,32 +390,59 @@ var Front = (function(mode) {
     runtime.on('writeClipboard', function(message) {
         self.writeClipboard(message.content);
     });
+    var _key = "";
     self.hideKeystroke = function() {
-        keystroke.animate({
-            right: "-2rem"
-        }, 300, function() {
-            keystroke.html("");
-            keystroke.hide();
+        if (runtime.conf.richHintsForKeystroke) {
+            _richKeystroke.hide();
+            _key = "";
             self.flush();
-        });
+        } else {
+            keystroke.animate({
+                right: "-2rem"
+            }, 300, function() {
+                keystroke.html("");
+                keystroke.hide();
+                self.flush();
+            });
+        }
     };
     runtime.on('hideKeystroke', self.hideKeystroke);
-    self.showKeystroke = function(key) {
-        if (keystroke.is(':animated')) {
-            keystroke.finish()
-        }
-        keystroke.show();
-        self.flush();
-        var keys = keystroke.html() + key;
-        keystroke.html(htmlEncode(keys));
-        if (keystroke.css('right') !== '0px') {
-            keystroke.animate({
-                right: 0
-            }, 300);
+    self.showKeystroke = function(key, mode) {
+        if (runtime.conf.richHintsForKeystroke) {
+            _key += key;
+            var root = window[mode].mappings.find(_key);
+            if (root) {
+                var words = root.getWords("", true).sort().map(function(w) {
+                    var meta = root.find(w).meta;
+                    if (meta.annotation || mode !== "Normal") {
+                        return "<div><span class=kbd-span><kbd><span class=pressed>{0}</span>{1}</kbd></span><span class=annotation>{2}</span></div>".format(_key, w, meta.annotation);
+                    } else {
+                        return "";
+                    }
+                }).join("");
+                if (words.length === 0) {
+                    words = _key;
+                }
+                _richKeystroke.html(words).show();
+                self.flush();
+            }
+        } else {
+            if (keystroke.is(':animated')) {
+                keystroke.finish()
+            }
+            keystroke.show();
+            self.flush();
+            var keys = keystroke.html() + key;
+            keystroke.html(htmlEncode(keys));
+            if (keystroke.css('right') !== '0px') {
+                keystroke.animate({
+                    right: 0
+                }, 300);
+            }
         }
     };
     runtime.on('showKeystroke', function(message) {
-        self.showKeystroke(message.key);
+        self.showKeystroke(message.key, message.mode);
     });
 
     self.initPort = function(message) {

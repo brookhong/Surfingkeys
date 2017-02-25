@@ -45,7 +45,7 @@ var Hints = (function(mode) {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
         style = $("<style></style>"),
-        holder = $('<div id=sk_hints/>');
+        holder = $('<div id=sk_hints style="display: block; opacity: 1;"/>');
     self.characters = 'asdfgqwertzxcvb';
     self.scrollKeys = '0jkhlG$';
     var _lastCreateAttrs = {},

@@ -33,6 +33,8 @@ TopHook.enter(9999);
 var frontendFrame = (function() {
     var self = {};
     var uiHost = document.createElement("div");
+    uiHost.style.display = "block";
+    uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
     uiHost.createShadowRoot();

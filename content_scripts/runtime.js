@@ -15,7 +15,9 @@ var runtime = window.runtime || (function() {
             prevLinkRegex: /((<<|prev(ious)?)+)/i,
             hintAlign: "center",
             defaultSearchEngine: "g",
+            showModeStatus: true,
             showProxyInStatusBar: true,
+            richHintsForKeystroke: true,
             blacklistPattern: undefined,
             lastQuery: ""
         },

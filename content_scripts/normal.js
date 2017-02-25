@@ -84,14 +84,15 @@ var Mode = (function() {
     };
 
     self.showStatus = function() {
-        if (mode_stack.length && document.hasFocus()) {
-            var sl = mode_stack[0].statusLine;
+        if (document.hasFocus() && mode_stack.length) {
+            var cm = mode_stack[0];
+            var sl = cm.statusLine;
             if (sl === undefined) {
-                sl = mode_stack[0].name;
+                sl = runtime.conf.showModeStatus ? cm.name :  "";
             }
-            if (window !== top) {
+            if (sl !== "" && window !== top) {
                 if (chrome.extension.getURL('').indexOf(window.location.origin) === 0) {
-                    if (!mode_stack[0].frontendOnly) {
+                    if (!cm.frontendOnly) {
                         sl += "✩";
                     }
                 } else {
@@ -656,7 +657,7 @@ var Normal = (function(mode) {
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
-            Front.showKeystroke(key);
+            Front.showKeystroke(key, this.name);
             event.sk_stopPropagation = true;
         } else {
             var last = this.map_node;
@@ -670,7 +671,7 @@ var Normal = (function(mode) {
                     if (code.length) {
                         // bound function needs arguments
                         this.pendingMap = code;
-                        Front.showKeystroke(key);
+                        Front.showKeystroke(key, this.name);
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
@@ -683,7 +684,7 @@ var Normal = (function(mode) {
                         }, 0);
                     }
                 } else {
-                    Front.showKeystroke(key);
+                    Front.showKeystroke(key, this.name);
                 }
                 event.sk_stopPropagation = true;
             }

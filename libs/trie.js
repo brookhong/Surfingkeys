@@ -64,8 +64,8 @@ var Trie = (function() {
             return found;
         },
 
-        getWords: function(prefix) {
-            var ret = [], prefix = (prefix || "") + (this.stem || "");
+        getWords: function(prefix, withoutStem) {
+            var ret = [], prefix = (prefix || "") + (withoutStem ? "" : (this.stem || ""));
             if (this.hasOwnProperty('meta')) {
                 ret.push(prefix);
             }

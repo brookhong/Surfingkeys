@@ -564,6 +564,9 @@ For example,
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
 | Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
+| showModeStatus | true | Whether always to show mode status. |
+| showProxyInStatusBar | true | Whether to show proxy info in status bar. |
+| richHintsForKeystroke | true | Whether to show rich hints for keystroke. |
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
 | settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
 | settings.omnibarMaxResults | 20 | How many results will be listed out for Omnibar. |
