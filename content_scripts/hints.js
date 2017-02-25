@@ -291,9 +291,11 @@ var Hints = (function(mode) {
         _lastCreateAttrs = attrs;
 
         var start = new Date().getTime();
-        if (createHints(cssSelector, attrs)) {
+        if (createHints(cssSelector, attrs) > 1) {
             self.statusLine += " - " + (new Date().getTime() - start) + "ms";
             self.enter();
+        } else {
+            handleHint();
         }
     };
 

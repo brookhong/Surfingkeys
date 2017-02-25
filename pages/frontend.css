@@ -140,7 +140,7 @@ body {
     text-align: right;
     display: inline-block;
 }
-#sk_richKeystroke kbd>.pressed {
+#sk_richKeystroke kbd>.candidates {
     color: #de0606;
     font-weight: bold;
 }

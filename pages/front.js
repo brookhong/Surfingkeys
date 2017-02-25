@@ -415,7 +415,7 @@ var Front = (function(mode) {
                 var words = root.getWords("", true).sort().map(function(w) {
                     var meta = root.find(w).meta;
                     if (meta.annotation || mode !== "Normal") {
-                        return "<div><span class=kbd-span><kbd><span class=pressed>{0}</span>{1}</kbd></span><span class=annotation>{2}</span></div>".format(_key, w, meta.annotation);
+                        return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, meta.annotation);
                     } else {
                         return "";
                     }

@@ -13,7 +13,6 @@ var Mode = (function() {
         if (event.sk_stopPropagation) {
             event.stopImmediatePropagation();
             event.preventDefault();
-            this.stopKeyupPropagation = true;
         }
     };
 
@@ -23,12 +22,6 @@ var Mode = (function() {
         this.eventListeners[evt] = function(event) {
             if (event.type === "keydown" && !event.hasOwnProperty('sk_keyName')) {
                 event.sk_keyName = KeyboardUtils.getKeyChar(event);
-            }
-            if (event.type === "keyup" && thisMode.stopKeyupPropagation) {
-                event.stopImmediatePropagation();
-                event.sk_suppressed = thisMode.suppressKeyup;
-                thisMode.suppressKeyup = false;
-                thisMode.stopKeyupPropagation = false;
             }
 
             if (!event.sk_suppressed) {

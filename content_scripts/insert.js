@@ -155,6 +155,7 @@ var Insert = (function(mode) {
         _emojiDiv.find(">div:nth({0})".format(ci)).addClass("selected");
     }
 
+    var _suppressKeyup = false;
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
@@ -166,7 +167,7 @@ var Insert = (function(mode) {
                 || event.keyCode === KeyboardUtils.keyCodes.upArrow
                 || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
                 rotateResult(event.shiftKey || event.keyCode === KeyboardUtils.keyCodes.upArrow);
-                self.suppressKeyup = true;
+                _suppressKeyup = true;
                 event.sk_stopPropagation = true;
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var elm = document.activeElement,
@@ -229,13 +230,14 @@ var Insert = (function(mode) {
         }
     });
     self.addEventListener('keyup', function(event) {
-        if (_emojiPending !== -1) {
+        if (!_suppressKeyup && _emojiPending !== -1) {
             if (event.target.selectionStart < _emojiPending || event.target.value[_emojiPending - 1] !== ":") {
                 _emojiDiv.remove();
             } else {
                 listEmoji();
             }
         }
+        _suppressKeyup = false;
     });
     self.addEventListener('focus', function(event) {
         if (!isEditable(event.target)) {
