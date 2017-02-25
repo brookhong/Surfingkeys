@@ -119,6 +119,9 @@ body {
     border: 1px solid #777;
     font-size: 12px;
 }
+#sk_status>span {
+    line-height: 16px;
+}
 #sk_find {
     border-style: none;
     outline: none;

@@ -271,22 +271,6 @@ var Visual = (function(mode) {
         return node;
     }
 
-    function getStartPos() {
-        var node = null,
-            offset = 0;
-        if (selection.anchorNode && selection.anchorNode.parentNode && selection.anchorNode.parentNode.className !== "surfingkeys_cursor") {
-            var top = $(selection.anchorNode.parentNode).offset().top;
-            if (top > document.body.scrollTop && top < document.body.scrollTop + window.innerHeight) {
-                node = selection.anchorNode;
-                offset = selection.anchorOffset;
-            }
-        }
-        if (!node) {
-            node = getTextNodeByY(0.3);
-        }
-        return [node, offset];
-    }
-
     function getNearestWord(text, offset) {
         var ret = text;
         var nonWord = /\W/;

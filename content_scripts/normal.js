@@ -495,23 +495,6 @@ var Normal = (function(mode) {
         };
     }
 
-    function hasScroll(el, direction, barSize) {
-        var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
-        var result = el[offset[0]];
-
-        if (result < barSize) {
-            // set scroll offset to barSize, and verify if we can get scroll offset as barSize
-            var originOffset = el[offset[0]];
-            el[offset[0]] = el.getBoundingClientRect()[offset[1]];
-            result = el[offset[0]];
-            el[offset[0]] = originOffset;
-        }
-        return result >= barSize && (
-            el === document.body
-            || $(el).css('overflow-' + direction) === 'auto'
-            || $(el).css('overflow-' + direction) === 'scroll');
-    }
-
     // set scrollIndex to the highest node
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
@@ -847,6 +830,7 @@ var Normal = (function(mode) {
             // hide borders
             var borderStyle = elm.style.borderStyle;
             elm.style.borderStyle = "none";
+            Front.toggleStatus();
 
             var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
             if (elm === document.body) {
@@ -884,6 +868,7 @@ var Normal = (function(mode) {
                 if (lastScrollTop === elm.scrollTop) {
                     if (lastScrollLeft === elm.scrollLeft) {
                         // done
+                        Front.toggleStatus();
                         Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                         // restore overflow
                         elm.style.overflowY = overflowY;

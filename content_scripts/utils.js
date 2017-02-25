@@ -29,6 +29,23 @@ function reportIssue(title, description) {
     Front.showPopup(error);
 }
 
+function hasScroll(el, direction, barSize) {
+    var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
+    var result = el[offset[0]];
+
+    if (result < barSize) {
+        // set scroll offset to barSize, and verify if we can get scroll offset as barSize
+        var originOffset = el[offset[0]];
+        el[offset[0]] = el.getBoundingClientRect()[offset[1]];
+        result = el[offset[0]];
+        el[offset[0]] = originOffset;
+    }
+    return result >= barSize && (
+        el === document.body
+        || $(el).css('overflow-' + direction) === 'auto'
+        || $(el).css('overflow-' + direction) === 'scroll');
+}
+
 function isElementPartiallyInViewport(el) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
@@ -221,18 +238,20 @@ String.prototype.format = function() {
                 } else {
                     character = event.key;
                     if (!character) {
-                        // keep for chrome version below 52
-                        if (event.keyIdentifier.slice(0, 2) !== "U+") {
-                            character = "{0}".format(event.keyIdentifier);
-                        } else {
-                            var keyIdentifier = event.keyIdentifier;
-                            if ((this.platform === "Windows" || this.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
-                                var correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
-                                keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
+                        if (event.keyIdentifier) {
+                            // keep for chrome version below 52
+                            if (event.keyIdentifier.slice(0, 2) !== "U+") {
+                                character = "{0}".format(event.keyIdentifier);
+                            } else {
+                                var keyIdentifier = event.keyIdentifier;
+                                if ((this.platform === "Windows" || this.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
+                                    var correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
+                                    keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
+                                }
+                                var unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
+                                character = String.fromCharCode(parseInt(unicodeKeyInHex));
+                                character = event.shiftKey ? character : character.toLowerCase();
                             }
-                            var unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
-                            character = String.fromCharCode(parseInt(unicodeKeyInHex));
-                            character = event.shiftKey ? character : character.toLowerCase();
                         }
                     } else {
                         if (character.charCodeAt(0) > 127   // Alt-s is ß under Mac

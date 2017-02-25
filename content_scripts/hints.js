@@ -275,7 +275,6 @@ var Hints = (function(mode) {
         if (elements.length > 0) {
             placeHints(elements);
             holder.addClass("hintsForTextNode");
-
         }
 
         return elements.length;
@@ -291,7 +290,9 @@ var Hints = (function(mode) {
         _onHintKey = onHintKey;
         _lastCreateAttrs = attrs;
 
+        var start = new Date().getTime();
         if (createHints(cssSelector, attrs)) {
+            self.statusLine += " - " + (new Date().getTime() - start) + "ms";
             self.enter();
         }
     };

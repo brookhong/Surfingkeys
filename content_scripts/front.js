@@ -170,6 +170,12 @@ var Front = (function() {
             position: pos
         });
     };
+    self.toggleStatus = function () {
+        runtime.command({
+            action: "toggleStatus",
+            toFrontend: true
+        });
+    };
 
     runtime.on('ace_editor_saved', function(response) {
         if (response.data !== undefined) {

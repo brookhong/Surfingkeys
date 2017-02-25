@@ -352,6 +352,10 @@ var Front = (function(mode) {
         self.showStatus(message.position, message.content, message.duration);
     });
 
+    runtime.on('toggleStatus', function(message) {
+        self.statusBar.toggle();
+    });
+
     var clipboard_holder = $('<textarea id=sk_clipboard/>');
     clipboard_holder = clipboard_holder[0];
     self.getContentFromClipboard = function(cb) {
