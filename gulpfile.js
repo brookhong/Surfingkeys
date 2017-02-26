@@ -4,6 +4,7 @@ var gulp = require('gulp'),
     clean = require('gulp-clean'),
     zip = require('gulp-zip'),
     gulpUtil = require('gulp-util'),
+    babel = require('gulp-babel'),
     gp_uglify = require('gulp-uglify');
 
 gulp.task('clean', function () {
@@ -33,6 +34,7 @@ gulp.task('build_common_content_min', ['clean'], function() {
         "content_scripts/hints.js",
     ])
     .pipe(gp_concat('common_content.min.js'))
+    .pipe(babel({presets: ['es2015']}))
     .pipe(gp_uglify().on('error', gulpUtil.log))
     .pipe(gulp.dest('dist/content_scripts'));
 });
