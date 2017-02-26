@@ -55,6 +55,7 @@
             "content_scripts/debug_utils.js",
             "content_scripts/runtime.js",
             "content_scripts/normal.js",
+            "content_scripts/insert.js",
             "content_scripts/visual.js",
             "content_scripts/hints.js",
             // endbuild
@@ -75,6 +76,7 @@
         "all_frames": false
     }],
     "web_accessible_resources": [
+        "pages/emoji.tsv",
         "pages/frontend.html",
         "pages/shadow.css",
         "pages/default.css"

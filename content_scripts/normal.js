@@ -9,20 +9,31 @@ var Mode = (function() {
         return (-1 !== self.specialKeys[specialKey].indexOf(decodeKeystroke(keyToCheck)));
     };
 
+    self.postHandler = function(event) {
+        if (event.sk_stopPropagation) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            this.stopKeyupPropagation = true;
+        }
+    };
+
     self.addEventListener = function(evt, handler) {
-        var mode_name = this.name;
+        var thisMode = this;
+
         this.eventListeners[evt] = function(event) {
             if (event.type === "keydown" && !event.hasOwnProperty('sk_keyName')) {
                 event.sk_keyName = KeyboardUtils.getKeyChar(event);
             }
+            if (event.type === "keyup" && thisMode.stopKeyupPropagation) {
+                event.stopImmediatePropagation();
+                event.sk_suppressed = thisMode.suppressKeyup;
+                thisMode.suppressKeyup = false;
+                thisMode.stopKeyupPropagation = false;
+            }
 
-            if (!event.hasOwnProperty('sk_suppressed')) {
+            if (!event.sk_suppressed) {
                 handler(event);
-                if (event.sk_stopPropagation) {
-                    event.stopImmediatePropagation();
-                    event.preventDefault();
-                    this.stopKeyupPropagation = true;
-                }
+                thisMode.postHandler(event);
             }
         };
         if (this.name !== "Disabled" && !Disabled.eventListeners.hasOwnProperty(evt)) {
@@ -200,176 +211,6 @@ var GetBackFocus = (function(mode) {
     return self;
 })(Mode);
 
-var Insert = (function(mode) {
-    var self = $.extend({name: "Insert", eventListeners: {}}, mode);
-
-    self.mappings = new Trie();
-    self.map_node = self.mappings;
-    self.mappings.add(encodeKeystroke("<Ctrl-e>"), {
-        annotation: "Move the cursor to the end of the line",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            element.setSelectionRange(element.value.length, element.value.length);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Ctrl-f>"), {
-        annotation: "Move the cursor to the beginning of the line",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            element.setSelectionRange(0, 0);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Ctrl-u>"), {
-        annotation: "Delete all entered characters before the cursor",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            element.value = element.value.substr(element.selectionStart);
-            element.setSelectionRange(0, 0);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Alt-b>"), {
-        annotation: "Move the cursor Backward 1 word",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            var pos = nextNonWord(element.value, -1, element.selectionStart);
-            element.setSelectionRange(pos, pos);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Alt-f>"), {
-        annotation: "Move the cursor Forward 1 word",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            var pos = nextNonWord(element.value, 1, element.selectionStart);
-            element.setSelectionRange(pos, pos);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Alt-w>"), {
-        annotation: "Delete a word backwards",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            var pos = deleteNextWord(element.value, -1, element.selectionStart);
-            element.value = pos[0];
-            element.setSelectionRange(pos[1], pos[1]);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Alt-d>"), {
-        annotation: "Delete a word forwards",
-        feature_group: 15,
-        code: function() {
-            var element = document.activeElement;
-            var pos = deleteNextWord(element.value, 1, element.selectionStart);
-            element.value = pos[0];
-            element.setSelectionRange(pos[1], pos[1]);
-        }
-    });
-    self.mappings.add(encodeKeystroke("<Esc>"), {
-        annotation: "Exit insert mode.",
-        feature_group: 15,
-        code: function() {
-            document.activeElement.blur();
-            self.exit();
-        }
-    });
-
-    self.addEventListener('keydown', function(event) {
-        // prevent this event to be handled by Surfingkeys' other listeners
-        event.sk_suppressed = true;
-        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-            document.activeElement.blur();
-            self.exit();
-            event.sk_stopPropagation = true;
-        } else if (!isEditable(event.target)) {
-            self.exit();
-        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {
-            // leave time 300ms for origin event handler of the input widget
-            setTimeout(function() {
-                if (document.activeElement === event.target) {
-                    event.target.blur();
-                }
-                self.exit();
-            }, 300);
-        } else if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event, function(last) {
-                // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
-                // such as, to insert `,m` in case of mapkey `,,` defined.
-                var pw = last.getPrefixWord();
-                if (pw) {
-                    var elm = document.activeElement, str = elm.value, pos = elm.selectionStart;
-                    if (str !== undefined && pos !== undefined) {
-                        elm.value = str.substr(0, elm.selectionStart) + pw + str.substr(elm.selectionEnd);
-                        pos += pw.length;
-                        elm.setSelectionRange(pos, pos);
-                    } else {
-                        elm = document.getSelection();
-                        var range = elm.getRangeAt(0);
-                        var n = document.createTextNode(pw);
-                        if (elm.type === "Caret") {
-                            str = elm.focusNode.data;
-                            if (str === undefined) {
-                                range.insertNode(n);
-                                elm.setPosition(n, n.length);
-                            } else {
-                                pos = elm.focusOffset;
-                                elm.focusNode.data = str.substr(0, pos) + pw + str.substr(pos);
-                                elm.setPosition(elm.focusNode, pos + pw.length);
-                            }
-                        } else {
-                            range.deleteContents();
-                            range.insertNode(n);
-                            elm.setPosition(n, n.length);
-                        }
-                    }
-                }
-            });
-        }
-    });
-    self.addEventListener('focus', function(event) {
-        if (!isEditable(event.target)) {
-            self.exit();
-        }
-    });
-    self.addEventListener('pushState', function(event) {
-        event.sk_suppressed = true;
-    });
-
-    function nextNonWord(str, dir, cur) {
-        var nonWord = /\W/;
-        for ( cur = cur + dir; ; ) {
-            if (cur < 0) {
-                cur = 0;
-                break;
-            } else if (cur >= str.length) {
-                cur = str.length;
-                break;
-            } else if (nonWord.test(str[cur])) {
-                break;
-            } else {
-                cur = cur + dir;
-            }
-        }
-        return cur;
-    }
-
-    function deleteNextWord(str, dir, cur) {
-        var pos = nextNonWord(str, dir, cur);
-        var s = str;
-        if (pos > cur) {
-            s = str.substr(0, cur) + str.substr(pos + 1);
-        } else if (pos < cur) {
-            s = str.substr(0, pos + 1) + str.substr(cur);
-        }
-        return [s, pos];
-    }
-
-    return self;
-})(Mode);
-
 var Normal = (function(mode) {
     var self = $.extend({name: "Normal", eventListeners: {}}, mode);
 
@@ -398,10 +239,6 @@ var Normal = (function(mode) {
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
             self.scrollOptions[5] = false;
-            if (self.stopKeyupPropagation) {
-                event.stopImmediatePropagation();
-                self.stopKeyupPropagation = false;
-            }
         }, 0);
     });
     self.addEventListener('pushState', function(event) {
@@ -638,21 +475,23 @@ var Normal = (function(mode) {
         return ret;
     };
 
-    self._handleMapKey = function(event, beforeFinish) {
+    self._handleMapKey = function(event, onNoMatched) {
         var finish = self.finish.bind(this),
             key = event.sk_keyName;
         if (this.pendingMap) {
             if (key == "<Esc>" || key == "<Ctrl-[>") {
                 finish();
+                event.sk_stopPropagation = true;
             } else {
                 this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
                 var pf = this.pendingMap.bind(this);
+                event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
                 setTimeout(function() {
                     pf(key);
                     finish();
+                    this.postHandler(event);
                 }, 0);
             }
-            event.sk_stopPropagation = true;
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
@@ -663,7 +502,7 @@ var Normal = (function(mode) {
             var last = this.map_node;
             this.map_node = this.map_node.find(key);
             if (!this.map_node) {
-                beforeFinish && beforeFinish(last);
+                onNoMatched && onNoMatched(last);
                 finish();
             } else {
                 if (this.map_node.meta) {
@@ -672,21 +511,25 @@ var Normal = (function(mode) {
                         // bound function needs arguments
                         this.pendingMap = code;
                         Front.showKeystroke(key, this.name);
+                        event.sk_stopPropagation = true;
                     } else {
+                        var thisMode = this;
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
+                        event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
                                 code();
                                 RUNTIME.repeats--;
                             }
                             finish();
+                            thisMode.postHandler(event);
                         }, 0);
                     }
                 } else {
                     Front.showKeystroke(key, this.name);
+                    event.sk_stopPropagation = true;
                 }
-                event.sk_stopPropagation = true;
             }
         }
     };
