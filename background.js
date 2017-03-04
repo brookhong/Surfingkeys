@@ -969,12 +969,14 @@ var Service = (function() {
                 }
                 proxyConf.autoproxy_hosts = Object.keys(hostsDict);
             }
-            _updateAndPostSettings({
+            var diffSet = {
                 autoproxy_hosts: proxyConf.autoproxy_hosts,
                 proxyMode: proxyConf.proxyMode,
                 proxy: proxyConf.proxy
-            });
+            };
+            _updateAndPostSettings(diffSet);
             _applyProxySettings(proxyConf);
+            _response(message, sendResponse, diffSet);
         });
     };
     self.setZoom = function(message, sender, sendResponse) {

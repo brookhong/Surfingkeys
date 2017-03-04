@@ -56,8 +56,15 @@ command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', fun
     return true;
 });
 command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-    RUNTIME('updateProxy', {
+    runtime.command({
+        action: "updateProxy",
         mode: args[0]
+    }, function(rs) {
+        if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
+            Front.showBanner("{0}: {1}".format(rs.proxyMode, rs.proxy), 3000);
+        } else {
+            Front.showBanner(rs.proxyMode, 3000);
+        }
     });
     // return true to close Omnibar for Commands, false to keep Omnibar on
     return true;
