@@ -190,8 +190,7 @@ var Hints = (function(mode) {
     };
 
     function placeHints(elements) {
-        holder.removeClass("hintsForTextNode");
-        holder.show().html('');
+        holder.attr('mode', 'click').show().html('');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
         style.appendTo(holder);
@@ -266,15 +265,45 @@ var Hints = (function(mode) {
         return elements.length;
     }
 
+    function getTextNodePos(node) {
+        var selection = document.getSelection();
+        selection.setBaseAndExtent(node, 0, node, 2)
+        var br = selection.getRangeAt(0).getBoundingClientRect();
+        return {
+            left: br.left,
+            top: br.top
+        };
+    }
+
     function createHintsForTextNode() {
 
         self.statusLine = "Hints to select text";
 
-        var elements = $(getTextNodes(document.body, /./, 2));
-        elements = elements.filterInvisible();
+        var elements = getTextNodes(document.body, /./);
+
+        elements = elements.map(function(e) {
+            var pos = getTextNodePos(e);
+            if (pos.top < 0 || pos.top > window.innerHeight
+                || pos.left < 0 || pos.left > window.innerWidth) {
+                return null;
+            } else {
+                return $('<div/>').css('position', 'fixed').css('top', pos.top).css('left', pos.left)
+                .css('z-index', 9999)
+                .data('z-index', 9999)
+                .data('link', e);
+            }
+        }).filter(function(e) {
+            return e !== null;
+        });
         if (elements.length > 0) {
-            placeHints(elements);
-            holder.addClass("hintsForTextNode");
+            holder.attr('mode', 'text').show().html('');
+            var hintLabels = self.genLabels(elements.length);
+            elements.forEach(function(e, i) {
+                e.data('label', hintLabels[i]).html(hintLabels[i]);
+                holder.append(e);
+            });
+            style.appendTo(holder);
+            holder.appendTo('body');
         }
 
         return elements.length;
