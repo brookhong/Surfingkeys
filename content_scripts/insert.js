@@ -110,8 +110,9 @@ var Insert = (function(mode) {
             _emojiDiv.html(emojiMatched).appendTo('body').show();
             _emojiDiv.find('>div:nth(0)').addClass("selected");
             var br = getCursorPixelPos(input);
+            _emojiDiv.css('position', "fixed");
             _emojiDiv.css('left', br.left);
-            _emojiDiv.css('top', br.top + br.height + 4);
+            _emojiDiv.css('top', br.top + br.height + 4 + document.body.scrollTop);
         }
     }
 
