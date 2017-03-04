@@ -207,6 +207,10 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
     });
 });
 map('<Ctrl-i>', 'I');
+cmap('<ArrowDown>', '<Tab>');
+cmap('<ArrowUp>', '<Shift-Tab>');
+cmap('<Ctrl-n>', '<Tab>');
+cmap('<Ctrl-p>', '<Shift-Tab>');
 mapkey('q', '#1Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
 mapkey('E', '#3Go one tab left', 'RUNTIME("previousTab")');
 mapkey('R', '#3Go one tab right', 'RUNTIME("nextTab")');
