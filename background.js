@@ -920,6 +920,11 @@ var Service = (function() {
             urls: tabURL
         });
     };
+    self.getTopURL = function(message, sender, sendResponse) {
+        _response(message, sendResponse, {
+            url: sender.tab.url
+        });
+    };
 
     function FindProxyForURL(url, host) {
         var lastPos;

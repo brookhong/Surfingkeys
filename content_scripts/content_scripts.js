@@ -102,7 +102,7 @@ function createKeyTarget(code, ag, repeatIgnore) {
 
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
-    if (!options.domain || options.domain.test(window.location.origin)) {
+    shouldWorkFor(options.domain, function() {
         keys = encodeKeystroke(keys);
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
@@ -112,7 +112,7 @@ function _mapkey(mode, keys, annotation, jscode, options) {
         var ag = (!Front.isProvider()) ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
         var keybound = createKeyTarget(jscode, ag, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
-    }
+    });
 }
 
 function mapkey(keys, annotation, jscode, options) {
@@ -127,8 +127,22 @@ function imapkey(keys, annotation, jscode, options) {
     _mapkey(Insert, keys, annotation, jscode, options);
 }
 
+function shouldWorkFor(domain, cb) {
+    if (window.location.href === chrome.extension.getURL('/pages/frontend.html')) {
+        runtime.command({
+            action: "getTopURL"
+        }, function(rs) {
+            if (!domain || domain.test(rs.url)) {
+                cb();
+            }
+        });
+    } else if(!domain || domain.test(window.location.origin)) {
+        cb();
+    }
+}
+
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
             var args = parseCommand(cmdline);
@@ -151,18 +165,18 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
         }
-    }
+    });
 }
 
 function unmap(keystroke, domain) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         keystroke = encodeKeystroke(keystroke);
         Normal.mappings.remove(keystroke);
-    }
+    });
 }
 
 function unmapAllExcept(keystrokes, domain) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         var modes = [Normal, Visual, Insert];
         if (typeof(Omnibar) !== 'undefined') {
             modes.push(Omnibar);
@@ -181,11 +195,11 @@ function unmapAllExcept(keystrokes, domain) {
             mode.mappings = _mappings;
             mode.map_node = _mappings;
         });
-    }
+    });
 }
 
 function imap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         var old_map = Insert.mappings.find(encodeKeystroke(old_keystroke));
         if (old_map) {
             var nks = encodeKeystroke(new_keystroke);
@@ -194,19 +208,34 @@ function imap(new_keystroke, old_keystroke, domain, new_annotation) {
             var meta = $.extend({}, old_map.meta);
             Insert.mappings.add(nks, meta);
         }
-    }
+    });
 }
 
 function iunmap(keystroke, domain) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         Insert.mappings.remove(encodeKeystroke(keystroke));
+    });
+}
+
+function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
+    if (typeof(Omnibar) !== 'undefined') {
+        shouldWorkFor(domain, function() {
+            var old_map = Omnibar.mappings.find(encodeKeystroke(old_keystroke));
+            if (old_map) {
+                var nks = encodeKeystroke(new_keystroke);
+                Omnibar.mappings.remove(nks);
+                // meta.word need to be new
+                var meta = $.extend({}, old_map.meta);
+                Omnibar.mappings.add(nks, meta);
+            }
+        });
     }
 }
 
 function vunmap(keystroke, domain) {
-    if (!domain || domain.test(window.location.origin)) {
+    shouldWorkFor(domain, function() {
         Visual.mappings.remove(encodeKeystroke(keystroke));
-    }
+    });
 }
 
 AceVimMappings = [];
@@ -408,6 +437,13 @@ function applySettings(rs) {
     }
     if (('snippets' in rs) && rs.snippets) {
         var delta = runUserScript(rs.snippets);
+        if (delta.error !== "") {
+            if (window === top) {
+                Front.showPopup("Error found in settings: " + delta.error);
+            } else {
+                console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
+            }
+        }
         if (!jQuery.isEmptyObject(delta.settings)) {
             if ('theme' in delta.settings) {
                 $(document).trigger("surfingkeys:themeChanged", [delta.settings.theme]);
@@ -428,8 +464,6 @@ function applySettings(rs) {
                     settings: delta.settings
                 });
             }
-        } else if (delta.error !== "" && window === top) {
-            Front.showPopup("Error found in settings: " + delta.error);
         }
     }
     if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
