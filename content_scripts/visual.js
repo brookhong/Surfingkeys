@@ -236,6 +236,24 @@ var Visual = (function(mode) {
             }
         }
     });
+    self.mappings.add("q", {
+        annotation: "Translate word under cursor",
+        feature_group: 9,
+        code: function() {
+            httpRequest({
+                url: _translationUrl + Visual.getWordUnderCursor()
+            }, function(res) {
+                var pos = Visual.getCursorPos();
+                Front.showBubble(pos, _parseTranslation(res));
+            });
+        }
+    });
+
+    var _translationUrl, _parseTranslation;
+    self.setTranslationService = function(url, cb) {
+        _translationUrl = url;
+        _parseTranslation = cb;
+    };
 
     var selection = document.getSelection(),
         caseSensitive = false,
@@ -318,8 +336,12 @@ var Visual = (function(mode) {
         if (lastPos) {
             lastPos.normalize();
         }
+        $(document).trigger("surfingkeys:cursorHidden");
         return lastPos;
     }
+    $(document).on('surfingkeys:cursorHidden', function() {
+        Front.hideBubble();
+    });
 
     function showCursor() {
         var ret = false;
@@ -463,7 +485,7 @@ var Visual = (function(mode) {
 
     self.getWordUnderCursor = function() {
         var word = selection.toString();
-        if (word.length === 0) {
+        if (word.length === 0 && cursor.parentElement) {
             var pe = cursor.parentElement;
             if (pe.tagName === "SURFINGKEYS_MARK") {
                 pe = pe.parentElement;
@@ -474,6 +496,16 @@ var Visual = (function(mode) {
             word = getNearestWord(pe.innerText, pos);
         }
         return word;
+    };
+
+    self.getCursorPos = function() {
+        var br = cursor.getBoundingClientRect();
+        return {
+            left: br.left,
+            top: br.top,
+            height: br.height,
+            width: br.width
+        };
     };
 
     self.next = function(backward) {

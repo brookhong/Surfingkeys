@@ -115,7 +115,7 @@ var Front = (function(mode) {
     var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body').hide();
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
-    $("<div class=sk_arrow>").html("<div class=sk_arrowdown></div><div class=sk_arrowdown_inner></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
+    $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
     var _richKeystroke = $('<div id=sk_richKeystroke class=sk_theme>').appendTo('body').hide();
 
@@ -326,7 +326,7 @@ var Front = (function(mode) {
         self.flush();
         var w = _bubble.width(),
             h = _bubble.height();
-        var left = [pos.left - w / 2, w / 2];
+        var left = [pos.left - 11 - w / 2, w / 2];
         if (left[0] < 0) {
             left[1] += left[0];
             left[0] = 0;
@@ -334,8 +334,17 @@ var Front = (function(mode) {
             left[1] += left[0] - window.innerWidth + w;
             left[0] = window.innerWidth - w;
         }
-        _bubble.find('div.sk_arrow').css('left', left[1]);
-        _bubble.css('top', pos.top - h - 12).css('left', left[0]);
+        var arrow = _bubble.find('div.sk_arrow');
+        if (pos.top - h - 12 >= 0) {
+            arrow.attr('dir', 'down');
+            arrow.css('top', '100%');
+            _bubble.css('top', pos.top - h - pos.height - 12).css('left', left[0]);
+        } else {
+            arrow.attr('dir', 'up');
+            arrow.css('top', -12);
+            _bubble.css('top', pos.top + pos.height + 12).css('left', left[0]);
+        }
+        arrow.css('left', left[1]);
     });
     self.hideBubble = function() {
         _bubble.hide();

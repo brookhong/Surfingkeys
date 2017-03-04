@@ -221,6 +221,19 @@ mapkey('t', '#8Open a URL', 'Front.openOmnibar({type: "URLs", extra: "getAllSite
 mapkey('go', '#8Open a URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false})');
 mapkey('ox', '#8Open recently closed URL', 'Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
 mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getTabURLs"})');
+function renderShanbay(res) {
+    var exp = res.msg;
+    if (res.data.definition) {
+        var tmp = [];
+        for (var reg in res.data.pronunciations) {
+            tmp.push('[{0}] {1}'.format(reg, res.data.pronunciations[reg]));
+            tmp.push('<audio src="{0}" controls></audio>'.format(res.data[reg+'_audio']));
+        }
+        tmp.push(res.data.definition);
+        exp = '<pre>{0}</pre>'.format(tmp.join('\n'));
+    }
+    return exp;
+}
 mapkey('Q', '#8Open omnibar for word translation', function() {
     Front.openOmniquery({
         url: "https://api.shanbay.com/bdc/search/?word=",
@@ -234,19 +247,13 @@ mapkey('Q', '#8Open omnibar for word translation', function() {
         style: "opacity: 0.8;",
         parseResult: function(res) {
             var res = JSON.parse(res.text);
-            if (res.data.definition) {
-                var tmp = [];
-                for (var reg in res.data.pronunciations) {
-                    tmp.push('[{0}] {1}'.format(reg, res.data.pronunciations[reg]));
-                    tmp.push('<audio src="{0}" controls></audio>'.format(res.data[reg+'_audio']));
-                }
-                tmp.push(res.data.definition);
-                return [ '<pre>{0}</pre>'.format(tmp.join('\n')) ];
-            } else {
-                return [ res.msg ];
-            }
+            return [ renderShanbay(res) ];
         }
     });
+});
+Visual.setTranslationService("https://api.shanbay.com/bdc/search/?word=", function(res) {
+    var res = JSON.parse(res.text);
+    return renderShanbay(res);
 });
 mapkey('b', '#8Open a bookmark', 'Front.openOmnibar(({type: "Bookmarks"}))');
 mapkey('ab', '#8Bookmark current page to selected folder', function() {

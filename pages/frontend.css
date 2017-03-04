@@ -330,23 +330,34 @@ div.sk_tab_hint {
 #sk_bubble * {
     color: #000 !important;
 }
-div.sk_arrowdown {
+div.sk_arrow>div:nth-of-type(1) {
     left: 0;
     position: absolute;
     width: 0;
     border-left: 12px solid transparent;
     border-right: 12px solid transparent;
-    border-top: 12px solid #999;
     background: transparent;
 }
-div.sk_arrowdown_inner {
+div.sk_arrow[dir=down]>div:nth-of-type(1) {
+    border-top: 12px solid #999;
+}
+div.sk_arrow[dir=up]>div:nth-of-type(1) {
+    border-bottom: 12px solid #999;
+}
+div.sk_arrow>div:nth-of-type(2) {
     left: 2px;
     position: absolute;
     width: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid #ffd;
     background: transparent;
+}
+div.sk_arrow[dir=down]>div:nth-of-type(2) {
+    border-top: 10px solid #ffd;
+}
+div.sk_arrow[dir=up]>div:nth-of-type(2) {
+    top: 2px;
+    border-bottom: 10px solid #ffd;
 }
 .ace_editor.ace_autocomplete {
     z-index: 2147483300 !important;
