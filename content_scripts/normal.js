@@ -208,14 +208,13 @@ var Normal = (function(mode) {
     var self = $.extend({name: "Normal", eventListeners: {}}, mode);
 
     self.addEventListener('keydown', function(event) {
-        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-            if (self.finish()) {
-                event.sk_stopPropagation = true;
-            } else if (isEditable(event.target)) {
+        if (isEditable(event.target)) {
+            if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 document.activeElement.blur();
+                Insert.exit();
+            } else {
+                Insert.enter();
             }
-        } else if (isEditable(event.target)) {
-            Insert.enter();
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist(window.location.origin);
             event.sk_stopPropagation = true;
@@ -454,14 +453,14 @@ var Normal = (function(mode) {
         RUNTIME('nextFrame');
     };
 
-    self.finish = function() {
+    function _finish(mode) {
         var ret = false;
-        if (this.map_node !== this.mappings || this.pendingMap != null || this.repeats) {
-            this.map_node = this.mappings;
-            this.pendingMap = null;
+        if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
+            mode.map_node = mode.mappings;
+            mode.pendingMap = null;
             Front.hideKeystroke();
-            if (this.repeats) {
-                this.repeats = "";
+            if (mode.repeats) {
+                mode.repeats = "";
             }
             ret = true;
         }
@@ -469,22 +468,20 @@ var Normal = (function(mode) {
     };
 
     self._handleMapKey = function(event, onNoMatched) {
-        var finish = self.finish.bind(this),
+        var thisMode = this,
             key = event.sk_keyName;
-        if (this.pendingMap) {
-            if (key == "<Esc>" || key == "<Ctrl-[>") {
-                finish();
-                event.sk_stopPropagation = true;
-            } else {
-                this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
-                var pf = this.pendingMap.bind(this);
-                event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
-                setTimeout(function() {
-                    pf(key);
-                    finish();
-                    this.postHandler(event);
-                }, 0);
-            }
+        if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
+            event.sk_stopPropagation = true;
+            event.sk_suppressed = true;
+        } else if (this.pendingMap) {
+            this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
+            var pf = this.pendingMap.bind(this);
+            event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
+            setTimeout(function() {
+                pf(key);
+                _finish(thisMode);
+                thisMode.postHandler(event);
+            }, 0);
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
@@ -496,7 +493,8 @@ var Normal = (function(mode) {
             this.map_node = this.map_node.find(key);
             if (!this.map_node) {
                 onNoMatched && onNoMatched(last);
-                finish();
+                event.sk_suppressed = (last !== this.mappings);
+                _finish(this);
             } else {
                 if (this.map_node.meta) {
                     var code = this.map_node.meta.code;
@@ -506,7 +504,6 @@ var Normal = (function(mode) {
                         Front.showKeystroke(key, this.name);
                         event.sk_stopPropagation = true;
                     } else {
-                        var thisMode = this;
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
                         event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
@@ -515,7 +512,7 @@ var Normal = (function(mode) {
                                 code();
                                 RUNTIME.repeats--;
                             }
-                            finish();
+                            _finish(thisMode);
                             thisMode.postHandler(event);
                         }, 0);
                     }

@@ -180,10 +180,6 @@ var Insert = (function(mode) {
                 _emojiPending = -1;
                 event.sk_stopPropagation = true;
             }
-        } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-            document.activeElement.blur();
-            self.exit();
-            event.sk_stopPropagation = true;
         } else if (!isEditable(event.target)) {
             self.exit();
         } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {

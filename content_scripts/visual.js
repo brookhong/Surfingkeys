@@ -23,21 +23,25 @@ var Visual = (function(mode) {
                 Mode.showStatus();
                 visualf = 0;
             }
-        } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-            if (state > 1) {
-                cursor.remove();
-                selection.collapse(selection.anchorNode, selection.anchorOffset);
-                showCursor();
-            } else {
-                self.visualClear();
-                self.exit();
-            }
-            state--;
-            self.statusLine = self.name + " - " + status[state];
-            Mode.showStatus();
-            event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             Normal._handleMapKey.call(self, event);
+            if (event.sk_stopPropagation) {
+                event.sk_suppressed = true;
+            } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+                if (state > 1) {
+                    cursor.remove();
+                    selection.collapse(selection.anchorNode, selection.anchorOffset);
+                    showCursor();
+                } else {
+                    self.visualClear();
+                    self.exit();
+                }
+                state--;
+                self.statusLine = self.name + " - " + status[state];
+                Mode.showStatus();
+                event.sk_stopPropagation = true;
+                event.sk_suppressed = true;
+            }
         }
     });
 
