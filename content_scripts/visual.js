@@ -144,6 +144,7 @@ var Visual = (function(mode) {
         annotation: "forward documentboundary",
         feature_group: 9,
         code: function() {
+            document.body.scrollTop = document.body.scrollHeight;
             modifySelection();
             if (matches.length) {
                 currentOccurrence = matches.length - 1;
@@ -295,7 +296,7 @@ var Visual = (function(mode) {
                 delta++;
                 found = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) || ((offset + delta) < text.length && !nonWord.test(text[offset + delta]));
             }
-            offset = ((offset + delta) < text.length && !nonWord.test(text[offset + delta])) ? (offset + delta) : (offset - delta);
+            offset = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) ? (offset - delta) : (offset + delta);
         }
         if (found) {
             var start = offset,
@@ -461,13 +462,16 @@ var Visual = (function(mode) {
     };
 
     self.getWordUnderCursor = function() {
-        hideCursor();
         var word = selection.toString();
-        if (word.length === 0 && selection.focusNode && selection.focusNode.nodeValue) {
-            word = getNearestWord(selection.focusNode.nodeValue, selection.focusOffset - 1);
-        }
-        if (state > 0) {
-            showCursor();
+        if (word.length === 0) {
+            var pe = cursor.parentElement;
+            if (pe.tagName === "SURFINGKEYS_MARK") {
+                pe = pe.parentElement;
+            }
+            cursor.innerText = "🇿";
+            var pos = pe.innerText.indexOf(cursor.innerText);
+            cursor.innerText = "";
+            word = getNearestWord(pe.innerText, pos);
         }
         return word;
     };
