@@ -49,11 +49,11 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         'pages/github-markdown.html'
     ], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
-        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-k6whJ99igQgqhch6A63JlRxd/4DZ7RT1fWyunKDcZ3U='))
+        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-aGNhu6CROImp/w1iO+ovyGHEBwh6aqkO6VR1TDvzsUs='))
         .pipe(gulp.dest('dist'));
     gulp.src('manifest.json')
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '            "content_scripts/common_content.min.js",'))
-        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-k6whJ99igQgqhch6A63JlRxd/4DZ7RT1fWyunKDcZ3U='))
+        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-aGNhu6CROImp/w1iO+ovyGHEBwh6aqkO6VR1TDvzsUs='))
         .pipe(gulp.dest('dist'));
 });
 

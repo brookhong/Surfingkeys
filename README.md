@@ -49,6 +49,9 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * Use vim editor to edit input on page
 * Dot to repeat previous action
 * `sm` to preview markdown
+* `<Ctrl-Alt-d>` to open diagram tool
+* Emoji completion in insert mode
+* Rich hints for keystroke
 
 ## Quick start
 
@@ -135,6 +138,22 @@ All mappings added with `imapkey` work in this mode.
     imap(',,', "<Esc>");        // press comma twice to leave current input box.
     imap(';;', "<Ctrl-'>");     // press semicolon twice to toggle quote.
 
+#### Emoji completion
+
+When user inputs a colon and 2(set by `settings.startToShowEmoji`) characters such as `:gr` in insert mode, Surfingkeys will try to find matched emoji, and list them out if there are some found.
+
+![emoji](https://cloud.githubusercontent.com/assets/288207/23602453/924ed762-028b-11e7-86f3-bf315c0a2499.gif)
+
+If you want this feature disabled completely, use below settings:
+
+    iunmap(":");
+
+If you'd like emoji suggestions popup as soon as you input colon, use below:
+
+    settings.startToShowEmoji = 0;
+
+[Complete list of Emoji](https://github.com/brookhong/Surfingkeys/blob/master/pages/emoji.tsv)
+
 ### Find
 
 `Find` is not actually a mode, it just another way to enter visual mode. Press `/` to open find bar, which sits at almost the same position with Mode indicator, type something there. All occurrences of your input will be highlighted. Press `Enter` to finish the finding, and you're in `Caret` visual mode now, press `n` to find next, `N` to find previous.
@@ -170,6 +189,11 @@ In omnibar opened with `b`:
 `Ctrl - Shift - <any letter>` to create vim-like global mark
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
+
+`cmap` could be used for Omnibar to change mappings, for example:
+
+    cmap('<Ctrl-n>', '<Tab>');
+    cmap('<Ctrl-p>', '<Shift-Tab>');
 
 ## Search selected with
 
@@ -461,6 +485,8 @@ mapkey in visual mode
 
     imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
+    cmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
+
 | parameter  | explanation |
 |:---------------| :-----|
 |**new_keystroke**               | string, the new keystroke that will be used.|
@@ -585,6 +611,7 @@ For example,
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used. |
 | settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
 | settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
+| settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 
 ### Example of settings.theme, below is to set font size of status bar

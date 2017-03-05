@@ -249,8 +249,8 @@ var Insert = (function(mode) {
                 _suppressKeyup = true;
                 event.sk_stopPropagation = true;
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-                var elm = document.activeElement;
-                emoji = _emojiDiv.find(">div.selected>span").html();
+                var elm = document.activeElement,
+                    emoji = _emojiDiv.find(">div.selected>span").html();
                 if (elm.setSelectionRange !== undefined) {
                     var val = elm.value;
                     elm.value = val.substr(0, _emojiPending - 1) + emoji + val.substr(elm.selectionStart);
