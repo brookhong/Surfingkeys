@@ -8,7 +8,16 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            element.setSelectionRange(element.value.length, element.value.length);
+            if (element.setSelectionRange !== undefined) {
+                element.setSelectionRange(element.value.length, element.value.length);
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                selection.setPosition(selection.focusNode, selection.focusNode.data.length - 1);
+                // blink cursor to bring cursor into view
+                Visual.showCursor();
+                Visual.hideCursor();
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Ctrl-f>"), {
@@ -16,7 +25,16 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            element.setSelectionRange(0, 0);
+            if (element.setSelectionRange !== undefined) {
+                element.setSelectionRange(0, 0);
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                selection.setPosition(selection.focusNode, 0);
+                // blink cursor to bring cursor into view
+                Visual.showCursor();
+                Visual.hideCursor();
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Ctrl-u>"), {
@@ -24,8 +42,14 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            element.value = element.value.substr(element.selectionStart);
-            element.setSelectionRange(0, 0);
+            if (element.setSelectionRange !== undefined) {
+                element.value = element.value.substr(element.selectionStart);
+                element.setSelectionRange(0, 0);
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                selection.focusNode.data = selection.focusNode.data.substr(selection.focusOffset);
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Alt-b>"), {
@@ -33,8 +57,13 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            var pos = nextNonWord(element.value, -1, element.selectionStart);
-            element.setSelectionRange(pos, pos);
+            if (element.setSelectionRange !== undefined) {
+                var pos = nextNonWord(element.value, -1, element.selectionStart);
+                element.setSelectionRange(pos, pos);
+            } else {
+                // for contenteditable div
+                document.getSelection().modify("move", "backward", "word");
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Alt-f>"), {
@@ -42,8 +71,13 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            var pos = nextNonWord(element.value, 1, element.selectionStart);
-            element.setSelectionRange(pos, pos);
+            if (element.setSelectionRange !== undefined) {
+                var pos = nextNonWord(element.value, 1, element.selectionStart);
+                element.setSelectionRange(pos, pos);
+            } else {
+                // for contenteditable div
+                document.getSelection().modify("move", "forward", "word");
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Alt-w>"), {
@@ -51,9 +85,19 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            var pos = deleteNextWord(element.value, -1, element.selectionStart);
-            element.value = pos[0];
-            element.setSelectionRange(pos[1], pos[1]);
+            if (element.setSelectionRange !== undefined) {
+                var pos = deleteNextWord(element.value, -1, element.selectionStart);
+                element.value = pos[0];
+                element.setSelectionRange(pos[1], pos[1]);
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                var p0 = selection.focusOffset;
+                document.getSelection().modify("move", "backward", "word");
+                var v = selection.focusNode.data, p1 = selection.focusOffset;
+                selection.focusNode.data = v.substr(0, p1) + v.substr(p0);
+                selection.setPosition(selection.focusNode, p1);
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Alt-d>"), {
@@ -61,9 +105,19 @@ var Insert = (function(mode) {
         feature_group: 15,
         code: function() {
             var element = document.activeElement;
-            var pos = deleteNextWord(element.value, 1, element.selectionStart);
-            element.value = pos[0];
-            element.setSelectionRange(pos[1], pos[1]);
+            if (element.setSelectionRange !== undefined) {
+                var pos = deleteNextWord(element.value, 1, element.selectionStart);
+                element.value = pos[0];
+                element.setSelectionRange(pos[1], pos[1]);
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                var p0 = selection.focusOffset;
+                document.getSelection().modify("move", "forward", "word");
+                var v = selection.focusNode.data, p1 = selection.focusOffset;
+                selection.focusNode.data = v.substr(0, p0) + v.substr(p1);
+                selection.setPosition(selection.focusNode, p0);
+            }
         }
     });
     self.mappings.add(encodeKeystroke("<Esc>"), {
@@ -84,7 +138,11 @@ var Insert = (function(mode) {
         feature_group: 15,
         keepPropagation: true,
         code: function() {
-            _emojiPending = document.activeElement.selectionStart;
+            if (document.activeElement.selectionStart !== undefined) {
+                _emojiPending = document.activeElement.selectionStart;
+            } else {
+                _emojiPending = document.getSelection().focusOffset;
+            }
             fetch(chrome.extension.getURL("pages/emoji.tsv"))
                 .then(res => Promise.all([res.text()]))
                 .then(res => {
@@ -95,24 +153,42 @@ var Insert = (function(mode) {
     });
 
     function listEmoji() {
-        var input = document.activeElement;
-        var query = input.value.substr(_emojiPending, input.selectionStart - _emojiPending);
-        var emojiMatched = _emojiList.filter(function(emoji) {
-            return emoji.indexOf(query) !== -1;
-        }).slice(0, 5).map(function(emoji) {
-            var ee = emoji.split("\t");
-            return "<div><span>{0}</span>{1}</div>".format(ee[0], ee[1]);
-        }).join("");
-
-        if (emojiMatched === "") {
+        var input = document.activeElement, query = "", isInput = true;
+        if (input.selectionStart !== undefined && input.value !== undefined) {
+            query = input.value.substr(_emojiPending, input.selectionStart - _emojiPending);
+        } else {
+            // for contenteditable div
+            isInput = false;
+            var selection = document.getSelection();
+            query = selection.focusNode.data.substr(_emojiPending, selection.focusOffset - _emojiPending);
+        }
+        if (query.length < runtime.conf.startToShowEmoji || query[0] === " ") {
             _emojiDiv.remove();
         } else {
-            _emojiDiv.html(emojiMatched).appendTo('body').show();
-            _emojiDiv.find('>div:nth(0)').addClass("selected");
-            var br = getCursorPixelPos(input);
-            _emojiDiv.css('position', "fixed");
-            _emojiDiv.css('left', br.left);
-            _emojiDiv.css('top', br.top + br.height + 4 + document.body.scrollTop);
+            var emojiMatched = _emojiList.filter(function(emoji) {
+                return emoji.indexOf(query) !== -1;
+            }).slice(0, 5).map(function(emoji) {
+                var ee = emoji.split("\t");
+                return "<div><span>{0}</span>{1}</div>".format(ee[0], ee[1]);
+            }).join("");
+
+            if (emojiMatched === "") {
+                _emojiDiv.remove();
+            } else {
+                _emojiDiv.html(emojiMatched).appendTo('body').show();
+                _emojiDiv.find('>div:nth(0)').addClass("selected");
+                var br;
+                if (isInput) {
+                    br = getCursorPixelPos(input);
+                } else {
+                    Visual.showCursor();
+                    br = Visual.getCursorPixelPos();
+                    Visual.hideCursor();
+                }
+                _emojiDiv.css('position', "fixed");
+                _emojiDiv.css('left', br.left);
+                _emojiDiv.css('top', br.top + br.height + 4 + document.body.scrollTop);
+            }
         }
     }
 
@@ -127,6 +203,7 @@ var Insert = (function(mode) {
         mask.style.left = (input.clientLeft + br.left) + "px";
         mask.style.top = (input.clientTop + br.top) + "px";
         mask.style.color = "red";
+        mask.style.overflow = "scroll";
         mask.style.visibility = "hidden";
         mask.style.whiteSpace = "pre-wrap";
         mask.style.padding = css.padding;
@@ -142,6 +219,7 @@ var Insert = (function(mode) {
             mask.insertBefore(span, fp);
         }
         document.body.appendChild(mask);
+        span.scrollIntoViewIfNeeded();
 
         br = span.getBoundingClientRect();
 
@@ -171,12 +249,19 @@ var Insert = (function(mode) {
                 _suppressKeyup = true;
                 event.sk_stopPropagation = true;
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-                var elm = document.activeElement,
-                    val = elm.value,
-                    emoji = _emojiDiv.find(">div.selected>span").html();
-                val = val.substr(0, _emojiPending - 1) + emoji + val.substr(elm.selectionStart);
-                elm.value = val;
-                elm.setSelectionRange(_emojiPending, _emojiPending);
+                var elm = document.activeElement;
+                emoji = _emojiDiv.find(">div.selected>span").html();
+                if (elm.setSelectionRange !== undefined) {
+                    var val = elm.value;
+                    elm.value = val.substr(0, _emojiPending - 1) + emoji + val.substr(elm.selectionStart);
+                    elm.setSelectionRange(_emojiPending, _emojiPending);
+                } else {
+                    // for contenteditable div
+                    var selection = document.getSelection(), val = selection.focusNode.data;
+                    selection.focusNode.data = val.substr(0, _emojiPending - 1) + emoji + val.substr(selection.focusOffset);
+                    selection.setPosition(selection.focusNode, _emojiPending);
+                }
+
                 _emojiDiv.remove();
                 _emojiPending = -1;
                 event.sk_stopPropagation = true;
@@ -228,7 +313,17 @@ var Insert = (function(mode) {
     });
     self.addEventListener('keyup', function(event) {
         if (!_suppressKeyup && _emojiPending !== -1) {
-            if (event.target.selectionStart < _emojiPending || event.target.value[_emojiPending - 1] !== ":") {
+            var v, ss;
+            if (event.target.selectionStart !== undefined && event.target.value !== undefined) {
+                v = event.target.value;
+                ss = event.target.selectionStart;
+            } else {
+                // for contenteditable div
+                var selection = document.getSelection();
+                v = selection.focusNode.data;
+                ss = selection.focusOffset;
+            }
+            if (ss < _emojiPending || v[_emojiPending - 1] !== ":") {
                 _emojiDiv.remove();
             } else {
                 listEmoji();

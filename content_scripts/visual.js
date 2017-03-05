@@ -31,7 +31,7 @@ var Visual = (function(mode) {
                 if (state > 1) {
                     cursor.remove();
                     selection.collapse(selection.anchorNode, selection.anchorOffset);
-                    showCursor();
+                    self.showCursor();
                 } else {
                     self.visualClear();
                     self.exit();
@@ -48,23 +48,23 @@ var Visual = (function(mode) {
     self.addEventListener('click', function(event) {
         switch (selection.type) {
             case "None":
-                hideCursor();
+                self.hideCursor();
                 state = 0;
                 break;
             case "Caret":
                 if (state) {
-                    hideCursor();
+                    self.hideCursor();
                     if (state === 0) {
                         state = 1;
                     }
-                    showCursor();
+                    self.showCursor();
                 }
                 break;
             case "Range":
                 if (state) {
-                    hideCursor();
+                    self.hideCursor();
                     state = 2;
-                    showCursor();
+                    self.showCursor();
                 }
                 break;
         }
@@ -175,7 +175,7 @@ var Visual = (function(mode) {
             Front.writeClipboard(selection.toString());
             if (runtime.conf.collapseAfterYank) {
                 selection.setPosition(pos[0], pos[1]);
-                showCursor();
+                self.showCursor();
             }
         }
     });
@@ -268,7 +268,7 @@ var Visual = (function(mode) {
     var visualf = 0, lastF = null;
 
     function visualSeek(dir, chr) {
-        hideCursor();
+        self.hideCursor();
         var lastPosBeforeF = [selection.focusNode, selection.focusOffset];
         if (findNextTextNodeBy(chr, true, (dir === -1))) {
             var fix = (dir === -1) ? -1 : 0;
@@ -283,7 +283,7 @@ var Visual = (function(mode) {
         } else {
             selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
         }
-        showCursor();
+        self.showCursor();
     }
 
     function getTextNodeByY(y) {
@@ -330,7 +330,7 @@ var Visual = (function(mode) {
         return ret;
     }
 
-    function hideCursor() {
+    self.hideCursor = function () {
         var lastPos = cursor.parentNode;
         cursor.remove();
         if (lastPos) {
@@ -338,13 +338,12 @@ var Visual = (function(mode) {
         }
         $(document).trigger("surfingkeys:cursorHidden");
         return lastPos;
-    }
+    };
     $(document).on('surfingkeys:cursorHidden', function() {
         Front.hideBubble();
     });
 
-    function showCursor() {
-        var ret = false;
+    self.showCursor = function () {
         if ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible')) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
@@ -360,39 +359,38 @@ var Visual = (function(mode) {
             if (cr.width === 0 || cr.height === 0) {
                 cursor.style.display = 'inline-block';
             }
+
+            // set content of cursor to enable scrollIntoViewIfNeeded
+            $(cursor).html('|');
+            cursor.scrollIntoViewIfNeeded();
+            $(cursor).html('');
         }
-        return ret;
-    }
+    };
+    self.getCursorPixelPos = function () {
+        return cursor.getBoundingClientRect();
+    };
+
 
     function select(found) {
-        hideCursor();
+        self.hideCursor();
         if (selection.anchorNode && state === 2) {
             selection.extend(found.firstChild, 0);
         } else {
             selection.setPosition(found.firstChild, 0);
         }
-        showCursor();
-        scrollIntoView();
+        self.showCursor();
     }
 
     function modifySelection() {
         var sel = self.map_node.meta.annotation.split(" ");
         var alter = (state === 2) ? "extend" : "move";
-        hideCursor();
+        self.hideCursor();
         var prevPos = [selection.focusNode, selection.focusOffset];
         selection.modify(alter, sel[0], sel[1]);
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
         }
-        showCursor();
-        scrollIntoView();
-    }
-
-    function scrollIntoView() {
-        // set content of cursor to enable scrollIntoViewIfNeeded
-        $(cursor).html('|');
-        cursor.scrollIntoViewIfNeeded();
-        $(cursor).html('');
+        self.showCursor();
     }
 
     function createMatchMark(node, pos, len) {
@@ -428,7 +426,7 @@ var Visual = (function(mode) {
     }
 
     self.visualClear = function() {
-        hideCursor();
+        self.hideCursor();
         var nodes = matches;
         for (var i = 0; i < nodes.length; i++) {
             if (nodes[i].parentNode) {
@@ -448,7 +446,7 @@ var Visual = (function(mode) {
                 Mode.showStatus();
                 break;
             case 2:
-                hideCursor();
+                self.hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
                 self.exit();
                 state = (state + 1) % 3;
@@ -459,7 +457,7 @@ var Visual = (function(mode) {
                 Hints.create("TEXT_NODES", function(element, event) {
                     setTimeout(function() {
                         selection.setPosition(element, 0);
-                        showCursor();
+                        self.showCursor();
                         self.enter();
                         state = (state + 1) % 3;
                         self.statusLine = self.name + " - " + status[state];
@@ -472,14 +470,14 @@ var Visual = (function(mode) {
 
     self.star = function() {
         if (selection.focusNode && selection.focusNode.nodeValue) {
-            hideCursor();
+            self.hideCursor();
             var pos = [selection.focusNode, selection.focusOffset];
             var query = self.getWordUnderCursor();
             runtime.updateHistory('find', query);
             self.visualClear();
             selection.setPosition(pos[0], pos[1]);
             highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
-            showCursor();
+            self.showCursor();
         }
     };
 

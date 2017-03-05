@@ -19,6 +19,7 @@ var runtime = window.runtime || (function() {
             showProxyInStatusBar: false,
             richHintsForKeystroke: true,
             blacklistPattern: undefined,
+            startToShowEmoji: 2,
             lastQuery: ""
         },
         runtime_handlers: {}
