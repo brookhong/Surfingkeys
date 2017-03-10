@@ -175,7 +175,7 @@ var Insert = (function(mode) {
             if (emojiMatched === "") {
                 _emojiDiv.remove();
             } else {
-                _emojiDiv.html(emojiMatched).appendTo('body').show();
+                _emojiDiv.html(emojiMatched).hide().appendTo('body');
                 _emojiDiv.find('>div:nth(0)').addClass("selected");
                 var br;
                 if (isInput) {
@@ -187,7 +187,12 @@ var Insert = (function(mode) {
                 }
                 _emojiDiv.css('position', "fixed");
                 _emojiDiv.css('left', br.left);
-                _emojiDiv.css('top', br.top + br.height + 4 + document.body.scrollTop);
+                var top = br.top + br.height + 4;
+                if (top + _emojiDiv.height() > window.innerHeight) {
+                  top = top - _emojiDiv.height() - 24;
+                }
+                _emojiDiv.css('top', top);
+                _emojiDiv.show();
             }
         }
     }
@@ -201,7 +206,7 @@ var Insert = (function(mode) {
         mask.style.position = "absolute";
         mask.innerHTML = input.value;
         mask.style.left = (input.clientLeft + br.left) + "px";
-        mask.style.top = (input.clientTop + br.top) + "px";
+        mask.style.top = (input.clientTop + br.top + document.body.scrollTop) + "px";
         mask.style.color = "red";
         mask.style.overflow = "scroll";
         mask.style.visibility = "hidden";
