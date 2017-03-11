@@ -24,4 +24,15 @@ mapkey('sm', 'Edit markdown source', function() {
     Front.showEditor(markdown_code, previewMarkdown, 'markdown');
 });
 
+mapkey(';h', 'Toggle this section', function() {
+    var desc = $('div.description');
+    if (desc.is(":visible")) {
+        $('div.content').css('height', "100vh");
+        desc.hide();
+    } else {
+        $('div.content').css('height', "90vh");
+        desc.show();
+    }
+});
+
 map('i', 'sm');

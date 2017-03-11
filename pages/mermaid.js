@@ -44,3 +44,14 @@ mapkey('fh', 'Set handwriting font', function() {
 mapkey('fn', 'Set normal font', function() {
     $('div.mermaid').css('font-family', $('body').css('font-family'));
 });
+
+mapkey(';h', 'Toggle this section', function() {
+    var desc = $('div.description');
+    if (desc.is(":visible")) {
+        $('div.content').css('height', "100vh");
+        desc.hide();
+    } else {
+        $('div.content').css('height', "90vh");
+        desc.show();
+    }
+});
