@@ -269,7 +269,7 @@ var Visual = (function(mode) {
 
     function visualSeek(dir, chr) {
         self.hideCursor();
-        var lastPosBeforeF = [selection.focusNode, selection.focusOffset];
+        var lastPosBeforeF = [selection.anchorNode, selection.anchorOffset];
         if (findNextTextNodeBy(chr, true, (dir === -1))) {
             var fix = (dir === -1) ? -1 : 0;
             if (state === 1) {

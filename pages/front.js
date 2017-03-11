@@ -419,9 +419,9 @@ var Front = (function(mode) {
     self.showKeystroke = function(key, mode) {
         if (runtime.conf.richHintsForKeystroke) {
             _key += key;
-            var root = window[mode].mappings.find(_key);
+            var root = window[mode].mappings.find(_key), words = _key;
             if (root) {
-                var words = root.getWords("", true).sort().map(function(w) {
+                words = root.getWords("", true).sort().map(function(w) {
                     var meta = root.find(w).meta;
                     if (meta.annotation || mode !== "Normal") {
                         return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, meta.annotation);
@@ -432,9 +432,9 @@ var Front = (function(mode) {
                 if (words.length === 0) {
                     words = _key;
                 }
-                _richKeystroke.html(words).show();
-                self.flush();
             }
+            _richKeystroke.html(words).show();
+            self.flush();
         } else {
             if (keystroke.is(':animated')) {
                 keystroke.finish()
