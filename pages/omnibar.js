@@ -215,7 +215,7 @@ var Omnibar = (function(mode, ui) {
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
                 type = "▓";
-                uid = "T" + b.id;
+                uid = "T" + b.windowId + ":" + b.id;
             } else {
                 type = "▤";
             }
@@ -317,9 +317,11 @@ var Omnibar = (function(mode, ui) {
                 type = uid[0], uid = uid.substr(1);
             }
             if (type === 'T') {
+                uid = uid.split(":");
                 runtime.command({
                     action: 'focusTab',
-                    tab_id: parseInt(uid)
+                    window_id: parseInt(uid[0]),
+                    tab_id: parseInt(uid[1])
                 });
             } else if (url && url.length) {
                 runtime.command({

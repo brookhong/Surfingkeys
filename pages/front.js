@@ -49,7 +49,8 @@ var Front = (function(mode) {
                     _tabs.trie = null;
                 } else if (_tabs.trie.meta) {
                     RUNTIME('focusTab', {
-                        tab_id: _tabs.trie.meta
+                        tab_id: _tabs.trie.meta.id,
+                        window_id: _tabs.trie.meta.windowId
                     });
                     self.hidePopup();
                     _tabs.trie = null;
@@ -164,7 +165,7 @@ var Front = (function(mode) {
         var tabstr = "<div class=sk_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
         var items = tabs.forEach(function(t, i) {
             var tab = $(tabstr);
-            _tabs.trie.add(hintLabels[i].toLowerCase(), t.id);
+            _tabs.trie.add(hintLabels[i].toLowerCase(), t);
             tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, htmlEncode(t.title)));
             tab.data('url', t.url);
             tabs_fg.append(tab);

@@ -483,9 +483,7 @@ var Service = (function() {
     };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
-        var queryInfo = message.queryInfo || {
-            windowId: tab.windowId
-        };
+        var queryInfo = message.queryInfo || {};
         chrome.tabs.query(queryInfo, function(tabs) {
             tabs = _filterByTitleOrUrl(tabs, message.query);
             if (message.query && message.query.length) {
@@ -514,9 +512,19 @@ var Service = (function() {
         });
     };
     self.focusTab = function(message, sender, sendResponse) {
-        chrome.tabs.update(message.tab_id, {
-            active: true
-        });
+        if (message.window_id !== undefined && sender.tab.windowId !== message.window_id) {
+            chrome.windows.update(message.window_id, {
+                focused: true
+            }, function() {
+                chrome.tabs.update(message.tab_id, {
+                    active: true
+                });
+            });
+        } else {
+            chrome.tabs.update(message.tab_id, {
+                active: true
+            });
+        }
     };
     self.historyTab = function(message, sender, sendResponse) {
         if (tabHistory.length > 0) {
@@ -1002,7 +1010,14 @@ var Service = (function() {
         } else if (type === 'H') {
             chrome.history.deleteUrl({url: uid}, cb);
         } else if (type === 'T') {
-            chrome.tabs.remove(parseInt(uid), cb);
+            uid = uid.split(":").map(function(u) {
+                return parseInt(u);
+            });
+            chrome.windows.update(uid[0], {
+                focused: true
+            }, function() {
+                chrome.tabs.remove(uid[1], cb);
+            });
         } else if (type === 'M') {
             loadSettings('marks', function(data) {
                 delete data.marks[uid];
