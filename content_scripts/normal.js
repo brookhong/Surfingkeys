@@ -263,12 +263,6 @@ var Normal = (function(mode) {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
-    self.mappings.add(encodeKeystroke("<Alt-s>"), {
-        annotation: "Toggle Surfingkeys for current site",
-        feature_group: 0,
-        code: function() {
-        }
-    });
 
     self.repeats = "";
     self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
