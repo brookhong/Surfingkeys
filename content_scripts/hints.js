@@ -68,7 +68,6 @@ var Hints = (function(mode) {
             Normal.appendKeysForRepeat("Hints", prefix);
             var link = $(matches[0]).data('link');
             _onHintKey(link, event);
-            flashPressedLink(link);
             if (behaviours.multipleHits) {
                 prefix = "";
                 refresh();
@@ -79,22 +78,6 @@ var Hints = (function(mode) {
             hide();
         }
     }
-
-  function flashPressedLink(link) {
-    var rect = link.getBoundingClientRect();
-    var flashElem = document.createElement('div');
-    flashElem.style.position = 'absolute';
-    flashElem.style.boxShadow = '0px 0px 4px 2px #63b2ff';
-    flashElem.style.backgroundColor = 'transparent';
-    flashElem.style.left = (rect.left + document.body.scrollLeft) + 'px';
-    flashElem.style.top = (rect.top + document.body.scrollTop) + 'px';
-    flashElem.style.width = rect.width + 'px';
-    flashElem.style.height = rect.height + 'px';
-    flashElem.style.zIndex = 2140000000;
-    document.body.appendChild(flashElem);
-
-    setTimeout(function () { flashElem.remove(); }, 300);
-  }
 
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
@@ -345,7 +328,20 @@ var Hints = (function(mode) {
         }
     };
 
+    var flashElem = $('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>')[0];
+    function flashPressedLink(link) {
+        var rect = link.getBoundingClientRect();
+        flashElem.style.left = rect.left + 'px';
+        flashElem.style.top = rect.top + 'px';
+        flashElem.style.width = rect.width + 'px';
+        flashElem.style.height = rect.height + 'px';
+        document.body.appendChild(flashElem);
+
+        setTimeout(function () { flashElem.remove(); }, 300);
+    }
+
     self.dispatchMouseClick = function(element, event) {
+        flashPressedLink(element);
         if (isEditable(element)) {
             self.exit();
             Insert.enter();
