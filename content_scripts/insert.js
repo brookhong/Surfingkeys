@@ -169,7 +169,8 @@ var Insert = (function(mode) {
                 return emoji.indexOf(query) !== -1;
             }).slice(0, 5).map(function(emoji) {
                 var ee = emoji.split("\t");
-                return "<div><span>{0}</span>{1}</div>".format(ee[0], ee[1]);
+                var parsedUnicodeEmoji = String.fromCodePoint.apply(null, ee[0].split(','));
+                return "<div><span>{0}</span>{1}</div>".format(parsedUnicodeEmoji, ee[1]);
             }).join("");
 
             if (emojiMatched === "") {
