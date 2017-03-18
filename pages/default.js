@@ -218,6 +218,8 @@ mapkey('<Alt-p>', '#3pin/unpin current tab', 'RUNTIME("togglePinTab")');
 mapkey('<Alt-m>', '#3mute/unmute current tab', 'RUNTIME("muteTab")');
 mapkey('B', '#4Go one tab history back', 'RUNTIME("historyTab", {backward: true})', {repeatIgnore: true});
 mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: false})', {repeatIgnore: true});
+mapkey('gT', '#4Go to first activated tab', 'RUNTIME("historyTab", {index: 0})', {repeatIgnore: true});
+mapkey('gt', '#4Go to last activated tab', 'RUNTIME("historyTab", {index: -1})', {repeatIgnore: true});
 mapkey('S', '#4Go back in history', 'history.go(-1)', {repeatIgnore: true});
 mapkey('D', '#4Go forward in history', 'history.go(1)', {repeatIgnore: true});
 mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
@@ -480,7 +482,7 @@ mapkey(';p', '#7Paste html on current page', function() {
     });
 });
 mapkey(';q', '#14Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
-mapkey('gt', 'Translate selected text with google', function() {
+mapkey(';t', 'Translate selected text with google', function() {
     searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
 });
 

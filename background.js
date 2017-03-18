@@ -529,11 +529,15 @@ var Service = (function() {
     self.historyTab = function(message, sender, sendResponse) {
         if (tabHistory.length > 0) {
             historyTabAction = true;
-            tabHistoryIndex += message.backward ? -1 : 1;
-            if (tabHistoryIndex < 0) {
-                tabHistoryIndex = 0;
-            } else if (tabHistoryIndex >= tabHistory.length) {
-                tabHistoryIndex = tabHistory.length - 1;
+            if (message.hasOwnProperty("index")) {
+                tabHistoryIndex = (parseInt(message.index) + tabHistory.length) % tabHistory.length;
+            } else {
+                tabHistoryIndex += message.backward ? -1 : 1;
+                if (tabHistoryIndex < 0) {
+                    tabHistoryIndex = 0;
+                } else if (tabHistoryIndex >= tabHistory.length) {
+                    tabHistoryIndex = tabHistory.length - 1;
+                }
             }
             var tab_id = tabHistory[tabHistoryIndex];
             chrome.tabs.update(tab_id, {
