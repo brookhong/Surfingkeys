@@ -37,8 +37,7 @@ var Visual = (function(mode) {
                     self.exit();
                 }
                 state--;
-                self.statusLine = self.name + " - " + status[state];
-                Mode.showStatus();
+                _onStateChange();
                 event.sk_stopPropagation = true;
                 event.sk_suppressed = true;
             }
@@ -68,8 +67,7 @@ var Visual = (function(mode) {
                 }
                 break;
         }
-        self.statusLine = self.name + " - " + status[state];
-        Mode.showStatus();
+        _onStateChange();
     });
 
     self.mappings = new Trie();
@@ -121,12 +119,12 @@ var Visual = (function(mode) {
         code: modifySelection
     });
     self.mappings.add("}", {
-        annotation: "forward paragraph",
+        annotation: "forward paragraphboundary",
         feature_group: 9,
         code: modifySelection
     });
     self.mappings.add("{", {
-        annotation: "backward paragraph",
+        annotation: "backward paragraphboundary",
         feature_group: 9,
         code: modifySelection
     });
@@ -167,18 +165,49 @@ var Visual = (function(mode) {
             modifySelection();
         }
     });
-    self.mappings.add("y", {
+    var _units = {
+        w: "word",
+        l: "lineboundary",
+        s: "sentence",
+        p: "paragraphboundary"
+    };
+    function _selectUnit(w) {
+        var unit = _units[w];
+        var pos = [selection.focusNode, selection.focusOffset];
+        selection.modify("move", "forward", unit);
+        if (selection.focusNode !== pos[0]) {
+            selection.setPosition(pos[0], pos[1]);
+        }
+        selection.modify("move", "backward", unit);
+        if (selection.focusNode !== pos[0]) {
+            selection.setPosition(pos[0], pos[1]);
+        }
+        selection.modify("extend", "forward", unit);
+    }
+    var _yankFunctions = [{}, {
+        annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
+        feature_group: 9,
+        code: function(w) {
+            var pos = [selection.focusNode, selection.focusOffset];
+            self.hideCursor();
+            _selectUnit(w);
+            Front.writeClipboard(selection.toString());
+            selection.collapseToStart();
+            selection.setPosition(pos[0], pos[1]);
+            self.showCursor();
+        }
+    }, {
         annotation: "Copy selected text",
         feature_group: 9,
         code: function() {
-            var pos = [selection.anchorNode, selection.anchorOffset];
+            var pos = [selection.focusNode, selection.focusOffset];
             Front.writeClipboard(selection.toString());
             if (runtime.conf.collapseAfterYank) {
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
             }
         }
-    });
+    }];
     self.mappings.add("*", {
         annotation: "Search word under the cursor",
         feature_group: 9,
@@ -246,6 +275,18 @@ var Visual = (function(mode) {
                 var pos = Visual.getCursorPos();
                 Front.showBubble(pos, _parseTranslation(res));
             });
+        }
+    });
+
+    self.mappings.add("V", {
+        annotation: "Select a word(w) or line(l) or sentence(s) or paragraph(p)",
+        feature_group: 9,
+        code: function(w) {
+            self.hideCursor();
+            state = 2;
+            _onStateChange();
+            _selectUnit(w);
+            self.showCursor();
         }
     });
 
@@ -437,21 +478,26 @@ var Visual = (function(mode) {
         Front.showStatus(2, '');
     }
 
+    function _onStateChange() {
+        self.mappings.add("y", _yankFunctions[state]);
+        self.statusLine = self.name + " - " + status[state];
+        Mode.showStatus();
+    }
+    function _updateState() {
+        state = (state + 1) % 3;
+        _onStateChange();
+    }
     self.toggle = function() {
         switch (state) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
-                state = (state + 1) % 3;
-                self.statusLine = self.name + " - " + status[state];
-                Mode.showStatus();
+                _updateState();
                 break;
             case 2:
                 self.hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
                 self.exit();
-                state = (state + 1) % 3;
-                self.statusLine = self.name + " - " + status[state];
-                Mode.showStatus();
+                _updateState();
                 break;
             default:
                 Hints.create("TEXT_NODES", function(element, event) {
@@ -459,9 +505,7 @@ var Visual = (function(mode) {
                         selection.setPosition(element, 0);
                         self.showCursor();
                         self.enter();
-                        state = (state + 1) % 3;
-                        self.statusLine = self.name + " - " + status[state];
-                        Mode.showStatus();
+                        _updateState();
                     }, 0);
                 });
                 break;
@@ -598,8 +642,7 @@ var Visual = (function(mode) {
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
             state = 1;
-            self.statusLine = self.name + " - " + status[state];
-            Mode.showStatus();
+            _onStateChange();
             select(matches[currentOccurrence]);
             self.enter();
         } else {

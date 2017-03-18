@@ -417,6 +417,10 @@ var Front = (function(mode) {
         }
     };
     runtime.on('hideKeystroke', self.hideKeystroke);
+    Visual.mappings.add("y", {
+        annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
+        feature_group: 9
+    });
     self.showKeystroke = function(key, mode) {
         if (runtime.conf.richHintsForKeystroke) {
             _key += key;
