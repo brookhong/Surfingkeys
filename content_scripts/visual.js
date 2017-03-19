@@ -514,14 +514,16 @@ var Visual = (function(mode) {
 
     self.star = function() {
         if (selection.focusNode && selection.focusNode.nodeValue) {
-            self.hideCursor();
-            var pos = [selection.focusNode, selection.focusOffset];
             var query = self.getWordUnderCursor();
-            runtime.updateHistory('find', query);
-            self.visualClear();
-            selection.setPosition(pos[0], pos[1]);
-            highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
-            self.showCursor();
+            if (query.length) {
+                self.hideCursor();
+                var pos = [selection.focusNode, selection.focusOffset];
+                runtime.updateHistory('find', query);
+                self.visualClear();
+                highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+                selection.setPosition(pos[0], pos[1]);
+                self.showCursor();
+            }
         }
     };
 
