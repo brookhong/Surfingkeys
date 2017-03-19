@@ -612,6 +612,23 @@ var Service = (function() {
             });
         });
     };
+
+    function _closeTab(s, n) {
+        chrome.tabs.query({currentWindow: true}, function(tabs) {
+            tabs = tabs.map(function(e) { return e.id; });
+            chrome.tabs.remove(tabs.slice(s.tab.index + (n < 0 ? n : 1),
+                                          s.tab.index + (n < 0 ? 0 : 1 + n)));
+        });
+    };
+
+    self.closeTabLeft  = function(message, sender, senderResponse) { _closeTab(sender, -message.repeats)};
+    self.closeTabRight = function(message, sender, senderResponse) { _closeTab(sender, message.repeats); };
+    self.closeTabsToLeft = function(message, sender, senderResponse) { _closeTab(sender, -sender.tab.index); };
+    self.closeTabsToRight = function(message, sender, senderResponse) {
+        chrome.tabs.query({currentWindow: true},
+                          function(tabs) { _closeTab(sender, tabs.length - sender.tab.index); });
+    };
+
     self.muteTab = function(message, sender, sendResponse) {
         var tab = sender.tab;
         chrome.tabs.update(tab.id, {

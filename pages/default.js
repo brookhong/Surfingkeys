@@ -465,6 +465,10 @@ mapkey('g?', '#4Reload current page without query string(all parts after questio
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
 mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
+mapkey('gxt', 'Close tab on left', 'RUNTIME("closeTabLeft")');
+mapkey('gxT', 'Close tab on right', 'RUNTIME("closeTabRight")');
+mapkey('gx0', 'Close all tabs on left', 'RUNTIME("closeTabsToLeft")');
+mapkey('gx$', 'Close all tabs on right', 'RUNTIME("closeTabsToRight")');
 mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
 mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/github-markdown.html")');
