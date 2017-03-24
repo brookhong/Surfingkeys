@@ -487,6 +487,14 @@ var Visual = (function(mode) {
         state = (state + 1) % 3;
         _onStateChange();
     }
+    self.restore = function() {
+        if (selection.focusNode) {
+            selection.setPosition(selection.focusNode, selection.focusOffset);
+            self.showCursor();
+            self.enter();
+            _updateState();
+        }
+    };
     self.toggle = function() {
         switch (state) {
             case 1:

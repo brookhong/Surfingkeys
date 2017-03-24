@@ -312,6 +312,7 @@ command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
     });
 });
 mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');
+mapkey('V', '#9Restore visual mode', 'Visual.restore()');
 mapkey('/', '#9Find in current page', 'Front.openFinder()');
 mapkey('*', '#9Find selected text in current page', function() {
     Visual.star();

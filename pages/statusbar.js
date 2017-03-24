@@ -83,6 +83,9 @@ var Find = (function(mode) {
         input[0].onkeydown = function(event) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 reset();
+                Front.visualCommand({
+                    action: 'visualClear'
+                });
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.val();
                 reset();
