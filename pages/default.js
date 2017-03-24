@@ -187,6 +187,7 @@ mapkey('G', '#2Scroll to the bottom of the page', 'Normal.scroll("bottom")', {re
 mapkey('0', '#2Scroll all the way to the left', 'Normal.scroll("leftmost")', {repeatIgnore: true});
 mapkey('$', '#2Scroll all the way to the right', 'Normal.scroll("rightmost")', {repeatIgnore: true});
 mapkey('cs', '#2Change scroll target', 'Normal.changeScrollTarget()');
+mapkey('cS', '#2Reset scroll target', 'Normal.resetScrollTarget()');
 mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', 'Hints.create("", Hints.dispatchMouseClick)');
 mapkey('af', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false})');

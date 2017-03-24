@@ -390,6 +390,10 @@ var Normal = (function(mode) {
             }
         }
     };
+    self.resetScrollTarget = function() {
+        scrollNodes = null;
+        initScrollIndex();
+    };
 
     self.scroll = function(type) {
         initScrollIndex();
