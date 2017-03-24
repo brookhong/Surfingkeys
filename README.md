@@ -231,7 +231,7 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 If you prefer to use omnibar always, use below mapping:
 
-    mapkey(' ', 'Choose a tab with omnibar', 'Front.openOmnibar(OpenTabs)');
+    mapkey('<Space>', 'Choose a tab with omnibar', 'Front.openOmnibar({type: "Tabs"})');
 
 which works same as:
 
@@ -555,10 +555,9 @@ works like
     mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
     vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
 
+### remove search alias and its bindings
+
     removeSearchAliasX(alias, search_leader_key, only_this_site_key);
-
-to remove search alias and key bindings to it.
-
 
 ### Omnibar helpers
 
