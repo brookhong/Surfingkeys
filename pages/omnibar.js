@@ -143,11 +143,12 @@ var Omnibar = (function(mode, ui) {
     self.input = ui.find('input');
     self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
-    self.input.on('input', function() {
+
+    function _onIput() {
         lastInput = self.input.val();
         handler.onInput && handler.onInput.call(this);
-    });
-    self.input[0].onkeydown = function(event) {
+    }
+    function _onKeyDown() {
         if (handler && handler.onKeydown) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
@@ -163,7 +164,18 @@ var Omnibar = (function(mode, ui) {
         } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
             self.collapseAlias() && event.preventDefault();
         }
-    };
+    }
+    self.input.on('input', _onIput);
+    self.input.on('keydown', _onKeyDown);
+    self.input.on('compositionstart', function(evt) {
+        self.input.off('input', _onIput);
+        self.input.off('keydown', _onKeyDown);
+    }).on('compositionend', function(evt) {
+        self.input.on('input', _onIput);
+        self.input.on('keydown', _onKeyDown);
+        _onIput();
+    });
+
     self.mappings.add(encodeKeystroke("<Tab>"), {
         annotation: "Forward cycle through the candidates.",
         feature_group: 16,
@@ -256,7 +268,7 @@ var Omnibar = (function(mode, ui) {
      */
     self.listURLs = function(items, showFolder) {
         var sliced = items.slice(0, (runtime.conf.omnibarMaxResults || 20));
-        var query = Omnibar.input.val().trim();
+        var query = self.input.val().trim();
         var rxp = query.length ? (new RegExp(query.replace(/\s+/, "\|"), 'gi')) : null;
         self.listResults(sliced, function(b) {
             var li;
@@ -462,10 +474,10 @@ var OpenBookmarks = (function() {
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId,
-                query: $(this).val()
+                query: Omnibar.input.val()
             }, self.onResponse);
             eaten = true;
-        } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && self.inFolder.length && !$(this).val().length) {
+        } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && self.inFolder.length && !Omnibar.input.val().length) {
             onFolderUp();
             eaten = true;
         } else if (event.ctrlKey && event.shiftKey && KeyboardUtils.isWordChar(event)) {
@@ -483,7 +495,7 @@ var OpenBookmarks = (function() {
         runtime.command({
             action: 'getBookmarks',
             parentId: currentFolderId,
-            query: $(this).val()
+            query: Omnibar.input.val()
         }, self.onResponse);
     };
     self.onResponse = function(response) {
@@ -556,7 +568,7 @@ var AddBookmark = (function() {
     };
 
     self.onInput = function() {
-        var query = $(this).val();
+        var query = Omnibar.input.val();
         var matches = folders.filter(function(b) {
             return b.title.indexOf(query) !== -1;
         });
@@ -595,7 +607,7 @@ var OpenHistory = (function() {
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(cached, $(this).val());
+        var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
         Omnibar.listURLs(filtered, false);
     };
     return self;
@@ -651,7 +663,7 @@ var OpenURLs = (function() {
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var val = $(this).val();
+        var val = Omnibar.input.val();
         var filtered = _filterByTitleOrUrl(cached, val);
         if (filtered.length === 0) {
             Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
@@ -684,7 +696,7 @@ var OpenTabs = (function() {
         self.getResults();
     };
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(cached, $(this).val());
+        var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
         Omnibar.listURLs(filtered, false);
     };
     return self;
@@ -764,7 +776,7 @@ var SearchEngine = (function() {
     };
     self.onInput = function() {
         if (self.suggestionURL) {
-            var val = $(this).val();
+            var val = Omnibar.input.val();
             runtime.command({
                 action: 'request',
                 method: 'get',
