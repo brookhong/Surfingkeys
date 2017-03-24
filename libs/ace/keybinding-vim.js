@@ -1992,6 +1992,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             return vimApi;
         } //{
     function enterVimMode(cm) {
+        vimGlobalState.cm = cm;
         cm.setOption('disableInput', true);
         cm.setOption('showCursorWhenSelecting', false);
         CodeMirror.signal(cm, "vim-mode-change", {
@@ -2739,6 +2740,9 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                         break;
                 }
                 this.unnamedRegister.setText(text, linewise, blockwise);
+                CodeMirror.signal(vimGlobalState.cm, "unnamed-register-set", {
+                    text: text
+                });
                 return;
             }
             var append = isUpperCase(registerName);

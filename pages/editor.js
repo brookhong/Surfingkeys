@@ -183,6 +183,11 @@ var AceEditor = (function(mode, elmId) {
         cm.on('vim-mode-change', function(data) {
             self.mode = data.mode;
         });
+        cm.on('unnamed-register-set', function(data) {
+            var lf = document.activeElement;
+            Front.writeClipboard(data.text);
+            lf.focus();
+        });
         var vim = cm.constructor.Vim;
         vimDeferred.resolve(vim);
         vim.defineEx("write", "w", function(cm, input) {
