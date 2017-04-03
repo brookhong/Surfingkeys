@@ -473,7 +473,7 @@ mapkey('gx0', 'Close all tabs on left', 'RUNTIME("closeTabsToLeft")');
 mapkey('gx$', 'Close all tabs on right', 'RUNTIME("closeTabsToRight")');
 mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
 mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
-mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/github-markdown.html")');
+mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/markdown.html")');
 mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', 'tabOpenLink("/pages/mermaid.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Front.showEditor(window.location.href, function(data) {

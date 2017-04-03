@@ -6,7 +6,7 @@ var Front = (function() {
 
     // this object is stub of UI, it's UI consumer
     self.isProvider = function() {
-        return false;
+        return window.location.href.indexOf(chrome.extension.getURL("/pages")) === 0;
     };
 
     function frontendCommand(args, successById) {

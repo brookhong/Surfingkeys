@@ -79,7 +79,7 @@ function autocmd(domain, jscode) {
 function _parseAnnotation(ag) {
     var annotations = ag.annotation.match(/#(\d+)(.*)/);
     if (annotations !== null) {
-        ag.feature_group = annotations[1];
+        ag.feature_group = parseInt(annotations[1]);
         ag.annotation = annotations[2];
     }
     return ag;

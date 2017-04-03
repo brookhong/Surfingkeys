@@ -3,10 +3,10 @@
     <head>
         <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE='">
         <meta charset="UTF-8">
-        <title>Mermaid diagram generator</title>
+        <title>Markdown preview</title>
         <link rel="stylesheet" href="../content_scripts/content_scripts.css">
         <link rel="stylesheet" href="common.css">
-        <link rel="stylesheet" href="mermaid.css">
+        <link rel="stylesheet" href="markdown.css">
     </head>
     <body>
         <!-- build:common_content -->
@@ -25,12 +25,12 @@
         <script src="default.js"></script>
         <script src="../content_scripts/top.js"></script>
 
-        <script src="../libs/webfontloader.js"></script>
-        <script src="../libs/mermaid.min.js"></script>
-        <script src="mermaid.js"></script>
+        <script src="../libs/marked.min.js"></script>
+        <script src="markdown.js"></script>
         <script src="common.js"></script>
         <div class="content">
-            <div class="mermaid">
+            <div class="markdown-body">
+                Loading ...
             </div>
         </div>
     </body>

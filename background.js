@@ -100,18 +100,16 @@ var Service = (function() {
                 if (_message.repeats > conf.repeatThreshold) {
                     _message.repeats = conf.repeatThreshold;
                 }
-                self[_message.action](_message, _sender, _sendResponse);
+                if (_sender.tab) {
+                    self[_message.action](_message, _sender, _sendResponse);
+                }
             } else if (_message.toFrontend) {
-                try {
+                if (frontEndPorts[tid]) {
                     frontEndPorts[tid].postMessage(_message);
                     contentPorts[tid] = _port;
                     if (_message.ack) {
                         onResponseById[_message.id] = _sendResponse;
                     }
-                } catch (e) {
-                    chrome.tabs.executeScript(tid, {
-                        code: "createFrontEnd()"
-                    });
                 }
             } else if (_message.toContent) {
                 contentPorts[tid].postMessage(_message);
@@ -256,7 +254,7 @@ var Service = (function() {
 
     chrome.extension.onConnect.addListener(function(port) {
         var sender = port.sender;
-        if (sender.url === frontEndURL) {
+        if (sender.url === frontEndURL && sender.tab) {
             frontEndPorts[sender.tab.id] = port;
         }
         activePorts.push(port);

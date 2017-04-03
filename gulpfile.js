@@ -17,7 +17,7 @@ gulp.task('copy-non-js-files', ['clean'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('copy-pretty-default-js', ['copy-js-files'], function() {
+gulp.task('copy-pretty-default-js', ['copy-js-files', 'copy-es-files'], function() {
     return gulp.src(['pages/default.js'], {base: "."})
         .pipe(gulp.dest('dist'));
 });
@@ -46,7 +46,8 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         'pages/options.html',
         'pages/popup.html',
         'pages/mermaid.html',
-        'pages/github-markdown.html'
+        'pages/fiddle.html',
+        'pages/markdown.html'
     ], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
         .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-aGNhu6CROImp/w1iO+ovyGHEBwh6aqkO6VR1TDvzsUs='))
@@ -66,9 +67,17 @@ gulp.task('copy-js-files', ['clean'], function() {
         'libs/ace/*.js',
         'libs/marked.min.js',
         'libs/mermaid.min.js',
-        'libs/webfontloader.js',
+        'libs/webfontloader.js'
+    ], {base: "."})
+    .pipe(gp_uglify().on('error', gulpUtil.log))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('copy-es-files', ['clean'], function() {
+    return gulp.src([
         'pages/*.js'
     ], {base: "."})
+    .pipe(babel({presets: ['es2015']}))
     .pipe(gp_uglify().on('error', gulpUtil.log))
     .pipe(gulp.dest('dist'));
 });
