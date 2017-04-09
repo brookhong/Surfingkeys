@@ -189,8 +189,10 @@ var GetBackFocus = (function(mode) {
     });
 
     self.enter = function() {
-        mode.enter.apply(self, arguments);
-        document.activeElement.blur();
+        if (runtime.conf.stealFocusOnLoad) {
+            mode.enter.apply(self, arguments);
+            document.activeElement.blur();
+        }
     };
 
     self.addEventListener('mousedown', function(event) {

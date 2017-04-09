@@ -5,6 +5,7 @@ function previewMarkdown(mk) {
     if (runtime.conf.useLocalMarkdownAPI) {
         $('.markdown-body').html(marked(mk));
     } else {
+        $('.markdown-body').html("Loading preview…");
         httpRequest({
             url: "https://api.github.com/markdown/raw",
             data: mk
@@ -16,6 +17,11 @@ function previewMarkdown(mk) {
 
 mapkey('sm', '#99Edit markdown source', function() {
     Front.showEditor(markdown_code, previewMarkdown, 'markdown');
+});
+
+mapkey(';s', '#99Switch markdown parser', function() {
+    runtime.conf.useLocalMarkdownAPI = !runtime.conf.useLocalMarkdownAPI;
+    previewMarkdown(markdown_code);
 });
 
 var renderDataFromClipboard = previewMarkdown;

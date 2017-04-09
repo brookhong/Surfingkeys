@@ -38,7 +38,7 @@ var Omnibar = (function(mode, ui) {
 
     self.mappings.add(encodeKeystroke("<Ctrl-d>"), {
         annotation: "Delete focused item from bookmark or history",
-        feature_group: 16,
+        feature_group: 8,
         code: function () {
             var focusedItem = Omnibar.resultsDiv.find('li.focused');
             var uid = focusedItem.data('uid');
@@ -57,7 +57,7 @@ var Omnibar = (function(mode, ui) {
 
     self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
         annotation: "Delete all listed item from bookmark or history.",
-        feature_group: 16,
+        feature_group: 8,
         code: function () {
             var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
                 return $(li).data('uid');
@@ -178,14 +178,14 @@ var Omnibar = (function(mode, ui) {
 
     self.mappings.add(encodeKeystroke("<Tab>"), {
         annotation: "Forward cycle through the candidates.",
-        feature_group: 16,
+        feature_group: 8,
         code: function () {
             rotateResult(false);
         }
     });
     self.mappings.add(encodeKeystroke("<Shift-Tab>"), {
         annotation: "Backward cycle through the candidates.",
-        feature_group: 16,
+        feature_group: 8,
         code: function () {
             rotateResult(true);
         }
@@ -346,8 +346,7 @@ var Omnibar = (function(mode, ui) {
                 });
             }
         }
-        ret = this.activeTab;
-        return ret;
+        return this.activeTab;
     };
 
     self.listResults = function(items, renderItem) {
@@ -768,11 +767,12 @@ var SearchEngine = (function() {
         runtime.command({
             action: "openLink",
             tab: {
-                tabbed: this.tabbed
+                tabbed: this.tabbed,
+                active: this.activeTab
             },
             url: url
         });
-        return true;
+        return this.activeTab;
     };
     self.onInput = function() {
         if (self.suggestionURL) {

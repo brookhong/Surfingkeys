@@ -611,6 +611,8 @@ For example,
 | settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
 | settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
+| settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
+| settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 
 ### Example of settings.theme, below is to set font size of status bar

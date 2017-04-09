@@ -20,6 +20,8 @@ var runtime = window.runtime || (function() {
             richHintsForKeystroke: true,
             blacklistPattern: undefined,
             startToShowEmoji: 2,
+            language: undefined,
+            stealFocusOnLoad: true,
             lastQuery: ""
         },
         runtime_handlers: {}

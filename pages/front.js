@@ -189,6 +189,30 @@ var Front = (function(mode) {
     };
     runtime.on('chooseTab', self.chooseTab);
 
+    function _initL10n(cb) {
+        var lang = runtime.conf.language || window.navigator.language;
+        if (lang === "en-US") {
+            cb(function(str) {
+                return str;
+            });
+        } else {
+            fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
+                return res.json();
+            }).then(function(l10n) {
+                if (typeof(l10n[lang]) === "object") {
+                    l10n = l10n[lang];
+                    cb(function(str) {
+                        return l10n[str] ? l10n[str] : str;
+                    })
+                } else {
+                    cb(function(str) {
+                        return str;
+                    });
+                }
+            });
+        }
+    }
+
     var callbacks = {};
     self.topCommand = function(args, cb) {
         args.id = generateQuickGuid();
@@ -216,36 +240,38 @@ var Front = (function(mode) {
             'Proxy',                 // 13
             'Misc',                  // 14
             'Insert Mode',           // 15
-            'Omnibar Mode',          // 16
         ];
         var holder = $('<div/>');
         var help_groups = feature_groups.map(function(){return [];});
-        [ Normal.mappings,
-            Visual.mappings,
-            Insert.mappings,
-            Omnibar.mappings
-        ].map(function(mappings) {
-            var words = mappings.getWords();
-            for (var i = 0; i < words.length; i++) {
-                var w = words[i];
-                var meta = mappings.find(w).meta;
-                w = decodeKeystroke(w);
-                if (meta.annotation.length) {
-                    var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), meta.annotation);
-                    help_groups[meta.feature_group].push(item);
+
+        _initL10n(function(locale) {
+            [ Normal.mappings,
+                Visual.mappings,
+                Insert.mappings,
+                Omnibar.mappings
+            ].map(function(mappings) {
+                var words = mappings.getWords();
+                for (var i = 0; i < words.length; i++) {
+                    var w = words[i];
+                    var meta = mappings.find(w).meta;
+                    w = decodeKeystroke(w);
+                    if (meta.annotation.length) {
+                        var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), locale(meta.annotation));
+                        help_groups[meta.feature_group].push(item);
+                    }
                 }
-            }
+            });
+            help_groups = help_groups.map(function(g, i) {
+                if (g.length) {
+                    return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(locale(feature_groups[i]), g.join(''));
+                } else {
+                    return "";
+                }
+            }).join("");
+            $(help_groups).appendTo(holder);
+            $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>{0}</a>".format(locale("More help"))).appendTo(holder);
+            _usage.html(holder.html());
         });
-        help_groups = help_groups.map(function(g, i) {
-            if (g.length) {
-                return "<div><div class=feature_name><span>{0}</span></div>{1}</div>".format(feature_groups[i], g.join(''));
-            } else {
-                return "";
-            }
-        }).join("");
-        $(help_groups).appendTo(holder);
-        $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>More help</a>").appendTo(holder);
-        _usage.html(holder.html());
     };
 
     runtime.on('showUsage', function(message) {
@@ -423,23 +449,25 @@ var Front = (function(mode) {
     });
     self.showKeystroke = function(key, mode) {
         if (runtime.conf.richHintsForKeystroke) {
-            _key += key;
-            var root = window[mode].mappings.find(_key), words = _key;
-            if (root) {
-                words = root.getWords("", true).sort().map(function(w) {
-                    var meta = root.find(w).meta;
-                    if (meta.annotation || mode !== "Normal") {
-                        return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, meta.annotation);
-                    } else {
-                        return "";
+            _initL10n(function(locale) {
+                _key += key;
+                var root = window[mode].mappings.find(_key), words = _key;
+                if (root) {
+                    words = root.getWords("", true).sort().map(function(w) {
+                        var meta = root.find(w).meta;
+                        if (meta.annotation || mode !== "Normal") {
+                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, locale(meta.annotation));
+                        } else {
+                            return "";
+                        }
+                    }).join("");
+                    if (words.length === 0) {
+                        words = _key;
                     }
-                }).join("");
-                if (words.length === 0) {
-                    words = _key;
                 }
-            }
-            _richKeystroke.html(words).show();
-            self.flush();
+                _richKeystroke.html(words).show();
+                self.flush();
+            });
         } else {
             if (keystroke.is(':animated')) {
                 keystroke.finish()
