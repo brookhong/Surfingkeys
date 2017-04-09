@@ -385,7 +385,7 @@ var Visual = (function(mode) {
     });
 
     self.showCursor = function () {
-        if ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible')) {
+        if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
             if (selection.focusNode.nodeType === Node.TEXT_NODE) {

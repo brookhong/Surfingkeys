@@ -71,12 +71,9 @@ var Omnibar = (function(mode, ui) {
                 }, function(ret) {
                     if (ret.response === "Done") {
                         if (handler && handler.getResults) {
-                            handler.getResults(function(response) {
-                                self.input.trigger('input');
-                            });
-                        } else {
-                            self.input.trigger('input');
+                            handler.getResults();
                         }
+                        self.input.trigger('input');
                     }
                 });
             }
@@ -583,31 +580,33 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 var OpenHistory = (function() {
     var self = {
         prompt: 'history≫'
-    }, cached;
+    }, cachedPromise;
 
     self.onOpen = function(arg) {
-        self.getResults(function(response) {
-            Omnibar.listURLs(response.history, false);
-        });
+        self.getResults();
+        self.onInput();
     };
 
-    self.getResults = function(cb) {
-        runtime.command({
-            action: 'getHistory',
-            query: {
-                startTime: 0,
-                text: ""
-            }
-        }, function(response) {
-            cached = response.history;
-            cb && cb(response);
+    self.getResults = function() {
+        cachedPromise = new Promise(function(resolve, reject) {
+            runtime.command({
+                action: 'getHistory',
+                query: {
+                    startTime: 0,
+                        text: ""
+                }
+            }, function(response) {
+                resolve(response.history);
+            });
         });
     };
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
-        Omnibar.listURLs(filtered, false);
+        cachedPromise.then(function(cached) {
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
+            Omnibar.listURLs(filtered, false);
+        });
     };
     return self;
 })();
@@ -616,39 +615,41 @@ Omnibar.addHandler('History', OpenHistory);
 var OpenURLs = (function() {
     var self = {
         prompt: '≫'
-    }, cached;
+    }, cachedPromise;
 
-    self.getResults = function(cb) {
+    self.getResults = function() {
         if (self.action === "getAllSites") {
-            runtime.command({
-                action: 'getTabs'
-            }, function(response) {
-                cached = response.tabs;
+            cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
-                    action: "getTopSites"
+                    action: 'getTabs'
                 }, function(response) {
-                    cached = cached.concat(response.urls);
-                    Omnibar.listURLs(cached, false);
-                    Omnibar.listBookmarkFolders(function() {
-                        runtime.command({
-                            action: 'getAllURLs'
-                        }, function(response) {
-                            cached = cached.concat(response.urls);
-                            cb && cb();
+                    var cached = response.tabs;
+                    runtime.command({
+                        action: "getTopSites"
+                    }, function(response) {
+                        cached = cached.concat(response.urls);
+                        Omnibar.listBookmarkFolders(function() {
+                            runtime.command({
+                                action: 'getAllURLs'
+                            }, function(response) {
+                                cached = cached.concat(response.urls);
+                                resolve(cached);
+                            });
                         });
                     });
                 });
             });
         } else {
-            runtime.command({
-                action: self.action
-            }, function(response) {
-                cached = response.urls;
-                Omnibar.listURLs(cached, false);
-                cb && cb();
+            cachedPromise = new Promise(function(resolve, reject) {
+                runtime.command({
+                    action: self.action
+                }, function(response) {
+                    resolve(response.urls);
+                });
             });
         }
-    }
+    };
+
     self.onOpen = function(arg) {
         self.action = arg;
         if (self.action === "getRecentlyClosed") {
@@ -659,17 +660,20 @@ var OpenURLs = (function() {
             self.prompt = '≫';
         }
         self.getResults();
+        self.onInput();
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        var val = Omnibar.input.val();
-        var filtered = _filterByTitleOrUrl(cached, val);
-        if (filtered.length === 0) {
-            Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
-        } else {
-            Omnibar.listURLs(filtered, false);
-            Omnibar.detectAndInsertURLItem(val);
-        }
+        cachedPromise.then(function(cached) {
+            var val = Omnibar.input.val();
+            var filtered = _filterByTitleOrUrl(cached, val);
+            if (filtered.length === 0) {
+                Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
+            } else {
+                Omnibar.listURLs(filtered, false);
+                Omnibar.detectAndInsertURLItem(val);
+            }
+        });
     };
     return self;
 })();
@@ -678,25 +682,28 @@ Omnibar.addHandler('URLs', OpenURLs);
 var OpenTabs = (function() {
     var self = {
         prompt: 'tabs≫'
-    }, cached;
+    }, cachedPromise;
 
-    self.getResults = function (cb) {
-        runtime.command({
-            action: 'getTabs',
-            query: ''
-        }, function(response) {
-            cached = response.tabs;
-            Omnibar.listURLs(response.tabs, false);
-            cb && cb();
+    self.getResults = function () {
+        cachedPromise = new Promise(function(resolve, reject) {
+            runtime.command({
+                action: 'getTabs',
+                query: ''
+            }, function(response) {
+                resolve(response.tabs);
+            });
         });
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onOpen = function() {
         self.getResults();
+        self.onInput();
     };
     self.onInput = function() {
-        var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
-        Omnibar.listURLs(filtered, false);
+        cachedPromise.then(function(cached) {
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
+            Omnibar.listURLs(filtered, false);
+        });
     };
     return self;
 })();

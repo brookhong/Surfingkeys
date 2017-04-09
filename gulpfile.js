@@ -17,7 +17,7 @@ gulp.task('copy-non-js-files', ['clean'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('copy-pretty-default-js', ['copy-js-files', 'copy-es-files'], function() {
+gulp.task('copy-pretty-default-js', ['copy-js-files'], function() {
     return gulp.src(['pages/default.js'], {base: "."})
         .pipe(gulp.dest('dist'));
 });
@@ -58,7 +58,7 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('copy-js-files', ['clean'], function() {
+gulp.task('copy-js-files', ['copy-es-files'], function() {
     return gulp.src([
         'background.js',
         'content_scripts/front.js',

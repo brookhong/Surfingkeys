@@ -55,6 +55,7 @@ var frontendFrame = (function() {
         }
         if (response.pointerEvents === "none") {
             uiHost.blur();
+            window.focus();
         }
     };
     self.create = function() {
