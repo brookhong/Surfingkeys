@@ -60,7 +60,6 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
 
 gulp.task('copy-js-files', ['copy-es-files'], function() {
     return gulp.src([
-        'background.js',
         'content_scripts/front.js',
         'content_scripts/content_scripts.js',
         'content_scripts/top.js',
@@ -75,6 +74,7 @@ gulp.task('copy-js-files', ['copy-es-files'], function() {
 
 gulp.task('copy-es-files', ['clean'], function() {
     return gulp.src([
+        'background.js',
         'pages/*.js'
     ], {base: "."})
     .pipe(babel({presets: ['es2015']}))

@@ -217,11 +217,30 @@ var Service = (function() {
             var config = {
                 mode: (proxyConf.proxyMode === "always" || proxyConf.proxyMode === "byhost") ? "pac_script" : proxyConf.proxyMode,
                 pacScript: {
-                    data: "var pacGlobal = {}; pacGlobal.hosts = " + JSON.stringify(dictFromArray(proxyConf.autoproxy_hosts, 1))
-                    + ", pacGlobal.autoproxy_pattern = '" + autoproxy_pattern
-                    + "', pacGlobal.proxyMode = '" + proxyConf.proxyMode
-                    + "', pacGlobal.proxy = '" + proxyConf.proxy + "'; "
-                    + FindProxyForURL.toString()
+                    data: `var pacGlobal = {
+                        hosts: ${JSON.stringify(dictFromArray(proxyConf.autoproxy_hosts, 1))},
+                        autoproxy_pattern: '${autoproxy_pattern}',
+                        proxyMode: '${proxyConf.proxyMode}',
+                        proxy: '${proxyConf.proxy}'
+                    };
+                    function FindProxyForURL(url, host) {
+                        var lastPos;
+                        if (pacGlobal.proxyMode === "always") {
+                            return pacGlobal.proxy;
+                        }
+                        var pp = new RegExp(pacGlobal.autoproxy_pattern);
+                        do {
+                            if (pacGlobal.hosts.hasOwnProperty(host)) {
+                                return pacGlobal.proxy;
+                            }
+                            if (pacGlobal.autoproxy_pattern.length && pp.test(host)) {
+                                return pacGlobal.proxy;
+                            }
+                            lastPos = host.indexOf('.') + 1;
+                            host = host.slice(lastPos);
+                        } while (lastPos >= 1);
+                        return 'DIRECT';
+                    }`
                 }
             };
             chrome.proxy.settings.set( {value: config, scope: 'regular'}, function() {
@@ -977,24 +996,6 @@ var Service = (function() {
         });
     };
 
-    function FindProxyForURL(url, host) {
-        var lastPos;
-        if (pacGlobal.proxyMode === "always") {
-            return pacGlobal.proxy;
-        }
-        var pp = new RegExp(pacGlobal.autoproxy_pattern);
-        do {
-            if (pacGlobal.hosts.hasOwnProperty(host)) {
-                return pacGlobal.proxy;
-            }
-            if (pacGlobal.autoproxy_pattern.length && pp.test(host)) {
-                return pacGlobal.proxy;
-            }
-            lastPos = host.indexOf('.') + 1;
-            host = host.slice(lastPos);
-        } while (lastPos >= 1);
-        return 'DIRECT';
-    }
     self.updateProxy = function(message, sender, sendResponse) {
         loadSettings(['proxyMode', 'proxy', 'autoproxy_hosts'], function(proxyConf) {
             if (message.proxy) {
