@@ -194,6 +194,10 @@ var Front = (function() {
         onOmniQuery(response.query);
     });
 
+    runtime.on('getBackFocus', function(response) {
+        window.focus();
+    });
+
     runtime.on('getPageText', function(response) {
         return document.body.innerText;
     });

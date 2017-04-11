@@ -48,6 +48,7 @@ var frontendFrame = (function() {
         $(document).trigger("surfingkeys:frontendReady");
     }
 
+    var lastStateOfPointerEvents = "none";
     self.setFrontFrame = function(response) {
         ifr.css('height', response.frameHeight);
         if (response.pointerEvents) {
@@ -55,8 +56,15 @@ var frontendFrame = (function() {
         }
         if (response.pointerEvents === "none") {
             uiHost.blur();
-            window.focus();
+            // test with https://docs.google.com/ and https://web.whatsapp.com/
+            if (lastStateOfPointerEvents !== response.pointerEvents) {
+                runtime.command({
+                    action: 'getBackFocus',
+                    toContent: true
+                });
+            }
         }
+        lastStateOfPointerEvents = response.pointerEvents;
     };
     self.create = function() {
         ifr[0].channel = new MessageChannel();
