@@ -479,29 +479,27 @@ runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
     if (rs.hasOwnProperty('blacklist') || runtime.conf.blacklistPattern) {
-        var disabled = checkBlackList(rs);
-        // only toggle Disabled mode when blacklist is updated
-        if (disabled) {
-            Disabled.enter(0, true);
-        } else {
-            Disabled.exit();
-        }
 
-        if (window === top) {
-            runtime.command({
-                action: 'setSurfingkeysIcon',
-                status: disabled
-            });
-        }
+        // only toggle Disabled mode when blacklist is updated
+        runtime.command({
+            action: 'getDisabled',
+            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+        }, function(resp) {
+            if (resp.disabled) {
+                Disabled.enter(0, true);
+            } else {
+                Disabled.exit();
+            }
+
+            if (window === top) {
+                runtime.command({
+                    action: 'setSurfingkeysIcon',
+                    status: resp.disabled
+                });
+            }
+        });
     }
 });
-
-function checkBlackList(sb) {
-    return chrome.extension.getURL('').indexOf(window.location.origin) !== 0 && (
-        sb.blacklist[window.location.origin] || sb.blacklist['.*']
-        || (runtime.conf.blacklistPattern && typeof(runtime.conf.blacklistPattern.test) === "function" && runtime.conf.blacklistPattern.test(window.location.href))
-    );
-}
 
 $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     runtime.command({
@@ -513,22 +511,26 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
 
         Normal.enter();
 
-        var disabled = checkBlackList(rs);
-        if (disabled) {
-            Disabled.enter(0, true);
-        } else {
-            document.addEventListener('DOMContentLoaded', function(e) {
-                GetBackFocus.enter(0, true);
-            });
-        }
+        runtime.command({
+            action: 'getDisabled',
+            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+        }, function(resp) {
+            if (resp.disabled) {
+                Disabled.enter(0, true);
+            } else {
+                document.addEventListener('DOMContentLoaded', function(e) {
+                    GetBackFocus.enter(0, true);
+                });
+            }
 
-        if (window === top) {
-            // this block being put here instead of top.js is to ensure sequence.
-            runtime.command({
-                action: 'setSurfingkeysIcon',
-                status: disabled
-            });
-        }
+            if (window === top) {
+                // this block being put here instead of top.js is to ensure sequence.
+                runtime.command({
+                    action: 'setSurfingkeysIcon',
+                    status: resp.disabled
+                });
+            }
+        });
     });
 });
 

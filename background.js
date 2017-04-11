@@ -100,9 +100,8 @@ var Service = (function() {
                 if (_message.repeats > conf.repeatThreshold) {
                     _message.repeats = conf.repeatThreshold;
                 }
-                if (_sender.tab) {
-                    self[_message.action](_message, _sender, _sendResponse);
-                }
+                // runtime.command from popup.js has _sender.tab undefined.
+                self[_message.action](_message, _sender, _sendResponse);
             } else if (_message.toFrontend) {
                 if (frontEndPorts[tid]) {
                     frontEndPorts[tid].postMessage(_message);
@@ -389,17 +388,42 @@ var Service = (function() {
         _updateSettings(diffSettings, afterSet);
     }
 
+    function _getDisabled(url, set, regex) {
+        if (regex) {
+            regex = new RegExp(regex.source, regex.flags);
+        }
+        return set.blacklist[url.origin]
+            || set.blacklist['.*']
+            || (regex && regex.test && regex.test(url.href));
+    }
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
-            if (data.blacklist.hasOwnProperty(message.domain)) {
-                delete data.blacklist[message.domain];
+            var origin = ".*";
+            if (sender.tab) {
+                origin = new URL(sender.tab.url).origin;
+            }
+            if (data.blacklist.hasOwnProperty(origin)) {
+                delete data.blacklist[origin];
             } else {
-                data.blacklist[message.domain] = 1;
+                data.blacklist[origin] = 1;
             }
             _updateAndPostSettings({blacklist: data.blacklist}, function() {
                 _response(message, sendResponse, {
                     blacklist: data.blacklist
                 });
+            });
+            if (sender.tab) {
+                _response(message, sendResponse, {
+                    disabled: _getDisabled(new URL(sender.tab.url), data, message.blacklistPattern),
+                    url: origin
+                });
+            }
+        });
+    };
+    self.getDisabled = function(message, sender, sendResponse) {
+        loadSettings('blacklist', function(data) {
+            _response(message, sendResponse, {
+                disabled: _getDisabled(new URL(sender.tab.url), data, message.blacklistPattern)
             });
         });
     };

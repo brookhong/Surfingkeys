@@ -96,6 +96,10 @@ String.prototype.format = function() {
     return formatted;
 };
 
+RegExp.prototype.toJSON = function() {
+    return {source: this.source, flags: this.flags};
+};
+
 (function($) {
     $.fn.regex = function(pattern, fn, fn_a) {
         var fn = fn || $.fn.text;

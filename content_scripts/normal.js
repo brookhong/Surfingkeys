@@ -151,7 +151,7 @@ var Disabled = (function(mode) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
-            Normal.toggleBlacklist(window.location.origin);
+            Normal.toggleBlacklist();
             self.exit();
             event.sk_stopPropagation = true;
         }
@@ -218,7 +218,7 @@ var Normal = (function(mode) {
                 Insert.enter();
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
-            self.toggleBlacklist(window.location.origin);
+            self.toggleBlacklist();
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             self._handleMapKey(event);
@@ -247,20 +247,17 @@ var Normal = (function(mode) {
         }
     });
 
-    self.toggleBlacklist = function(domain) {
-        if (chrome.extension.getURL('').indexOf(domain) !== 0) {
-            // can not blacklist URLs from this extension.
-            runtime.command({
-                action: 'toggleBlacklist',
-                domain: domain
-            }, function(resp) {
-                if (checkBlackList(resp)) {
-                    Front.showBanner('Surfingkeys turned OFF for ' + domain, 3000);
-                } else {
-                    Front.showBanner('Surfingkeys turned ON for ' + domain, 3000);
-                }
-            });
-        }
+    self.toggleBlacklist = function() {
+        runtime.command({
+            action: 'toggleBlacklist',
+            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+        }, function(resp) {
+            if (resp.disabled) {
+                Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
+            } else {
+                Front.showBanner('Surfingkeys turned ON for ' + resp.url, 3000);
+            }
+        });
     };
 
     self.mappings = new Trie();
