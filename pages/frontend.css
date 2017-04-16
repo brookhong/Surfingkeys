@@ -37,7 +37,7 @@
 .sk_theme .omnibar_visitcount {
     color: #1e46e9;
 }
-.sk_theme .prompt {
+.sk_theme .prompt, .sk_theme .resultPage {
     color: #aaa;
 }
 .sk_theme .feature_name {
@@ -64,7 +64,7 @@ body {
 #sk_omnibar span.omnibar_highlight {
     text-shadow: 0 0 0.01em;
 }
-#sk_omnibarSearchArea .prompt {
+#sk_omnibarSearchArea .prompt, #sk_omnibarSearchArea .resultPage {
     display: inline-block;
     font-size: 20px;
     width: auto;

@@ -1,17 +1,38 @@
-function _matchWithList(str, keys) {
-    for (var i = 0; i < keys.length; i++) {
-        if (str.indexOf(keys[i]) === -1) {
-            return false;
+function _regexFromString(str, highlight) {
+    var rxp = null;
+    if (/^\/.+\/([gimuy]*)$/.test(str)) {
+        // full regex input
+        try {
+            rxp = eval(str);
+        } catch (e) {
+            rxp = null;
         }
     }
-    return true;
+    if (!rxp) {
+        if (/^\/.+$/.test(str)) {
+            // part regex input
+            rxp = eval(str + "/i");
+        }
+        if (!rxp) {
+            str = str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+            if (highlight) {
+                rxp = new RegExp(str.replace(/\s+/, "\|"), 'gi');
+            } else {
+                var words = str.split(/\s+/).map(function(w) {
+                    return `(?=.*${w})`;
+                }).join('');
+                rxp = new RegExp(`^${words}.*$`, "gi");
+            }
+        }
+    }
+    return rxp;
 }
 
 function _filterByTitleOrUrl(urls, query) {
     if (query && query.length) {
-        var keys = query.toUpperCase().trim().split(/\s+/);
+        var rxp = _regexFromString(query, false);
         urls = urls.filter(function(b) {
-            return _matchWithList(b.title.toUpperCase(), keys) || _matchWithList(b.url.toUpperCase(), keys);
+            return rxp.test(b.title) || rxp.test(b.url);
         });
     }
     return urls;
@@ -73,8 +94,45 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
+    self.mappings.add(encodeKeystroke("<Ctrl-.>"), {
+        annotation: "Show results of next page",
+        feature_group: 8,
+        code: function () {
+            if (_start * _pageSize < _items.length) {
+                _start ++;
+            } else {
+                _start = 1;
+            }
+            _listResultPage();
+        }
+    });
+
+    self.mappings.add(encodeKeystroke("<Ctrl-,>"), {
+        annotation: "Show results of previous page",
+        feature_group: 8,
+        code: function () {
+            if (_start > 1) {
+                _start --;
+            } else {
+                _start = Math.ceil(_items.length / _pageSize);
+            }
+            _listResultPage();
+        }
+    });
+
+    self.mappings.add(encodeKeystroke("<Ctrl-c>"), {
+        annotation: "Copy all listed items",
+        feature_group: 8,
+        code: function () {
+            // hide Omnibar.input, so that we could use clipboard_holder to make copy
+            self.input.hide();
+            Front.writeClipboard(JSON.stringify(_page, null, 4));
+            self.input.show();
+        }
+    });
+
     self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
-        annotation: "Delete all listed item from bookmark or history.",
+        annotation: "Delete all listed items from bookmark or history",
         feature_group: 8,
         code: function () {
             var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
@@ -156,7 +214,8 @@ var Omnibar = (function(mode, ui) {
     }
 
     self.input = ui.find('input');
-    self.promptSpan = ui.find('#sk_omnibarSearchArea>span');
+    self.promptSpan = ui.find('#sk_omnibarSearchArea>span.prompt');
+    var resultPageSpan = ui.find('#sk_omnibarSearchArea>span.resultPage');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
 
     function _onIput() {
@@ -279,6 +338,7 @@ var Omnibar = (function(mode, ui) {
         }
     };
 
+    var _start, _items, _showFolder, _pageSize, _page;
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
      * @param {Array} items - Array of url items with title.
@@ -286,19 +346,34 @@ var Omnibar = (function(mode, ui) {
      *
      */
     self.listURLs = function(items, showFolder) {
-        var sliced = items.slice(0, (runtime.conf.omnibarMaxResults || 20));
+        _pageSize = (runtime.conf.omnibarMaxResults || 10);
+        _start = 1;
+        _items = items;
+        _showFolder = showFolder;
+        _listResultPage();
+    };
+
+    function _listResultPage() {
+        var si = (_start - 1) * _pageSize,
+            ei = si + _pageSize;
+            ei = ei > _items.length ? _items.length : ei;
+        resultPageSpan.html(`${si + 1} - ${ei} / ${_items.length}`);
+        _page = _items.slice(si, ei);
         var query = self.input.val().trim();
-        var rxp = query.length ? (new RegExp(query.replace(/\s+/, "\|"), 'gi')) : null;
-        self.listResults(sliced, function(b) {
+        var rxp = null;
+        if (query.length) {
+            rxp = _regexFromString(query, true);
+        }
+        self.listResults(_page, function(b) {
             var li;
             if (b.hasOwnProperty('url')) {
                 li = self.createURLItem(b, rxp);
-            } else if (showFolder) {
+            } else if (_showFolder) {
                 li = $('<li/>').html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
             }
             return li;
         });
-    };
+    }
 
     ui.onShow = function(args) {
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
@@ -313,10 +388,12 @@ var Omnibar = (function(mode, ui) {
         lastHandler = handler;
         handler = handler;
         self.promptSpan.html(handler.prompt)
+        resultPageSpan.html("")
         ui[0].scrollTop = 0;
     };
 
     ui.onHide = function() {
+        _items = null;
         lastInput = "";
         self.input.val('');
         self.resultsDiv.html("");
@@ -609,26 +686,9 @@ var OpenHistory = (function() {
 
     self.getResults = function() {
         cachedPromise = new Promise(function(resolve, reject) {
-            var startTime = runtime.conf.historyStartTime,
-                endTime = runtime.conf.historyEndTime,
-                now = new Date().getTime();
-            if (startTime < 0) {
-                startTime += now;
-            }
-            if (endTime < 0) {
-                endTime += now;
-            }
             runtime.command({
-                action: 'getHistory',
-                query: {
-                    startTime: startTime,
-                    endTime: endTime,
-                        text: ""
-                }
+                action: 'getHistory'
             }, function(response) {
-                response.history = response.history.sort(function(a, b) {
-                    return b.visitCount - a.visitCount;
-                });
                 resolve(response.history);
             });
         });

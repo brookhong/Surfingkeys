@@ -22,6 +22,7 @@ var Service = (function() {
         focusAfterClosed: "right",
         repeatThreshold: 99,
         tabsMRUOrder: true,
+        historyMUOrder: true,
         newTabPosition: 'default',
         interceptedErrors: []
     };
@@ -524,14 +525,24 @@ var Service = (function() {
             });
         })
     };
+    function _getHistory(cb) {
+        chrome.history.search({
+            startTime: 0,
+            maxResults: 2147483647,
+            text: ""
+        }, function(tree) {
+            if (conf.historyMUOrder) {
+                tree = tree.sort(function(a, b) {
+                    return b.visitCount - a.visitCount;
+                });
+            }
+            cb(tree);
+        });
+    }
     self.getAllURLs = function(message, sender, sendResponse) {
         chrome.bookmarks.getRecent(2147483647, function(tree) {
             var urls = tree;
-            chrome.history.search({
-                startTime: 0,
-                maxResults: 2147483647,
-                text: ""
-            }, function(tree) {
+            _getHistory(function(tree) {
                 urls = urls.concat(tree);
                 _response(message, sendResponse, {
                     urls: urls
@@ -768,8 +779,7 @@ var Service = (function() {
         }
     };
     self.getHistory = function(message, sender, sendResponse) {
-        message.query.maxResults = 2147483647;
-        chrome.history.search(message.query, function(tree) {
+        _getHistory(function(tree) {
             _response(message, sendResponse, {
                 history: tree
             });

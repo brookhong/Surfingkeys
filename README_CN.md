@@ -573,7 +573,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.richHintsForKeystroke | true | 是否启用实时按键提示。 |
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
-| settings.omnibarMaxResults | 20 | 搜索栏下面最多显示多少条结果。 |
+| settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
@@ -586,7 +586,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.blacklistPattern | undefined | 如果当前访问的网站匹配设定的正则表达式，则禁用Surfingkeys。 |
 | settings.focusAfterClosed | "right" | 关掉当前标签页后，切换到哪一侧的标签页。["left", "right"] |
 | settings.repeatThreshold | 99 | 操作可重复最多次数。 |
-| settings.tabsMRUOrder | true | 是否按最近使用顺序列出所有标签页。 |
+| settings.tabsMRUOrder | true | 查找打开标签页时，是否按最近访问顺序列出所有标签页。 |
+| settings.historyMUOrder | true | 查找访问记录时，是否按最常访问顺序列出所有访问记录。 |
 | settings.newTabPosition | 'default' | 在哪个位置创建新标签页。["left", "right", "first", "default"] |
 | settings.interceptedErrors | [] | 指明Surfingkeys为哪些错误显示错误页，这样在这些错误页你依然可以使用Surfingkeys。例如，["*"]为所有错误显示错误页，["net::ERR_NAME_NOT_RESOLVED"]只为ERR_NAME_NOT_RESOLVED显示错误页。更多错误请参考[net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h)。  |
 | settings.startToShowEmoji | 2 | 在冒号后输入多少个字符才显示表情下拉选项。 |

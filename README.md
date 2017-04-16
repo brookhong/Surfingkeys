@@ -594,7 +594,7 @@ For example,
 | settings.richHintsForKeystroke | true | Whether to show rich hints for keystroke. |
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
 | settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
-| settings.omnibarMaxResults | 20 | How many results will be listed out for Omnibar. |
+| settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
 | settings.smoothScroll | true | Whether to use smooth scrolling when pressing keys like `j`/`k`/`e`/`d` to scroll page or elements. |
@@ -607,7 +607,8 @@ For example,
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
 | settings.focusAfterClosed | "right" | Which side of tab will be focused after current tab closed. ["left", "right"] |
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
-| settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used. |
+| settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
+| settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
 | settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
 | settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |

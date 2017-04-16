@@ -1,6 +1,7 @@
 {
     "zh-CN": {
         "Add current URL to vim-like marks": "为当前URL设置类VIM标示",
+        "Apply proxy info from clipboard": "应用剪贴板中的代理信息",
         "Backward 20 lines": "往上20行",
         "Backward cycle through the candidates.": "切回上一个条目",
         "Backward to next char.": "往后查找字符",
@@ -23,6 +24,7 @@
         "Close tab on left": "关闭左侧标签页",
         "Close tab on right": "关闭右侧标签页",
         "Copy a link URL to the clipboard": "复制链接",
+        "Copy all listed items": "复制当前列出的结果",
         "Copy current downloading URL": "复制当前正在下载的链接",
         "Copy current page's URL": "复制当前地址",
         "Copy current page's source": "复制当前页源码",
@@ -30,14 +32,17 @@
         "Copy current settings": "复制当前设置",
         "Copy form data for POST on current page": "复制当前页的表单数据",
         "Copy form data in JSON on current page": "复制当前页的表单数据，用JSON格式",
+        "Copy proxy info": "复制代理信息",
         "Delete a word backwards": "删除光标前一个单词",
         "Delete a word forwards": "删除光标后一个单词",
         "Delete all entered characters before the cursor": "删除光标前的所有字符",
         "Delete all listed item from bookmark or history.": "从收藏夹或访问历史中删除所有列出条目",
+        "Delete all listed items from bookmark or history": "从收藏夹或访问记录中删除当前列出的结果",
         "Delete focused item from bookmark or history": "从收藏夹或访问历史中删除选中条目",
         "Duplicate current tab": "复制当前标签页",
         "Edit Settings": "编辑设置",
         "Edit current URL with vim editor": "用VIM编辑器编辑当前地址",
+        "Edit selected URL with vim editor, then open": "用VIM编辑器编辑选中URL再打开",
         "Exit insert mode": "退出插入模式",
         "Find in current page": "在当前页查找",
         "Find selected text in current page": "在当前页查找选中文本",
@@ -147,6 +152,8 @@
         "Settings": "设置",
         "Show last action": "显示最近一次操作",
         "Show me the money": "这是个测试！",
+        "Show results of next page": "显示下一页搜索结果",
+        "Show results of previous page": "显示上一页搜索结果",
         "Show usage": "查看帮助",
         "Switch frames": "切换frames",
         "Tabs": "标签页",
@@ -188,7 +195,6 @@
         "vim-like marks": "类VIM标签",
         "zoom in": "放大页面",
         "zoom out": "缩小页面",
-        "Edit selected URL with vim editor, then open": "用VIM编辑器编辑选中URL再打开",
         "zoom reset": "重置缩放比例"
     }
 }

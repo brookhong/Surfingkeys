@@ -5,7 +5,7 @@ var runtime = window.runtime || (function() {
             // local part from settings
             useLocalMarkdownAPI: true,
             focusOnSaved: true,
-            omnibarMaxResults: 20,
+            omnibarMaxResults: 10,
             tabsThreshold: 9,
             hintsThreshold: 10000,
             smoothScroll: true,
@@ -22,8 +22,6 @@ var runtime = window.runtime || (function() {
             startToShowEmoji: 2,
             language: undefined,
             stealFocusOnLoad: true,
-            historyStartTime: 0,
-            historyEndTime: undefined,
             lastQuery: ""
         },
         runtime_handlers: {}
