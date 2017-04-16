@@ -179,6 +179,9 @@ The omnibar provides kinds of functions that need user input, for example,
 * `Shift-Enter` to open selected item in current tab and close omnibar. If you'd like to open in current tab by default, please use `go`.
 * `Tab` to forward cycle through the candidates.
 * `Shift-Tab` to backward cycle through the candidates.
+* `Ctrl-.` to show results of next page
+* `Ctrl-,` to show results of previous page
+* `Ctrl-c` to copy all listed items
 
 In omnibar opened with `t`:
 

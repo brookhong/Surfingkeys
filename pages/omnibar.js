@@ -98,12 +98,14 @@ var Omnibar = (function(mode, ui) {
         annotation: "Show results of next page",
         feature_group: 8,
         code: function () {
-            if (_start * _pageSize < _items.length) {
-                _start ++;
-            } else {
-                _start = 1;
+            if (_items) {
+                if (_start * _pageSize < _items.length) {
+                    _start ++;
+                } else {
+                    _start = 1;
+                }
+                _listResultPage();
             }
-            _listResultPage();
         }
     });
 
@@ -111,12 +113,14 @@ var Omnibar = (function(mode, ui) {
         annotation: "Show results of previous page",
         feature_group: 8,
         code: function () {
-            if (_start > 1) {
-                _start --;
-            } else {
-                _start = Math.ceil(_items.length / _pageSize);
+            if (_items) {
+                if (_start > 1) {
+                    _start --;
+                } else {
+                    _start = Math.ceil(_items.length / _pageSize);
+                }
+                _listResultPage();
             }
-            _listResultPage();
         }
     });
 
@@ -172,6 +176,8 @@ var Omnibar = (function(mode, ui) {
             $.extend(SearchEngine, SearchEngine.aliases[alias]);
             self.resultsDiv.html("");
             self.promptSpan.html(handler.prompt)
+            resultPageSpan.html("");
+            _items = null;
             self.collapsingPoint = val;
             self.input.val(val);
             if (val.length) {
@@ -321,7 +327,7 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.detectAndInsertURLItem = function(str) {
-        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i;
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)$/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {
