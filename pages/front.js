@@ -309,9 +309,12 @@ var Front = (function(mode) {
             });
         }
     };
-    self.showEditor = function() {
-        _popup.html("Not supported.");
-        showPopup(_popup);
+    self.showEditor = function(element, cb) {
+        self.hidePopup();
+        self.onEditorSaved = cb;
+        setTimeout(function() {
+            showPopup(_editor, element);
+        }, 10);
     };
     runtime.on('showEditor', function(message) {
         showPopup(_editor, message);

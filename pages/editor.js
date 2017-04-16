@@ -35,10 +35,15 @@ var AceEditor = (function(mode, elmId) {
         document.activeElement.blur();
         mode.exit.call(self);
         Front.hidePopup();
-        Front.contentCommand({
-            action: 'ace_editor_saved',
-            data: data
-        });
+        if (Front.onEditorSaved) {
+            Front.onEditorSaved(data);
+            Front.onEditorSaved = undefined;
+        } else {
+            Front.contentCommand({
+                action: 'ace_editor_saved',
+                data: data
+            });
+        }
     };
 
     self.addEventListener('keydown', function(event) {

@@ -188,6 +188,7 @@
         "vim-like marks": "类VIM标签",
         "zoom in": "放大页面",
         "zoom out": "缩小页面",
+        "Edit selected URL with vim editor, then open": "用VIM编辑器编辑选中URL再打开",
         "zoom reset": "重置缩放比例"
     }
 }

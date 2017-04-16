@@ -26,6 +26,10 @@ var runtime = window.runtime || (function() {
         },
         runtime_handlers: {}
     }, actions = {};
+    if (!chrome.runtime.connect) {
+        return self;
+    }
+
     var _port = chrome.runtime.connect({
         name: 'main'
     });

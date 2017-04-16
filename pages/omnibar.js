@@ -55,6 +55,24 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
+    self.mappings.add(encodeKeystroke("<Ctrl-i>"), {
+        annotation: "Edit selected URL with vim editor, then open",
+        feature_group: 8,
+        code: function () {
+            var focusedItem = Omnibar.resultsDiv.find('li.focused');
+            var url = focusedItem.data('url');
+            if (url) {
+                Front.showEditor({
+                    initial_line: 1,
+                    type: "url",
+                    content: url
+                }, function(data) {
+                    data && tabOpenLink(data);
+                });
+            }
+        }
+    });
+
     self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
         annotation: "Delete all listed item from bookmark or history.",
         feature_group: 8,
@@ -142,7 +160,10 @@ var Omnibar = (function(mode, ui) {
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
 
     function _onIput() {
-        lastInput = self.input.val();
+        if (lastInput !== self.input.val()) {
+            lastInput = self.input.val();
+            self.focusedItem = 0;
+        }
         handler.onInput && handler.onInput.call(this);
     }
     function _onKeyDown() {
@@ -351,9 +372,7 @@ var Omnibar = (function(mode, ui) {
         items.forEach(function(b) {
             renderItem(b).appendTo(results);
         });
-        var fi = self.focusedItem || 0;
-        results.find('li:nth({0})'.format(fi)).addClass('focused');
-        self.focusedItem = fi;
+        results.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
         self.resultsDiv.html("");
         results.appendTo(self.resultsDiv);
     };

@@ -128,17 +128,13 @@ function imapkey(keys, annotation, jscode, options) {
 }
 
 function shouldWorkFor(domain, cb) {
-    if (window.location.href === chrome.extension.getURL('/pages/frontend.html')) {
-        runtime.command({
-            action: "getTopURL"
-        }, function(rs) {
-            if (!domain || domain.test(rs.url)) {
-                cb();
-            }
-        });
-    } else if(!domain || domain.test(window.location.origin)) {
-        cb();
-    }
+    runtime.command({
+        action: "getTopURL"
+    }, function(rs) {
+        if (!domain || domain.test(rs.url)) {
+            cb();
+        }
+    });
 }
 
 function map(new_keystroke, old_keystroke, domain, new_annotation) {

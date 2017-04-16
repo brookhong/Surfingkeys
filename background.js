@@ -101,7 +101,11 @@ var Service = (function() {
                     _message.repeats = conf.repeatThreshold;
                 }
                 // runtime.command from popup.js has _sender.tab undefined.
-                self[_message.action](_message, _sender, _sendResponse);
+                try {
+                    self[_message.action](_message, _sender, _sendResponse);
+                } catch (e) {
+                    console.log(_message.action + ": " + e);
+                }
             } else if (_message.toFrontend) {
                 if (frontEndPorts[tid]) {
                     frontEndPorts[tid].postMessage(_message);
@@ -992,7 +996,7 @@ var Service = (function() {
     };
     self.getTopURL = function(message, sender, sendResponse) {
         _response(message, sendResponse, {
-            url: sender.tab.url
+            url: sender.tab ? sender.tab.url : ""
         });
     };
 
