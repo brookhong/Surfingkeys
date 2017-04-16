@@ -278,12 +278,25 @@ var Service = (function() {
         var sender = port.sender;
         if (sender.url === frontEndURL && sender.tab) {
             frontEndPorts[sender.tab.id] = port;
+            port.onDisconnect.addListener(function(port) {
+                delete frontEndPorts[port.sender.tab.id];
+            });
         }
         activePorts.push(port);
-        port.onMessage.addListener(function(message) {
-            return handleMessage(message, port.sender, port.postMessage.bind(port), port);
+        port.onMessage.addListener(function(message, port) {
+            return handleMessage(message, port.sender, function(resp) {
+                try {
+                    if (!port.isDisconnected) {
+                        port.postMessage(resp)
+                    }
+                } catch (e) {
+                    console.log(message.action + ": " + e);
+                    console.log(port);
+                }
+            }, port);
         });
         port.onDisconnect.addListener(function() {
+            port.isDisconnected = true;
             for (var i = 0; i < activePorts.length; i++) {
                 if (activePorts[i] === port) {
                     activePorts.splice(i, 1);

@@ -22,6 +22,8 @@ var runtime = window.runtime || (function() {
             startToShowEmoji: 2,
             language: undefined,
             stealFocusOnLoad: true,
+            historyStartTime: 0,
+            historyEndTime: undefined,
             lastQuery: ""
         },
         runtime_handlers: {}

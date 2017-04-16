@@ -238,6 +238,7 @@ var Omnibar = (function(mode, ui) {
             if (b.hasOwnProperty('lastVisitTime')) {
                 type = "☼";
                 additional = "<span class=omnibar_timestamp># {0}</span>".format(timeStampString(b.lastVisitTime));
+                additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
                 type = "☆";
@@ -608,13 +609,26 @@ var OpenHistory = (function() {
 
     self.getResults = function() {
         cachedPromise = new Promise(function(resolve, reject) {
+            var startTime = runtime.conf.historyStartTime,
+                endTime = runtime.conf.historyEndTime,
+                now = new Date().getTime();
+            if (startTime < 0) {
+                startTime += now;
+            }
+            if (endTime < 0) {
+                endTime += now;
+            }
             runtime.command({
                 action: 'getHistory',
                 query: {
-                    startTime: 0,
+                    startTime: startTime,
+                    endTime: endTime,
                         text: ""
                 }
             }, function(response) {
+                response.history = response.history.sort(function(a, b) {
+                    return b.visitCount - a.visitCount;
+                });
                 resolve(response.history);
             });
         });

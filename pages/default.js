@@ -69,6 +69,25 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', func
     // return true to close Omnibar for Commands, false to keep Omnibar on
     return true;
 });
+mapkey(';cp', '#13Copy proxy info', function() {
+    runtime.command({
+        action: 'getSettings',
+        key: ['proxyMode', 'proxy', 'autoproxy_hosts']
+    }, function(response) {
+        Front.writeClipboard(JSON.stringify(response.settings, null, 4));
+    });
+});
+mapkey(';ap', '#13Apply proxy info from clipboard', function() {
+    Front.getContentFromClipboard(function(response) {
+        var proxyConf = JSON.parse(response.data);
+        RUNTIME('updateProxy', {
+            host: proxyConf.autoproxy_hosts.join(","),
+            operation: 'add',
+            proxy: proxyConf.proxy,
+            mode: proxyConf.proxyMode
+        });
+    });
+});
 // create shortcuts for the command with different parameters
 map('spa', ':setProxyMode always', 0, '#13set proxy mode `always`');
 map('spb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
@@ -175,7 +194,6 @@ mapkey('ZR', '#5Restore last session', function() {
 });
 mapkey('T', '#3Choose a tab', 'Front.chooseTab()');
 mapkey('?', '#0Show usage', 'Front.showUsage()');
-mapkey('u', '#0Show usage', 'Front.showUsage()');
 mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
 mapkey('d', '#2Scroll a page down', 'Normal.scroll("pageDown")', {repeatIgnore: true});
 mapkey('j', '#2Scroll down', 'Normal.scroll("down")', {repeatIgnore: true});
@@ -192,6 +210,7 @@ mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', 
 mapkey('af', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
 mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false})');
 mapkey('cf', '#1Open multiple links in a new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false, multipleHits: true})');
+map('C', 'gf');
 mapkey('<Ctrl-h>', '#1Mouse over elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseover"]})');
 mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]})');
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {

@@ -34,6 +34,9 @@
 .sk_theme .omnibar_timestamp {
     color: #cc4b9c;
 }
+.sk_theme .omnibar_visitcount {
+    color: #1e46e9;
+}
 .sk_theme .prompt {
     color: #aaa;
 }
