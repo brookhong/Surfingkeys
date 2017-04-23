@@ -11,6 +11,26 @@ document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     }
 }, true);
 
+var getTopURLPromise = new Promise(function(resolve, reject) {
+    if (window === top) {
+        resolve(window.location.href);
+    } else {
+        runtime.command({
+            action: "getTopURL"
+        }, function(rs) {
+            resolve(rs.url);
+        });
+    }
+});
+
+function shouldWorkFor(domain, cb) {
+    getTopURLPromise.then(function(url) {
+        if (!domain || domain.test(rs.url)) {
+            cb();
+        }
+    });
+}
+
 if (typeof(Commands) === 'undefined') {
     Commands = { items: {} };
 }
@@ -138,16 +158,6 @@ function vmapkey(keys, annotation, jscode, options) {
 
 function imapkey(keys, annotation, jscode, options) {
     _mapkey(Insert, keys, annotation, jscode, options);
-}
-
-function shouldWorkFor(domain, cb) {
-    runtime.command({
-        action: "getTopURL"
-    }, function(rs) {
-        if (!domain || domain.test(rs.url)) {
-            cb();
-        }
-    });
 }
 
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
