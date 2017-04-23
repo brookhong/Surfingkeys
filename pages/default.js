@@ -232,6 +232,15 @@ mapkey('O', '#1Detect clickable links from text', function() {
         $(`<a href=${element.data}>`)[0].click()
     });
 });
+mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
+    var pdfUrl = window.location.href;
+    if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
+        pdfUrl = window.location.search.substr(1);
+        window.location.href = pdfUrl + ((pdfUrl.search(/\?/) === -1) ? "?nopdfviewerfromsk=1" : "&nopdfviewerfromsk=1");
+    } else if (/nopdfviewerfromsk=1/.test(pdfUrl)) {
+        window.location.href = pdfUrl.replace(/.nopdfviewerfromsk=1/, '');
+    }
+});
 map('<Ctrl-i>', 'I');
 cmap('<ArrowDown>', '<Tab>');
 cmap('<ArrowUp>', '<Shift-Tab>');

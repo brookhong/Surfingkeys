@@ -21,6 +21,21 @@ function isEditable(element) {
         || element.isContentEditable
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
 }
+
+function parseQueryString(query) {
+    var params = {};
+    if (query.length) {
+        var parts = query.split('&');
+        for (var i = 0, ii = parts.length; i < ii; ++i) {
+            var param = parts[i].split('=');
+            var key = param[0].toLowerCase();
+            var value = param.length > 1 ? param[1] : null;
+            params[decodeURIComponent(key)] = decodeURIComponent(value);
+        }
+    }
+    return params;
+}
+
 function reportIssue(title, description) {
     title = encodeURIComponent(title);
     description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0AURL%3A+{3}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent), encodeURIComponent(window.location.href));
