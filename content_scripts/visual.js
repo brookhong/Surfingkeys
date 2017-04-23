@@ -508,7 +508,7 @@ var Visual = (function(mode) {
                 _updateState();
                 break;
             default:
-                Hints.create("TEXT_NODES", function(element, event) {
+                Hints.create(/./, function(element, event) {
                     setTimeout(function() {
                         selection.setPosition(element, 0);
                         self.showCursor();

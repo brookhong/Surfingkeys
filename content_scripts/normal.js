@@ -326,7 +326,7 @@ var Normal = (function(mode) {
                 var maxHeight = 0;
                 scrollIndex = 0;
                 scrollNodes.forEach(function(n, i) {
-                    var h = n.getBoundingClientRect().height;
+                    var h = n.scrollHeight;
                     if (h > maxHeight) {
                         scrollIndex = i;
                         maxHeight = h

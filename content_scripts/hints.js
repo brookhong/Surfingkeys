@@ -267,7 +267,7 @@ var Hints = (function(mode) {
 
     function getTextNodePos(node) {
         var selection = document.getSelection();
-        selection.setBaseAndExtent(node, 0, node, 2)
+        selection.setBaseAndExtent(node, 0, node, 1)
         var br = selection.getRangeAt(0).getBoundingClientRect();
         return {
             left: br.left,
@@ -275,11 +275,11 @@ var Hints = (function(mode) {
         };
     }
 
-    function createHintsForTextNode() {
+    function createHintsForTextNode(rxp) {
 
         self.statusLine = "Hints to select text";
 
-        var elements = getTextNodes(document.body, /./);
+        var elements = getTextNodes(document.body, rxp);
 
         elements = elements.map(function(e) {
             var pos = getTextNodePos(e);
@@ -310,7 +310,7 @@ var Hints = (function(mode) {
     }
 
     function createHints(cssSelector, attrs) {
-        return (cssSelector === "TEXT_NODES") ? createHintsForTextNode() : createHintsForClick(cssSelector, attrs);
+        return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector) : createHintsForClick(cssSelector, attrs);
     }
 
     self.create = function(cssSelector, onHintKey, attrs) {

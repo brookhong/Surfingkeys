@@ -226,6 +226,12 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
         }, element.localName);
     });
 });
+mapkey('O', '#1Detect clickable links from text', function() {
+    var clickablePat = /https?:\/\//i;
+    Hints.create(clickablePat, function(element, event) {
+        $(`<a href=${element.data}>`)[0].click()
+    });
+});
 map('<Ctrl-i>', 'I');
 cmap('<ArrowDown>', '<Tab>');
 cmap('<ArrowUp>', '<Shift-Tab>');
