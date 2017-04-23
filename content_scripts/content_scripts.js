@@ -1,3 +1,12 @@
+document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
+    var elm = evt.srcElement;
+    if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
+        // stop before redirect to prevent chrome crash
+        window.stop();
+        window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?" + elm.src);
+    }
+}, true);
+
 if (typeof(Commands) === 'undefined') {
     Commands = { items: {} };
 }

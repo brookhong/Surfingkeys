@@ -79,6 +79,7 @@
         "pages/emoji.tsv",
         "pages/l10n.json",
         "pages/frontend.html",
+        "pages/pdf_viewer.html",
         "pages/shadow.css",
         "pages/default.css"
     ],
