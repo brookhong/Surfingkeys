@@ -275,9 +275,9 @@ var Hints = (function(mode) {
         };
     }
 
-    function createHintsForTextNode(rxp) {
+    function createHintsForTextNode(rxp, attrs) {
 
-        self.statusLine = "Hints to select text";
+        self.statusLine = (attrs && attrs.statusLine) || "Hints to select text";
 
         var elements = getTextNodes(document.body, rxp);
 
@@ -328,7 +328,7 @@ var Hints = (function(mode) {
     }
 
     function createHints(cssSelector, attrs) {
-        return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector) : createHintsForClick(cssSelector, attrs);
+        return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector, attrs) : createHintsForClick(cssSelector, attrs);
     }
 
     self.create = function(cssSelector, onHintKey, attrs) {

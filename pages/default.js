@@ -226,11 +226,10 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
         }, element.localName);
     });
 });
-mapkey('O', '#1Detect clickable links from text', function() {
-    var clickablePat = /https?:\/\/\S+/ig;
-    Hints.create(clickablePat, function(element, event, match) {
+mapkey('O', '#1Open detected links from text', function() {
+    Hints.create(runtime.conf.clickablePat, function(element, event, match) {
         $(`<a href=${match}>`)[0].click()
-    });
+    }, {statusLine: "Open detected links from text"});
 });
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
     var pdfUrl = window.location.href;

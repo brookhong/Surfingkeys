@@ -33,6 +33,7 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * [Markdown预览](#markdown预览)
 * [截屏](#截屏)
 * [mermaid图形生成器](#mermaid图形生成器)
+* [PDF阅读器](#pdf阅读器)
 * [配置参考](#配置参考)
 * [编译](#编译)
 * [License](#license)
@@ -54,6 +55,7 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * `<Ctrl-Alt-d>`打开图形生成器
 * 插入模式下的表情下拉选项
 * 按键实时提示
+* 所有按键对PDF适用
 
 ## 快速上手
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
@@ -454,6 +456,13 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 按`Ctrl-Alt-d`打开。
 
+## PDF阅读器
+为了支持PDF文件，Surfingkeys集成了来自[pdf.js](https://github.com/mozilla/pdf.js)的PDF阅读器。当你用Chrome打开一个PDF文件时，这个PDF阅读器就会打开，这样所有Surfingkeys的按键都可以用了。
+
+如果希望使用Chrome默认的PDF阅读器打开，可以按`;s`切换。
+
+当你使用Chrome默认PDF阅读器时，有些按键还是可用的，但部分按键比如滚动／可视模式下的按键就不可用了。
+
 ## 配置参考
 
 ### 添加一个按键映射
@@ -617,6 +626,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 * [TRIE](https://github.com/mikedeboer/trie)
 * [ACE vim editor](https://github.com/ajaxorg/ace)
 * [markdown parser](https://github.com/chjj/marked)
+* [pdf.js](https://github.com/mozilla/pdf.js)
 * [vimium](https://github.com/philc/vimium)
 * [cVim](https://github.com/1995eaton/chromium-vim)
 

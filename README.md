@@ -31,6 +31,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * [Markdown preview](#markdown-preview)
 * [Capture page](#capture-page)
 * [Mermaid diagram generator](#mermaid-diagram-generator)
+* [PDF viewer](#pdf-viewer)
 * [Edit your own settings](#edit-your-own-settings)
 * [Build](#build)
 * [License](#license)
@@ -52,6 +53,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * `<Ctrl-Alt-d>` to open diagram tool
 * Emoji completion in insert mode
 * Rich hints for keystroke
+* Everything in Surfingkeys works for PDF
 
 ## Quick start
 
@@ -458,6 +460,13 @@ Surfingkeys provides a simple frontend to generate diagrams from text in clipboa
 
 `Ctrl-Alt-d` to open it.
 
+## PDF viewer
+To make Surfingkeys work for PDF files, Surfingkeys integrates PDF viewer from the notable [pdf.js](https://github.com/mozilla/pdf.js). When a pdf file is opened in Chrome, the PDF viewer will be launched, and you could use everything from Surfingkeys then.
+
+If you would like to use original pdf viewer provided by Chrome itself, use `;s` to toggle that.
+
+Some functionalities are also available when you're using original pdf viewer, but some functionalities such as smooth scroll/visual mode etc won't be available.
+
 ## Edit your own settings
 
 ### Map a keystroke to some action
@@ -638,6 +647,7 @@ For example,
 * [TRIE](https://github.com/mikedeboer/trie), finally replaced by my own simple implementation for less memory usage and better performance.
 * [ACE vim editor](https://github.com/ajaxorg/ace), for vim editor.
 * [markdown parser](https://github.com/chjj/marked), for markdown parser.
+* [pdf.js](https://github.com/mozilla/pdf.js), for pdf viewer.
 * [vimium](https://github.com/philc/vimium), for the days without this extension.
 * [cVim](https://github.com/1995eaton/chromium-vim), for the days without this extension.
 

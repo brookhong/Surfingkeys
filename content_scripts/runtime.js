@@ -13,6 +13,7 @@ var runtime = window.runtime || (function() {
             scrollStepSize: 70,
             nextLinkRegex: /((>>|next)+)/i,
             prevLinkRegex: /((<<|prev(ious)?)+)/i,
+            clickablePat: /https?:\/\/\S+/ig,
             hintAlign: "center",
             defaultSearchEngine: "g",
             showModeStatus: false,

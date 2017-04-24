@@ -40,7 +40,7 @@ gulp.task('build_common_content_min', ['clean'], function() {
 });
 
 gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
-    gulp.src([
+    return gulp.src([
         'pages/frontend.html',
         'pages/error.html',
         'pages/options.html',
@@ -53,7 +53,10 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
         .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-aGNhu6CROImp/w1iO+ovyGHEBwh6aqkO6VR1TDvzsUs='))
         .pipe(gulp.dest('dist'));
-    gulp.src('manifest.json')
+});
+
+gulp.task('use_common_content_min_manifest', ['copy-non-js-files', 'clean'], function() {
+    return gulp.src('manifest.json')
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '            "content_scripts/common_content.min.js",'))
         .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-aGNhu6CROImp/w1iO+ovyGHEBwh6aqkO6VR1TDvzsUs='))
         .pipe(gulp.dest('dist'));
@@ -84,7 +87,7 @@ gulp.task('copy-es-files', ['clean'], function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['copy-pretty-default-js', 'build_common_content_min', 'use_common_content_min'], function() {
+gulp.task('default', ['copy-pretty-default-js', 'build_common_content_min', 'use_common_content_min', 'use_common_content_min_manifest'], function() {
     return gulp.src('dist/**')
         .pipe(zip('sk.zip'))
         .pipe(gulp.dest('dist'));

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE='">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=' https://www.google-analytics.com">
         <meta charset="UTF-8">
         <title>Markdown preview</title>
         <link rel="stylesheet" href="../content_scripts/content_scripts.css">
@@ -28,6 +28,7 @@
         <script src="../libs/marked.min.js"></script>
         <script src="markdown.js"></script>
         <script src="common.js"></script>
+        <script src="ga.js"></script>
         <div class="content">
             <div class="markdown-body">
                 Loading ...
