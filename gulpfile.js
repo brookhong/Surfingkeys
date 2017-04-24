@@ -47,6 +47,7 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         'pages/popup.html',
         'pages/mermaid.html',
         'pages/fiddle.html',
+        'pages/pdf_viewer.html',
         'pages/markdown.html'
     ], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
@@ -64,6 +65,7 @@ gulp.task('copy-js-files', ['copy-es-files'], function() {
         'content_scripts/content_scripts.js',
         'content_scripts/top.js',
         'libs/ace/*.js',
+        'pages/pdf/*.js',
         'libs/marked.min.js',
         'libs/mermaid.min.js',
         'libs/webfontloader.js'

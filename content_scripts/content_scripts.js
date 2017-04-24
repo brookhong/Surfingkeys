@@ -25,7 +25,7 @@ var getTopURLPromise = new Promise(function(resolve, reject) {
 
 function shouldWorkFor(domain, cb) {
     getTopURLPromise.then(function(url) {
-        if (!domain || domain.test(rs.url)) {
+        if (!domain || domain.test(url)) {
             cb();
         }
     });

@@ -227,9 +227,9 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
     });
 });
 mapkey('O', '#1Detect clickable links from text', function() {
-    var clickablePat = /https?:\/\//i;
-    Hints.create(clickablePat, function(element, event) {
-        $(`<a href=${element.data}>`)[0].click()
+    var clickablePat = /https?:\/\/\S+/ig;
+    Hints.create(clickablePat, function(element, event, match) {
+        $(`<a href=${match}>`)[0].click()
     });
 });
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {

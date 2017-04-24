@@ -66,8 +66,8 @@ var Hints = (function(mode) {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
-            var link = $(matches[0]).data('link');
-            _onHintKey(link, event);
+            var link = $(matches[0]).data('link'), match = $(matches[0]).data('match');
+            _onHintKey(link, event, match);
             if (behaviours.multipleHits) {
                 prefix = "";
                 refresh();
@@ -265,9 +265,9 @@ var Hints = (function(mode) {
         return elements.length;
     }
 
-    function getTextNodePos(node) {
+    function getTextNodePos(node, offset) {
         var selection = document.getSelection();
-        selection.setBaseAndExtent(node, 0, node, 1)
+        selection.setBaseAndExtent(node, offset, node, offset+1)
         var br = selection.getRangeAt(0).getBoundingClientRect();
         return {
             left: br.left,
@@ -281,20 +281,38 @@ var Hints = (function(mode) {
 
         var elements = getTextNodes(document.body, rxp);
 
-        elements = elements.map(function(e) {
-            var pos = getTextNodePos(e);
+        var positions;
+        if (rxp.flags.indexOf('g') === -1) {
+            positions = elements.map(function(e) {
+                return [e, 0, ""];
+            });
+        } else {
+            positions = [];
+            for (var i = 0, length = elements.length; i < length; i++) {
+                var e = elements[i], match;
+                while ((match = rxp.exec(e.data)) != null) {
+                    positions.push([e, match.index, match[0]]);
+                }
+            }
+        }
+
+        elements = positions.map(function(e) {
+            var pos = getTextNodePos(e[0], e[1]);
             if (pos.top < 0 || pos.top > window.innerHeight
                 || pos.left < 0 || pos.left > window.innerWidth) {
                 return null;
             } else {
                 return $('<div/>').css('position', 'fixed').css('top', pos.top).css('left', pos.left)
-                .css('z-index', 9999)
-                .data('z-index', 9999)
-                .data('link', e);
+                    .css('z-index', 9999)
+                    .data('z-index', 9999)
+                    .data('link', e[0])
+                    .data('offset', e[1])
+                    .data('match', e[2]);
             }
         }).filter(function(e) {
             return e !== null;
         });
+
         if (elements.length > 0) {
             holder.attr('mode', 'text').show().html('');
             var hintLabels = self.genLabels(elements.length);
