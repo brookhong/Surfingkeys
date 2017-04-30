@@ -8022,7 +8022,7 @@ function getViewerConfiguration() {
     printContainer: document.getElementById('printContainer'),
     openFileInputName: 'fileInput',
     debuggerScriptPath: './debugger.js',
-    defaultUrl: window.location.search.substr(1)
+    defaultUrl: window.location.search.substr(3)
   };
 }
 function webViewerLoad() {

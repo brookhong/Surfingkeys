@@ -234,10 +234,14 @@ mapkey('O', '#1Open detected links from text', function() {
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
     var pdfUrl = window.location.href;
     if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
-        pdfUrl = window.location.search.substr(1);
-        window.location.href = pdfUrl + ((pdfUrl.search(/\?/) === -1) ? "?nopdfviewerfromsk=1" : "&nopdfviewerfromsk=1");
-    } else if (/nopdfviewerfromsk=1/.test(pdfUrl)) {
-        window.location.href = pdfUrl.replace(/.nopdfviewerfromsk=1/, '');
+        pdfUrl = window.location.search.substr(3);
+        chrome.storage.local.set({"noPdfViewer": 1}, function() {
+            window.location.replace(pdfUrl);
+        });
+    } else {
+        chrome.storage.local.remove("noPdfViewer", function() {
+            window.location.replace(pdfUrl);
+        });
     }
 });
 map('<Ctrl-i>', 'I');
