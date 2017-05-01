@@ -39,6 +39,7 @@
         "Delete all listed item from bookmark or history.": "从收藏夹或访问历史中删除所有列出条目",
         "Delete all listed items from bookmark or history": "从收藏夹或访问记录中删除当前列出的结果",
         "Delete focused item from bookmark or history": "从收藏夹或访问历史中删除选中条目",
+        "Delete history older than 30 days": "删除30天前的所有访问历史记录",
         "Duplicate current tab": "复制当前标签页",
         "Edit Settings": "编辑设置",
         "Edit current URL with vim editor": "用VIM编辑器编辑当前地址",

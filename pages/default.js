@@ -528,6 +528,11 @@ mapkey(';q', '#14Insert jquery library on current page', 'Normal.insertJS("//aja
 mapkey(';t', 'Translate selected text with google', function() {
     searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
 });
+mapkey(';dh', '#14Delete history older than 30 days', function() {
+    RUNTIME('deleteHistoryOlderThan', {
+        days: 30
+    });
+});
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response.text);

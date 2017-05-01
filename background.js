@@ -1160,6 +1160,14 @@ var Service = (function() {
             img.src = dataUrl;
         });
     };
+    self.deleteHistoryOlderThan = function(message, sender, sendResponse) {
+        var days = message.days || 0, hours = message.hours || 0;
+        chrome.history.deleteRange({
+            startTime: 0,
+            endTime: new Date().getTime() - (days * 86400 + hours * 3600) * 1000
+        }, function() {
+        });
+    };
 
     var _queueURLs = [];
     self.queueURLs = function(message, sender, sendResponse) {
