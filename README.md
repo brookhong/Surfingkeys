@@ -610,7 +610,7 @@ For example,
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
 | settings.smoothScroll | true | Whether to use smooth scrolling when pressing keys like `j`/`k`/`e`/`d` to scroll page or elements. |
-| settings.collapseAfterYank | true | Whether to collapse selection to beginning after yanking text in visual mode. |
+| settings.modeAfterYank | "" | Which mode to fall back after yanking text in visual mode. Value could be one of ["", "Caret", "Normal"], default is "", which means no action after yank.|
 | settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indiate next page. |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indiate previous page. |

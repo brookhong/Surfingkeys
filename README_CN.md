@@ -589,7 +589,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
-| settings.collapseAfterYank | true | 可视模式下，是否在复制文本之后取消选择。 |
+| settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | 匹配下一页链接的正则表达式。 |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| 匹配上一页链接的正则表达式。 |

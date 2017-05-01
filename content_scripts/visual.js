@@ -202,9 +202,14 @@ var Visual = (function(mode) {
         code: function() {
             var pos = [selection.focusNode, selection.focusOffset];
             Front.writeClipboard(selection.toString());
-            if (runtime.conf.collapseAfterYank) {
+            if (runtime.conf.modeAfterYank === "Caret") {
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
+                state = 1;
+                _onStateChange();
+            } else if (runtime.conf.modeAfterYank === "Normal") {
+                state = 2;
+                self.toggle();
             }
         }
     }];
@@ -483,7 +488,7 @@ var Visual = (function(mode) {
         self.statusLine = self.name + " - " + status[state];
         Mode.showStatus();
     }
-    function _updateState() {
+    function _incState() {
         state = (state + 1) % 3;
         _onStateChange();
     }
@@ -492,20 +497,20 @@ var Visual = (function(mode) {
             selection.setPosition(selection.focusNode, selection.focusOffset);
             self.showCursor();
             self.enter();
-            _updateState();
+            _incState();
         }
     };
     self.toggle = function() {
         switch (state) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
-                _updateState();
+                _incState();
                 break;
             case 2:
                 self.hideCursor();
                 selection.collapse(selection.focusNode, selection.focusOffset);
                 self.exit();
-                _updateState();
+                _incState();
                 break;
             default:
                 Hints.create(/./, function(element, event) {
@@ -513,7 +518,7 @@ var Visual = (function(mode) {
                         selection.setPosition(element, 0);
                         self.showCursor();
                         self.enter();
-                        _updateState();
+                        _incState();
                     }, 0);
                 });
                 break;

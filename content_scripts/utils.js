@@ -136,7 +136,8 @@ RegExp.prototype.toJSON = function() {
         return this.filter(function(i) {
             var ret = null;
             var elm = this;
-            if ($(elm).attr('disabled') === undefined) {
+            var style = getComputedStyle(elm);
+            if ($(elm).attr('disabled') === undefined && style.visibility !== "hidden") {
                 var r = elm.getBoundingClientRect();
                 if (r.width === 0 || r.height === 0) {
                     // use the first visible child instead
