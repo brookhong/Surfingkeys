@@ -869,7 +869,7 @@ var SearchEngine = (function() {
     };
     self.onEnter = function() {
         var fi = Omnibar.resultsDiv.find('li.focused');
-        var url = fi.data('url') || (self.url + (fi.data('query') || Omnibar.input.val()) );
+        var url = fi.data('url') || constructSearchURL(self.url, (fi.data('query') || Omnibar.input.val()) );
         runtime.command({
             action: "openLink",
             tab: {

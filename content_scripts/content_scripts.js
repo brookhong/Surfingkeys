@@ -358,6 +358,14 @@ function tabOpenLink(str, simultaneousness) {
     }
 }
 
+function constructSearchURL(se, word) {
+    if (se.indexOf("{0}") > 0) {
+        return se.format(word);
+    } else {
+        return se + word;
+    }
+}
+
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
     Front.getContentFromClipboard(function(response) {
         var query = window.getSelection().toString() || response.data;
@@ -367,7 +375,7 @@ function searchSelectedWith(se, onlyThisSite, interactive, alias) {
         if (interactive) {
             Front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
         } else {
-            tabOpenLink(se + encodeURIComponent(query));
+            tabOpenLink(constructSearchURL(se, encodeURIComponent(query)));
         }
     });
 }

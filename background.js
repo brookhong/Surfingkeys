@@ -1168,6 +1168,15 @@ var Service = (function() {
         }, function() {
         });
     };
+    self.removeBookmark = function(message, sender, sendResponse) {
+        chrome.bookmarks.search({
+            url: sender.tab.url
+        }, function(bookmarks) {
+            bookmarks.forEach(function(b) {
+                chrome.bookmarks.remove(b.id);
+            });
+        });
+    };
 
     var _queueURLs = [];
     self.queueURLs = function(message, sender, sendResponse) {
