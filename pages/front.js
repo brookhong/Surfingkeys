@@ -245,6 +245,8 @@ var Front = (function(mode) {
         var help_groups = feature_groups.map(function(){return [];});
 
         _initL10n(function(locale) {
+            help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
+
             [ Normal.mappings,
                 Visual.mappings,
                 Insert.mappings,
