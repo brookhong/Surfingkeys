@@ -218,6 +218,13 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
         Front.writeClipboard(element.href);
     })
 });
+mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
+    Hints.linksToYank = [];
+    Hints.create('*[href]', function(element, event) {
+        Hints.linksToYank.push(element.href);
+        Front.writeClipboard(Hints.linksToYank.join('\n'));
+    }, {multipleHits: true})
+});
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {

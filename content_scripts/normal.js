@@ -568,9 +568,13 @@ var Normal = (function(mode) {
         for (var i = 0; i < modeKeys.length; i++) {
             var modeKey = modeKeys[i].split('\t');
             if (modeKey[0] === 'Hints') {
-                setTimeout(function() {
-                    Hints.feedkeys(modeKey[1]);
-                }, 120 + i*100);
+                function closureWrapper() {
+                    var hints = modeKey[1];
+                    return function() {
+                        Hints.feedkeys(hints);
+                    }
+                }
+                setTimeout(closureWrapper(), 120 + i*100);
             }
         }
     };
