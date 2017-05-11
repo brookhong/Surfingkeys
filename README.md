@@ -497,6 +497,8 @@ mapkey in visual mode
 
     imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
+    vmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
+
     cmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
 | parameter  | explanation |

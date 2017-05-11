@@ -493,6 +493,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
     imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
+    vmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
+
     cmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
 
 | 参数  | 含义 |
