@@ -254,6 +254,19 @@ function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
     }
 }
 
+function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
+    shouldWorkFor(domain, function() {
+        var old_map = Visual.mappings.find(encodeKeystroke(old_keystroke));
+        if (old_map) {
+            var nks = encodeKeystroke(new_keystroke);
+            Visual.mappings.remove(nks);
+            // meta.word need to be new
+            var meta = $.extend({}, old_map.meta);
+            Visual.mappings.add(nks, meta);
+        }
+    });
+}
+
 function vunmap(keystroke, domain) {
     shouldWorkFor(domain, function() {
         Visual.mappings.remove(encodeKeystroke(keystroke));
