@@ -19,6 +19,7 @@ var runtime = window.runtime || (function() {
             showModeStatus: false,
             showProxyInStatusBar: false,
             richHintsForKeystroke: true,
+            smartPageBoundary: true,
             blacklistPattern: undefined,
             startToShowEmoji: 2,
             language: undefined,

@@ -328,6 +328,24 @@ function walkPageUrl(step) {
     }
 }
 
+function previousPage() {
+    var prevLinks = $('*:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
+    if (prevLinks.length) {
+        clickOn(prevLinks);
+    } else {
+        walkPageUrl(-1);
+    }
+}
+
+function nextPage() {
+    var nextLinks = $('*:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
+    if (nextLinks.length) {
+        clickOn(nextLinks);
+    } else {
+        walkPageUrl(1);
+    }
+}
+
 function tabOpenLink(str, simultaneousness) {
     simultaneousness = simultaneousness || 5;
 

@@ -286,6 +286,19 @@ var Normal = (function(mode) {
                 $(document).trigger("surfingkeys:scrollDone");
             }
         };
+        if (elm === document.body) {
+            var f = elm.skScrollBy;
+            elm.skScrollBy = function(x, y) {
+                if (runtime.conf.smartPageBoundary) {
+                    if (document.body.scrollTop === 0 && y === 0) {
+                        previousPage();
+                    } else if (document.body.scrollHeight - document.body.scrollTop <= window.innerHeight && y > 0) {
+                        nextPage();
+                    }
+                }
+                f.call(elm, x, y);
+            };
+        }
         elm.smoothScrollBy = function(x, y, d) {
             if (!self.scrollOptions[5]) {
                 // scrollOptions: prop, step, duration, previousTimestamp, delta, keyHeld

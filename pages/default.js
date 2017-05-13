@@ -401,22 +401,8 @@ mapkey('cc', '#7Open selected link or link from clipboard', function() {
         });
     }
 });
-mapkey('[[', '#1Click on the previous link on current page', function() {
-    var prevLinks = $('a').regex(runtime.conf.prevLinkRegex);
-    if (prevLinks.length) {
-        clickOn(prevLinks);
-    } else {
-        walkPageUrl(-1);
-    }
-});
-mapkey(']]', '#1Click on the next link on current page', function() {
-    var nextLinks = $('a').regex(runtime.conf.nextLinkRegex);
-    if (nextLinks.length) {
-        clickOn(nextLinks);
-    } else {
-        walkPageUrl(1);
-    }
-});
+mapkey('[[', '#1Click on the previous link on current page', previousPage);
+mapkey(']]', '#1Click on the next link on current page', nextPage);
 mapkey('ys', "#7Copy current page's source", function() {
     var aa = document.documentElement.cloneNode(true);
     Front.writeClipboard(aa.outerHTML);
