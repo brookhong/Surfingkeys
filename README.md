@@ -256,7 +256,7 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
 
 For example,
 
-    command('setProxyMode', 'setProxyMode <always|direct|byhost>', function(args) {
+    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
         // args is an array of arguments
         RUNTIME('updateProxy', {
             mode: args[0]
@@ -355,7 +355,7 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, to set proxy mode, there are three modes: direct, byhost, always
+* setProxyMode, to set proxy mode, there are five modes: direct, byhost, always, system and clear.
 
         direct      Chrome will connect to all sites directly.
         byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
@@ -375,7 +375,11 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `spb`, shortcut for `:setProxyMode byhost`
 
+* `spc`, shortcut for `:setProxyMode clear`
+
 * `spd`, shortcut for `:setProxyMode direct`
+
+* `sps`, shortcut for `:setProxyMode system`
 
 * `spi`, shortcut for `:proxyInfo`
 
