@@ -50,6 +50,10 @@ var frontendFrame = (function() {
 
     var lastStateOfPointerEvents = "none";
     self.setFrontFrame = function(response) {
+        if (ifr[0].getBoundingClientRect().top) {
+            // test with https://carlosbecker.com/posts/production-code-coverage-jacoco/
+            ifr.css('top', document.body.scrollTop);
+        }
         ifr.css('height', response.frameHeight);
         if (response.pointerEvents) {
             ifr.css('pointer-events', response.pointerEvents);
