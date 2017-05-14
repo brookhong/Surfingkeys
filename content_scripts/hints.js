@@ -246,6 +246,9 @@ var Hints = (function(mode) {
         }
         if (cssSelector === "") {
             cssSelector = "a, button, select, input, textarea";
+            if (runtime.conf.clickableSelector.length) {
+                cssSelector += ", " + runtime.conf.clickableSelector;
+            }
             if (!runtime.conf.hintsThreshold || $(cssSelector).length < runtime.conf.hintsThreshold) {
                 // to avoid bad performance when there are too many clickable elements.
                 cssSelector += ", *:css(cursor=pointer), *[onclick]";

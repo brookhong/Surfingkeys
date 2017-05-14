@@ -324,25 +324,32 @@ function removeSearchAliasX(alias, search_leader_key, only_this_site_key) {
 function walkPageUrl(step) {
     var numbers = window.location.href.match(/^(.*\/[^\/\d]*)(\d+)([^\d]*)$/);
     if (numbers && numbers.length === 4) {
-        window.location.href = numbers[1] + (parseInt(numbers[2]) + step) + numbers[3];
+        var cp = parseInt(numbers[2]);
+        if (cp < 0xffffffff) {
+            window.location.href = numbers[1] + (cp + step) + numbers[3];
+            return true;
+        }
     }
+    return false;
 }
 
 function previousPage() {
-    var prevLinks = $('*:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
+    var prevLinks = $('a, button, *:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex).filterInvisible();
     if (prevLinks.length) {
         clickOn(prevLinks);
+        return true;
     } else {
-        walkPageUrl(-1);
+        return walkPageUrl(-1);
     }
 }
 
 function nextPage() {
-    var nextLinks = $('*:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
+    var nextLinks = $('a, button, *:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex).filterInvisible();
     if (nextLinks.length) {
         clickOn(nextLinks);
+        return true;
     } else {
-        walkPageUrl(1);
+        return walkPageUrl(1);
     }
 }
 

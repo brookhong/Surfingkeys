@@ -596,6 +596,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
+| settings.clickableSelector | "" | 自定义CSS selector用于f键选择无法检测到的可点击元素，例如"\*.jfk-button, \*.goog-flat-menu-button"。 |
+| settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | 用于检测文字中可点击链接的正则表达式，你可以按`O`打开检测到的链接。|
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
 | settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |

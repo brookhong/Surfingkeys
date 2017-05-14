@@ -290,10 +290,10 @@ var Normal = (function(mode) {
             var f = elm.skScrollBy;
             elm.skScrollBy = function(x, y) {
                 if (runtime.conf.smartPageBoundary) {
-                    if (document.body.scrollTop === 0 && y === 0) {
-                        previousPage();
+                    if (document.body.scrollTop === 0 && y <= 0) {
+                        previousPage() && Front.showBanner("Top margin hit, jump to previous page");
                     } else if (document.body.scrollHeight - document.body.scrollTop <= window.innerHeight && y > 0) {
-                        nextPage();
+                        nextPage() && Front.showBanner("Bottom margin hit, jump to next page");
                     }
                 }
                 f.call(elm, x, y);
@@ -409,13 +409,13 @@ var Normal = (function(mode) {
 
     self.scroll = function(type) {
         initScrollIndex();
-        if (scrollNodes.length === 0) {
-            return;
-        }
-        var scrollNode = scrollNodes[scrollIndex];
-        if (!$(scrollNode).is(':visible')) {
-            self.changeScrollTarget(true);
+        var scrollNode = document.body;
+        if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
+            if (!$(scrollNode).is(':visible')) {
+                self.changeScrollTarget(true);
+                scrollNode = scrollNodes[scrollIndex];
+            }
         }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
@@ -564,7 +564,7 @@ var Normal = (function(mode) {
     }
 
     self.appendKeysForRepeat = function(mode, keys) {
-        if (lastKeys.length > 0) {
+        if (lastKeys && lastKeys.length > 0) {
             // keys for normal mode must be pushed.
             lastKeys.push('{0}\t{1}'.format(mode, keys));
             saveLastKeys();
