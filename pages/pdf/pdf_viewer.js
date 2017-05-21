@@ -953,8 +953,8 @@ var DEFAULT_SCALE_DELTA = 1.1;
 var DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
 function configure(PDFJS) {
   PDFJS.imageResourcesPath = './images/';
-  PDFJS.workerSrc = '../build/pdf.worker.js';
-  PDFJS.cMapUrl = '../web/cmaps/';
+  PDFJS.workerSrc = './pdf/pdf.worker.js';
+  PDFJS.cMapUrl = './pdf/cmaps/';
   PDFJS.cMapPacked = true;
 }
 var DefaultExternalServices = {
@@ -1805,10 +1805,10 @@ var validateFileURL;
       if (HOSTED_VIEWER_ORIGINS.indexOf(viewerOrigin) >= 0) {
         return;
       }
-      var fileOrigin = new URL(file, window.location.href).origin;
-      if (fileOrigin !== viewerOrigin) {
-        throw new Error('file origin does not match viewer\'s');
-      }
+      // var fileOrigin = new URL(file, window.location.href).origin;
+      // if (fileOrigin !== viewerOrigin) {
+        // throw new Error('file origin does not match viewer\'s');
+      // }
     } catch (e) {
       var message = e && e.message;
       var loadingErrorMessage = _ui_utils.mozL10n.get('loading_error', null, 'An error occurred while loading the PDF.');
@@ -8425,8 +8425,6 @@ exports.ViewHistory = ViewHistory;
 "use strict";
 
 
-var DEFAULT_URL = 'compressed.tracemonkey-pldi-09.pdf';
-;
 var pdfjsWebApp;
 {
   pdfjsWebApp = __webpack_require__(5);
@@ -8546,7 +8544,7 @@ function getViewerConfiguration() {
     printContainer: document.getElementById('printContainer'),
     openFileInputName: 'fileInput',
     debuggerScriptPath: './debugger.js',
-    defaultUrl: DEFAULT_URL
+    defaultUrl: window.location.search.substr(3)
   };
 }
 function webViewerLoad() {
