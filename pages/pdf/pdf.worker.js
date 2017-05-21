@@ -98,11 +98,22 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.warn = exports.utf8StringToString = exports.stringToUTF8String = exports.stringToPDFString = exports.stringToBytes = exports.string32 = exports.shadow = exports.setVerbosityLevel = exports.removeNullCharacters = exports.readUint32 = exports.readUint16 = exports.readInt8 = exports.log2 = exports.loadJpegStream = exports.isEvalSupported = exports.isLittleEndian = exports.createValidAbsoluteUrl = exports.isSameOrigin = exports.isNodeJS = exports.isSpace = exports.isString = exports.isNum = exports.isInt = exports.isEmptyObj = exports.isBool = exports.isArrayBuffer = exports.isArray = exports.info = exports.globalScope = exports.getVerbosityLevel = exports.getLookupTableFactory = exports.error = exports.deprecated = exports.createObjectURL = exports.createPromiseCapability = exports.createBlob = exports.bytesToString = exports.assert = exports.arraysToBytes = exports.arrayByteLength = exports.XRefParseException = exports.Util = exports.UnknownErrorException = exports.UnexpectedResponseException = exports.TextRenderingMode = exports.StreamType = exports.StatTimer = exports.PasswordResponses = exports.PasswordException = exports.PageViewport = exports.NotImplementedException = exports.NativeImageDecoding = exports.MissingPDFException = exports.MissingDataException = exports.MessageHandler = exports.InvalidPDFException = exports.CMapCompressionType = exports.ImageKind = exports.FontType = exports.AnnotationType = exports.AnnotationFlag = exports.AnnotationFieldFlag = exports.AnnotationBorderStyleType = exports.UNSUPPORTED_FEATURES = exports.VERBOSITY_LEVELS = exports.OPS = exports.IDENTITY_MATRIX = exports.FONT_IDENTITY_MATRIX = undefined;
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var compatibility = __w_pdfjs_require__(37);
+__w_pdfjs_require__(37);
+
 var globalScope = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : undefined;
 var FONT_IDENTITY_MATRIX = [0.001, 0, 0, 0.001, 0, 0];
+var NativeImageDecoding = {
+  NONE: 'none',
+  DECODE: 'decode',
+  DISPLAY: 'display'
+};
 var TextRenderingMode = {
   FILL: 0,
   STROKE: 1,
@@ -963,12 +974,14 @@ var createBlob = function createBlob(data, contentType) {
   if (typeof Blob !== 'undefined') {
     return new Blob([data], { type: contentType });
   }
-  warn('The "Blob" constructor is not supported.');
+  throw new Error('The "Blob" constructor is not supported.');
 };
 var createObjectURL = function createObjectURLClosure() {
   var digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-  return function createObjectURL(data, contentType, forceDataSchema) {
-    if (!forceDataSchema && typeof URL !== 'undefined' && URL.createObjectURL) {
+  return function createObjectURL(data, contentType) {
+    var forceDataSchema = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+    if (!forceDataSchema && URL.createObjectURL) {
       var blob = createBlob(data, contentType);
       return URL.createObjectURL(blob);
     }
@@ -987,6 +1000,8 @@ var createObjectURL = function createObjectURLClosure() {
   };
 }();
 function MessageHandler(sourceName, targetName, comObj) {
+  var _this = this;
+
   this.sourceName = sourceName;
   this.targetName = targetName;
   this.comObj = comObj;
@@ -994,9 +1009,9 @@ function MessageHandler(sourceName, targetName, comObj) {
   this.postMessageTransfers = true;
   var callbacksCapabilities = this.callbacksCapabilities = Object.create(null);
   var ah = this.actionHandler = Object.create(null);
-  this._onComObjOnMessage = function messageHandlerComObjOnMessage(event) {
+  this._onComObjOnMessage = function (event) {
     var data = event.data;
-    if (data.targetName !== this.sourceName) {
+    if (data.targetName !== _this.sourceName) {
       return;
     }
     if (data.isReply) {
@@ -1015,7 +1030,7 @@ function MessageHandler(sourceName, targetName, comObj) {
     } else if (data.action in ah) {
       var action = ah[data.action];
       if (data.callbackId) {
-        var sourceName = this.sourceName;
+        var sourceName = _this.sourceName;
         var targetName = data.sourceName;
         Promise.resolve().then(function () {
           return action[0].call(action[1], data.data);
@@ -1045,18 +1060,18 @@ function MessageHandler(sourceName, targetName, comObj) {
     } else {
       error('Unknown action from worker: ' + data.action);
     }
-  }.bind(this);
+  };
   comObj.addEventListener('message', this._onComObjOnMessage);
 }
 MessageHandler.prototype = {
-  on: function messageHandlerOn(actionName, handler, scope) {
+  on: function on(actionName, handler, scope) {
     var ah = this.actionHandler;
     if (ah[actionName]) {
       error('There is already an actionName called "' + actionName + '"');
     }
     ah[actionName] = [handler, scope];
   },
-  send: function messageHandlerSend(actionName, data, transfers) {
+  send: function send(actionName, data, transfers) {
     var message = {
       sourceName: this.sourceName,
       targetName: this.targetName,
@@ -1065,7 +1080,7 @@ MessageHandler.prototype = {
     };
     this.postMessage(message, transfers);
   },
-  sendWithPromise: function messageHandlerSendWithPromise(actionName, data, transfers) {
+  sendWithPromise: function sendWithPromise(actionName, data, transfers) {
     var callbackId = this.callbackIndex++;
     var message = {
       sourceName: this.sourceName,
@@ -1121,6 +1136,7 @@ exports.InvalidPDFException = InvalidPDFException;
 exports.MessageHandler = MessageHandler;
 exports.MissingDataException = MissingDataException;
 exports.MissingPDFException = MissingPDFException;
+exports.NativeImageDecoding = NativeImageDecoding;
 exports.NotImplementedException = NotImplementedException;
 exports.PageViewport = PageViewport;
 exports.PasswordException = PasswordException;
@@ -4673,9 +4689,13 @@ var Lexer = function LexerClosure() {
         divideBy = 10;
         ch = this.nextChar();
       }
+      if (ch === 0x0A || ch === 0x0D) {
+        do {
+          ch = this.nextChar();
+        } while (ch === 0x0A || ch === 0x0D);
+      }
       if (ch < 0x30 || ch > 0x39) {
-        error('Invalid number: ' + String.fromCharCode(ch));
-        return 0;
+        error('Invalid number: ' + String.fromCharCode(ch) + ' (charCode ' + ch + ')');
       }
       var baseValue = ch - 0x30;
       var powerValue = 0;
@@ -10837,7 +10857,7 @@ function setPDFNetworkStreamClass(cls) {
   PDFNetworkStream = cls;
 }
 var WorkerMessageHandler = {
-  setup: function wphSetup(handler, port) {
+  setup: function setup(handler, port) {
     var testMessageProcessed = false;
     handler.on('test', function wphSetupTest(data) {
       if (testMessageProcessed) {
@@ -10873,7 +10893,7 @@ var WorkerMessageHandler = {
       return WorkerMessageHandler.createDocumentHandler(data, port);
     });
   },
-  createDocumentHandler: function wphCreateDocumentHandler(docParams, port) {
+  createDocumentHandler: function createDocumentHandler(docParams, port) {
     var pdfManager;
     var terminated = false;
     var cancelXHRs = null;
@@ -11076,7 +11096,7 @@ var WorkerMessageHandler = {
         forceDataSchema: data.disableCreateObjectURL,
         maxImageSize: data.maxImageSize === undefined ? -1 : data.maxImageSize,
         disableFontFace: data.disableFontFace,
-        disableNativeImageDecoder: data.disableNativeImageDecoder,
+        nativeImageDecoderSupport: data.nativeImageDecoderSupport,
         ignoreErrors: data.ignoreErrors
       };
       getPdfManager(data, evaluatorOptions).then(function (newPdfManager) {
@@ -11154,7 +11174,12 @@ var WorkerMessageHandler = {
         startWorkerTask(task);
         var pageNum = pageIndex + 1;
         var start = Date.now();
-        page.getOperatorList(handler, task, data.intent, data.renderInteractiveForms).then(function (operatorList) {
+        page.getOperatorList({
+          handler: handler,
+          task: task,
+          intent: data.intent,
+          renderInteractiveForms: data.renderInteractiveForms
+        }).then(function (operatorList) {
           finishWorkerTask(task);
           info('page=' + pageNum + ' - getOperatorList: time=' + (Date.now() - start) + 'ms, len=' + operatorList.totalLength);
         }, function (e) {
@@ -11196,7 +11221,12 @@ var WorkerMessageHandler = {
         startWorkerTask(task);
         var pageNum = pageIndex + 1;
         var start = Date.now();
-        return page.extractTextContent(handler, task, data.normalizeWhitespace, data.combineTextItems).then(function (textContent) {
+        return page.extractTextContent({
+          handler: handler,
+          task: task,
+          normalizeWhitespace: data.normalizeWhitespace,
+          combineTextItems: data.combineTextItems
+        }).then(function (textContent) {
           finishWorkerTask(task);
           info('text indexing: page=' + pageNum + ' - time=' + (Date.now() - start) + 'ms');
           return textContent;
@@ -11236,15 +11266,18 @@ var WorkerMessageHandler = {
       docParams = null;
     });
     return workerHandlerName;
+  },
+  initializeFromPort: function initializeFromPort(port) {
+    var handler = new MessageHandler('worker', 'main', port);
+    WorkerMessageHandler.setup(handler, port);
+    handler.send('ready', null);
   }
 };
-function initializeWorker() {
-  var handler = new MessageHandler('worker', 'main', self);
-  WorkerMessageHandler.setup(handler, self);
-  handler.send('ready', null);
+function isMessagePort(maybePort) {
+  return typeof maybePort.postMessage === 'function' && 'onmessage' in maybePort;
 }
-if (typeof window === 'undefined' && !isNodeJS()) {
-  initializeWorker();
+if (typeof window === 'undefined' && !isNodeJS() && typeof self !== 'undefined' && isMessagePort(self)) {
+  WorkerMessageHandler.initializeFromPort(self);
 }
 exports.setPDFNetworkStreamClass = setPDFNetworkStreamClass;
 exports.WorkerTask = WorkerTask;
@@ -15232,6 +15265,8 @@ var ChunkedStreamManager = function ChunkedStreamManagerClosure() {
       return this._loadedStreamCapability.promise;
     },
     sendRequest: function ChunkedStreamManager_sendRequest(begin, end) {
+      var _this = this;
+
       var rangeReader = this.pdfNetworkStream.getRangeReader(begin, end);
       if (!rangeReader.isStreamingSupported) {
         rangeReader.onProgress = this.onProgress.bind(this);
@@ -15262,14 +15297,14 @@ var ChunkedStreamManager = function ChunkedStreamManagerClosure() {
         rangeReader.read().then(readChunk, reject);
       });
       promise.then(function (data) {
-        if (this.aborted) {
+        if (_this.aborted) {
           return;
         }
-        this.onReceiveData({
+        _this.onReceiveData({
           chunk: data,
           begin: begin
         });
-      }.bind(this));
+      });
     },
     requestAllChunks: function ChunkedStreamManager_requestAllChunks() {
       var missingChunks = this.stream.getMissingChunks();
@@ -17085,6 +17120,7 @@ var IDENTITY_MATRIX = sharedUtil.IDENTITY_MATRIX;
 var UNSUPPORTED_FEATURES = sharedUtil.UNSUPPORTED_FEATURES;
 var ImageKind = sharedUtil.ImageKind;
 var OPS = sharedUtil.OPS;
+var NativeImageDecoding = sharedUtil.NativeImageDecoding;
 var TextRenderingMode = sharedUtil.TextRenderingMode;
 var CMapCompressionType = sharedUtil.CMapCompressionType;
 var Util = sharedUtil.Util;
@@ -17145,7 +17181,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
     forceDataSchema: false,
     maxImageSize: -1,
     disableFontFace: false,
-    disableNativeImageDecoder: false,
+    nativeImageDecoderSupport: NativeImageDecoding.DECODE,
     ignoreErrors: false
   };
   function NativeImageDecoder(xref, resources, handler, forceDataSchema) {
@@ -17186,7 +17222,19 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
     var cs = ColorSpace.parse(dict.get('ColorSpace', 'CS'), xref, res);
     return (cs.numComps === 1 || cs.numComps === 3) && cs.isDefaultDecode(dict.getArray('Decode', 'D'));
   };
-  function PartialEvaluator(pdfManager, xref, handler, pageIndex, idFactory, fontCache, builtInCMapCache, options) {
+  function PartialEvaluator(_ref) {
+    var _this = this;
+
+    var pdfManager = _ref.pdfManager,
+        xref = _ref.xref,
+        handler = _ref.handler,
+        pageIndex = _ref.pageIndex,
+        idFactory = _ref.idFactory,
+        fontCache = _ref.fontCache,
+        builtInCMapCache = _ref.builtInCMapCache,
+        _ref$options = _ref.options,
+        options = _ref$options === undefined ? null : _ref$options;
+
     this.pdfManager = pdfManager;
     this.xref = xref;
     this.handler = handler;
@@ -17196,13 +17244,13 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
     this.builtInCMapCache = builtInCMapCache;
     this.options = options || DefaultPartialEvaluatorOptions;
     this.fetchBuiltInCMap = function (name) {
-      var cachedCMap = builtInCMapCache[name];
+      var cachedCMap = _this.builtInCMapCache[name];
       if (cachedCMap) {
         return Promise.resolve(cachedCMap);
       }
-      return handler.sendWithPromise('FetchBuiltInCMap', { name: name }).then(function (data) {
+      return _this.handler.sendWithPromise('FetchBuiltInCMap', { name: name }).then(function (data) {
         if (data.compressionType !== CMapCompressionType.NONE) {
-          builtInCMapCache[name] = data;
+          _this.builtInCMapCache[name] = data;
         }
         return data;
       });
@@ -17272,12 +17320,14 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
   var TILING_PATTERN = 1,
       SHADING_PATTERN = 2;
   PartialEvaluator.prototype = {
-    clone: function clone(newOptions) {
-      newOptions = newOptions || DefaultPartialEvaluatorOptions;
+    clone: function clone() {
+      var newOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultPartialEvaluatorOptions;
+
       var newEvaluator = Object.create(this);
       newEvaluator.options = newOptions;
       return newEvaluator;
     },
+
     hasBlendModes: function PartialEvaluator_hasBlendModes(resources) {
       if (!isDict(resources)) {
         return false;
@@ -17364,7 +17414,13 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         operatorList.addOp(OPS.beginGroup, [groupOptions]);
       }
       operatorList.addOp(OPS.paintFormXObjectBegin, [matrix, bbox]);
-      return this.getOperatorList(xobj, task, dict.get('Resources') || resources, operatorList, initialState).then(function () {
+      return this.getOperatorList({
+        stream: xobj,
+        task: task,
+        resources: dict.get('Resources') || resources,
+        operatorList: operatorList,
+        initialState: initialState
+      }).then(function () {
         operatorList.addOp(OPS.paintFormXObjectEnd, []);
         if (group) {
           operatorList.addOp(OPS.endGroup, [groupOptions]);
@@ -17372,7 +17428,8 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       });
     },
     buildPaintImageXObject: function PartialEvaluator_buildPaintImageXObject(resources, image, inline, operatorList, cacheKey, imageCache) {
-      var self = this;
+      var _this2 = this;
+
       var dict = image.dict;
       var w = dict.get('Width', 'W');
       var h = dict.get('Height', 'H');
@@ -17415,25 +17472,25 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         operatorList.addOp(OPS.paintInlineImageXObject, [imgData]);
         return;
       }
-      var useNativeImageDecoder = !this.options.disableNativeImageDecoder;
+      var nativeImageDecoderSupport = this.options.nativeImageDecoderSupport;
       var objId = 'img_' + this.idFactory.createObjId();
       operatorList.addDependency(objId);
       args = [objId, w, h];
-      if (useNativeImageDecoder && !softMask && !mask && image instanceof JpegStream && NativeImageDecoder.isSupported(image, this.xref, resources)) {
+      if (nativeImageDecoderSupport !== NativeImageDecoding.NONE && !softMask && !mask && image instanceof JpegStream && NativeImageDecoder.isSupported(image, this.xref, resources)) {
         operatorList.addOp(OPS.paintJpegXObject, args);
         this.handler.send('obj', [objId, this.pageIndex, 'JpegStream', image.getIR(this.options.forceDataSchema)]);
         return;
       }
       var nativeImageDecoder = null;
-      if (useNativeImageDecoder && (image instanceof JpegStream || mask instanceof JpegStream || softMask instanceof JpegStream)) {
-        nativeImageDecoder = new NativeImageDecoder(self.xref, resources, self.handler, self.options.forceDataSchema);
+      if (nativeImageDecoderSupport === NativeImageDecoding.DECODE && (image instanceof JpegStream || mask instanceof JpegStream || softMask instanceof JpegStream)) {
+        nativeImageDecoder = new NativeImageDecoder(this.xref, resources, this.handler, this.options.forceDataSchema);
       }
-      PDFImage.buildImage(self.handler, self.xref, resources, image, inline, nativeImageDecoder).then(function (imageObj) {
+      PDFImage.buildImage(this.handler, this.xref, resources, image, inline, nativeImageDecoder).then(function (imageObj) {
         var imgData = imageObj.createImageData(false);
-        self.handler.send('obj', [objId, self.pageIndex, 'Image', imgData], [imgData.data.buffer]);
-      }).then(undefined, function (reason) {
+        _this2.handler.send('obj', [objId, _this2.pageIndex, 'Image', imgData], [imgData.data.buffer]);
+      }).catch(function (reason) {
         warn('Unable to decode image: ' + reason);
-        self.handler.send('obj', [objId, self.pageIndex, 'Image', null]);
+        _this2.handler.send('obj', [objId, _this2.pageIndex, 'Image', null]);
       });
       operatorList.addOp(OPS.paintImageXObject, args);
       if (cacheKey) {
@@ -17467,7 +17524,12 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       var tilingOpList = new OperatorList();
       var resourcesArray = [patternDict.get('Resources'), resources];
       var patternResources = Dict.merge(this.xref, resourcesArray);
-      return this.getOperatorList(pattern, task, patternResources, tilingOpList).then(function () {
+      return this.getOperatorList({
+        stream: pattern,
+        task: task,
+        resources: patternResources,
+        operatorList: tilingOpList
+      }).then(function () {
         operatorList.addDependencies(tilingOpList.dependencies);
         operatorList.addOp(fn, getTilingPatternIR({
           fnArray: tilingOpList.fnArray,
@@ -17476,39 +17538,42 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       });
     },
     handleSetFont: function PartialEvaluator_handleSetFont(resources, fontArgs, fontRef, operatorList, task, state) {
+      var _this3 = this;
+
       var fontName;
       if (fontArgs) {
         fontArgs = fontArgs.slice();
         fontName = fontArgs[0].name;
       }
-      var self = this;
       return this.loadFont(fontName, fontRef, resources).then(function (translated) {
         if (!translated.font.isType3Font) {
           return translated;
         }
-        return translated.loadType3Data(self, resources, operatorList, task).then(function () {
+        return translated.loadType3Data(_this3, resources, operatorList, task).then(function () {
           return translated;
-        }, function (reason) {
-          self.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.font });
+        }).catch(function (reason) {
+          _this3.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.font });
           return new TranslatedFont('g_font_error', new ErrorFont('Type3 font load error: ' + reason), translated.font);
         });
       }).then(function (translated) {
         state.font = translated.font;
-        translated.send(self.handler);
+        translated.send(_this3.handler);
         return translated.loadedName;
       });
     },
     handleText: function PartialEvaluator_handleText(chars, state) {
+      var _this4 = this;
+
       var font = state.font;
       var glyphs = font.charsToGlyphs(chars);
       var isAddToPathSet = !!(state.textRenderingMode & TextRenderingMode.ADD_TO_PATH_FLAG);
       if (font.data && (isAddToPathSet || this.options.disableFontFace)) {
-        var buildPath = function (fontChar) {
+        var buildPath = function buildPath(fontChar) {
           if (!font.renderer.hasBuiltPath(fontChar)) {
             var path = font.renderer.getPathJs(fontChar);
-            this.handler.send('commonobj', [font.loadedName + '_path_' + fontChar, 'FontPath', path]);
+            _this4.handler.send('commonobj', [font.loadedName + '_path_' + fontChar, 'FontPath', path]);
           }
-        }.bind(this);
+        };
         for (var i = 0, ii = glyphs.length; i < ii; i++) {
           var glyph = glyphs[i];
           buildPath(glyph.fontChar);
@@ -17521,11 +17586,13 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       return glyphs;
     },
     setGState: function PartialEvaluator_setGState(resources, gState, operatorList, task, stateManager) {
+      var _this5 = this;
+
       var gStateObj = [];
       var gStateKeys = gState.getKeys();
-      var self = this;
       var promise = Promise.resolve();
-      for (var i = 0, ii = gStateKeys.length; i < ii; i++) {
+
+      var _loop = function _loop() {
         var key = gStateKeys[i];
         var value = gState.get(key);
         switch (key) {
@@ -17544,7 +17611,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
             break;
           case 'Font':
             promise = promise.then(function () {
-              return self.handleSetFont(resources, null, value[0], operatorList, task, stateManager.state).then(function (loadedName) {
+              return _this5.handleSetFont(resources, null, value[0], operatorList, task, stateManager.state).then(function (loadedName) {
                 operatorList.addDependency(loadedName);
                 gStateObj.push([key, [loadedName, value[1]]]);
               });
@@ -17559,9 +17626,9 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
               break;
             }
             if (isDict(value)) {
-              promise = promise.then(function (dict) {
-                return self.handleSMask(dict, resources, operatorList, task, stateManager);
-              }.bind(this, value));
+              promise = promise.then(function () {
+                return _this5.handleSMask(value, resources, operatorList, task, stateManager);
+              });
               gStateObj.push([key, true]);
             } else {
               warn('Unsupported SMask type');
@@ -17587,6 +17654,10 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
             info('Unknown graphic state operator ' + key);
             break;
         }
+      };
+
+      for (var i = 0, ii = gStateKeys.length; i < ii; i++) {
+        _loop();
       }
       return promise.then(function () {
         if (gStateObj.length > 0) {
@@ -17595,6 +17666,8 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       });
     },
     loadFont: function PartialEvaluator_loadFont(fontName, font, resources) {
+      var _this6 = this;
+
       function errorFont() {
         return Promise.resolve(new TranslatedFont('g_font_error', new ErrorFont('Font ' + fontName + ' is not available'), font));
       }
@@ -17671,15 +17744,14 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       } catch (e) {
         translatedPromise = Promise.reject(e);
       }
-      var self = this;
       translatedPromise.then(function (translatedFont) {
         if (translatedFont.fontType !== undefined) {
           var xrefFontStats = xref.stats.fontTypes;
           xrefFontStats[translatedFont.fontType] = true;
         }
         fontCapability.resolve(new TranslatedFont(font.loadedName, translatedFont, font));
-      }, function (reason) {
-        self.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.font });
+      }).catch(function (reason) {
+        _this6.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.font });
         try {
           var descriptor = preEvaluatedFont.descriptor;
           var fontFile3 = descriptor && descriptor.get('FontFile3');
@@ -17726,15 +17798,25 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       operatorList.addOp(fn, args);
       return Promise.resolve();
     },
-    getOperatorList: function PartialEvaluator_getOperatorList(stream, task, resources, operatorList, initialState) {
+    getOperatorList: function getOperatorList(_ref2) {
+      var _this7 = this;
+
+      var stream = _ref2.stream,
+          task = _ref2.task,
+          resources = _ref2.resources,
+          operatorList = _ref2.operatorList,
+          _ref2$initialState = _ref2.initialState,
+          initialState = _ref2$initialState === undefined ? null : _ref2$initialState;
+
+      resources = resources || Dict.empty;
+      initialState = initialState || new EvalState();
+      assert(operatorList, 'getOperatorList: missing "operatorList" parameter');
       var self = this;
       var xref = this.xref;
       var imageCache = Object.create(null);
-      assert(operatorList);
-      resources = resources || Dict.empty;
       var xobjs = resources.get('XObject') || Dict.empty;
       var patterns = resources.get('Pattern') || Dict.empty;
-      var stateManager = new StateManager(initialState || new EvalState());
+      var stateManager = new StateManager(initialState);
       var preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
       var timeSlotManager = new TimeSlotManager();
       function closePendingRestoreOPS(argument) {
@@ -17980,16 +18062,29 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         closePendingRestoreOPS();
         resolve();
       }).catch(function (reason) {
-        if (this.options.ignoreErrors) {
-          this.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.unknown });
+        if (_this7.options.ignoreErrors) {
+          _this7.handler.send('UnsupportedFeature', { featureId: UNSUPPORTED_FEATURES.unknown });
           warn('getOperatorList - ignoring errors during task: ' + task.name);
           closePendingRestoreOPS();
           return;
         }
         throw reason;
-      }.bind(this));
+      });
     },
-    getTextContent: function PartialEvaluator_getTextContent(stream, task, resources, stateManager, normalizeWhitespace, combineTextItems) {
+    getTextContent: function getTextContent(_ref3) {
+      var _this8 = this;
+
+      var stream = _ref3.stream,
+          task = _ref3.task,
+          resources = _ref3.resources,
+          _ref3$stateManager = _ref3.stateManager,
+          stateManager = _ref3$stateManager === undefined ? null : _ref3$stateManager,
+          _ref3$normalizeWhites = _ref3.normalizeWhitespace,
+          normalizeWhitespace = _ref3$normalizeWhites === undefined ? false : _ref3$normalizeWhites,
+          _ref3$combineTextItem = _ref3.combineTextItems,
+          combineTextItems = _ref3$combineTextItem === undefined ? false : _ref3$combineTextItem;
+
+      resources = resources || Dict.empty;
       stateManager = stateManager || new StateManager(new TextState());
       var WhitespaceRegexp = /\s/g;
       var textContent = {
@@ -18018,7 +18113,6 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       var MULTI_SPACE_FACTOR_MAX = 4;
       var self = this;
       var xref = this.xref;
-      resources = xref.fetchIfRef(resources) || Dict.empty;
       var xobjs = null;
       var xobjsCache = Object.create(null);
       var preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
@@ -18366,7 +18460,14 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
               if (isArray(matrix) && matrix.length === 6) {
                 xObjStateManager.transform(matrix);
               }
-              next(self.getTextContent(xobj, task, xobj.dict.get('Resources') || resources, xObjStateManager, normalizeWhitespace, combineTextItems).then(function (formTextContent) {
+              next(self.getTextContent({
+                stream: xobj,
+                task: task,
+                resources: xobj.dict.get('Resources') || resources,
+                stateManager: xObjStateManager,
+                normalizeWhitespace: normalizeWhitespace,
+                combineTextItems: combineTextItems
+              }).then(function (formTextContent) {
                 Util.appendToArray(textContent.items, formTextContent.items);
                 Util.extendObj(textContent.styles, formTextContent.styles);
                 xobjsCache.key = name;
@@ -18401,15 +18502,18 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         flushTextContentItem();
         resolve(textContent);
       }).catch(function (reason) {
-        if (this.options.ignoreErrors) {
+        if (_this8.options.ignoreErrors) {
           warn('getTextContent - ignoring errors during task: ' + task.name);
           flushTextContentItem();
           return textContent;
         }
         throw reason;
-      }.bind(this));
+      });
     },
+
     extractDataStructures: function PartialEvaluator_extractDataStructures(dict, baseDict, properties) {
+      var _this9 = this;
+
       var xref = this.xref;
       var toUnicode = dict.get('ToUnicode') || baseDict.get('ToUnicode');
       var toUnicodePromise = toUnicode ? this.readToUnicode(toUnicode) : Promise.resolve(undefined);
@@ -18485,8 +18589,8 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       properties.dict = dict;
       return toUnicodePromise.then(function (toUnicode) {
         properties.toUnicode = toUnicode;
-        return this.buildToUnicode(properties);
-      }.bind(this)).then(function (toUnicode) {
+        return _this9.buildToUnicode(properties);
+      }).then(function (toUnicode) {
         properties.toUnicode = toUnicode;
         return properties;
       });
@@ -18838,6 +18942,8 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       };
     },
     translateFont: function PartialEvaluator_translateFont(preEvaluatedFont) {
+      var _this10 = this;
+
       var baseDict = preEvaluatedFont.baseDict;
       var dict = preEvaluatedFont.dict;
       var composite = preEvaluatedFont.composite;
@@ -18867,9 +18973,9 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
             lastChar: maxCharIndex
           };
           return this.extractDataStructures(dict, dict, properties).then(function (properties) {
-            properties.widths = this.buildCharCodeToWidth(metrics.widths, properties);
+            properties.widths = _this10.buildCharCodeToWidth(metrics.widths, properties);
             return new Font(baseFontName, null, properties);
-          }.bind(this));
+          });
         }
       }
       var firstChar = dict.get('FirstChar') || 0;
@@ -18948,14 +19054,14 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         cMapPromise = Promise.resolve(undefined);
       }
       return cMapPromise.then(function () {
-        return this.extractDataStructures(dict, baseDict, properties);
-      }.bind(this)).then(function (properties) {
-        this.extractWidths(dict, descriptor, properties);
+        return _this10.extractDataStructures(dict, baseDict, properties);
+      }).then(function (properties) {
+        _this10.extractWidths(dict, descriptor, properties);
         if (type === 'Type3') {
           properties.isType3Font = true;
         }
         return new Font(fontName.name, fontFile, properties);
-      }.bind(this));
+      });
     }
   };
   return PartialEvaluator;
@@ -18991,19 +19097,30 @@ var TranslatedFont = function TranslatedFontClosure() {
       var fontResources = this.dict.get('Resources') || resources;
       var charProcKeys = charProcs.getKeys();
       var charProcOperatorList = Object.create(null);
-      for (var i = 0, n = charProcKeys.length; i < n; ++i) {
-        loadCharProcsPromise = loadCharProcsPromise.then(function (key) {
+
+      var _loop2 = function _loop2() {
+        var key = charProcKeys[i];
+        loadCharProcsPromise = loadCharProcsPromise.then(function () {
           var glyphStream = charProcs.get(key);
           var operatorList = new OperatorList();
-          return type3Evaluator.getOperatorList(glyphStream, task, fontResources, operatorList).then(function () {
+          return type3Evaluator.getOperatorList({
+            stream: glyphStream,
+            task: task,
+            resources: fontResources,
+            operatorList: operatorList
+          }).then(function () {
             charProcOperatorList[key] = operatorList.getIR();
             parentOperatorList.addDependencies(operatorList.dependencies);
-          }, function (reason) {
-            warn('Type3 font resource \"' + key + '\" is not available');
+          }).catch(function (reason) {
+            warn('Type3 font resource "' + key + '" is not available.');
             var operatorList = new OperatorList();
             charProcOperatorList[key] = operatorList.getIR();
           });
-        }.bind(this, charProcKeys[i]));
+        });
+      };
+
+      for (var i = 0, n = charProcKeys.length; i < n; ++i) {
+        _loop2();
       }
       this.type3Loaded = loadCharProcsPromise.then(function () {
         translatedFont.charProcOperatorList = charProcOperatorList;
@@ -21944,6 +22061,8 @@ exports.JpxImage = JpxImage;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var sharedUtil = __w_pdfjs_require__(0);
 var corePrimitives = __w_pdfjs_require__(1);
 var coreCrypto = __w_pdfjs_require__(14);
@@ -22307,6 +22426,8 @@ var Catalog = function CatalogClosure() {
       return shadow(this, 'javaScript', javaScript);
     },
     cleanup: function Catalog_cleanup() {
+      var _this = this;
+
       this.pageKidsCountCache.clear();
       var promises = [];
       this.fontCache.forEach(function (promise) {
@@ -22317,17 +22438,21 @@ var Catalog = function CatalogClosure() {
           var font = translatedFonts[i].dict;
           delete font.translated;
         }
-        this.fontCache.clear();
-        this.builtInCMapCache = Object.create(null);
-      }.bind(this));
+        _this.fontCache.clear();
+        _this.builtInCMapCache = Object.create(null);
+      });
     },
     getPage: function Catalog_getPage(pageIndex) {
+      var _this2 = this;
+
       if (!(pageIndex in this.pagePromises)) {
-        this.pagePromises[pageIndex] = this.getPageDict(pageIndex).then(function (a) {
-          var dict = a[0];
-          var ref = a[1];
-          return this.pageFactory.createPage(pageIndex, dict, ref, this.fontCache, this.builtInCMapCache);
-        }.bind(this));
+        this.pagePromises[pageIndex] = this.getPageDict(pageIndex).then(function (_ref) {
+          var _ref2 = _slicedToArray(_ref, 2),
+              dict = _ref2[0],
+              ref = _ref2[1];
+
+          return _this2.pageFactory.createPage(pageIndex, dict, ref, _this2.fontCache, _this2.builtInCMapCache);
+        });
       }
       return this.pagePromises[pageIndex];
     },
@@ -23329,6 +23454,8 @@ var ObjectLoader = function () {
       return this.capability.promise;
     },
     _walk: function ObjectLoader_walk(nodesToVisit) {
+      var _this3 = this;
+
       var nodesToRevisit = [];
       var pendingRequests = [];
       while (nodesToVisit.length) {
@@ -23372,16 +23499,16 @@ var ObjectLoader = function () {
         addChildren(currentNode, nodesToVisit);
       }
       if (pendingRequests.length) {
-        this.xref.stream.manager.requestRanges(pendingRequests).then(function pendingRequestCallback() {
+        this.xref.stream.manager.requestRanges(pendingRequests).then(function () {
           nodesToVisit = nodesToRevisit;
           for (var i = 0; i < nodesToRevisit.length; i++) {
             var node = nodesToRevisit[i];
             if (isRef(node)) {
-              this.refSet.remove(node);
+              _this3.refSet.remove(node);
             }
           }
-          this._walk(nodesToVisit);
-        }.bind(this), this.capability.reject);
+          _this3._walk(nodesToVisit);
+        }, this.capability.reject);
         return;
       }
       this.refSet = null;
@@ -24777,20 +24904,19 @@ var Annotation = function AnnotationClosure() {
       this.data.contents = stringToPDFString(dict.get('Contents') || '');
     },
     loadResources: function Annotation_loadResources(keys) {
-      return new Promise(function (resolve, reject) {
-        this.appearance.dict.getAsync('Resources').then(function (resources) {
-          if (!resources) {
-            resolve();
-            return;
-          }
-          var objectLoader = new ObjectLoader(resources.map, keys, resources.xref);
-          objectLoader.load().then(function () {
-            resolve(resources);
-          }, reject);
-        }, reject);
-      }.bind(this));
+      return this.appearance.dict.getAsync('Resources').then(function (resources) {
+        if (!resources) {
+          return;
+        }
+        var objectLoader = new ObjectLoader(resources.map, keys, resources.xref);
+        return objectLoader.load().then(function () {
+          return resources;
+        });
+      });
     },
     getOperatorList: function Annotation_getOperatorList(evaluator, task, renderForms) {
+      var _this = this;
+
       if (!this.appearance) {
         return Promise.resolve(new OperatorList());
       }
@@ -24800,13 +24926,17 @@ var Annotation = function AnnotationClosure() {
       var bbox = appearanceDict.getArray('BBox') || [0, 0, 1, 1];
       var matrix = appearanceDict.getArray('Matrix') || [1, 0, 0, 1, 0, 0];
       var transform = getTransformMatrix(data.rect, bbox, matrix);
-      var self = this;
       return resourcesPromise.then(function (resources) {
         var opList = new OperatorList();
         opList.addOp(OPS.beginAnnotation, [data.rect, transform, matrix]);
-        return evaluator.getOperatorList(self.appearance, task, resources, opList).then(function () {
+        return evaluator.getOperatorList({
+          stream: _this.appearance,
+          task: task,
+          resources: resources,
+          operatorList: opList
+        }).then(function () {
           opList.addOp(OPS.endAnnotation, []);
-          self.appearance.reset();
+          _this.appearance.reset();
           return opList;
         });
       });
@@ -24971,7 +25101,12 @@ var TextWidgetAnnotation = function TextWidgetAnnotationClosure() {
         return Promise.resolve(operatorList);
       }
       var stream = new Stream(stringToBytes(this.data.defaultAppearance));
-      return evaluator.getOperatorList(stream, task, this.fieldResources, operatorList).then(function () {
+      return evaluator.getOperatorList({
+        stream: stream,
+        task: task,
+        resources: this.fieldResources,
+        operatorList: operatorList
+      }).then(function () {
         return operatorList;
       });
     }
@@ -25552,6 +25687,7 @@ var CMap = function CMapClosure() {
       out.charcode = 0;
       out.length = 1;
     },
+
     get length() {
       return this._map.length;
     },
@@ -25614,6 +25750,7 @@ var IdentityCMap = function IdentityCMapClosure() {
       }
       return map;
     },
+
     readCharCode: CMap.prototype.readCharCode,
     get length() {
       return 0x10000;
@@ -26153,6 +26290,8 @@ exports.IdentityCMap = IdentityCMap;
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var sharedUtil = __w_pdfjs_require__(0);
 var corePrimitives = __w_pdfjs_require__(1);
 var coreStream = __w_pdfjs_require__(2);
@@ -26314,37 +26453,62 @@ var Page = function PageClosure() {
       return stream;
     },
     loadResources: function Page_loadResources(keys) {
+      var _this = this;
+
       if (!this.resourcesPromise) {
         this.resourcesPromise = this.pdfManager.ensure(this, 'resources');
       }
-      return this.resourcesPromise.then(function resourceSuccess() {
-        var objectLoader = new ObjectLoader(this.resources.map, keys, this.xref);
+      return this.resourcesPromise.then(function () {
+        var objectLoader = new ObjectLoader(_this.resources.map, keys, _this.xref);
         return objectLoader.load();
-      }.bind(this));
+      });
     },
-    getOperatorList: function Page_getOperatorList(handler, task, intent, renderInteractiveForms) {
-      var self = this;
-      var pdfManager = this.pdfManager;
-      var contentStreamPromise = pdfManager.ensure(this, 'getContentStream', []);
+    getOperatorList: function getOperatorList(_ref) {
+      var _this2 = this;
+
+      var handler = _ref.handler,
+          task = _ref.task,
+          intent = _ref.intent,
+          renderInteractiveForms = _ref.renderInteractiveForms;
+
+      var contentStreamPromise = this.pdfManager.ensure(this, 'getContentStream');
       var resourcesPromise = this.loadResources(['ExtGState', 'ColorSpace', 'Pattern', 'Shading', 'XObject', 'Font']);
-      var partialEvaluator = new PartialEvaluator(pdfManager, this.xref, handler, this.pageIndex, this.idFactory, this.fontCache, this.builtInCMapCache, this.evaluatorOptions);
+      var partialEvaluator = new PartialEvaluator({
+        pdfManager: this.pdfManager,
+        xref: this.xref,
+        handler: handler,
+        pageIndex: this.pageIndex,
+        idFactory: this.idFactory,
+        fontCache: this.fontCache,
+        builtInCMapCache: this.builtInCMapCache,
+        options: this.evaluatorOptions
+      });
       var dataPromises = Promise.all([contentStreamPromise, resourcesPromise]);
-      var pageListPromise = dataPromises.then(function (data) {
-        var contentStream = data[0];
-        var opList = new OperatorList(intent, handler, self.pageIndex);
+      var pageListPromise = dataPromises.then(function (_ref2) {
+        var _ref3 = _slicedToArray(_ref2, 1),
+            contentStream = _ref3[0];
+
+        var opList = new OperatorList(intent, handler, _this2.pageIndex);
         handler.send('StartRenderPage', {
-          transparency: partialEvaluator.hasBlendModes(self.resources),
-          pageIndex: self.pageIndex,
+          transparency: partialEvaluator.hasBlendModes(_this2.resources),
+          pageIndex: _this2.pageIndex,
           intent: intent
         });
-        return partialEvaluator.getOperatorList(contentStream, task, self.resources, opList).then(function () {
+        return partialEvaluator.getOperatorList({
+          stream: contentStream,
+          task: task,
+          resources: _this2.resources,
+          operatorList: opList
+        }).then(function () {
           return opList;
         });
       });
-      var annotationsPromise = pdfManager.ensure(this, 'annotations');
-      return Promise.all([pageListPromise, annotationsPromise]).then(function (datas) {
-        var pageOpList = datas[0];
-        var annotations = datas[1];
+      var annotationsPromise = this.pdfManager.ensure(this, 'annotations');
+      return Promise.all([pageListPromise, annotationsPromise]).then(function (_ref4) {
+        var _ref5 = _slicedToArray(_ref4, 2),
+            pageOpList = _ref5[0],
+            annotations = _ref5[1];
+
         if (annotations.length === 0) {
           pageOpList.flush(true);
           return pageOpList;
@@ -26368,18 +26532,41 @@ var Page = function PageClosure() {
         });
       });
     },
-    extractTextContent: function Page_extractTextContent(handler, task, normalizeWhitespace, combineTextItems) {
-      var self = this;
-      var pdfManager = this.pdfManager;
-      var contentStreamPromise = pdfManager.ensure(this, 'getContentStream', []);
+    extractTextContent: function extractTextContent(_ref6) {
+      var _this3 = this;
+
+      var handler = _ref6.handler,
+          task = _ref6.task,
+          normalizeWhitespace = _ref6.normalizeWhitespace,
+          combineTextItems = _ref6.combineTextItems;
+
+      var contentStreamPromise = this.pdfManager.ensure(this, 'getContentStream');
       var resourcesPromise = this.loadResources(['ExtGState', 'XObject', 'Font']);
       var dataPromises = Promise.all([contentStreamPromise, resourcesPromise]);
-      return dataPromises.then(function (data) {
-        var contentStream = data[0];
-        var partialEvaluator = new PartialEvaluator(pdfManager, self.xref, handler, self.pageIndex, self.idFactory, self.fontCache, self.builtInCMapCache, self.evaluatorOptions);
-        return partialEvaluator.getTextContent(contentStream, task, self.resources, null, normalizeWhitespace, combineTextItems);
+      return dataPromises.then(function (_ref7) {
+        var _ref8 = _slicedToArray(_ref7, 1),
+            contentStream = _ref8[0];
+
+        var partialEvaluator = new PartialEvaluator({
+          pdfManager: _this3.pdfManager,
+          xref: _this3.xref,
+          handler: handler,
+          pageIndex: _this3.pageIndex,
+          idFactory: _this3.idFactory,
+          fontCache: _this3.fontCache,
+          builtInCMapCache: _this3.builtInCMapCache,
+          options: _this3.evaluatorOptions
+        });
+        return partialEvaluator.getTextContent({
+          stream: contentStream,
+          task: task,
+          resources: _this3.resources,
+          normalizeWhitespace: normalizeWhitespace,
+          combineTextItems: combineTextItems
+        });
       });
     },
+
     getAnnotationsData: function Page_getAnnotationsData(intent) {
       var annotations = this.annotations;
       var annotationsData = [];
@@ -26568,11 +26755,12 @@ var PDFDocument = function PDFDocumentClosure() {
       this.xref.setStartXRef(startXRef);
     },
     setup: function PDFDocument_setup(recoveryMode) {
+      var _this4 = this;
+
       this.xref.parse(recoveryMode);
-      var self = this;
       var pageFactory = {
         createPage: function createPage(pageIndex, dict, ref, fontCache, builtInCMapCache) {
-          return new Page(self.pdfManager, self.xref, pageIndex, dict, ref, fontCache, builtInCMapCache);
+          return new Page(_this4.pdfManager, _this4.xref, pageIndex, dict, ref, fontCache, builtInCMapCache);
         }
       };
       this.catalog = new Catalog(this.pdfManager, this.xref, pageFactory);
@@ -27716,6 +27904,8 @@ var OpenTypeFileBuilder = function OpenTypeFileBuilderClosure() {
 var ProblematicCharRanges = new Int32Array([0x0000, 0x0020, 0x007F, 0x00A1, 0x00AD, 0x00AE, 0x0600, 0x0780, 0x08A0, 0x10A0, 0x1780, 0x1800, 0x1C00, 0x1C50, 0x2000, 0x2010, 0x2011, 0x2012, 0x2028, 0x2030, 0x205F, 0x2070, 0x25CC, 0x25CD, 0x3000, 0x3001, 0xAA60, 0xAA80, 0xFFF0, 0x10000]);
 var Font = function FontClosure() {
   function Font(name, file, properties) {
+    var _this = this;
+
     var charCode, glyphName, unicode;
     this.name = name;
     this.loadedName = properties.loadedName;
@@ -27802,15 +27992,15 @@ var Font = function FontClosure() {
       } else {
         glyphsUnicodeMap = getGlyphsUnicode();
         this.toUnicode.forEach(function (charCode, unicodeCharCode) {
-          if (!this.composite) {
+          if (!_this.composite) {
             glyphName = properties.differences[charCode] || properties.defaultEncoding[charCode];
             unicode = getUnicodeForGlyph(glyphName, glyphsUnicodeMap);
             if (unicode !== -1) {
               unicodeCharCode = unicode;
             }
           }
-          this.toFontChar[charCode] = unicodeCharCode;
-        }.bind(this));
+          _this.toFontChar[charCode] = unicodeCharCode;
+        });
       }
       this.loadedName = fontName.split('-')[0];
       this.loading = false;
@@ -30781,8 +30971,8 @@ var Jbig2Image = function Jbig2ImageClosure() {
           }
         }
         for (k = 0; k < referenceTemplateLength; k++) {
-          i0 = i + referenceTemplateY[k] + offsetY;
-          j0 = j + referenceTemplateX[k] + offsetX;
+          i0 = i + referenceTemplateY[k] - offsetY;
+          j0 = j + referenceTemplateX[k] - offsetX;
           if (i0 < 0 || i0 >= referenceHeight || j0 < 0 || j0 >= referenceWidth) {
             contextLabel <<= 1;
           } else {
@@ -37075,8 +37265,8 @@ exports.Type1Parser = Type1Parser;
 "use strict";
 
 
-var pdfjsVersion = '1.8.233';
-var pdfjsBuild = '19321937';
+var pdfjsVersion = '1.8.355';
+var pdfjsBuild = 'e9cbfbcc';
 var pdfjsCoreWorker = __w_pdfjs_require__(8);
 {
   __w_pdfjs_require__(19);
@@ -37219,6 +37409,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
       get: function get() {
         return this;
       },
+
       enumerable: false,
       configurable: true
     });
@@ -37226,6 +37417,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
       get: function get() {
         return this.length;
       },
+
       enumerable: false,
       configurable: true
     });
@@ -37414,6 +37606,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
         });
         return dataset;
       },
+
       enumerable: true
     });
   })();
@@ -37474,6 +37667,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
         });
         return classList;
       },
+
       enumerable: true
     });
   })();
@@ -37674,6 +37868,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
         var scripts = document.getElementsByTagName('script');
         return scripts[scripts.length - 1];
       },
+
       enumerable: true,
       configurable: true
     });
@@ -37695,6 +37890,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
         set: function set(value) {
           typeProperty.set.call(this, value === 'number' ? 'text' : value);
         },
+
         enumerable: true,
         configurable: true
       });
@@ -37717,6 +37913,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
       set: function set(value) {
         readyStateProto.set.call(this, value);
       },
+
       enumerable: true,
       configurable: true
     });
@@ -37855,16 +38052,18 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
         }
       },
       scheduleRejectionCheck: function scheduleRejectionCheck() {
+        var _this = this;
+
         if (this.pendingRejectionCheck) {
           return;
         }
         this.pendingRejectionCheck = true;
-        setTimeout(function rejectionCheck() {
-          this.pendingRejectionCheck = false;
+        setTimeout(function () {
+          _this.pendingRejectionCheck = false;
           var now = Date.now();
-          for (var i = 0; i < this.unhandledRejections.length; i++) {
-            if (now - this.unhandledRejections[i].time > REJECTION_TIMEOUT) {
-              var unhandled = this.unhandledRejections[i].promise._value;
+          for (var i = 0; i < _this.unhandledRejections.length; i++) {
+            if (now - _this.unhandledRejections[i].time > REJECTION_TIMEOUT) {
+              var unhandled = _this.unhandledRejections[i].promise._value;
               var msg = 'Unhandled rejection: ' + unhandled;
               if (unhandled.stack) {
                 msg += '\n' + unhandled.stack;
@@ -37874,14 +38073,14 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
               } catch (_) {
                 console.warn(msg);
               }
-              this.unhandledRejections.splice(i);
+              _this.unhandledRejections.splice(i);
               i--;
             }
           }
-          if (this.unhandledRejections.length) {
-            this.scheduleRejectionCheck();
+          if (_this.unhandledRejections.length) {
+            _this.scheduleRejectionCheck();
           }
-        }.bind(this), REJECTION_TIMEOUT);
+        }, REJECTION_TIMEOUT);
       }
     };
     var Promise = function Promise(resolver) {
@@ -38450,6 +38649,7 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
       toString: function toString() {
         return this.href;
       },
+
       get href() {
         if (this._isInvalid) {
           return this._url;
@@ -38572,3 +38772,4 @@ if (typeof PDFJS === 'undefined' || !PDFJS.compatibilityChecked) {
 /***/ })
 /******/ ]);
 });
+//# sourceMappingURL=pdf.worker.js.map
