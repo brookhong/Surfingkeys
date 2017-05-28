@@ -192,8 +192,17 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
 
 function unmap(keystroke, domain) {
     shouldWorkFor(domain, function() {
-        keystroke = encodeKeystroke(keystroke);
-        Normal.mappings.remove(keystroke);
+        var old_map = Normal.mappings.find(encodeKeystroke(keystroke));
+        if (old_map) {
+            Normal.mappings.remove(encodeKeystroke(keystroke));
+        } else {
+            for (var k in Mode.specialKeys) {
+                var idx = Mode.specialKeys[k].indexOf(keystroke);
+                if (idx !== -1) {
+                    Mode.specialKeys[k].splice(idx, 1);
+                }
+            }
+        }
     });
 }
 
@@ -336,7 +345,7 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = $('a, button, *:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
+    var prevLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -346,7 +355,7 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = $('a, button, *:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
+    var nextLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
