@@ -594,6 +594,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
+| settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
 | settings.clickableSelector | "" | 自定义CSS selector用于f键选择无法检测到的可点击元素，例如"\*.jfk-button, \*.goog-flat-menu-button"。 |

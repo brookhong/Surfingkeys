@@ -613,6 +613,7 @@ For example,
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
 | settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
 | settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
+| settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
 | settings.clickableSelector | "" | Extra CSS selector to pick elements for hints mode, such as "\*.jfk-button, \*.goog-flat-menu-button". |

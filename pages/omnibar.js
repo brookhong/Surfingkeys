@@ -224,10 +224,12 @@ var Omnibar = (function(mode, ui) {
     var resultPageSpan = ui.find('#sk_omnibarSearchArea>span.resultPage');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
 
+    function _getInitialFocus() {
+        return runtime.conf.focusFirstCandidate ? 0 : _items ? Math.min(_items.length, _pageSize) : _pageSize;
+    }
     function _onIput() {
         if (lastInput !== self.input.val()) {
             lastInput = self.input.val();
-            self.focusedItem = 0;
         }
         handler.onInput && handler.onInput.call(this);
     }
@@ -338,7 +340,7 @@ var Omnibar = (function(mode, ui) {
                 url: url
             }, new RegExp(str.replace(/\s+/, "\|"), 'gi'));
             li.prependTo(self.resultsDiv.find('ul'));
-            self.focusedItem = 0;
+            self.focusedItem = _getInitialFocus();
             self.resultsDiv.find('li.focused').removeClass('focused');
             self.resultsDiv.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
         }
@@ -355,6 +357,7 @@ var Omnibar = (function(mode, ui) {
         _pageSize = (runtime.conf.omnibarMaxResults || 10);
         _start = 1;
         _items = items;
+        self.focusedItem = _getInitialFocus();
         _showFolder = showFolder;
         _listResultPage();
     };
@@ -389,7 +392,6 @@ var Omnibar = (function(mode, ui) {
         if (args.pref) {
             self.input.val(args.pref);
         }
-        self.focusedItem = 0;
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
@@ -667,6 +669,7 @@ var AddBookmark = (function() {
     };
 
     self.onInput = function() {
+        Omnibar.focusedItem = 0;
         var query = Omnibar.input.val();
         var matches = folders.filter(function(b) {
             return b.title.indexOf(query) !== -1;

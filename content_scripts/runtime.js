@@ -24,6 +24,7 @@ var runtime = window.runtime || (function() {
             clickableSelector: "",
             blacklistPattern: undefined,
             startToShowEmoji: 2,
+            focusFirstCandidate: false,
             language: undefined,
             stealFocusOnLoad: true,
             lastQuery: ""
