@@ -341,6 +341,7 @@ var Normal = (function(mode) {
     // set scrollIndex to the highest node
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
+            $('html, body').css('overflow', 'visible');
             scrollNodes = getScrollableElements(100, 1.1);
             while (scrollNodes.length) {
                 var maxHeight = 0;
