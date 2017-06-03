@@ -13,6 +13,8 @@ var Mode = (function() {
         if (event.sk_stopPropagation) {
             event.stopImmediatePropagation();
             event.preventDefault();
+            // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
+            this.stopKeyupPropagation = (event.type === "keydown") ? event.keyCode : 0;
         }
     };
 
@@ -22,6 +24,11 @@ var Mode = (function() {
         this.eventListeners[evt] = function(event) {
             if (event.type === "keydown" && !event.hasOwnProperty('sk_keyName')) {
                 event.sk_keyName = KeyboardUtils.getKeyChar(event);
+            }
+
+            if (event.type === "keyup" && thisMode.stopKeyupPropagation === event.keyCode) {
+                event.stopImmediatePropagation();
+                thisMode.stopKeyupPropagation = 0;
             }
 
             if (!event.sk_suppressed) {
