@@ -1,7 +1,6 @@
 .sk_theme {
     background: #fff;
     color: #000;
-    border-radius: 4px;
 }
 .sk_theme tbody {
     color: #000;
@@ -16,7 +15,7 @@
     color: #222;
 }
 .sk_theme .focused {
-    background: #f0f0f0;
+    background: #cddef9 !important;
 }
 .sk_theme kbd {
     background: #ddd;
@@ -55,11 +54,18 @@ body {
     position: fixed;
     width: 80%;
     max-height: 80%;
-    top: 10%;
     left: 10%;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
     z-index: 2147483000;
+}
+.sk_omnibar_middle {
+    top: 10%;
+    border-radius: 4px;
+}
+.sk_omnibar_bottom {
+    bottom: 0;
+    border-radius: 4px 4px 0px 0px;
 }
 #sk_omnibar span.omnibar_highlight {
     text-shadow: 0 0 0.01em;
@@ -81,12 +87,22 @@ body {
 }
 #sk_omnibarSearchArea {
     display: flex;
+}
+.sk_omnibar_middle #sk_omnibarSearchArea {
     margin: 0.5rem 1rem;
-    padding-bottom: 0.3rem;
     border-bottom: 1px solid #999;
 }
+.sk_omnibar_bottom #sk_omnibarSearchArea {
+    margin: 0.2rem 1rem;
+    border-top: 1px solid #999;
+}
+.sk_omnibar_middle #sk_omnibarSearchResult {
+    margin-top: -1rem;
+}
+.sk_omnibar_bottom #sk_omnibarSearchResult {
+    margin-bottom: -1rem;
+}
 #sk_omnibarSearchResult {
-    padding-bottom: 1rem;
     max-height: 600px;
     overflow: hidden;
 }
@@ -95,8 +111,11 @@ body {
 }
 #sk_omnibarSearchResult>ul>li {
     margin: 0rem 0.6rem;
-    padding: 0.4rem;
+    padding: 0.2rem;
     display: block;
+}
+#sk_omnibarSearchResult>ul>li:nth-child(odd) {
+    background: #fafafa;
 }
 #sk_omnibarSearchResult li div.title {
     text-align: left;

@@ -6,6 +6,7 @@ var runtime = window.runtime || (function() {
             useLocalMarkdownAPI: true,
             focusOnSaved: true,
             omnibarMaxResults: 10,
+            omnibarPosition: "middle",
             tabsThreshold: 9,
             hintsThreshold: 10000,
             smoothScroll: true,

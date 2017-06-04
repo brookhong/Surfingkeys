@@ -48,7 +48,7 @@ var frontendFrame = (function() {
         $(document).trigger("surfingkeys:frontendReady");
     }
 
-    var lastStateOfPointerEvents = "none";
+    var lastStateOfPointerEvents = "none", _origOverflow;
     self.setFrontFrame = function(response) {
         ifr.css('height', response.frameHeight);
         if (response.pointerEvents) {
@@ -64,8 +64,11 @@ var frontendFrame = (function() {
                 });
             }
             document.body.style.animationFillMode = "";
+            document.body.style.overflow = _origOverflow;
         } else {
             document.body.style.animationFillMode = "none";
+            _origOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'visible';
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };

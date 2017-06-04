@@ -224,9 +224,6 @@ var Omnibar = (function(mode, ui) {
     var resultPageSpan = ui.find('#sk_omnibarSearchArea>span.resultPage');
     self.resultsDiv = ui.find('#sk_omnibarSearchResult');
 
-    function _getInitialFocus() {
-        return runtime.conf.focusFirstCandidate ? 0 : _items ? Math.min(_items.length, _pageSize) : _pageSize;
-    }
     function _onIput() {
         if (lastInput !== self.input.val()) {
             lastInput = self.input.val();
@@ -265,14 +262,14 @@ var Omnibar = (function(mode, ui) {
         annotation: "Forward cycle through the candidates.",
         feature_group: 8,
         code: function () {
-            rotateResult(false);
+            rotateResult(runtime.conf.omnibarPosition === "bottom");
         }
     });
     self.mappings.add(encodeKeystroke("<Shift-Tab>"), {
         annotation: "Backward cycle through the candidates.",
         feature_group: 8,
         code: function () {
-            rotateResult(true);
+            rotateResult(runtime.conf.omnibarPosition !== "bottom");
         }
     });
 
@@ -353,7 +350,6 @@ var Omnibar = (function(mode, ui) {
         _pageSize = (runtime.conf.omnibarMaxResults || 10);
         _start = 1;
         _items = items;
-        self.focusedItem = _getInitialFocus();
         _showFolder = showFolder;
         _listResultPage();
     };
@@ -381,6 +377,18 @@ var Omnibar = (function(mode, ui) {
     }
 
     ui.onShow = function(args) {
+        ui.removeClass("sk_omnibar_middle");
+        ui.removeClass("sk_omnibar_bottom");
+        ui.addClass("sk_omnibar_" + runtime.conf.omnibarPosition);
+        if (runtime.conf.omnibarPosition === "bottom") {
+            self.resultsDiv.remove();
+            self.resultsDiv.insertBefore("#sk_omnibarSearchArea");
+        } else {
+            self.resultsDiv.remove();
+            self.resultsDiv.insertAfter("#sk_omnibarSearchArea");
+        }
+        self.resultsDiv.hide();
+
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
         self.input[0].focus();
@@ -450,24 +458,30 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.listResults = function(items, renderItem) {
+        if (runtime.conf.omnibarPosition === "bottom") {
+            items.reverse();
+        }
         var results = $("<ul/>");
         items.forEach(function(b) {
             renderItem(b).appendTo(results);
         });
-        results.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
-        self.resultsDiv.html("");
+        self.resultsDiv.html("").show();
         results.appendTo(self.resultsDiv);
+        if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
+            results.find('>li:last')[0].scrollIntoViewIfNeeded();
+        }
+        if (runtime.conf.focusFirstCandidate) {
+            self.focusedItem = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
+            results.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
+        } else {
+            self.focusedItem = items.length;
+        }
     };
 
     self.listWords = function(words) {
-        var results = $("<ul/>");
-        words.forEach(function(w) {
-            var li = $('<li/>').html("⌕ " + w).data('query', w);
-            li.appendTo(results);
+        self.listResults(words, function(w) {
+            return $('<li/>').html("⌕ " + w).data('query', w);
         });
-        self.resultsDiv.html("");
-        results.appendTo(self.resultsDiv);
-        self.focusedItem = words.length;
     };
 
     self.html = function(content) {
@@ -887,7 +901,9 @@ var SearchEngine = (function() {
                 method: 'get',
                 url: self.suggestionURL + val
             }, function(resp) {
-                self.listSuggestion(resp);
+                if (typeof(self.listSuggestion === "function")) {
+                    self.listSuggestion(resp);
+                }
             });
         }
     };
