@@ -328,21 +328,17 @@ var Omnibar = (function(mode, ui) {
         return li;
     };
 
-    self.detectAndInsertURLItem = function(str) {
+    self.detectAndInsertURLItem = function(str, toList) {
         var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)$/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {
                 url = "http://" + str;
             }
-            var li = self.createURLItem({
+            toList.unshift({
                 title: str,
                 url: url
-            }, new RegExp(str.replace(/\s+/, "\|"), 'gi'));
-            li.prependTo(self.resultsDiv.find('ul'));
-            self.focusedItem = _getInitialFocus();
-            self.resultsDiv.find('li.focused').removeClass('focused');
-            self.resultsDiv.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
+            });
         }
     };
 
@@ -772,8 +768,8 @@ var OpenURLs = (function() {
             if (filtered.length === 0) {
                 Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
             } else {
+                Omnibar.detectAndInsertURLItem(val, filtered);
                 Omnibar.listURLs(filtered, false);
-                Omnibar.detectAndInsertURLItem(val);
             }
         });
     };
@@ -892,7 +888,6 @@ var SearchEngine = (function() {
                 url: self.suggestionURL + val
             }, function(resp) {
                 self.listSuggestion(resp);
-                Omnibar.detectAndInsertURLItem(val);
             });
         }
     };
