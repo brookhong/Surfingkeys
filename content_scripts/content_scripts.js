@@ -282,9 +282,16 @@ function vunmap(keystroke, domain) {
     });
 }
 
-AceVimMappings = [];
 function aceVimMap(lhs, rhs, ctx) {
-    AceVimMappings.push(arguments);
+    if (typeof(Front.vimMappings) !== 'undefined') {
+        Front.vimMappings.push(arguments);
+    }
+}
+
+function onAceVimKeymapInit(fn) {
+    if (typeof(Front.vimMappings) !== 'undefined') {
+        Front.keymapModifier = fn;
+    }
 }
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {

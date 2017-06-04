@@ -211,9 +211,10 @@ var AceEditor = (function(mode, elmId) {
             self.exit();
             self.state.cm.signal('vim-command-done', '')
         });
-        AceVimMappings.forEach(function(a) {
+        Front.vimMappings.forEach(function(a) {
             vim.map.apply(vim, a);
         });
+        Front.keymapModifier && Front.keymapModifier(self.getKeyboardHandler().defaultKeymap);
     });
     self.container.style.background="#f1f1f1";
     self.$blockScrolling = Infinity;

@@ -296,6 +296,7 @@ var Front = (function(mode) {
         self.showPressed = true;
         self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
     });
+    self.vimMappings = [];
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {
             AceEditor.show(message);
