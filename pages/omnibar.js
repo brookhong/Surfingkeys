@@ -94,6 +94,23 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
+    self.mappings.add(encodeKeystroke("<Ctrl-j>"), {
+        annotation: "Toggle Omnibar's position",
+        feature_group: 8,
+        code: function () {
+            if (runtime.conf.omnibarPosition === "bottom") {
+                runtime.conf.omnibarPosition = "middle";
+            } else {
+                runtime.conf.omnibarPosition = "bottom";
+            }
+            setTimeout(function() {
+                _savedAargs.pref = self.input.val();
+                Front.hidePopup();
+                Front.openOmnibar(_savedAargs);
+            }, 1);
+        }
+    });
+
     self.mappings.add(encodeKeystroke("<Ctrl-.>"), {
         annotation: "Show results of next page",
         feature_group: 8,
@@ -376,7 +393,9 @@ var Omnibar = (function(mode, ui) {
         });
     }
 
+    var _savedAargs;
     ui.onShow = function(args) {
+        _savedAargs = args;
         ui.removeClass("sk_omnibar_middle");
         ui.removeClass("sk_omnibar_bottom");
         ui.addClass("sk_omnibar_" + runtime.conf.omnibarPosition);
@@ -387,7 +406,6 @@ var Omnibar = (function(mode, ui) {
             self.resultsDiv.remove();
             self.resultsDiv.insertAfter("#sk_omnibarSearchArea");
         }
-        self.resultsDiv.hide();
 
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
@@ -458,6 +476,10 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.listResults = function(items, renderItem) {
+        self.resultsDiv.html("");
+        if (!items || items.length === 0) {
+            return;
+        }
         if (runtime.conf.omnibarPosition === "bottom") {
             items.reverse();
         }
@@ -465,7 +487,6 @@ var Omnibar = (function(mode, ui) {
         items.forEach(function(b) {
             renderItem(b).appendTo(results);
         });
-        self.resultsDiv.html("").show();
         results.appendTo(self.resultsDiv);
         if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
             results.find('>li:last')[0].scrollIntoViewIfNeeded();
@@ -867,9 +888,13 @@ var SearchEngine = (function() {
     self.onOpen = function(arg) {
         $.extend(self, self.aliases[arg]);
         var q = Omnibar.input.val();
-        var b = q.match(/^(site:\S+\s*).*/);
-        var start = b ? b[1].length : 0;
-        Omnibar.input[0].setSelectionRange(start, q.length);
+        if (q.length) {
+            var b = q.match(/^(site:\S+\s*).*/);
+            if (b) {
+                Omnibar.input[0].setSelectionRange(b[1].length, q.length);
+            }
+            Omnibar.input.trigger('input');
+        }
     };
     self.onClose = function() {
         self.prompt = undefined;

@@ -163,6 +163,12 @@ function imapkey(keys, annotation, jscode, options) {
     _mapkey(Insert, keys, annotation, jscode, options);
 }
 
+function cmapkey(keys, annotation, jscode, options) {
+    if (typeof(Omnibar) !== 'undefined') {
+        _mapkey(Omnibar, keys, annotation, jscode, options);
+    }
+}
+
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
     shouldWorkFor(domain, function() {
         if (old_keystroke[0] === ':') {

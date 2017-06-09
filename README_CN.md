@@ -194,6 +194,8 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
+`cmapkey`用于搜索栏里创建按键。
+
 `cmap`用于搜索栏修改按键，如：
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -492,6 +494,10 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 可视化模式下的mapkey
 
     vmapkey(keystroke, help_string, action_code, [options])
+
+搜索栏里用
+
+    cmapkey(keystroke, help_string, action_code, [options])
 
 ### 映射按键到其他按键
 

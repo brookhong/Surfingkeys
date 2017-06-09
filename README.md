@@ -195,6 +195,8 @@ In omnibar opened with `b`:
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
+To create new map keys for Omnibar using `cmapkey`.
+
 `cmap` could be used for Omnibar to change mappings, for example:
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -491,9 +493,11 @@ Just an example to map one keystroke to different functions on different sites,
     mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
     mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
 
-mapkey in visual mode
+mapkey in visual mode and omnibar bar.
 
     vmapkey(keystroke, help_string, action_code, [options])
+
+    cmapkey(keystroke, help_string, action_code, [options])
 
 ### map a keystroke to another
 

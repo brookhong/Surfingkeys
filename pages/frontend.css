@@ -106,6 +106,9 @@ body {
     max-height: 600px;
     overflow: hidden;
 }
+#sk_omnibarSearchResult:empty {
+    display: none;
+}
 #sk_omnibarSearchResult>ul {
     padding: 0;
 }
