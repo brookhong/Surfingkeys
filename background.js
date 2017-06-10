@@ -743,9 +743,11 @@ var Service = (function() {
         });
     };
     self.createBookmark = function(message, sender, sendResponse) {
-        createBookmark(message.page, function(ret) {
-            _response(message, sendResponse, {
-                bookmark: ret
+        removeBookmark(message.page.url, function() {
+            createBookmark(message.page, function(ret) {
+                _response(message, sendResponse, {
+                    bookmark: ret
+                });
             });
         });
     };
@@ -1168,12 +1170,25 @@ var Service = (function() {
         }, function() {
         });
     };
-    self.removeBookmark = function(message, sender, sendResponse) {
+    function removeBookmark(url, cb) {
         chrome.bookmarks.search({
-            url: sender.tab.url
+            url: url
         }, function(bookmarks) {
             bookmarks.forEach(function(b) {
                 chrome.bookmarks.remove(b.id);
+            });
+            cb && cb();
+        });
+    }
+    self.removeBookmark = function(message, sender, sendResponse) {
+        removeBookmark(sender.tab.url);
+    };
+    self.getBookmark = function(message, sender, sendResponse) {
+        chrome.bookmarks.search({
+            url: sender.tab.url
+        }, function(bookmarks) {
+            _response(message, sendResponse, {
+                bookmarks: bookmarks
             });
         });
     };

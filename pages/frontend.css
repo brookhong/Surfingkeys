@@ -96,11 +96,11 @@ body {
     margin: 0.2rem 1rem;
     border-top: 1px solid #999;
 }
-.sk_omnibar_middle #sk_omnibarSearchResult {
-    margin-top: -1rem;
+.sk_omnibar_middle #sk_omnibarSearchResult>ul {
+    margin-top: 0;
 }
-.sk_omnibar_bottom #sk_omnibarSearchResult {
-    margin-bottom: -1rem;
+.sk_omnibar_bottom #sk_omnibarSearchResult>ul {
+    margin-bottom: 0;
 }
 #sk_omnibarSearchResult {
     max-height: 600px;

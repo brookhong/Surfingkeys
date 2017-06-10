@@ -24,4 +24,8 @@ mapkey(';s', '#99Switch markdown parser', function() {
     previewMarkdown(markdown_code);
 });
 
+mapkey('cc', '#99Copy generated html code', function() {
+    Front.writeClipboard($('.markdown-body').html());
+});
+
 var renderDataFromClipboard = previewMarkdown;

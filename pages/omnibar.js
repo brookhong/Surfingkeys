@@ -61,15 +61,15 @@ var Omnibar = (function(mode, ui) {
         annotation: "Delete focused item from bookmark or history",
         feature_group: 8,
         code: function () {
-            var focusedItem = Omnibar.resultsDiv.find('li.focused');
-            var uid = focusedItem.data('uid');
+            var fi = Omnibar.resultsDiv.find('li.focused');
+            var uid = fi.data('uid');
             if (uid) {
                 runtime.command({
                     action: "removeURL",
                     uid: uid
                 }, function(ret) {
                     if (ret.response === "Done") {
-                        focusedItem.remove();
+                        fi.remove();
                     }
                 });
             }
@@ -80,8 +80,8 @@ var Omnibar = (function(mode, ui) {
         annotation: "Edit selected URL with vim editor, then open",
         feature_group: 8,
         code: function () {
-            var focusedItem = Omnibar.resultsDiv.find('li.focused');
-            var url = focusedItem.data('url');
+            var fi = Omnibar.resultsDiv.find('li.focused');
+            var url = fi.data('url');
             if (url) {
                 Front.showEditor({
                     initial_line: 1,
@@ -220,16 +220,23 @@ var Omnibar = (function(mode, ui) {
         return eaten;
     };
 
+    self.focusItem = function(sel) {
+        var fi = self.resultsDiv.find(sel);
+        fi.addClass('focused');
+        fi[0].scrollIntoViewIfNeeded();
+    };
+
     function rotateResult(backward) {
         var total = self.resultsDiv.find('li').length;
         if (total > 0) {
-            var lastFocused = self.focusedItem;
-            self.focusedItem = (backward ? (lastFocused + total) : (lastFocused + total + 2)) % (total + 1);
-            self.resultsDiv.find('li:nth({0})'.format(lastFocused)).removeClass('focused');
-            if (self.focusedItem < total) {
-                self.resultsDiv.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
-                handler.onTabKey && handler.onTabKey(self.focusedItem);
-                self.scrollIntoView();
+            var fi = self.resultsDiv.find('li.focused');
+            fi.removeClass('focused');
+            var lastFocused = fi.index();
+            lastFocused = (lastFocused === -1) ? total : lastFocused;
+            var toFocus = (backward ? (lastFocused + total) : (lastFocused + total + 2)) % (total + 1);
+            if (toFocus < total) {
+                Omnibar.focusItem('li:nth({0})'.format(toFocus));
+                handler.onTabKey && handler.onTabKey();
             } else {
                 self.input.val(lastInput);
             }
@@ -323,7 +330,7 @@ var Omnibar = (function(mode, ui) {
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
                 type = "☆";
-                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId] || "", timeStampString(b.dateAdded));
+                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId].title || "", timeStampString(b.dateAdded));
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
                 type = "▓";
@@ -492,10 +499,8 @@ var Omnibar = (function(mode, ui) {
             results.find('>li:last')[0].scrollIntoViewIfNeeded();
         }
         if (runtime.conf.focusFirstCandidate) {
-            self.focusedItem = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
-            results.find('li:nth({0})'.format(self.focusedItem)).addClass('focused');
-        } else {
-            self.focusedItem = items.length;
+            var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
+            results.find('li:nth({0})'.format(fi)).addClass('focused');
         }
     };
 
@@ -519,9 +524,9 @@ var Omnibar = (function(mode, ui) {
         }, function(response) {
             bookmarkFolders = {};
             response.folders.forEach(function(f) {
-                bookmarkFolders[f.id] = f.title;
+                bookmarkFolders[f.id] = f;
             });
-            cb && cb(response);
+            cb && cb(response, bookmarkFolders);
         });
     };
 
@@ -553,7 +558,7 @@ var OpenBookmarks = (function() {
         }
         self.prompt = fl.prompt;
         Omnibar.promptSpan.html(self.prompt)
-        Omnibar.focusedItem = fl.focusedItem;
+        lastFocused = fl.focused;
         eaten = true;
     }
 
@@ -565,13 +570,13 @@ var OpenBookmarks = (function() {
             self.inFolder.push({
                 prompt: self.prompt,
                 folderId: currentFolderId,
-                focusedItem: Omnibar.focusedItem
+                focused: fi.index()
             });
             self.prompt = fi.data('folder_name') + "≫";
             Omnibar.promptSpan.html(self.prompt)
             Omnibar.input.val('');
             currentFolderId = folderId;
-            Omnibar.focusedItem = 0;
+            lastFocused = 0;
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId
@@ -594,7 +599,6 @@ var OpenBookmarks = (function() {
         self.inFolder = [];
         self.prompt = "bookmark≫";
         currentFolderId = undefined;
-        Omnibar.focusedItem = 0;
     };
 
     self.onKeydown = function(event) {
@@ -638,7 +642,8 @@ var OpenBookmarks = (function() {
             });
         }
         Omnibar.listURLs(items, true);
-        Omnibar.scrollIntoView();
+
+        Omnibar.focusItem('li:nth({0})'.format(lastFocused));
     };
 
     return self;
@@ -648,65 +653,90 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 var AddBookmark = (function() {
     var self = {
         prompt: 'add bookmark≫'
-    }, folders;
+    }, folders, origFFC;
 
     self.onOpen = function(arg) {
         self.page = arg;
+        // always focus first candidate for AddBookmark.
+        origFFC = runtime.conf.focusFirstCandidate;
+        runtime.conf.focusFirstCandidate = true;
         Omnibar.listBookmarkFolders(function(response) {
             folders = response.folders;
-            selectedFolder = folders[0];
-            Omnibar.listResults(folders, function(f) {
-                return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
+            Omnibar.listResults(folders.slice(), function(f) {
+                return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
             });
-            Omnibar.scrollIntoView();
+            runtime.command({
+                action: "getBookmark"
+            }, function(resp) {
+                if (resp.bookmarks.length) {
+                    var b = resp.bookmarks[0];
+                    Omnibar.promptSpan.html('edit bookmark≫');
+                    Omnibar.resultsDiv.find('li.focused').removeClass('focused');
+                    Omnibar.focusItem(`li[folder=${b.parentId}]`);
+                }
+            });
         });
     };
 
     self.onClose = function() {
-        Omnibar.focusedItem = 0;
+        runtime.conf.focusFirstCandidate = origFFC;
     };
 
-    var selectedFolder;
     self.onTabKey = function() {
-        selectedFolder = Omnibar.resultsDiv.find('li.focused').data('folder');
-        Omnibar.input.val(selectedFolder.title);
+        var fi = Omnibar.resultsDiv.find('li.focused');
+        Omnibar.input.val(fi.html().substr(2));
     };
 
     self.onEnter = function() {
-        var focusedItem = Omnibar.resultsDiv.find('li.focused');
-        if (focusedItem.length) {
-            selectedFolder = focusedItem.data('folder');
-        }
-        var path = Omnibar.input.val();
         self.page.path = [];
-        if (path.indexOf(selectedFolder.title) === 0) {
-            path = path.replace(selectedFolder.title,"").split('/');
+        var fi = Omnibar.resultsDiv.find('li.focused');
+        var folderName;
+        if (fi.length) {
+            self.page.folder = fi.attr('folder');
+            folderName = fi.html().substr(2);
+        } else {
+            var path = Omnibar.input.val();
+            path = path.split('/');
             var title = path.pop();
             if (title.length) {
                 self.page.title = title;
             }
-            if (path.length) {
+            path = path.filter(function(p) {
+                return p.length > 0;
+            });
+            for (var l = path.length; l > 0; l--) {
+                var targetFolder = folders.filter(function(f) {
+                    return f.title === `/${path.slice(0, l).join("/")}/`;
+                });
+                if (targetFolder.length) {
+                    self.page.folder = targetFolder[0].id;
+                    self.page.path = path.slice(l);
+                    folderName = "/" + path.join("/");
+                    break;
+                }
+            }
+            if (self.page.folder === undefined) {
+                self.page.folder = folders[0].id;
                 self.page.path = path;
+                folderName = `${folders[0].title}${path.join("/")}`;
             }
         }
-        self.page.folder = selectedFolder.id;
         runtime.command({
             action: 'createBookmark',
             page: self.page
         }, function(response) {
-            Front.showBanner("Bookmark created at {0}.".format(selectedFolder.title + self.page.path.join('/')));
+            Front.showBanner("Bookmark created at {0}.".format(folderName), 3000);
         });
         return true;
     };
 
     self.onInput = function() {
-        Omnibar.focusedItem = 0;
         var query = Omnibar.input.val();
         var matches = folders.filter(function(b) {
             return b.title.indexOf(query) !== -1;
         });
         Omnibar.listResults(matches, function(f) {
-            return $('<li/>').data('folder', f).html("▷ {0}".format(f.title));
+            return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
         });
     };
 
@@ -903,7 +933,7 @@ var SearchEngine = (function() {
         self.listSuggestion = undefined;
     };
     self.onTabKey = function() {
-        Omnibar.input.val(Omnibar.resultsDiv.find('li:nth({0})'.format(Omnibar.focusedItem)).data('query'));
+        Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('query'));
     };
     self.onEnter = function() {
         var fi = Omnibar.resultsDiv.find('li.focused');
@@ -952,7 +982,6 @@ var Commands = (function() {
         }, function(response) {
             var candidates = response.settings.cmdHistory;
             if (candidates.length) {
-                Omnibar.focusedItem = candidates.length;
                 Omnibar.listResults(candidates, function(c) {
                     return $('<li/>').data('cmd', c).html(c);
                 });
@@ -965,14 +994,13 @@ var Commands = (function() {
             return cmd === "" || c.indexOf(cmd) !== -1;
         });
         if (candidates.length) {
-            Omnibar.focusedItem = candidates.length;
             Omnibar.listResults(candidates, function(c) {
                 return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
             });
         }
     };
     self.onTabKey = function() {
-        Omnibar.input.val(Omnibar.resultsDiv.find('li:nth({0})'.format(Omnibar.focusedItem)).data('cmd'));
+        Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('cmd'));
     };
     self.onEnter = function() {
         var ret = false;
