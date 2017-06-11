@@ -540,7 +540,8 @@ var OpenBookmarks = (function() {
     };
 
     var folderOnly = false,
-        currentFolderId;
+        currentFolderId,
+        lastFocused = 0;
 
     function onFolderUp() {
         var fl = self.inFolder.pop();

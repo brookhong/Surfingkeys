@@ -87,7 +87,7 @@ var frontendFrame = (function() {
         ifr[0].removeEventListener("load", initPort, false);
         ifr[0].addEventListener("load", initPort, false);
 
-        document.body.appendChild(uiHost);
+        document.documentElement.appendChild(uiHost);
     };
 
     return self;
@@ -123,12 +123,6 @@ function createFrontEnd() {
     }
     var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
     if (!frontendReady) {
-        if (!document.body) {
-            var dom = document.implementation.createDocument('http://www.w3.org/1999/xhtml', 'html', null);
-            var body = dom.createElement("body");
-            $(body).attr('createdBySurfingkeys', 1);
-            document.documentElement.appendChild(body);
-        }
         frontendFrame.create();
         frontendReady = true;
     }
