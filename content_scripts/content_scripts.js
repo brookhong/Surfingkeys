@@ -214,10 +214,7 @@ function unmap(keystroke, domain) {
 
 function unmapAllExcept(keystrokes, domain) {
     shouldWorkFor(domain, function() {
-        var modes = [Normal, Visual, Insert];
-        if (typeof(Omnibar) !== 'undefined') {
-            modes.push(Omnibar);
-        }
+        var modes = [Normal, Insert];
         modes.forEach(function(mode) {
             var _mappings = new Trie();
             keystrokes = keystrokes || [];
