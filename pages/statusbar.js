@@ -88,6 +88,9 @@ var Find = (function(mode) {
                 });
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.val();
+                if (event.ctrlKey) {
+                    query = '\\b' + query + '\\b';
+                }
                 reset();
                 runtime.updateHistory('find', query);
                 Front.visualCommand({

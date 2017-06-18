@@ -159,6 +159,8 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 查找不是模式，但是它会让你自动进入visual mode. 按`/`打开查找栏，输入你要查找的文字，你会看到所有匹配的文字会被高亮。按回车完成查找，这时你会自动进入visual mode -- `Caret`。按`n`定位下一个，`N`定位前一个。
 
+按`Ctrl-Enter`查找完整的单词，就像输入`\bkeyword\b`一样。
+
 ### 按键测试
 
 `spk`可以打开按键测试模式。
