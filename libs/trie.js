@@ -78,6 +78,10 @@ var Trie = (function() {
         },
 
         getPrefixWord: function() {
+            // unmapAllExcept could make this Trie object empty.
+            if (Object.keys(this).length === 0) {
+                return "";
+            }
             var fullWord = "", futureWord = this.stem, node = this;
             while (fullWord === "") {
                 var keys = Object.keys(node);
