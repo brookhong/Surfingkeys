@@ -1,4 +1,139 @@
-var Service = (function() {
+function request(url, onReady, headers, data, onException) {
+    console.log("request" + url);
+    headers = headers || {};
+    return new Promise(function(acc, rej) {
+        var xhr = new XMLHttpRequest();
+        var method = (data !== undefined) ? "POST" : "GET";
+        xhr.open(method, url);
+        for (var h in headers) {
+            xhr.setRequestHeader(h, headers[h]);
+        }
+        xhr.onload = function() {
+            acc(xhr.responseText);
+        };
+        xhr.onerror = rej.bind(null, xhr);
+        xhr.send(data);
+    }).then(onReady).catch(function(exp) {
+        onException && onException(exp);
+    });
+}
+
+var Gist = (function() {
+    var self = {};
+
+    function _initGist(token, magic_word, onGistReady) {
+        request("https://api.github.com/gists", function(res) {
+            var gists = JSON.parse(res);
+            var gist = "";
+            gists.forEach(function(g) {
+                if (g.hasOwnProperty('description') && g['description'] === magic_word && g.files.hasOwnProperty(magic_word)) {
+                    gist = g.id;
+                }
+            });
+            if (gist === "") {
+                request("https://api.github.com/gists", function(res) {
+                    var ng = JSON.parse(res);
+                    onGistReady(ng.id);
+                }, {
+                    'Authorization': 'token ' + token
+                }, `{ "description": "${magic_word}", "public": false, "files": { "${magic_word}": { "content": "${magic_word}" } } }`);
+            } else {
+                onGistReady(gist);
+            }
+        }, {
+            'Authorization': 'token ' + token
+        });
+    }
+
+    var _token, _gist = "", _comments = [];
+    self.initGist = function(token, onGistReady) {
+        if (_token === token && _gist !== "") {
+            onGistReady && onGistReady(_gist);
+        } else {
+            _token = token;
+            _initGist(_token, "cloudboard", function(gist) {
+                _gist = gist;
+                onGistReady && onGistReady(_gist);
+            });
+        }
+    };
+
+    function _newComment(text, cb) {
+        request(`https://api.github.com/gists/${_gist}/comments`, function(res) {
+            cb && cb(res);
+        }, {
+            'Authorization': 'token ' + _token
+        }, `{"body": "${encodeURIComponent(text)}"}`);
+    }
+    function _readComment(cid, cb) {
+        request(`https://api.github.com/gists/${_gist}/comments/${cid}`, function(res) {
+            var comment = JSON.parse(res);
+            cb({status: 0, content: decodeURIComponent(comment.body)});
+        }, {
+            'Authorization': 'token ' + _token
+        });
+    }
+    function _listComment(cb) {
+        request(`https://api.github.com/gists/${_gist}/comments`, function(res) {
+            _comments = JSON.parse(res).map(function(c) {
+                return c.id;
+            });
+            cb(_comments);
+        }, {
+            'Authorization': 'token ' + _token
+        });
+    }
+    function _writeComment(cid, clip, cb) {
+        request(`https://api.github.com/gists/${_gist}/comments/${cid}`, function(res) {
+            cb && cb(res);
+        }, {
+            'Authorization': 'token ' + _token
+        }, `{"body": "${encodeURIComponent(clip)}"}`);
+    }
+    self.readComment = function(nr, cb) {
+        if (_gist === "") {
+            cb({status: 1, content: "Please call initGist first!"});
+        } else if (nr >= _comments.length) {
+            _listComment(function(cmts) {
+                if (nr < cmts.length) {
+                    _readComment(cmts[nr], cb);
+                } else {
+                    cb({status: 1, content: "Register not exists!"});
+                }
+            });
+        } else {
+            _readComment(_comments[nr], cb);
+        }
+    };
+    self.editComment = function(nr, clip, cb) {
+        if (_gist === "") {
+            cb({status: 1, content: "Please call initGist first!"});
+        } else if (nr >= _comments.length) {
+            _listComment(function(cmts) {
+                if (nr < cmts.length) {
+                    _writeComment(cmts[nr], clip, cb);
+                } else {
+                    var toCreate = nr - cmts.length + 1;
+                    function cbAfterCreated() {
+                        toCreate --;
+                        if (toCreate > 0) {
+                            _newComment(".", cbAfterCreated);
+                        } else if (toCreate === 0) {
+                            _newComment(clip, cb);
+                        }
+                    }
+                    cbAfterCreated();
+                }
+            });
+        } else {
+            _writeComment(_comments[nr], clip, cb);
+        }
+    };
+
+    return self;
+})();
+
+var ChromeService = (function() {
     var self = {}, onResponseById = {};
 
     var activePorts = [],
@@ -26,23 +161,6 @@ var Service = (function() {
         newTabPosition: 'default',
         interceptedErrors: []
     };
-
-    function request(url, headers, data) {
-        headers = headers || {};
-        return new Promise(function(acc, rej) {
-            var xhr = new XMLHttpRequest();
-            var method = (data !== undefined) ? "POST" : "GET";
-            xhr.open(method, url);
-            for (var h in headers) {
-                xhr.setRequestHeader(h, headers[h]);
-            }
-            xhr.onload = function() {
-                acc(xhr.responseText);
-            };
-            xhr.onerror = rej.bind(null, xhr);
-            xhr.send(data);
-        });
-    }
 
     function extendObject(target, ss) {
         for (var k in ss) {
@@ -189,11 +307,10 @@ var Service = (function() {
 
         loadRawSettings(keys, function(set) {
             if (set.localPath) {
-                var s = request(set.localPath);
-                s.then(function(resp) {
+                request(set.localPath, function(resp) {
                     set.snippets = resp;
                     cb(set);
-                }).catch(function(po) {
+                }, function(po) {
                     // failed to read snippets from localPath
                     set.error = "Failed to read snippets from " + set.localPath;
                     cb(set);
@@ -473,8 +590,7 @@ var Service = (function() {
     };
 
     function _loadSettingsFromUrl(url) {
-        var s = request(url);
-        s.then(function(resp) {
+        request(url, function(resp) {
             _updateAndPostSettings({localPath: url, snippets: resp});
         });
     };
@@ -868,12 +984,11 @@ var Service = (function() {
         });
     };
     self.request = function(message, sender, sendResponse) {
-        var s = request(message.url, message.headers, message.data);
-        s.then(function(res) {
+        request(message.url, function(res) {
             _response(message, sendResponse, {
                 text: res
             });
-        });
+        }, message.headers, message.data);
     };
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
@@ -1190,6 +1305,24 @@ var Service = (function() {
             _response(message, sendResponse, {
                 bookmarks: bookmarks
             });
+        });
+    };
+
+    self.initGist = function(message, sender, sendResponse) {
+        Gist.initGist(message.token, function(gist) {
+            _response(message, sendResponse, {
+                gist: gist
+            });
+        });
+    };
+    self.readComment = function(message, sender, sendResponse) {
+        Gist.readComment(message.index, function(resp) {
+            _response(message, sendResponse, resp);
+        });
+    };
+    self.editComment = function(message, sender, sendResponse) {
+        Gist.editComment(message.index, message.content, function(resp) {
+            _response(message, sendResponse, {gistResp: resp});
         });
     };
 
