@@ -450,12 +450,16 @@ var Visual = (function(mode) {
 
     function highlight(pattern) {
         getTextNodes(document.body, pattern).forEach(function(node) {
-            var mtches = node.data.match(pattern);
-            mtches.forEach(function(match) {
-                var mark = createMatchMark(node, node.data.indexOf(match), match.length);
+            var mtches;
+            while ((mtches = pattern.exec(node.data)) !== null) {
+                var match = mtches[0];
+                var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
                 matches.push(mark);
+
                 node = mark.nextSibling;
-            });
+                // node changed, reset pattern.lastIndex
+                pattern.lastIndex = 0;
+            }
         });
         document.body.normalize();
         if (matches.length) {
@@ -654,6 +658,7 @@ var Visual = (function(mode) {
     runtime.on('visualClear', self.visualClear);
 
     self.visualEnter = function (query) {
+        self.visualClear();
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
             state = 1;

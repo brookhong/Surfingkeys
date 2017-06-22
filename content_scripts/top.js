@@ -63,12 +63,16 @@ var frontendFrame = (function() {
                     toContent: true
                 });
             }
-            document.body.style.animationFillMode = "";
-            document.body.style.overflow = _origOverflow;
+            if (document.body) {
+                document.body.style.animationFillMode = "";
+                document.body.style.overflow = _origOverflow;
+            }
         } else {
-            document.body.style.animationFillMode = "none";
-            _origOverflow = document.body.style.overflow;
-            document.body.style.overflow = 'visible';
+            if (document.body) {
+                document.body.style.animationFillMode = "none";
+                _origOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'visible';
+            }
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };

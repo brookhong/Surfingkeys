@@ -142,13 +142,17 @@ var Hints = (function(mode) {
         createHints(_cssSelector, _lastCreateAttrs);
     }
 
+    var _origOverflow;
     self.enter = function() {
+        _origOverflow = document.body.style.overflowX;
+        document.body.style.overflowX = "hidden";
         mode.enter.call(self);
         $(document).on('surfingkeys:scrollStarted', onScrollStarted);
         $(document).on('surfingkeys:scrollDone', onScrollDone);
     };
 
     self.exit = function() {
+        document.body.style.overflowX = _origOverflow;
         mode.exit.call(self);
         $(document).off('surfingkeys:scrollStarted', onScrollStarted);
         $(document).off('surfingkeys:scrollDone', onScrollDone);

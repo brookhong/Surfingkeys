@@ -160,6 +160,8 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
 `Find` is not actually a mode, it just another way to enter visual mode. Press `/` to open find bar, which sits at almost the same position with Mode indicator, type something there. All occurrences of your input will be highlighted. Press `Enter` to finish the finding, and you're in `Caret` visual mode now, press `n` to find next, `N` to find previous.
 
+Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\bkeyword\b`.
+
 ### Show pressed keys
 
 This is helper mode for you to see what keys Surfingkeys recognized when you press one. It helps you when you don't know how to specify the keys that you need map.
