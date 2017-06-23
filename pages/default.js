@@ -514,7 +514,7 @@ mapkey('su', '#4Edit current URL with vim editor', function() {
 });
 mapkey(';m', '#1mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', '#12Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf")');
-mapkey(';p', '#7Paste html on current page', function() {
+mapkey(';pp', '#7Paste html on current page', function() {
     Front.getContentFromClipboard(function(response) {
         document.body.innerHTML = response.data;
     });
