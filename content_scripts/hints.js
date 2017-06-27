@@ -16,8 +16,11 @@ var Hints = (function(mode) {
                 handleHint();
             } else {
                 var key = event.sk_keyName;
+                if (isCapital(key)) {
+                    shiftKey = true
+                }
                 if (key !== '') {
-                    if (self.characters.indexOf(key) !== -1) {
+                    if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key.toUpperCase();
                         handleHint();
                     } else {
@@ -45,12 +48,18 @@ var Hints = (function(mode) {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
         style = $("<style></style>"),
-        holder = $('<div id=sk_hints style="display: block; opacity: 1;"/>');
+        holder = $('<div id=sk_hints style="display: block; opacity: 1;"/>'),
+        shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
     self.scrollKeys = '0jkhlG$';
     var _lastCreateAttrs = {},
         _onHintKey = self.dispatchMouseClick,
         _cssSelector = "";
+
+    function isCapital(key) {
+        return key === key.toUpperCase() &&
+               key !== key.toLowerCase() // in case key is a symbol or special character
+    }
 
     function getZIndex(node) {
         var z = 0;
@@ -82,8 +91,8 @@ var Hints = (function(mode) {
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
             var event = document.createEvent('MouseEvents');
-            event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, false,
-                false, false, false, 0, null);
+            event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, shiftKey,
+                false, shiftKey, false, 0, null);
             element.dispatchEvent(event);
         });
         lastMouseTarget = element;
@@ -115,6 +124,7 @@ var Hints = (function(mode) {
         };
         holder.html("").remove();
         prefix = "";
+        shiftKey = false;
         self.exit();
     }
 
