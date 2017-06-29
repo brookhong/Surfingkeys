@@ -17,7 +17,7 @@ var Hints = (function(mode) {
             } else {
                 var key = event.sk_keyName;
                 if (isCapital(key)) {
-                    shiftKey = true
+                    shiftKey = true;
                 }
                 if (key !== '') {
                     if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
@@ -58,7 +58,7 @@ var Hints = (function(mode) {
 
     function isCapital(key) {
         return key === key.toUpperCase() &&
-               key !== key.toLowerCase() // in case key is a symbol or special character
+               key !== key.toLowerCase(); // in case key is a symbol or special character
     }
 
     function getZIndex(node) {
