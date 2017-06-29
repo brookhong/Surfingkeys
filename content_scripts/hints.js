@@ -91,8 +91,9 @@ var Hints = (function(mode) {
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
             var event = document.createEvent('MouseEvents');
-            event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, shiftKey,
-                false, shiftKey, false, 0, null);
+            var mouseButton = (shiftKey === true) ? 1 : 0;
+            event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, false,
+                false, false, false, mouseButton, null);
             element.dispatchEvent(event);
         });
         lastMouseTarget = element;
