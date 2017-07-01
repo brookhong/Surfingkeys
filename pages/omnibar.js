@@ -956,7 +956,7 @@ var SearchEngine = (function() {
             return;
         }
         var val = Omnibar.input.val();
-        if(_pendingRequest) {
+        if (_pendingRequest) {
             clearTimeout(_pendingRequest);
             _pendingRequest = undefined;
         }
