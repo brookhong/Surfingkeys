@@ -916,6 +916,8 @@ var SearchEngine = (function() {
     var self = {};
     self.aliases = {};
 
+    var _pendingRequest = undefined; // timeout ID
+
     self.onOpen = function(arg) {
         $.extend(self, self.aliases[arg]);
         var q = Omnibar.input.val();
@@ -950,18 +952,26 @@ var SearchEngine = (function() {
         return this.activeTab;
     };
     self.onInput = function() {
-        if (self.suggestionURL) {
-            var val = Omnibar.input.val();
+        if (!self.suggestionURL || typeof(self.listSuggestion) !== "function") {
+            return;
+        }
+        var val = Omnibar.input.val();
+        if (_pendingRequest) {
+            clearTimeout(_pendingRequest);
+            _pendingRequest = undefined;
+        }
+        // Set a timeout before the request is dispatched so that it can be canceled if necessary.
+        // This helps prevent rate-limits when typing a long query.
+        // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
+        _pendingRequest = setTimeout(function() {
             runtime.command({
                 action: 'request',
                 method: 'get',
                 url: self.suggestionURL + val
             }, function(resp) {
-                if (typeof(self.listSuggestion === "function")) {
-                    self.listSuggestion(resp);
-                }
+                self.listSuggestion(resp);
             });
-        }
+        }, runtime.conf.omnibarSuggestionTimeout);
     };
     return self;
 })();
