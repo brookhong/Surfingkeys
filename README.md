@@ -620,7 +620,7 @@ For example,
 | settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
 | settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
 | settings.omnibarPosition | "middle" | Where to position Omnibar. ["middle", "bottom"] |
-| settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried in milliseconds. Helps prevent unnecessary HTTP requests and/or API rate-limiting. |
+| settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and/or API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
