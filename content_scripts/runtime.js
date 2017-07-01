@@ -7,6 +7,7 @@ var runtime = window.runtime || (function() {
             focusOnSaved: true,
             omnibarMaxResults: 10,
             omnibarPosition: "middle",
+            omnibarSuggestionTimeout: 200,
             tabsThreshold: 9,
             hintsThreshold: 10000,
             smoothScroll: true,

@@ -971,7 +971,7 @@ var SearchEngine = (function() {
             }, function(resp) {
                 self.listSuggestion(resp);
             });
-        }, 200);
+        }, runtime.conf.omnibarSuggestionTimeout);
     };
     return self;
 })();
