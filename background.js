@@ -1,5 +1,4 @@
 function request(url, onReady, headers, data, onException) {
-    console.log("request" + url);
     headers = headers || {};
     return new Promise(function(acc, rej) {
         var xhr = new XMLHttpRequest();
@@ -479,6 +478,22 @@ var ChromeService = (function() {
         switch (command) {
             case 'restartext':
                 chrome.runtime.reload();
+                break;
+            case 'proxyThis':
+                chrome.tabs.query({
+                    currentWindow: true,
+                    active: true
+                }, function(resp) {
+                    var host = new URL(resp[0].url).host;
+                    updateProxy({
+                        host: host,
+                        operation: "toggle"
+                    }, function() {
+                        chrome.tabs.reload(resp[0].id, {
+                            bypassCache: true
+                        });
+                    });
+                });
                 break;
             default:
                 break;
@@ -1140,7 +1155,7 @@ var ChromeService = (function() {
         });
     };
 
-    self.updateProxy = function(message, sender, sendResponse) {
+    function updateProxy(message, cb) {
         loadSettings(['proxyMode', 'proxy', 'autoproxy_hosts'], function(proxyConf) {
             if (message.proxy) {
                 proxyConf.proxy = message.proxy;
@@ -1153,7 +1168,7 @@ var ChromeService = (function() {
                 var hosts = message.host.split(/\s*[ ,\n]\s*/);
                 if (message.operation === "toggle") {
                     hosts.forEach(function(host) {
-                        if (hostsDict.indexOf(host)) {
+                        if (hostsDict.hasOwnProperty(host)) {
                             delete hostsDict[host];
                         } else {
                             hostsDict[host] = 1;
@@ -1177,6 +1192,11 @@ var ChromeService = (function() {
             };
             _updateAndPostSettings(diffSet);
             _applyProxySettings(proxyConf);
+            cb && cb(diffSet);
+        });
+    }
+    self.updateProxy = function(message, sender, sendResponse) {
+        updateProxy(message, function(diffSet) {
             _response(message, sendResponse, diffSet);
         });
     };

@@ -12,6 +12,9 @@
     "commands": {
         "restartext": {
             "description": "Restart this extenstion."
+        },
+        "proxyThis": {
+            "description": "Toggle current site in autoproxy_hosts."
         }
     },
     "browser_action": {

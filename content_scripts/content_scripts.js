@@ -1,7 +1,6 @@
 document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     var elm = evt.srcElement;
     if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
-        var url = new URL(elm.src);
         chrome.storage.local.get("noPdfViewer", function(resp) {
             if (!resp.noPdfViewer) {
                 setTimeout(function() {
@@ -528,7 +527,7 @@ function applySettings(rs) {
         var delta = runUserScript(rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
-                Front.showPopup("Error found in settings: " + delta.error);
+                console.log("Error found in settings: " + delta.error);
             } else {
                 console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
             }
