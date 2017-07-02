@@ -296,10 +296,19 @@ function onAceVimKeymapInit(fn) {
     }
 }
 
-function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
-    if (typeof(addSearchAlias) !== 'undefined') {
-        addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
+    if (typeof(SearchEngine) !== 'undefined') {
+        SearchEngine.aliases[alias] = {
+            prompt: prompt + "≫",
+            url: url,
+            suggestionURL: suggestionURL || "",
+            listSuggestion: listSuggestion
+        };
     }
+}
+
+function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
+    addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
     vmapkey((search_leader_key || 's') + alias, '', 'searchSelectedWith("{0}")'.format(search_url));
     mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', 'searchSelectedWith("{0}", true)'.format(search_url));
@@ -322,10 +331,14 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
     }
 }
 
-function removeSearchAliasX(alias, search_leader_key, only_this_site_key) {
-    if (typeof(removeSearchAlias) !== 'undefined') {
-        removeSearchAlias(alias);
+function removeSearchAlias(alias) {
+    if (typeof(SearchEngine) !== 'undefined') {
+        delete SearchEngine.aliases[alias];
     }
+}
+
+function removeSearchAliasX(alias, search_leader_key, only_this_site_key) {
+    removeSearchAlias(alias);
     unmap((search_leader_key || 's') + alias);
     vunmap((search_leader_key || 's') + alias);
     unmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
