@@ -969,7 +969,18 @@ var SearchEngine = (function() {
                 method: 'get',
                 url: self.suggestionURL + val
             }, function(resp) {
-                self.listSuggestion(resp);
+                var resp = self.listSuggestion(resp);
+                if (Array.isArray(resp)) {
+                    Omnibar.detectAndInsertURLItem(val, resp);
+                    var rxp = _regexFromString(val, true);
+                    Omnibar.listResults(resp, function(w) {
+                        if (w.hasOwnProperty('url')) {
+                            return Omnibar.createURLItem(w, rxp);
+                        } else {
+                            return $('<li/>').html("⌕ " + w).data('query', w);
+                        }
+                    });
+                }
             });
         }, runtime.conf.omnibarSuggestionTimeout);
     };

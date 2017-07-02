@@ -534,22 +534,21 @@ mapkey(';db', '#14Remove bookmark for current page', function() {
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
     var res = eval(response.text);
-    Omnibar.listWords(res[1]);
+    return res[1];
 });
 addSearchAliasX('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
     var res = eval(response.text);
-    res = res.map(function(r){
+    return res.map(function(r){
         return r.phrase;
     });
-    Omnibar.listWords(res);
 });
 addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=eval&wd=', function(response) {
     var res = eval(response.text);
-    Omnibar.listWords(res.s);
+    return res.s;
 });
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
     var res = eval(response.text);
-    Omnibar.listWords(res[1]);
+    return res[1];
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
