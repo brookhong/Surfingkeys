@@ -131,7 +131,7 @@ var Front = (function(mode) {
         }
     };
     function showPopup(td, args) {
-        self.enter();
+        self.enter(0, true);
         if (_display && _display.is(':visible')) {
             _display.hide();
             _display.onHide && _display.onHide();
