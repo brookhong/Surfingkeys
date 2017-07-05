@@ -161,7 +161,7 @@ body {
     padding-left: 4px;
 }
 #sk_richKeystroke .kbd-span {
-    width: 30px;
+    min-width: 30px;
     text-align: right;
     display: inline-block;
 }

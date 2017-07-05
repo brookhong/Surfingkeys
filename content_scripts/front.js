@@ -157,7 +157,7 @@ var Front = (function() {
         frontendCommand({
             action: 'showKeystroke',
             mode: mode,
-            key: decodeKeystroke(key)
+            key: key
         });
     };
 

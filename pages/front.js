@@ -463,7 +463,7 @@ var Front = (function(mode) {
                     words = root.getWords("", true).sort().map(function(w) {
                         var meta = root.find(w).meta;
                         if (meta.annotation || mode !== "Normal") {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, locale(meta.annotation));
+                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w, locale(meta.annotation));
                         } else {
                             return "";
                         }
@@ -481,8 +481,8 @@ var Front = (function(mode) {
             }
             keystroke.show();
             self.flush();
-            var keys = keystroke.html() + key;
-            keystroke.html(htmlEncode(keys));
+            var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
+            keystroke.html(keys);
             if (keystroke.css('right') !== '0px') {
                 keystroke.animate({
                     right: 0
