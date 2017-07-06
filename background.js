@@ -156,7 +156,6 @@ var ChromeService = (function() {
         focusAfterClosed: "right",
         repeatThreshold: 99,
         tabsMRUOrder: true,
-        historyMUOrder: true,
         newTabPosition: 'default',
         interceptedErrors: []
     };
@@ -656,13 +655,13 @@ var ChromeService = (function() {
             });
         })
     };
-    function _getHistory(cb) {
+    function _getHistory(cb, sortByMostUsed) {
         chrome.history.search({
             startTime: 0,
             maxResults: 2147483647,
             text: ""
         }, function(tree) {
-            if (conf.historyMUOrder) {
+            if (sortByMostUsed) {
                 tree = tree.sort(function(a, b) {
                     return b.visitCount - a.visitCount;
                 });
@@ -678,7 +677,7 @@ var ChromeService = (function() {
                 _response(message, sendResponse, {
                     urls: urls
                 });
-            });
+            }, true);
         });
     };
     self.getTabs = function(message, sender, sendResponse) {
@@ -916,7 +915,7 @@ var ChromeService = (function() {
             _response(message, sendResponse, {
                 history: tree
             });
-        });
+        }, message.sortByMostUsed);
     };
     self.openLink = function(message, sender, sendResponse) {
         if (message.tab.tabbed) {
