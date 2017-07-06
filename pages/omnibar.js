@@ -785,7 +785,8 @@ var OpenURLs = (function() {
         if (self.action === "getAllSites") {
             cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
-                    action: 'getTabs'
+                    action: 'getTabs',
+                    queryInfo: runtime.conf.omnibarTabsQuery
                 }, function(response) {
                     var cached = response.tabs;
                     runtime.command({
