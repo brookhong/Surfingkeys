@@ -47,8 +47,7 @@ var flowChartExample = `graph LR
     C -->|Two| E[Result two]`;
 
 mermaid.parseError = function(err) {
-    Front.showBanner("Failed to generate diagram from clipboard, load default", 3000);
-    drawDiagram(sequenceDiagramExample);
+    Front.showPopup(err);
 }
 function drawDiagram(code) {
     source = code;
