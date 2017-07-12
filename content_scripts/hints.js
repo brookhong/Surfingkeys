@@ -198,7 +198,7 @@ var Hints = (function(mode) {
     self.coordinate = function() {
         // a hack to get co-ordinate
         var link = $('<div/>').css('top', 0).css('left', 0).html('A').appendTo(holder);
-        holder.appendTo('body');
+        holder.prependTo('body');
         var ordinate = link.offset();
         holder.html('');
         return ordinate;
@@ -244,7 +244,7 @@ var Hints = (function(mode) {
             }
             bcr = h.getBoundingClientRect();
         }
-        holder.appendTo('body');
+        holder.prependTo('body');
     }
 
     function createHintsForClick(cssSelector, attrs) {
