@@ -14,7 +14,7 @@ var Mode = (function() {
             event.stopImmediatePropagation();
             event.preventDefault();
             // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
-            this.stopKeyupPropagation = (event.type === "keydown") ? event.keyCode : 0;
+            this.stopKeyupPropagation = (event.type === "keydown" && this.enableKeyupMerging) ? event.keyCode : 0;
         }
     };
 
@@ -218,6 +218,16 @@ var GetBackFocus = (function(mode) {
 
 var Normal = (function(mode) {
     var self = $.extend({name: "Normal", eventListeners: {}}, mode);
+
+    // Enable to stop propagation of the event whose keydown handler has been triggered
+    // Why we need this?
+    // For example, there is keyup event handler of `s` on some site to set focus on an input box,
+    // Now user presses `sg` to search with google, Surfingkeys got `s` and triggered its keydown handler.
+    // But keyup handler of the site also got triggered, then `g` was swallowed by the input box.
+    // This setting now is only turned on for Normal.
+    // For Hints, we could not turn on it, as keyup should be propagated to Normal
+    // to stop scrolling when holding a key.
+    self.enableKeyupMerging = true;
 
     self.addEventListener('keydown', function(event) {
         if (isEditable(event.target)) {
