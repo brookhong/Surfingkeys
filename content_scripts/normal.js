@@ -74,11 +74,14 @@ var Mode = (function() {
         if (pos === -1) {
             // push this mode into stack
             mode_stack.unshift(this);
-        } else if (pos > 0 && !reentrant) {
-            // pop up all the modes over this
-            // mode_stack = mode_stack.slice(pos);
-            var modeList = Mode.stack().map(function(u) { return u.name; }).join(',');
-            reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
+        } else if (pos > 0) {
+            if (reentrant) {
+                // pop up all the modes over this
+                mode_stack = mode_stack.slice(pos);
+            } else {
+                var modeList = Mode.stack().map(function(u) { return u.name; }).join(',');
+                reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
+            }
             // stackTrace();
         }
 

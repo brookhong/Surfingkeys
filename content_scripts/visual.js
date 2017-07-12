@@ -571,6 +571,11 @@ var Visual = (function(mode) {
 
     self.next = function(backward) {
         if (matches.length) {
+            // need enter visual mode again when modeAfterYank is set to Normal / Caret.
+            if (state === 0) {
+                self.enter();
+                _incState();
+            }
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);

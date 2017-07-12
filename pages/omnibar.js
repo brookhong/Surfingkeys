@@ -177,6 +177,16 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
+    self.mappings.add(encodeKeystroke("<Ctrl-r>"), {
+        annotation: "Re-sort history by visitCount or lastVisitTime.",
+        feature_group: 8,
+        code: function () {
+            if (handler && handler.onReset) {
+                handler.onReset();
+            }
+        }
+    });
+
     var handlers = {},
         bookmarkFolders;
 
@@ -758,10 +768,28 @@ var OpenHistory = (function() {
     self.getResults = function() {
         cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
-                action: 'getHistory'
+                action: 'getHistory',
+                sortByMostUsed: runtime.conf.historyMUOrder
             }, function(response) {
                 resolve(response.history);
             });
+        });
+    };
+
+    self.onReset = function() {
+        runtime.conf.historyMUOrder = !runtime.conf.historyMUOrder;
+        cachedPromise.then(function(cached) {
+            if (runtime.conf.historyMUOrder) {
+                cached = cached.sort(function(a, b) {
+                    return b.visitCount - a.visitCount;
+                });
+            } else {
+                cached = cached.sort(function(a, b) {
+                    return b.lastVisitTime - a.lastVisitTime;
+                });
+            }
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
+            Omnibar.listURLs(filtered, false);
         });
     };
 

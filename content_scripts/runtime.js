@@ -9,6 +9,7 @@ var runtime = window.runtime || (function() {
             omnibarPosition: "middle",
             omnibarSuggestionTimeout: 200,
             omnibarTabsQuery: {},
+            historyMUOrder: true,
             tabsThreshold: 9,
             hintsThreshold: 10000,
             smoothScroll: true,
