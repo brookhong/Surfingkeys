@@ -1355,5 +1355,23 @@ var ChromeService = (function() {
         });
     };
 
+    self.getVoices = function(message, sender, sendResponse) {
+        chrome.tts.getVoices(function(voices) {
+            _response(message, sendResponse, {
+                voices: voices
+            });
+        });
+    };
+
+    self.read = function(message, sender, sendResponse) {
+        var options = message.options || {};
+        options.onEvent = function(ttsEvent) {
+            _response(message, sendResponse, {
+                ttsEvent: ttsEvent
+            });
+        };
+        chrome.tts.speak(message.content, options);
+    };
+
     return self;
 })();

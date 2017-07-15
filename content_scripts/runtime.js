@@ -31,6 +31,7 @@ var runtime = window.runtime || (function() {
             focusFirstCandidate: false,
             language: undefined,
             stealFocusOnLoad: true,
+            defaultVoice: "Daniel",
             lastQuery: ""
         },
         runtime_handlers: {}
@@ -54,8 +55,10 @@ var runtime = window.runtime || (function() {
     _port.onMessage.addListener(function(_message) {
         if (callbacks[_message.id]) {
             var f = callbacks[_message.id];
-            delete callbacks[_message.id];
-            f(_message);
+            // returns true to make callback stay for coming response.
+            if (!f(_message)) {
+                delete callbacks[_message.id];
+            }
         } else if (actions[_message.action]) {
             var result = {
                 id: _message.id,

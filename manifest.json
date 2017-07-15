@@ -27,6 +27,7 @@
     },
     "author": "brook hong",
     "permissions": [
+        "tts",
         "webRequest",
         "proxy",
         "<all_urls>",

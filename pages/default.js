@@ -137,6 +137,60 @@ command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', f
     var hosts = args.join('');
     return toggleProxySite(hosts);
 });
+command('listVoices', '#13list tts voices', function() {
+    runtime.command({
+        action: 'getVoices'
+    }, function(response) {
+
+        var voices = response.voices.map(function(s) {
+            return `<tr><td>${s.voiceName}</td><td>${s.lang}</td><td>${s.gender}</td><td>${s.remote}</td></tr>`;
+        });
+        voices.unshift("<tr style='font-weight: bold;'><td>voiceName</td><td>lang</td><td>gender</td><td>remote</td></tr>");
+        Front.showPopup("<table style='width:100%'>{0}</table>".format(voices.join('')));
+
+    });
+});
+command('testVoices', '#13list tts voices', function(args) {
+    runtime.command({
+        action: 'getVoices'
+    }, function(response) {
+
+        var voices = response.voices, i = 0;
+        if (args.length > 0) {
+            voices = voices.filter(function(v) {
+                return v.lang.indexOf(args[0]) !== -1;
+            });
+        }
+        var textToRead = "This is to test voice with SurfingKeys";
+        if (args.length > 1) {
+            textToRead = args[1];
+        }
+        for (i = 0; i < voices.length - 1; i++) {
+            var text = `${textToRead}, ${voices[i].voiceName} / ${voices[i].lang}.`;
+            readText(text, {
+                enqueue: true,
+                verbose: true,
+                voiceName: voices[i].voiceName
+            });
+        }
+        readText(text, {
+            enqueue: true,
+            verbose: true,
+            voiceName: voices[i].voiceName,
+            onEnd: function() {
+                Front.showPopup("All voices test done.");
+            }
+        });
+    });
+});
+mapkey('gr', '#14Read selected text or text from clipboard.', function() {
+    Front.getContentFromClipboard(function(response) {
+        readText(window.getSelection().toString() || response.data, {verbose: true});
+    });
+});
+vmapkey('gr', '#9Read selected text.', function() {
+    readText(window.getSelection().toString(), {verbose: true});
+});
 mapkey('sfr', '#13show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'
@@ -228,6 +282,9 @@ mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
     }, {multipleHits: true})
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
+mapkey('gi', '#1Go to the first edit box', function() {
+    Hints.create("input[type=text]:visible:nth(0)", Hints.dispatchMouseClick);
+});
 mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {
         Front.showEditor(element, function(data) {

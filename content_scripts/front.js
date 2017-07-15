@@ -35,6 +35,13 @@ var Front = (function() {
         });
     };
 
+    self.hidePopup = function() {
+        frontendCommand({
+            action: 'hidePopup'
+        });
+    };
+
+
     self.showPressed = function(content) {
         frontendCommand({
             action: 'showPressed'
@@ -190,6 +197,7 @@ var Front = (function() {
     });
 
     runtime.on('omnibar_query_entered', function(response) {
+        readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
         onOmniQuery(response.query);
     });

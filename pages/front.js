@@ -292,6 +292,9 @@ var Front = (function(mode) {
     runtime.on('showPopup', function(message) {
         self.showPopup(message.content);
     });
+    runtime.on('hidePopup', function(message) {
+        self.hidePopup();
+    });
     runtime.on('showPressed', function(message) {
         self.showPressed = true;
         self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");

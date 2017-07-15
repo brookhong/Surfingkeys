@@ -274,8 +274,10 @@ var Visual = (function(mode) {
         annotation: "Translate word under cursor",
         feature_group: 9,
         code: function() {
+            var w = Visual.getWordUnderCursor();
+            readText(w);
             httpRequest({
-                url: _translationUrl + Visual.getWordUnderCursor()
+                url: _translationUrl + w
             }, function(res) {
                 var pos = Visual.getCursorPos();
                 Front.showBubble(pos, _parseTranslation(res));
