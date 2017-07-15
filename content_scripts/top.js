@@ -4,7 +4,7 @@ var frontendFrame = (function() {
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
-    var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
+    var ifr = $('<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="{0}" />'.format(frontEndURL));
     uiHost.createShadowRoot();
     var sk_style = document.createElement("style");
     sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));

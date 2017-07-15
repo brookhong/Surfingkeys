@@ -387,9 +387,6 @@ var Visual = (function(mode) {
         $(document).trigger("surfingkeys:cursorHidden");
         return lastPos;
     };
-    $(document).on('surfingkeys:cursorHidden', function() {
-        Front.hideBubble();
-    });
 
     self.showCursor = function () {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
@@ -487,7 +484,21 @@ var Visual = (function(mode) {
         }
         matches = [];
         Front.showStatus(2, '');
+    };
+
+    function onCursorHiden() {
+        Front.hideBubble();
     }
+
+    self.enter = function() {
+        mode.enter.apply(self, arguments);
+        $(document).on('surfingkeys:cursorHidden', onCursorHiden);
+    };
+
+    self.exit = function() {
+        $(document).off('surfingkeys:cursorHidden', onCursorHiden);
+        mode.exit.apply(self, arguments);
+    };
 
     function _onStateChange() {
         self.mappings.add("y", _yankFunctions[state]);
