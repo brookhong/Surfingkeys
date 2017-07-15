@@ -13,30 +13,6 @@ document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     }
 }, true);
 
-var getTopURLPromise = new Promise(function(resolve, reject) {
-    if (window === top) {
-        resolve(window.location.href);
-    } else {
-        runtime.command({
-            action: "getTopURL"
-        }, function(rs) {
-            resolve(rs.url);
-        });
-    }
-});
-
-function shouldWorkFor(domain, cb) {
-    getTopURLPromise.then(function(url) {
-        if (!domain || domain.test(url)) {
-            cb();
-        }
-    });
-}
-
-if (typeof(Commands) === 'undefined') {
-    Commands = { items: {} };
-}
-
 function command(cmd, annotation, jscode) {
     if (typeof(jscode) === 'string') {
         jscode = new Function(jscode);
@@ -74,7 +50,7 @@ function parseCommand(cmdline) {
     return tokens;
 }
 
-RUNTIME = function(action, args) {
+function RUNTIME(action, args) {
     var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight'];
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {
@@ -86,12 +62,11 @@ RUNTIME = function(action, args) {
     try {
         chrome.runtime.sendMessage(args);
     } catch (e) {
-        console.log('[runtime exception] ' + e);
-        window.location.reload();
+        Front.showPopup('[runtime exception] ' + e);
     }
 }
 
-AutoCommands = {};
+var AutoCommands = {};
 function autocmd(domain, jscode) {
     var dp = "",
         po;
@@ -132,22 +107,35 @@ function createKeyTarget(code, ag, repeatIgnore) {
         keybound.feature_group = ag.feature_group;
         keybound.annotation = ag.annotation;
     }
+
+    keybound.isDefault = _defaultMapping;
     return keybound;
 }
 
+var _defaultMapping = true;
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
-    shouldWorkFor(options.domain, function() {
+    if (!options.domain || options.domain.test(document.location.href)) {
         keys = encodeKeystroke(keys);
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
         }
-        // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
-        var ag = (!Front.isProvider()) ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
-        var keybound = createKeyTarget(jscode, ag, options.repeatIgnore);
-        mode.mappings.add(keys, keybound);
-    });
+        var keybound;
+        if (_defaultMapping) {
+            // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
+            if (Front.isProvider()) {
+                keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
+            } else {
+                keybound = createKeyTarget(jscode, null, options.repeatIgnore);
+            }
+            mode.mappings.add(keys, keybound);
+        } else {
+            // for user defined mappings, annotations are kept in content.
+            keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
+            mode.mappings.add(keys, keybound);
+        }
+    }
 }
 
 function mapkey(keys, annotation, jscode, options) {
@@ -168,8 +156,21 @@ function cmapkey(keys, annotation, jscode, options) {
     }
 }
 
+function _map(mode, nks, oks) {
+    oks = encodeKeystroke(oks);
+    var old_map = mode.mappings.find(oks);
+    if (old_map) {
+        nks = encodeKeystroke(nks);
+        mode.mappings.remove(nks);
+        // meta.word need to be new
+        var meta = $.extend({}, old_map.meta);
+        mode.mappings.add(nks, meta);
+    }
+    return old_map;
+}
+
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
             var args = parseCommand(cmdline);
@@ -183,20 +184,15 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 Normal.mappings.add(encodeKeystroke(new_keystroke), keybound);
             }
         } else {
-            var old_map = Normal.mappings.find(encodeKeystroke(old_keystroke));
-            if (old_map) {
-                var nks = encodeKeystroke(new_keystroke);
-                Normal.mappings.remove(nks);
-                Normal.mappings.add(nks, old_map.meta);
-            } else if (old_keystroke in Mode.specialKeys) {
+            if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
         }
-    });
+    }
 }
 
 function unmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         var old_map = Normal.mappings.find(encodeKeystroke(keystroke));
         if (old_map) {
             Normal.mappings.remove(encodeKeystroke(keystroke));
@@ -208,11 +204,11 @@ function unmap(keystroke, domain) {
                 }
             }
         }
-    });
+    }
 }
 
 function unmapAllExcept(keystrokes, domain) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         var modes = [Normal, Insert];
         modes.forEach(function(mode) {
             var _mappings = new Trie();
@@ -228,60 +224,39 @@ function unmapAllExcept(keystrokes, domain) {
             mode.mappings = _mappings;
             mode.map_node = _mappings;
         });
-    });
+    }
 }
 
 function imap(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
-        var old_map = Insert.mappings.find(encodeKeystroke(old_keystroke));
-        if (old_map) {
-            var nks = encodeKeystroke(new_keystroke);
-            Insert.mappings.remove(nks);
-            // meta.word need to be new
-            var meta = $.extend({}, old_map.meta);
-            Insert.mappings.add(nks, meta);
-        }
-    });
+    if (!domain || domain.test(document.location.href)) {
+        _map(Insert, new_keystroke, old_keystroke);
+    }
 }
 
 function iunmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         Insert.mappings.remove(encodeKeystroke(keystroke));
-    });
+    }
 }
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
     if (typeof(Omnibar) !== 'undefined') {
-        shouldWorkFor(domain, function() {
-            var old_map = Omnibar.mappings.find(encodeKeystroke(old_keystroke));
-            if (old_map) {
-                var nks = encodeKeystroke(new_keystroke);
-                Omnibar.mappings.remove(nks);
-                // meta.word need to be new
-                var meta = $.extend({}, old_map.meta);
-                Omnibar.mappings.add(nks, meta);
-            }
-        });
+        if (!domain || domain.test(document.location.href)) {
+            _map(Omnibar, new_keystroke, old_keystroke);
+        }
     }
 }
 
 function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
-        var old_map = Visual.mappings.find(encodeKeystroke(old_keystroke));
-        if (old_map) {
-            var nks = encodeKeystroke(new_keystroke);
-            Visual.mappings.remove(nks);
-            // meta.word need to be new
-            var meta = $.extend({}, old_map.meta);
-            Visual.mappings.add(nks, meta);
-        }
-    });
+    if (!domain || domain.test(document.location.href)) {
+        _map(Visual, new_keystroke, old_keystroke);
+    }
 }
 
 function vunmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         Visual.mappings.remove(encodeKeystroke(keystroke));
-    });
+    }
 }
 
 function aceVimMap(lhs, rhs, ctx) {
@@ -562,7 +537,7 @@ function readText(text, options) {
 /*
  * run user snippets, and return settings updated in snippets
  */
-function runUserScript(snippets) {
+function runScript(snippets) {
     var result = { settings: {}, error: "" };
     try {
         var F = new Function('settings', snippets);
@@ -583,7 +558,7 @@ function applySettings(rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
     if (('snippets' in rs) && rs.snippets) {
-        var delta = runUserScript(rs.snippets);
+        var delta = runScript(rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
                 console.log("Error found in settings: " + delta.error);
@@ -622,6 +597,23 @@ function applySettings(rs) {
     }
 }
 
+Normal.insertJS(function() {
+    var _wr = function(type) {
+        var orig = history[type];
+        return function() {
+            var rv = orig.apply(this, arguments);
+            var e = new NativeEventForSK(type);
+            e.arguments = arguments;
+            window.dispatchEvent(e);
+            return rv;
+        };
+    };
+    // Hold Event at NativeEventForSK in case of it is overrided
+    // test with http://search.bilibili.com/
+    var NativeEventForSK = Event;
+    history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
+});
+
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
@@ -648,52 +640,51 @@ runtime.on('settingsUpdated', function(response) {
     }
 });
 
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
-    runtime.command({
-        action: 'getSettings'
-    }, function(response) {
-        var rs = response.settings;
+function _init(onInit) {
+    httpRequest({
+        url: chrome.extension.getURL('/pages/default.js'),
+    }, function(res) {
 
-        applySettings(rs);
+        runScript(res.text);
 
-        Normal.enter();
+        _defaultMapping = false;
+        $(document).trigger("surfingkeys:defaultSettingsLoaded");
 
         runtime.command({
-            action: 'getDisabled',
-            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-        }, function(resp) {
-            if (resp.disabled) {
-                Disabled.enter(0, true);
-            } else {
-                document.addEventListener('DOMContentLoaded', function(e) {
-                    GetBackFocus.enter(0, true);
-                });
-            }
+            action: 'getSettings'
+        }, function(response) {
+            var rs = response.settings;
+
+            applySettings(rs);
+
+            Normal.enter();
 
             if (window === top) {
-                // this block being put here instead of top.js is to ensure sequence.
                 runtime.command({
-                    action: 'setSurfingkeysIcon',
-                    status: resp.disabled
+                    action: 'getDisabled',
+                    blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+                }, function(resp) {
+                    if (resp.disabled) {
+                        Disabled.enter(0, true);
+                    } else {
+                        GetBackFocus.enter(0, true);
+                    }
+
+                    runtime.command({
+                        action: 'setSurfingkeysIcon',
+                        status: resp.disabled
+                    });
                 });
             }
         });
-    });
-});
 
-Normal.insertJS(function() {
-    var _wr = function(type) {
-        var orig = history[type];
-        return function() {
-            var rv = orig.apply(this, arguments);
-            var e = new NativeEventForSK(type);
-            e.arguments = arguments;
-            window.dispatchEvent(e);
-            return rv;
-        };
-    };
-    // Hold Event at NativeEventForSK in case of it is overrided
-    // test with http://search.bilibili.com/
-    var NativeEventForSK = Event;
-    history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
-});
+    });
+}
+
+if (window === top) {
+    $(document).on('surfingkeys:frontendReady', function() {
+        _init();
+    });
+} else {
+    _init();
+}

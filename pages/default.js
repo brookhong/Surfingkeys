@@ -165,14 +165,16 @@ command('testVoices', '#13list tts voices', function(args) {
         if (args.length > 1) {
             textToRead = args[1];
         }
+        var text;
         for (i = 0; i < voices.length - 1; i++) {
-            var text = `${textToRead}, ${voices[i].voiceName} / ${voices[i].lang}.`;
+            text = `${textToRead}, ${voices[i].voiceName} / ${voices[i].lang}.`;
             readText(text, {
                 enqueue: true,
                 verbose: true,
                 voiceName: voices[i].voiceName
             });
         }
+        text = `${textToRead}, ${voices[i].voiceName} / ${voices[i].lang}.`;
         readText(text, {
             enqueue: true,
             verbose: true,
@@ -498,10 +500,12 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
     Front.writeClipboard(JSON.stringify(aa, null, 4));
 });
 mapkey('yg', '#7Capture current page', function() {
+    Front.toggleStatus();
     setTimeout(function() {
         runtime.command({
             action: 'captureVisibleTab'
         }, function(response) {
+            Front.toggleStatus();
             Front.showPopup("<img src='{0}' />".format(response.dataUrl));
         });
     }, 500);
@@ -609,5 +613,3 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
-
-$(document).trigger("surfingkeys:defaultSettingsLoaded");

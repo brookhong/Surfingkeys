@@ -1,31 +1,3 @@
-// Hook focus on top window on load
-// test with http://askubuntu.com/questions/529781/upgrade-from-gdb-7-7-to-7-8
-var TopHook = (function(mode) {
-    var self = $.extend({name: "TopHook", eventListeners: {}}, mode);
-
-    self.addEventListener('blur', function(event) {
-        setTimeout(function() {
-            window.focus();
-        }, 0);
-    });
-
-    self.addEventListener('mousedown', function(event) {
-        self.exit();
-    });
-
-    self.addEventListener('keydown', function(event) {
-        self.exit();
-    });
-
-    self.addEventListener('pushState', function(event) {
-        event.sk_suppressed = true;
-        Insert.exit();
-    });
-
-    return self;
-})(Mode);
-TopHook.enter(9999);
-
 var frontendFrame = (function() {
     var self = {};
     var uiHost = document.createElement("div");
@@ -39,17 +11,22 @@ var frontendFrame = (function() {
     uiHost.shadowRoot.appendChild(sk_style);
     ifr.appendTo(uiHost.shadowRoot);
 
-    function initPort() {
+    ifr[0].addEventListener("load", function() {
         this.contentWindow.postMessage({
-            action: 'initPort',
-            from: 'top'
-        }, frontEndURL, [this.channel.port2]);
-        self.contentWindow = this.contentWindow;
-        $(document).trigger("surfingkeys:frontendReady");
-    }
+            action: 'initFrontend',
+            ack: true,
+            origin: getDocumentOrigin()
+        }, frontEndURL);
+    }, false);
+
+    document.documentElement.appendChild(uiHost);
 
     var lastStateOfPointerEvents = "none", _origOverflow;
-    self.setFrontFrame = function(response) {
+    var _actions = {}, activeContent = null;
+    _actions['initFrontendAck'] = function(response) {
+        $(document).trigger("surfingkeys:frontendReady");
+    };
+    _actions['setFrontFrame'] = function(response) {
         ifr.css('height', response.frameHeight);
         if (response.pointerEvents) {
             ifr.css('pointer-events', response.pointerEvents);
@@ -58,10 +35,10 @@ var frontendFrame = (function() {
             uiHost.blur();
             // test with https://docs.google.com/ and https://web.whatsapp.com/
             if (lastStateOfPointerEvents !== response.pointerEvents) {
-                runtime.command({
+                activeContent.window.postMessage({
                     action: 'getBackFocus',
-                    toContent: true
-                });
+                    commandToContent: true
+                }, activeContent.origin);
             }
             if (document.body) {
                 document.body.style.animationFillMode = "";
@@ -76,23 +53,52 @@ var frontendFrame = (function() {
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };
-    self.create = function() {
-        ifr[0].channel = new MessageChannel();
-        ifr[0].channel.port1.onmessage = function(message) {
-            var _message = message.data;
-            if (_message.action && self.hasOwnProperty(_message.action)) {
-                var ret = self[_message.action](_message);
-                if (ret) {
-                    _message.data = ret;
-                    self.contentWindow.postMessage(_message, frontEndURL);
+
+    window.addEventListener('message', function(event) {
+        var _message = event.data;
+        if (_message.commandToFrontend || _message.responseToFrontend) {
+            // forward message to frontend
+            ifr[0].contentWindow.postMessage(_message, frontEndURL);
+            if (_message.commandToFrontend) {
+                if (_message.origin && !_message.automatic) {
+                    // if the message is auto triggered rather than by user
+                    // we won't change activeContent here.
+                    if (!activeContent || activeContent.window !== event.source) {
+
+                        if (activeContent) {
+                            activeContent.window.postMessage({
+                                action: 'deactivated',
+                                direct: true,
+                                reason: `${_message.action}@${event.timeStamp}`,
+                                commandToContent: true
+                            }, activeContent.origin);
+                        }
+
+                        activeContent = {
+                            window: event.source,
+                            origin: _message.origin
+                        };
+                        // update usage for user defined mappings.
+                        activeContent.window.postMessage({
+                            action: 'activated',
+                            direct: true,
+                            reason: `${_message.action}@${event.timeStamp}`,
+                            commandToContent: true
+                        }, activeContent.origin);
+                    }
                 }
             }
-        };
-        ifr[0].removeEventListener("load", initPort, false);
-        ifr[0].addEventListener("load", initPort, false);
-
-        document.documentElement.appendChild(uiHost);
-    };
+        } else if (_message.commandToContent || _message.responseToContent) {
+            // forward message to content
+            if (activeContent && !_message.direct && activeContent.window !== top) {
+                activeContent.window.postMessage(_message, activeContent.origin);
+            }
+        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+            _actions[_message.action](_message);
+        } else {
+            console.log(_message);
+        }
+    }, true);
 
     return self;
 })();
@@ -105,14 +111,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
         url: window.location.href
     });
 
-    var fakeBody = $('body[createdBySurfingkeys=1]');
-    if (fakeBody.length) {
-        fakeBody.remove();
-        frontendFrame.contentWindow = null;
-    }
     setTimeout(function() {
         // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
-        createFrontEnd();
         for (var p in AutoCommands) {
             var c = AutoCommands[p];
             if (c.regex.test(window.location.href)) {
@@ -121,17 +121,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     }, 0);
 });
-function createFrontEnd() {
-    if (!frontendFrame) {
-        return;
-    }
-    var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
-    if (!frontendReady) {
-        frontendFrame.create();
-        frontendReady = true;
-    }
-    return frontendReady;
-}
 
 function _setScrollPos(x, y) {
     $(document).ready(function() {

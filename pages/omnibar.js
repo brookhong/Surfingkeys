@@ -86,9 +86,10 @@ var Omnibar = (function(mode, ui) {
                 Front.showEditor({
                     initial_line: 1,
                     type: "url",
-                    content: url
-                }, function(data) {
-                    data && tabOpenLink(data);
+                    content: url,
+                    onEditorSaved: function(data) {
+                        data && tabOpenLink(data);
+                    }
                 });
             }
         }

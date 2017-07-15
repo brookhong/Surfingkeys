@@ -201,7 +201,7 @@ var GetBackFocus = (function(mode) {
     self.enter = function() {
         if (runtime.conf.stealFocusOnLoad) {
             mode.enter.apply(self, arguments);
-            document.activeElement.blur();
+            document.activeElement && document.activeElement.blur();
         }
     };
 

@@ -2,8 +2,7 @@ var Front = (function(mode) {
     var self = $.extend({
         name: "Front",
         frontendOnly: true,
-        eventListeners: {},
-        ports: {}
+        eventListeners: {}
     }, mode);
 
     // this object is implementation of UI, it's UI provider
@@ -11,17 +10,26 @@ var Front = (function(mode) {
         return true;
     };
 
-    self.contentCommand = function(args, cb) {
-        args.toContent = true;
-        runtime.command(args, cb);
+    var topOrigin,
+        _actions = {},
+        _callbacks = {};
+    self.contentCommand = function(args, successById) {
+        args.commandToContent = true;
+        args.id = generateQuickGuid();
+        if (successById) {
+            args.ack = true;
+            _callbacks[args.id] = successById;
+        }
+        top.postMessage(args, topOrigin);
     };
 
+    var _showPressed;
     self.addEventListener('keydown', function(event) {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
             event.sk_stopPropagation = true;
         } else {
-            if (self.showPressed) {
+            if (_showPressed) {
                 if (event.sk_keyName.length > 1) {
                     var keyStr = JSON.stringify({
                         metaKey: event.metaKey,
@@ -60,11 +68,6 @@ var Front = (function(mode) {
         }
     });
 
-    self.postMessage = function(to, message) {
-        if (self.ports[to]) {
-            self.ports[to].postMessage(message);
-        }
-    };
     self.flush = function() {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
@@ -91,11 +94,11 @@ var Front = (function(mode) {
             var input = $('#sk_status').find('input').length ? $('#sk_status').find('input') : Omnibar.input;
             input.focus();
         }
-        self.postMessage('top', {
+        top.postMessage({
             action: 'setFrontFrame',
             pointerEvents: pointerEvents ? "all" : "none",
             frameHeight: visibleDivs.length > 0 ? "100%" : "0px"
-        });
+        }, topOrigin);
     };
     self.visualCommand = function(args) {
         if (_usage.is(':visible')) {
@@ -121,15 +124,17 @@ var Front = (function(mode) {
     var _richKeystroke = $('<div id=sk_richKeystroke class=sk_theme>').appendTo('body').hide();
 
     var _display;
-    self.hidePopup = function() {
+    _actions['hidePopup'] = function() {
         if (_display && _display.is(':visible')) {
             _display.hide();
             self.flush();
             _display.onHide && _display.onHide();
-            self.showPressed = false;
+            _showPressed = false;
             self.exit();
         }
     };
+    self.hidePopup = _actions['hidePopup'];
+
     function showPopup(td, args) {
         self.enter(0, true);
         if (_display && _display.is(':visible')) {
@@ -146,7 +151,7 @@ var Front = (function(mode) {
         }
     }
 
-    self.highlightElement = function(message) {
+    _actions['highlightElement'] = function(message) {
         var rect = message.rect;
         frameElement.css('top', rect.top).css('left', rect.left).css('width', rect.width).css('height', rect.height).show();
         self.flush();
@@ -155,7 +160,6 @@ var Front = (function(mode) {
             self.flush();
         }, message.duration);
     };
-    runtime.on('highlightElement', self.highlightElement);
 
     _tabs.onShow = function(tabs) {
         var tabs_fg = _tabs.find('div.sk_tabs_fg');
@@ -176,7 +180,7 @@ var Front = (function(mode) {
         });
         _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
     }
-    self.chooseTab = function() {
+    _actions['chooseTab'] = function() {
         runtime.command({
             action: 'getTabs'
         }, function(response) {
@@ -187,7 +191,6 @@ var Front = (function(mode) {
             }
         });
     };
-    runtime.on('chooseTab', self.chooseTab);
 
     function _initL10n(cb) {
         var lang = runtime.conf.language || window.navigator.language;
@@ -212,15 +215,6 @@ var Front = (function(mode) {
             });
         }
     }
-
-    var callbacks = {};
-    self.topCommand = function(args, cb) {
-        args.id = generateQuickGuid();
-        if (cb) {
-            callbacks[args.id] = cb;
-        }
-        self.postMessage('top', args);
-    };
 
     _usage.onShow = function(message) {
         var feature_groups = [
@@ -257,7 +251,7 @@ var Front = (function(mode) {
                     var w = words[i];
                     var meta = mappings.find(w).meta;
                     w = decodeKeystroke(w);
-                    if (meta.annotation.length) {
+                    if (meta.annotation && meta.annotation.length) {
                         var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), locale(meta.annotation));
                         help_groups[meta.feature_group].push(item);
                     }
@@ -276,29 +270,36 @@ var Front = (function(mode) {
         });
     };
 
-    runtime.on('showUsage', function(message) {
-        showPopup(_usage, message);
-    });
-
-    self.showUsage = function() {
-        // showUsage in frontend.html once more will hide it.
-        self.hidePopup();
+    var _userMappings;
+    _actions['addMappingForUsage'] = function(message) {
+        _userMappings = new Trie();
+        message.userMappings.forEach(function(m) {
+            _userMappings.add(m.word, m);
+        });
     };
 
-    self.showPopup = function(message) {
-        _popup.html(message);
+    _actions['showUsage'] = function(message) {
+        showPopup(_usage, message);
+    };
+
+    self.showUsage = self.hidePopup;
+
+    _actions['showPopup'] = function(message) {
+        self.showPopup(message.content);
+    };
+
+    self.showPopup = function(content) {
+        _popup.html(content);
         showPopup(_popup);
     };
-    runtime.on('showPopup', function(message) {
-        self.showPopup(message.content);
-    });
-    runtime.on('hidePopup', function(message) {
-        self.hidePopup();
-    });
-    runtime.on('showPressed', function(message) {
-        self.showPressed = true;
-        self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
-    });
+
+    _actions['showPressed'] = function(message) {
+        _showPressed = true;
+        self.showPopup({
+            content: "<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>"
+        });
+    };
+    self.showPressed = _actions['showPressed'];
     self.vimMappings = [];
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {
@@ -315,47 +316,41 @@ var Front = (function(mode) {
             });
         }
     };
-    self.showEditor = function(element, cb) {
-        self.hidePopup();
-        self.onEditorSaved = cb;
-        setTimeout(function() {
-            showPopup(_editor, element);
-        }, 10);
-    };
-    runtime.on('showEditor', function(message) {
+    _actions['showEditor'] = function(message) {
+        if (message.onEditorSaved) {
+            self.onEditorSaved = message.onEditorSaved;
+        }
         showPopup(_editor, message);
-    });
-    runtime.on('updateOmnibarResult', function(message) {
+    };
+    self.showEditor = _actions['showEditor'];
+    _actions['updateOmnibarResult'] = function(message) {
         Omnibar.listWords(message.words);
-    });
-    self.openOmnibar = function(message) {
+    };
+    _actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
         var style = message.style || "";
         self.omnibar.find('style').html("#sk_omnibar {" + style + "}");
     };
-    runtime.on('openOmnibar', self.openOmnibar);
-    self.openFinder = function() {
+    self.openOmnibar = _actions['openOmnibar'];
+    _actions['openFinder'] = function() {
         Find.open();
     };
-    runtime.on('openFinder', self.openFinder);
-    self.showBanner = function(message, linger_time) {
+    self.openFinder = _actions['openFinder'];
+    _actions['showBanner'] = function(message) {
         banner.finish();
-        banner.html(htmlEncode(message)).show();
+        banner.html(htmlEncode(message.content)).show();
         self.flush();
         banner.animate({
             "top": "0"
         }, 300);
-        banner.delay(linger_time || 1000).animate({
+        banner.delay(message.linger_time || 1000).animate({
             "top": "-3rem"
         }, 300, function() {
             banner.html("").hide();
             self.flush();
         });
     };
-    runtime.on('showBanner', function(message) {
-        self.showBanner(message.content, message.linger_time);
-    });
-    runtime.on('showBubble', function(message) {
+    _actions['showBubble'] = function(message) {
         var pos = message.position;
         _bubble.find('div.sk_bubble_content').html(message.content);
         _bubble.show();
@@ -381,31 +376,30 @@ var Front = (function(mode) {
             _bubble.css('top', pos.top + pos.height + 12).css('left', left[0]);
         }
         arrow.css('left', left[1]);
-    });
-    self.hideBubble = function() {
+    };
+    self.showBubble = function() {
+    };
+
+    _actions['hideBubble'] = function() {
         _bubble.hide();
         self.flush();
     };
-    runtime.on('hideBubble', function(message) {
-        self.hideBubble();
-    });
+    self.hideBubble = _actions['hideBubble'];
 
-    self.showStatus = function(pos, content, duration) {
-        StatusBar.show(pos, content, duration);
+    _actions['showStatus'] = function(message) {
+        self.showStatus(message.position, message.content, message.duration);
+    };
+    self.showStatus = function(position, content, duration) {
+        StatusBar.show(position, content, duration);
     };
 
-    runtime.on('showStatus', function(message) {
-        self.showStatus(message.position, message.content, message.duration);
-    });
-
-    self.toggleStatus = function(message) {
+    _actions['toggleStatus'] = function(message) {
         self.statusBar.toggle();
     };
-    runtime.on('toggleStatus', self.toggleStatus);
 
     var clipboard_holder = $('<textarea id=sk_clipboard/>');
     clipboard_holder = clipboard_holder[0];
-    self.getContentFromClipboard = function(cb) {
+    _actions['getContentFromClipboard'] = function() {
         var result = '';
         document.body.appendChild(clipboard_holder);
         clipboard_holder.value = '';
@@ -415,29 +409,21 @@ var Front = (function(mode) {
         }
         clipboard_holder.value = '';
         clipboard_holder.remove();
-        if (cb) {
-            // to make getContentFromClipboard have a same syntax with Front in content window
-            // pass result as data attribute of an object.
-            cb({data: result});
-        }
         return result;
     };
-    runtime.on('getContentFromClipboard', function(message) {
-        return self.getContentFromClipboard();
-    });
-    self.writeClipboard = function(message) {
+    _actions['writeClipboard'] = function(message) {
         document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = message;
+        clipboard_holder.value = message.content;
         clipboard_holder.select();
         document.execCommand('copy');
         clipboard_holder.value = '';
         clipboard_holder.remove();
     };
-    runtime.on('writeClipboard', function(message) {
-        self.writeClipboard(message.content);
-    });
+    self.writeClipboard = function(data) {
+        _actions['writeClipboard']({content: data});
+    };
     var _key = "";
-    self.hideKeystroke = function() {
+    _actions['hideKeystroke'] = function() {
         if (runtime.conf.richHintsForKeystroke) {
             _richKeystroke.hide();
             _key = "";
@@ -452,28 +438,41 @@ var Front = (function(mode) {
             });
         }
     };
-    runtime.on('hideKeystroke', self.hideKeystroke);
+    self.hideKeystroke = _actions['hideKeystroke'];
     Visual.mappings.add("y", {
         annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
         feature_group: 9
     });
-    self.showKeystroke = function(key, mode) {
+    function getMetas(mapping, key, out) {
+        var root = mapping.find(key);
+        if (root) {
+            root.getMetas(function(m) {
+                return true;
+            }).forEach(function(m) {
+                out[m.word] = m;
+            });
+        }
+    }
+    _actions['showKeystroke'] = function(message) {
+        var key = message.key,
+            mode = message.mode;
         if (runtime.conf.richHintsForKeystroke) {
             _initL10n(function(locale) {
                 _key += key;
-                var root = window[mode].mappings.find(_key), words = _key;
-                if (root) {
-                    words = root.getWords("", true).sort().map(function(w) {
-                        var meta = root.find(w).meta;
-                        if (meta.annotation || mode !== "Normal") {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w, locale(meta.annotation));
-                        } else {
-                            return "";
-                        }
-                    }).join("");
-                    if (words.length === 0) {
-                        words = _key;
+                var words = _key;
+                var cc = {};
+                getMetas(window[mode].mappings, _key, cc);
+                getMetas(_userMappings, _key, cc);
+                words = Object.keys(cc).sort().map(function(w) {
+                    var meta = cc[w];
+                    if (meta.annotation) {
+                        return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                    } else {
+                        return "";
                     }
+                }).join("");
+                if (words.length === 0) {
+                    words = _key;
                 }
                 _richKeystroke.html(words).show();
                 self.flush();
@@ -493,35 +492,38 @@ var Front = (function(mode) {
             }
         }
     };
-    runtime.on('showKeystroke', function(message) {
-        self.showKeystroke(message.key, message.mode);
-    });
-
-    self.initPort = function(message) {
-        self.ports[message.from] = event.ports[0];
+    self.showKeystroke = function() {
     };
 
-    self.handleMessage = function(event) {
+    _actions['initFrontend'] = function(message) {
+        $(document).trigger("surfingkeys:frontendReady");
+        topOrigin = message.origin;
+        return new Date().getTime();
+    };
+
+    window.addEventListener('message', function(event) {
         var _message = event.data;
-        if (callbacks[_message.id]) {
-            var f = callbacks[_message.id];
-            delete callbacks[_message.id];
-            f(_message);
-        } else if (_message.action && self.hasOwnProperty(_message.action)) {
-            var ret = self[_message.action](_message) || {};
-            ret.id = _message.id;
-            if (_message.from && self.ports[_message.from]) {
-                self.ports[_message.from].postMessage(ret);
+        if (_callbacks[_message.id]) {
+            var f = _callbacks[_message.id];
+            // returns true to make callback stay for coming response.
+            if (!f(_message)) {
+                delete _callbacks[_message.id];
+            }
+        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+            var ret = _actions[_message.action](_message);
+            if (_message.ack) {
+                top.postMessage({
+                    data: ret,
+                    action: _message.action + "Ack",
+                    responseToContent: _message.commandToFrontend,
+                    id: _message.id
+                }, topOrigin);
             }
         }
-    };
+    }, true);
 
     return self;
 })(Mode);
-
-window.addEventListener('message', function(event) {
-    Front.handleMessage(event);
-}, true);
 
 $(document).on('surfingkeys:themeChanged', function(evt, theme) {
     $('#sk_theme').html(theme);

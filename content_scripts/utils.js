@@ -4,6 +4,13 @@ function timeStampString(t) {
     return dt.toLocaleString();
 }
 
+function getDocumentOrigin() {
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+    // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
+    // file:// cannot be used as a security restriction; this restriction may be modified in the future.
+    return (document.origin === "null" ? "*" : document.origin);
+}
+
 function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
@@ -347,6 +354,7 @@ function _encodeKeystroke(s, k) {
     if (s.indexOf("Shift-") !== -1) {
         mod |= 8;
     }
+    var code;
     if (k.length > 1) {
         code = 256 + encodeKeystroke.specialKeys.indexOf(k);
     } else {

@@ -133,18 +133,15 @@ var Gist = (function() {
 })();
 
 var ChromeService = (function() {
-    var self = {}, onResponseById = {};
+    var self = {};
 
     var activePorts = [],
         tabHistory = [],
         tabHistoryIndex = 0,
-        historyTabAction = false,
-        frontEndURL = chrome.extension.getURL('/pages/frontend.html');
+        historyTabAction = false;
 
     // data by tab id
-    var frontEndPorts = {},
-        contentPorts = {},
-        tabActivated = {},
+    var tabActivated = {},
         tabMessages = {},
         frames = {},
         tabURLs = {},
@@ -223,23 +220,6 @@ var ChromeService = (function() {
                 } catch (e) {
                     console.log(_message.action + ": " + e);
                 }
-            } else if (_message.toFrontend) {
-                if (frontEndPorts[tid]) {
-                    frontEndPorts[tid].postMessage(_message);
-                    contentPorts[tid] = _port;
-                    if (_message.ack) {
-                        onResponseById[_message.id] = _sendResponse;
-                    }
-                }
-            } else if (_message.toContent) {
-                contentPorts[tid].postMessage(_message);
-                if (_message.ack) {
-                    onResponseById[_message.id] = _sendResponse;
-                }
-            } else if (onResponseById.hasOwnProperty(_message.id)) {
-                var f = onResponseById[_message.id];
-                delete onResponseById[_message.id];
-                f(_message);
             } else {
                 var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
                 console.log(type + JSON.stringify(_message))
@@ -392,12 +372,6 @@ var ChromeService = (function() {
 
     chrome.extension.onConnect.addListener(function(port) {
         var sender = port.sender;
-        if (sender.url === frontEndURL && sender.tab) {
-            frontEndPorts[sender.tab.id] = port;
-            port.onDisconnect.addListener(function(port) {
-                delete frontEndPorts[port.sender.tab.id];
-            });
-        }
         activePorts.push(port);
         port.onMessage.addListener(function(message, port) {
             return handleMessage(message, port.sender, function(resp) {
@@ -423,8 +397,6 @@ var ChromeService = (function() {
     });
 
     function removeTab(tabId) {
-        delete frontEndPorts[tabId];
-        delete contentPorts[tabId];
         delete tabActivated[tabId];
         delete tabMessages[tabId];
         delete tabURLs[tabId];
@@ -460,7 +432,7 @@ var ChromeService = (function() {
         _setScrollPos_bg(tabId);
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
-        if (frontEndPorts.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
+        if (tabURLs.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
             if (tabHistory.length > 10) {
                 tabHistory.shift();
             }
@@ -1122,7 +1094,9 @@ var ChromeService = (function() {
     };
     self.executeScript = function(message, sender, sendResponse) {
         chrome.tabs.executeScript(sender.tab.id, {
-            code: message.code
+            frameId: sender.frameId,
+            code: message.code,
+            file: message.file
         }, function(result) {
             _response(message, sendResponse, {
                 response: result

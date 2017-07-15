@@ -613,7 +613,7 @@ var Visual = (function(mode) {
         }
         return found;
     }
-    function visualUpdateForContentWindow(query) {
+    self.visualUpdateForContentWindow = function(query) {
         self.visualClear();
 
         // set caret to top in view
@@ -648,21 +648,13 @@ var Visual = (function(mode) {
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         }
 
-    }
-    runtime.on('visualUpdate', function(message) {
-        // for finding in content window, we use window.find for a better performance.
-        if (message.query.length > 3 || $('*').length < 10000) {
-            visualUpdateForContentWindow(message.query);
-        }
-    });
+    };
 
     // this is only for finding in frontend.html, like in usage popover.
     self.visualUpdate = function(query) {
         self.visualClear();
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
     };
-
-    runtime.on('visualClear', self.visualClear);
 
     self.visualEnter = function (query) {
         self.visualClear();
@@ -676,9 +668,6 @@ var Visual = (function(mode) {
             Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }
     };
-    runtime.on('visualEnter', function(message) {
-        self.visualEnter(message.query);
-    });
 
     var _style = {};
     self.style = function (element, style) {

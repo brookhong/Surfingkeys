@@ -6,15 +6,19 @@ var Front = (function() {
 
     // this object is stub of UI, it's UI consumer
     self.isProvider = function() {
-        return window.location.href.indexOf(chrome.extension.getURL("/pages")) === 0;
+        return chrome.extension.getURL("/pages/frontend.html") === document.location.href;
     };
 
+    var _callbacks = {};
     function frontendCommand(args, successById) {
-        args.toFrontend = true;
-        if (window === top) {
-            createFrontEnd();
+        args.commandToFrontend = true;
+        args.origin = getDocumentOrigin();
+        args.id = generateQuickGuid();
+        if (successById) {
+            args.ack = true;
+            _callbacks[args.id] = successById;
         }
-        runtime.command(args, successById);
+        runtime.postTopMessage(args);
     }
 
     self.highlightElement = function(sn) {
@@ -169,23 +173,22 @@ var Front = (function() {
     };
 
     self.showStatus = function (pos, msg, duration) {
-        // don't createFrontEnd for showStatus, test on issues.xxxxxx.com
-        runtime.command({
+        frontendCommand({
             action: "showStatus",
             content: msg,
             duration: duration,
-            toFrontend: true,
             position: pos
         });
     };
     self.toggleStatus = function () {
-        runtime.command({
-            action: "toggleStatus",
-            toFrontend: true
+        frontendCommand({
+            action: "toggleStatus"
         });
     };
 
-    runtime.on('ace_editor_saved', function(response) {
+    var _actions = {};
+
+    _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {
             onEditorSaved(response.data);
         }
@@ -194,21 +197,59 @@ var Front = (function() {
             window.focus();
             Insert.enter();
         }
-    });
+    };
 
-    runtime.on('omnibar_query_entered', function(response) {
+    _actions["omnibar_query_entered"] = function(response) {
         readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
         onOmniQuery(response.query);
-    });
+    };
 
-    runtime.on('getBackFocus', function(response) {
+    _actions["getBackFocus"] = function(response) {
         window.focus();
-    });
+    };
 
-    runtime.on('getPageText', function(response) {
+    _actions["getPageText"] = function(response) {
         return document.body.innerText;
-    });
+    };
+
+    var _pendingQuery;
+    _actions["visualUpdate"] = function(message) {
+        if (_pendingQuery) {
+            clearTimeout(_pendingQuery);
+            _pendingQuery = undefined;
+        }
+        _pendingQuery = setTimeout(function() {
+            Visual.visualUpdateForContentWindow(message.query);
+        }, 500);
+    };
+
+    _actions["visualClear"] = Visual.visualClear;
+
+    _actions["visualEnter"] = function(message) {
+        Visual.visualEnter(message.query);
+    };
+
+    var _active = false;
+    _actions['deactivated'] = function(message) {
+        _active = false;
+    };
+
+    _actions['activated'] = function(message) {
+        _active = true;
+        var userMappings = Normal.mappings.getMetas(function(m) { return !m.isDefault;}).map(function(m) {
+            return {
+                word: m.word,
+                annotation: m.annotation,
+                feature_group: m.feature_group
+            };
+        });
+        frontendCommand({
+            action: "addMappingForUsage",
+            automatic: true,
+            userMappings: userMappings
+        });
+    };
 
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
@@ -227,9 +268,35 @@ var Front = (function() {
 
             Normal.exit();
             Normal.enter();
-            GetBackFocus.enter(0, true);
         }
     };
 
+    window.addEventListener('message', function(event) {
+        var _message = event.data;
+        if (_active) {
+            if (_message.responseToContent && _callbacks[_message.id]) {
+                var f = _callbacks[_message.id];
+                // returns true to make callback stay for coming response.
+                if (!f(_message)) {
+                    delete _callbacks[_message.id];
+                }
+            } else if (_message.commandToContent && _message.action && _actions.hasOwnProperty(_message.action)) {
+                var ret = _actions[_message.action](_message);
+                if (_message.ack) {
+                    runtime.postTopMessage({
+                        data: ret,
+                        responseToFrontend: true,
+                        origin: _message.origin,
+                        id: _message.id
+                    });
+                }
+            }
+        } else if (_message.action === "activated") {
+            _actions['activated'](_message);
+        }
+    }, true);
+
     return self;
 })();
+
+var Commands = { items: {} };

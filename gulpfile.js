@@ -64,9 +64,6 @@ gulp.task('use_common_content_min_manifest', ['copy-non-js-files', 'clean'], fun
 
 gulp.task('copy-js-files', ['copy-es-files'], function() {
     return gulp.src([
-        'content_scripts/front.js',
-        'content_scripts/content_scripts.js',
-        'content_scripts/top.js',
         'libs/ace/*.js',
         'pages/pdf/*.js',
         'libs/marked.min.js',
@@ -79,6 +76,9 @@ gulp.task('copy-js-files', ['copy-es-files'], function() {
 
 gulp.task('copy-es-files', ['clean'], function() {
     return gulp.src([
+        'content_scripts/front.js',
+        'content_scripts/content_scripts.js',
+        'content_scripts/top.js',
         'background.js',
         'pages/*.js'
     ], {base: "."})

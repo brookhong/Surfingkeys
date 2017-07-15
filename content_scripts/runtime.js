@@ -48,7 +48,7 @@ var runtime = window.runtime || (function() {
             console.log('reload triggered by runtime disconnection.');
             setTimeout(function() {
                 window.location.reload();
-            }, 500);
+            }, 1000);
         }
     });
     var callbacks = {};
@@ -133,6 +133,34 @@ var runtime = window.runtime || (function() {
             }
         }
     });
+
+    var getTopURLPromise = new Promise(function(resolve, reject) {
+        if (window === top) {
+            resolve(window.location.href);
+        } else {
+            self.command({
+                action: "getTopURL"
+            }, function(rs) {
+                resolve(rs.url);
+            });
+        }
+    });
+
+    self.getTopURL = function(cb) {
+        getTopURLPromise.then(function(url) {
+            cb(url);
+        });
+    };
+
+    self.postTopMessage = function(msg) {
+        getTopURLPromise.then(function(topUrl) {
+            if (new URL(topUrl).origin === "file://") {
+                topUrl = "*";
+            }
+            top.postMessage(msg, topUrl);
+        });
+    };
+
 
     return self;
 })();
