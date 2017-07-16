@@ -185,6 +185,9 @@ command('testVoices', '#13list tts voices', function(args) {
         });
     });
 });
+command('stopReading', '#13Stop reading.', function(args) {
+    RUNTIME('stopReading');
+});
 mapkey('gr', '#14Read selected text or text from clipboard.', function() {
     Front.getContentFromClipboard(function(response) {
         readText(window.getSelection().toString() || response.data, {verbose: true});

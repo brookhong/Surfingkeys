@@ -336,19 +336,22 @@ var Front = (function(mode) {
         Find.open();
     };
     self.openFinder = _actions['openFinder'];
-    _actions['showBanner'] = function(message) {
+    self.showBanner = function(content, linger_time) {
         banner.finish();
-        banner.html(htmlEncode(message.content)).show();
+        banner.html(htmlEncode(content)).show();
         self.flush();
         banner.animate({
             "top": "0"
         }, 300);
-        banner.delay(message.linger_time || 1000).animate({
+        banner.delay(linger_time || 1000).animate({
             "top": "-3rem"
         }, 300, function() {
             banner.html("").hide();
             self.flush();
         });
+    };
+    _actions['showBanner'] = function(message) {
+        self.showBanner(message.content, message.linger_time);
     };
     _actions['showBubble'] = function(message) {
         var pos = message.position;

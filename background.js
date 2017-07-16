@@ -1346,6 +1346,9 @@ var ChromeService = (function() {
         };
         chrome.tts.speak(message.content, options);
     };
+    self.stopReading = function(message, sender, sendResponse) {
+        chrome.tts.stop();
+    };
 
     return self;
 })();
