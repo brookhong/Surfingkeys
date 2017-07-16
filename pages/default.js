@@ -32,9 +32,7 @@ imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 cmapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = document.activeElement;
-    Front.showEditor(element, function(data) {
-        $(element).val(data);
-    }, element.localName);
+    Front.showEditor(element);
 });
 function toggleProxySite(host) {
     RUNTIME('updateProxy', {
@@ -292,9 +290,7 @@ mapkey('gi', '#1Go to the first edit box', function() {
 });
 mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {
-        Front.showEditor(element, function(data) {
-            $(element).val(data);
-        }, element.localName);
+        Front.showEditor(element);
     });
 });
 mapkey('O', '#1Open detected links from text', function() {

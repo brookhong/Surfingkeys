@@ -207,6 +207,19 @@ var AceEditor = (function(mode, elmId) {
             self.state.cm.signal('vim-command-done', '')
         });
         vim.map('<CR>', ':wq', 'normal')
+        vim.defineEx("bnext", "bn", function(cm, input) {
+            Front.contentCommand({
+                action: 'nextEdit',
+                backward: false
+            });
+        });
+        vim.map('<C-b>', ':bn', 'normal')
+        vim.defineEx("bprevious", "bp", function(cm, input) {
+            Front.contentCommand({
+                action: 'nextEdit',
+                backward: true
+            });
+        });
         vim.defineEx("quit", "q", function(cm, input) {
             self.exit();
             self.state.cm.signal('vim-command-done', '')

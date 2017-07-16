@@ -349,6 +349,10 @@ var Hints = (function(mode) {
         return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector, attrs) : createHintsForClick(cssSelector, attrs);
     }
 
+    self.getSelector = function() {
+        return _cssSelector;
+    };
+
     self.create = function(cssSelector, onHintKey, attrs) {
         // save last used attributes, which will be reused if the user scrolls while the hints are still open
         _cssSelector = cssSelector;
@@ -365,7 +369,7 @@ var Hints = (function(mode) {
     };
 
     var flashElem = $('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>')[0];
-    function flashPressedLink(link) {
+    self.flashPressedLink = function(link) {
         var rect = link.getBoundingClientRect();
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';
@@ -374,10 +378,10 @@ var Hints = (function(mode) {
         document.body.appendChild(flashElem);
 
         setTimeout(function () { flashElem.remove(); }, 300);
-    }
+    };
 
     self.dispatchMouseClick = function(element, event) {
-        flashPressedLink(element);
+        self.flashPressedLink(element);
         if (isEditable(element)) {
             self.exit();
             Insert.enter();

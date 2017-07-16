@@ -52,9 +52,15 @@ var Front = (function() {
         });
     };
 
+    function updateElementBehindEditor(data) {
+        $(elementBehindEditor).val(data);
+    }
+
     var onEditorSaved, elementBehindEditor;
     self.showEditor = function(element, onWrite, type) {
-        var content, initial_line = 0;
+        var content,
+            type = type || element.localName
+            initial_line = 0;
         if (typeof(element) === "string") {
             content = element;
             elementBehindEditor = document.body;
@@ -72,7 +78,7 @@ var Front = (function() {
             content = $(element).val();
             elementBehindEditor = element;
         }
-        onEditorSaved = onWrite;
+        onEditorSaved = onWrite || updateElementBehindEditor;
         frontendCommand({
             action: 'showEditor',
             type: type || "textarea",
@@ -196,6 +202,19 @@ var Front = (function() {
             elementBehindEditor.focus();
             window.focus();
             Insert.enter();
+        }
+    };
+    _actions["nextEdit"] = function(response) {
+        var sel = Hints.getSelector() || "input:visible, textarea:visible, *[contenteditable=true], select:visible";
+        sel = $(sel).toArray();
+        if (sel.length) {
+            var i = sel.indexOf(elementBehindEditor);
+            i = (i + (response.backward ? -1 : 1)) % sel.length;
+            sel = sel[i];
+            sel.scrollIntoViewIfNeeded();
+            Hints.flashPressedLink(sel);
+
+            self.showEditor(sel);
         }
     };
 
