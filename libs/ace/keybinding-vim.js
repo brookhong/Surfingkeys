@@ -72,7 +72,11 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
     CodeMirror.addClass = CodeMirror.rmClass =
         CodeMirror.e_stop = function() {};
     CodeMirror.keyName = function(e) {
-        if (e.key) return e.key;
+        if (e.key) {
+            // WebKit returns ArrowUp/ArrowDown/ArrowLeft/ArrowRight
+            var ek = e.key.replace(/^Arrow/, '');
+            return ek;
+        }
         var key = (KEYS[e.keyCode] || "");
         if (key.length == 1) key = key.toUpperCase();
         key = event.getModifierString(e).replace(/(^|-)\w/g, function(m) {
@@ -1992,6 +1996,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             return vimApi;
         } //{
     function enterVimMode(cm) {
+        vimGlobalState.cm = cm;
         cm.setOption('disableInput', true);
         cm.setOption('showCursorWhenSelecting', false);
         CodeMirror.signal(cm, "vim-mode-change", {
@@ -2743,6 +2748,9 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                         break;
                 }
                 this.unnamedRegister.setText(text, linewise, blockwise);
+                CodeMirror.signal(vimGlobalState.cm, "unnamed-register-set", {
+                    text: text
+                });
                 return;
             }
             var append = isUpperCase(registerName);
@@ -2968,6 +2976,10 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                 var macroModeState = vimGlobalState.macroModeState;
                 if (macroModeState.isRecording) {
                     logSearchQuery(macroModeState, query);
+                }
+                if (cm.ace.$blockScrolling) {
+                    // refer to ace.js:12263
+                    cm.ace.renderer.scrollCursorIntoView();
                 }
             }
 
@@ -5298,6 +5310,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             cm.openDialog(template, onClose, {
                 bottom: true,
                 value: options.value,
+                closeOnBlur: false,
                 onKeyDown: options.onKeyDown,
                 onKeyUp: options.onKeyUp,
                 selectValueOnOpen: false
