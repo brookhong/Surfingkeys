@@ -957,7 +957,7 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
             return this.removeFullLines(firstRow, lastRow);
         };
         this.insertNewLine = function(position) {
-            console.warn("Use of document.insertNewLine is deprecated. Use insertMergedLines(position, [\'\', \'\']) instead.");
+            console.warn("Use of document.insertNewLine is deprecated. Use insertMergedLines(position, ['', '']) instead.");
             return this.insertMergedLines(position, ["", ""]);
         };
         this.insert = function(position, text) {
@@ -1287,14 +1287,12 @@ define("ace/lib/lang", ["require", "exports", "module"], function(require, expor
             }
             return copy;
         }
-        var cons = obj.constructor;
-        if (cons === RegExp)
+        if (Object.prototype.toString.call(obj) !== "[object Object]")
             return obj;
 
-        copy = cons();
-        for (var key in obj) {
+        copy = {};
+        for (var key in obj)
             copy[key] = deepCopy(obj[key]);
-        }
         return copy;
     };
 
@@ -12095,7 +12093,7 @@ define("ace/mode/javascript_worker", ["require", "exports", "module", "ace/lib/o
 
             var errors = [];
             var maxErrorLevel = this.isValidJS(value) ? "warning" : "error";
-            lint(value, this.options);
+            lint(value, this.options, this.options.globals);
             var results = lint.errors;
 
             var errorAdded = false

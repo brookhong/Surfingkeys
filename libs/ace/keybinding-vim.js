@@ -72,11 +72,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
     CodeMirror.addClass = CodeMirror.rmClass =
         CodeMirror.e_stop = function() {};
     CodeMirror.keyName = function(e) {
-        if (e.key) {
-            // WebKit returns ArrowUp/ArrowDown/ArrowLeft/ArrowRight
-            var ek = e.key.replace(/^Arrow/, '');
-            return ek;
-        }
+        if (e.key) return e.key;
         var key = (KEYS[e.keyCode] || "");
         if (key.length == 1) key = key.toUpperCase();
         key = event.getModifierString(e).replace(/(^|-)\w/g, function(m) {
@@ -132,19 +128,17 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             return this.ace.inVirtualSelectionMode && this.ace.selection.index;
         };
         this.onChange = function(delta) {
-            if (delta.action[0] == 'i') {
-                var change = {
-                    text: delta.lines
-                };
-                var curOp = this.curOp = this.curOp || {};
-                if (!curOp.changeHandlers)
-                    curOp.changeHandlers = this._eventRegistry["change"] && this._eventRegistry["change"].slice();
-                if (this.virtualSelectionMode()) return;
-                if (!curOp.lastChange) {
-                    curOp.lastChange = curOp.change = change;
-                } else {
-                    curOp.lastChange.next = curOp.lastChange = change;
-                }
+            var change = {
+                text: delta.action[0] == 'i' ? delta.lines : []
+            };
+            var curOp = this.curOp = this.curOp || {};
+            if (!curOp.changeHandlers)
+                curOp.changeHandlers = this._eventRegistry["change"] && this._eventRegistry["change"].slice();
+            if (this.virtualSelectionMode()) return;
+            if (!curOp.lastChange) {
+                curOp.lastChange = curOp.change = change;
+            } else {
+                curOp.lastChange.next = curOp.lastChange = change;
             }
             this.$updateMarkers(delta);
         };
@@ -487,8 +481,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                     "top": 0,
                     "bottom": margin
                 };
-                renderer.scrollCursorIntoView(toAcePos(pos),
-                    (renderer.lineHeight * 2) / renderer.$size.scrollerHeight, viewMargin);
+                renderer.scrollCursorIntoView(toAcePos(pos), (renderer.lineHeight * 2) / renderer.$size.scrollerHeight, viewMargin);
             }
         };
         this.getLine = function(row) {
@@ -999,7 +992,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
     }, {
         keys: 's',
         type: 'keyToKey',
-        toKeys: 'xi',
+        toKeys: 'c',
         context: 'visual'
     }, {
         keys: 'S',
@@ -1009,7 +1002,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
     }, {
         keys: 'S',
         type: 'keyToKey',
-        toKeys: 'dcc',
+        toKeys: 'VdO',
         context: 'visual'
     }, {
         keys: '<Home>',
@@ -1713,6 +1706,13 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             blockwise: true
         }
     }, {
+        keys: '<C-q>',
+        type: 'action',
+        action: 'toggleVisualMode',
+        actionArgs: {
+            blockwise: true
+        }
+    }, {
         keys: 'gv',
         type: 'action',
         action: 'reselectLastSelection'
@@ -1992,7 +1992,6 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             return vimApi;
         } //{
     function enterVimMode(cm) {
-        vimGlobalState.cm = cm;
         cm.setOption('disableInput', true);
         cm.setOption('showCursorWhenSelecting', false);
         CodeMirror.signal(cm, "vim-mode-change", {
@@ -2430,7 +2429,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             exCommandDispatcher.map(lhs, rhs, ctx);
         },
         unmap: function(lhs, ctx) {
-            exCommandDispatcher.unmap(lhs, ctx || "normal");
+            exCommandDispatcher.unmap(lhs, ctx);
         },
         setOption: setOption,
         getOption: getOption,
@@ -2528,8 +2527,12 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                     window.clearTimeout(lastInsertModeKeyTimer);
                 }
                 if (keysAreChars) {
-                    var here = cm.getCursor();
-                    cm.replaceRange('', offsetCursor(here, 0, -(keys.length - 1)), here, '+input');
+                    var selections = cm.listSelections();
+                    for (var i = 0; i < selections.length; i++) {
+                        var here = selections[i].head;
+                        cm.replaceRange('', offsetCursor(here, 0, -(keys.length - 1)), here, '+input');
+                    }
+                    vimGlobalState.macroModeState.lastInsertModeChanges.changes.pop();
                 }
                 clearInputState(cm);
                 return match.command;
@@ -2740,9 +2743,6 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                         break;
                 }
                 this.unnamedRegister.setText(text, linewise, blockwise);
-                CodeMirror.signal(vimGlobalState.cm, "unnamed-register-set", {
-                    text: text
-                });
                 return;
             }
             var append = isUpperCase(registerName);
@@ -2829,7 +2829,11 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                 }
             }
             if (bestMatch.keys.slice(-11) == '<character>') {
-                inputState.selectedCharacter = lastChar(keys);
+                var character = lastChar(keys);
+                if (/<C-.>/.test(character)) return {
+                    type: 'none'
+                };
+                inputState.selectedCharacter = character;
             }
             return {
                 type: 'full',
@@ -2964,10 +2968,6 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                 var macroModeState = vimGlobalState.macroModeState;
                 if (macroModeState.isRecording) {
                     logSearchQuery(macroModeState, query);
-                }
-                if (cm.ace.$blockScrolling) {
-                    // refer to ace.js:12263
-                    cm.ace.renderer.scrollCursorIntoView();
                 }
             }
 
@@ -5298,7 +5298,6 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             cm.openDialog(template, onClose, {
                 bottom: true,
                 value: options.value,
-                closeOnBlur: false,
                 onKeyDown: options.onKeyDown,
                 onKeyUp: options.onKeyUp,
                 selectValueOnOpen: false
@@ -5460,8 +5459,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
         if (smartCase) {
             ignoreCase = (/^[^A-Z]*$/).test(regexPart);
         }
-        var regexp = new RegExp(regexPart,
-            (ignoreCase || forceIgnoreCase) ? 'i' : undefined);
+        var regexp = new RegExp(regexPart, (ignoreCase || forceIgnoreCase) ? 'i' : undefined);
         return regexp;
     }
 
@@ -5596,8 +5594,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                     found = cursor.find(prev);
                 }
                 if (!found) {
-                    cursor = cm.getSearchCursor(query,
-                        (prev) ? Pos(cm.lastLine()) : Pos(cm.firstLine(), 0));
+                    cursor = cm.getSearchCursor(query, (prev) ? Pos(cm.lastLine()) : Pos(cm.firstLine(), 0));
                     if (!cursor.find(prev)) {
                         return;
                     }
@@ -5847,7 +5844,6 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                     }
                 }
             }
-            throw Error('No such mapping.');
         }
     };
 
@@ -6407,6 +6403,8 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
         cm.setCursor(cm.getCursor().line, cm.getCursor().ch - 1);
         cm.setOption('keyMap', 'vim');
         cm.setOption('disableInput', true);
+
+        lastChange.overwrite = cm.state.overwrite;
         cm.toggleOverwrite(false); // exit replace mode if we were in it.
         insertModeChangeRegister.setText(lastChange.changes.join(''));
         CodeMirror.signal(cm, "vim-mode-change", {
@@ -6530,6 +6528,10 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                 lastChange.expectCursorActivityForChange = true;
                 if (changeObj.origin == '+input' || changeObj.origin == 'paste' || changeObj.origin === undefined /* only in testing */ ) {
                     var text = changeObj.text.join('\n');
+                    if (lastChange.maybeReset) {
+                        lastChange.changes = [];
+                        lastChange.maybeReset = false;
+                    }
                     lastChange.changes.push(text);
                 }
                 changeObj = changeObj.next;
@@ -6548,7 +6550,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             if (lastChange.expectCursorActivityForChange) {
                 lastChange.expectCursorActivityForChange = false;
             } else {
-                lastChange.changes = [];
+                lastChange.maybeReset = true;
             }
         } else if (!cm.curOp.isVimOp) {
             handleExternalSelection(cm, vim);
@@ -6611,6 +6613,10 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
         }
 
         function onKeyFound() {
+            if (lastChange.maybeReset) {
+                lastChange.changes = [];
+                lastChange.maybeReset = false;
+            }
             lastChange.changes.push(new InsertModeKey(keyName));
             return true;
         }
@@ -6637,7 +6643,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             if (macroModeState.lastInsertModeChanges.changes.length > 0) {
                 repeat = !vim.lastEditActionCommand ? 1 : repeat;
                 var changeObject = macroModeState.lastInsertModeChanges;
-                repeatInsertModeChanges(cm, changeObject.changes, repeat);
+                repeatInsertModeChanges(cm, changeObject.changes, repeat, changeObject.overwrite);
             }
         }
         vim.inputState = vim.lastEditInputState;
@@ -6659,7 +6665,7 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
         macroModeState.isPlaying = false;
     }
 
-    function repeatInsertModeChanges(cm, changes, repeat) {
+    function repeatInsertModeChanges(cm, changes, repeat, overwrite) {
         function keyHandler(binding) {
             if (typeof binding == 'string') {
                 CodeMirror.commands[binding](cm);
@@ -6688,7 +6694,11 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
                     CodeMirror.lookupKey(change.keyName, 'vim-insert', keyHandler);
                 } else {
                     var cur = cm.getCursor();
-                    cm.replaceRange(change, cur, cur);
+                    var end = cur;
+                    if (overwrite && !/\n/.test(change)) {
+                        end = offsetCursor(cur, 0, change.length);
+                    }
+                    cm.replaceRange(change, cur, end);
                 }
             }
         }
