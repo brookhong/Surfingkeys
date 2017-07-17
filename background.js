@@ -528,18 +528,25 @@ var ChromeService = (function() {
         _updateSettings(diffSettings, afterSet);
     }
 
-    function _getDisabled(url, set, regex) {
-        if (regex) {
-            regex = new RegExp(regex.source, regex.flags);
+    function _getDisabled(set, url, regex) {
+        if (set.blacklist['.*']) {
+            return true;
         }
-        return set.blacklist[url.origin]
-            || set.blacklist['.*']
-            || (regex && regex.test && regex.test(url.href));
+        if (url) {
+            if (set.blacklist[url.origin]) {
+                return true;
+            }
+            if (regex) {
+                regex = new RegExp(regex.source, regex.flags);
+                return regex.test(url.href);
+            }
+        }
+        return false;
     }
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             var origin = ".*";
-            if (sender.tab) {
+            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
                 origin = new URL(sender.tab.url).origin;
             }
             if (data.blacklist.hasOwnProperty(origin)) {
@@ -549,21 +556,17 @@ var ChromeService = (function() {
             }
             _updateAndPostSettings({blacklist: data.blacklist}, function() {
                 _response(message, sendResponse, {
-                    blacklist: data.blacklist
-                });
-            });
-            if (sender.tab) {
-                _response(message, sendResponse, {
-                    disabled: _getDisabled(new URL(sender.tab.url), data, message.blacklistPattern),
+                    disabled: _getDisabled(data, sender.tab ? new URL(sender.tab.url) : null, message.blacklistPattern),
+                    blacklist: data.blacklist,
                     url: origin
                 });
-            }
+            });
         });
     };
     self.getDisabled = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             _response(message, sendResponse, {
-                disabled: _getDisabled(new URL(sender.tab.url), data, message.blacklistPattern)
+                disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
             });
         });
     };
@@ -696,6 +699,16 @@ var ChromeService = (function() {
                 active: true
             });
         }
+    };
+    self.focusTabByIndex = function(message, sender, sendResponse) {
+        var queryInfo = message.queryInfo || {};
+        chrome.tabs.query(queryInfo, function(tabs) {
+            if (message.repeats > 0 && message.repeats <= tabs.length) {
+                chrome.tabs.update(tabs[message.repeats - 1].id, {
+                    active: true
+                });
+            }
+        });
     };
     self.historyTab = function(message, sender, sendResponse) {
         if (tabHistory.length > 0) {

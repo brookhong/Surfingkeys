@@ -149,7 +149,7 @@ function saveSettings() {
         });
         Front.showBanner('Loading settings from ' + localPath, 300);
     } else {
-        var delta = runUserScript(settingsCode);
+        var delta = runScript(settingsCode);
         if (delta.error === "") {
 
             RUNTIME('updateSettings', {

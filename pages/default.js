@@ -186,12 +186,12 @@ command('testVoices', '#13list tts voices', function(args) {
 command('stopReading', '#13Stop reading.', function(args) {
     RUNTIME('stopReading');
 });
-mapkey('gr', '#14Read selected text or text from clipboard.', function() {
+mapkey('gr', '#14Read selected text or text from clipboard', function() {
     Front.getContentFromClipboard(function(response) {
         readText(window.getSelection().toString() || response.data, {verbose: true});
     });
 });
-vmapkey('gr', '#9Read selected text.', function() {
+vmapkey('gr', '#9Read selected text', function() {
     readText(window.getSelection().toString(), {verbose: true});
 });
 mapkey('sfr', '#13show failed web requests of current page', function() {
@@ -414,6 +414,10 @@ command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
             return $('<li/>').html(s);
         });
     });
+});
+command('timeStamp', 'print time stamp in human readable format', function(args) {
+    var dt = new Date(parseInt(args[0]));
+    Omnibar.listWords([dt.toString()]);
 });
 mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');
 mapkey('V', '#9Restore visual mode', 'Visual.restore()');

@@ -88,9 +88,13 @@ var Front = (function() {
     };
 
     self.chooseTab = function() {
-        frontendCommand({
-            action: 'chooseTab'
-        });
+        if (Normal.repeats !== "") {
+            RUNTIME('focusTabByIndex');
+        } else {
+            frontendCommand({
+                action: 'chooseTab'
+            });
+        }
     };
 
     self.openOmnibar = function(args) {

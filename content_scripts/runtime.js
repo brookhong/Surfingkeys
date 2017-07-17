@@ -24,7 +24,7 @@ var runtime = window.runtime || (function() {
             showModeStatus: false,
             showProxyInStatusBar: false,
             richHintsForKeystroke: true,
-            smartPageBoundary: true,
+            smartPageBoundary: false,
             clickableSelector: "",
             blacklistPattern: undefined,
             startToShowEmoji: 2,

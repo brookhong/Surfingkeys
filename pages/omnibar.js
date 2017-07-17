@@ -179,7 +179,7 @@ var Omnibar = (function(mode, ui) {
     });
 
     self.mappings.add(encodeKeystroke("<Ctrl-r>"), {
-        annotation: "Re-sort history by visitCount or lastVisitTime.",
+        annotation: "Re-sort history by visitCount or lastVisitTime",
         feature_group: 8,
         code: function () {
             if (handler && handler.onReset) {
