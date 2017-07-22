@@ -22,9 +22,12 @@ var frontendFrame = (function() {
     document.documentElement.appendChild(uiHost);
 
     var lastStateOfPointerEvents = "none", _origOverflow;
-    var _actions = {}, activeContent = null;
+    var _actions = {}, activeContent = null, _initialized = false;
     _actions['initFrontendAck'] = function(response) {
-        $(document).trigger("surfingkeys:frontendReady");
+        if (!_initialized) {
+            _initialized = true;
+            $(document).trigger("surfingkeys:frontendReady");
+        }
     };
     _actions['setFrontFrame'] = function(response) {
         ifr.css('height', response.frameHeight);
@@ -88,15 +91,13 @@ var frontendFrame = (function() {
                     }
                 }
             }
+        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+            _actions[_message.action](_message);
         } else if (_message.commandToContent || _message.responseToContent) {
             // forward message to content
             if (activeContent && !_message.direct && activeContent.window !== top) {
                 activeContent.window.postMessage(_message, activeContent.origin);
             }
-        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
-            _actions[_message.action](_message);
-        } else {
-            console.log(_message);
         }
     }, true);
 

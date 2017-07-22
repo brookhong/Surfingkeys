@@ -59,7 +59,7 @@ var Front = (function() {
     var onEditorSaved, elementBehindEditor;
     self.showEditor = function(element, onWrite, type) {
         var content,
-            type = type || element.localName
+            type = type || element.localName,
             initial_line = 0;
         if (typeof(element) === "string") {
             content = element;
