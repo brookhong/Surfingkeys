@@ -21,7 +21,7 @@ var frontendFrame = (function() {
 
     document.documentElement.appendChild(uiHost);
 
-    var lastStateOfPointerEvents = "none", _origOverflow;
+    var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null, _initialized = false;
     _actions['initFrontendAck'] = function(response) {
         if (!_initialized) {
@@ -45,13 +45,15 @@ var frontendFrame = (function() {
             }
             if (document.body) {
                 document.body.style.animationFillMode = "";
-                document.body.style.overflow = _origOverflow;
+                document.body.style.overflowY = _origOverflowY;
             }
         } else {
             if (document.body) {
                 document.body.style.animationFillMode = "none";
-                _origOverflow = document.body.style.overflow;
-                document.body.style.overflow = 'visible';
+                if (_origOverflowY === undefined) {
+                    _origOverflowY = document.body.style.overflowY;
+                }
+                document.body.style.overflowY = 'visible';
             }
         }
         lastStateOfPointerEvents = response.pointerEvents;

@@ -361,7 +361,7 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.detectAndInsertURLItem = function(str, toList) {
-        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)$/i;
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {

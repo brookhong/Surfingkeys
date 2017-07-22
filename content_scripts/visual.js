@@ -318,12 +318,18 @@ var Visual = (function(mode) {
     function visualSeek(dir, chr) {
         self.hideCursor();
         var lastPosBeforeF = [selection.anchorNode, selection.anchorOffset];
+        if (selection.anchorNode && selection.anchorNode.data && selection.anchorNode.data.length
+            && selection.anchorNode.data[selection.anchorOffset] === chr
+            && dir === 1
+        ) {
+            // if the char after cursor is the char to find, forward one step.
+            selection.setPosition(selection.anchorNode, selection.anchorOffset + 1);
+        }
         if (findNextTextNodeBy(chr, true, (dir === -1))) {
-            var fix = (dir === -1) ? -1 : 0;
             if (state === 1) {
-                selection.setPosition(selection.focusNode, selection.focusOffset + fix);
+                selection.setPosition(selection.focusNode, selection.focusOffset - 1);
             } else {
-                var found = [selection.focusNode, selection.focusOffset + fix];
+                var found = [selection.focusNode, selection.focusOffset - 1];
                 selection.collapseToStart();
                 selection.setPosition(lastPosBeforeF[0], lastPosBeforeF[1]);
                 selection.extend(found[0], found[1]);
@@ -495,8 +501,10 @@ var Visual = (function(mode) {
         $(document).on('surfingkeys:cursorHidden', onCursorHiden);
     };
 
+    var _lastPos = null;
     self.exit = function() {
         $(document).off('surfingkeys:cursorHidden', onCursorHiden);
+        _lastPos = [selection.anchorNode, selection.anchorOffset];
         mode.exit.apply(self, arguments);
     };
 
@@ -510,8 +518,8 @@ var Visual = (function(mode) {
         _onStateChange();
     }
     self.restore = function() {
-        if (selection.focusNode) {
-            selection.setPosition(selection.focusNode, selection.focusOffset);
+        if (_lastPos) {
+            selection.setPosition(_lastPos[0], _lastPos[1]);
             self.showCursor();
             self.enter();
             _incState();

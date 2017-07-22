@@ -396,8 +396,11 @@ var Front = (function(mode) {
         StatusBar.show(position, content, duration);
     };
 
-    _actions['toggleStatus'] = function(message) {
+    self.toggleStatus = function() {
         self.statusBar.toggle();
+    };
+    _actions['toggleStatus'] = function(message) {
+        self.toggleStatus();
     };
 
     var clipboard_holder = $('<textarea id=sk_clipboard/>');
