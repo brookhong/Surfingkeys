@@ -948,6 +948,13 @@ var SearchEngine = (function() {
 
     var _pendingRequest = undefined; // timeout ID
 
+    function formatURL(url, query) {
+        if (url.indexOf("%s") !== -1) {
+            return url.replace("%s", query)
+        }
+        return url + query
+    }
+
     self.onOpen = function(arg) {
         $.extend(self, self.aliases[arg]);
         var q = Omnibar.input.val();
@@ -997,7 +1004,7 @@ var SearchEngine = (function() {
             runtime.command({
                 action: 'request',
                 method: 'get',
-                url: self.suggestionURL + val
+                url: formatURL(self.suggestionURL, val)
             }, function(resp) {
                 var resp = self.listSuggestion(resp);
                 if (Array.isArray(resp)) {
