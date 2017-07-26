@@ -950,9 +950,9 @@ var SearchEngine = (function() {
 
     function formatURL(url, query) {
         if (url.indexOf("%s") !== -1) {
-            return url.replace("%s", query)
+            return url.replace("%s", query);
         }
-        return url + query
+        return url + query;
     }
 
     self.onOpen = function(arg) {
