@@ -11,7 +11,6 @@ var runtime = window.runtime || (function() {
             omnibarTabsQuery: {},
             historyMUOrder: true,
             tabsThreshold: 9,
-            hintsThreshold: 10000,
             smoothScroll: true,
             modeAfterYank: "",
             scrollStepSize: 70,
@@ -32,6 +31,7 @@ var runtime = window.runtime || (function() {
             language: undefined,
             stealFocusOnLoad: true,
             defaultVoice: "Daniel",
+            experiment: false,
             lastQuery: ""
         },
         runtime_handlers: {}

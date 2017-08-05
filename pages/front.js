@@ -295,9 +295,7 @@ var Front = (function(mode) {
 
     _actions['showPressed'] = function(message) {
         _showPressed = true;
-        self.showPopup({
-            content: "<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>"
-        });
+        self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
     };
     self.showPressed = _actions['showPressed'];
     self.vimMappings = [];

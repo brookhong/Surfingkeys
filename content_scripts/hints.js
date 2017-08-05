@@ -75,8 +75,8 @@ var Hints = (function(mode) {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
-            var link = $(matches[0]).data('link'), match = $(matches[0]).data('match');
-            _onHintKey(link, event, match);
+            var link = $(matches[0]).data('link');
+            _onHintKey(link);
             if (behaviours.multipleHits) {
                 prefix = "";
                 refresh();
@@ -150,7 +150,12 @@ var Hints = (function(mode) {
     }
 
     function onScrollDone(evt) {
-        createHints(_cssSelector, _lastCreateAttrs);
+        var start = new Date().getTime();
+        var found = createHints(_cssSelector, _lastCreateAttrs);
+        if (found > 1) {
+            self.statusLine += " - " + (new Date().getTime() - start) + "ms / " + found;
+            Mode.showStatus();
+        }
     }
 
     var _origOverflow;
@@ -259,23 +264,31 @@ var Hints = (function(mode) {
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
-        if (cssSelector === "") {
-            cssSelector = "a, button, select, input, textarea";
-            if (runtime.conf.clickableSelector.length) {
-                cssSelector += ", " + runtime.conf.clickableSelector;
-            }
-            if (!runtime.conf.hintsThreshold || $(cssSelector).length < runtime.conf.hintsThreshold) {
-                // to avoid bad performance when there are too many clickable elements.
-                cssSelector += ", *:css(cursor=pointer), *[onclick]";
-            }
-        }
         var elements;
         if (behaviours.tabbed) {
-            elements = $('a').regex(/^(?:(?!javascript:\/\/).)+.*$/, $.fn.attr, ['href']);
+            elements = $('a').regex(/^(?:(?!javascript:\/\/).)+.*$/, $.fn.attr, ['href']).filterInvisible();
         } else {
-            elements = $(document.body).find(cssSelector);
+            if (cssSelector === "") {
+                cssSelector = "a, button, select, input, textarea, *[onclick]";
+                if (runtime.conf.clickableSelector.length) {
+                    cssSelector += ", " + runtime.conf.clickableSelector;
+                }
+
+                elements = getVisibleElements(function(e, v) {
+                    if (jQuery.find.matchesSelector(e, cssSelector)) {
+                        v.push(e);
+                    } else if (getComputedStyle(e).cursor === "pointer") {
+                        v.push(e);
+                    } else if (e.closest('a') !== null) {
+                        v.push(e);
+                    }
+                });
+            } else {
+                elements = $(document.documentElement).find(cssSelector).filterInvisible().toArray();
+            }
+            elements = $(filterOverlapElements(elements));
         }
-        elements = elements.filterInvisible().filterChildren();
+
         if (elements.length > 0) {
             placeHints(elements);
         }
@@ -287,17 +300,39 @@ var Hints = (function(mode) {
         var selection = document.getSelection();
         selection.setBaseAndExtent(node, offset, node, offset+1)
         var br = selection.getRangeAt(0).getBoundingClientRect();
-        return {
-            left: br.left,
-            top: br.top
+        var pos = {
+            left: -1,
+            top: -1
         };
+        if (br.height > 0 && br.width > 0) {
+            pos.left = br.left;
+            pos.top = br.top;
+        }
+        return pos;
     }
 
     function createHintsForTextNode(rxp, attrs) {
 
         self.statusLine = (attrs && attrs.statusLine) || "Hints to select text";
 
-        var elements = getTextNodes(document.body, rxp);
+        var elements = getVisibleElements(function(e, v) {
+            var aa = e.childNodes;
+            for (var i = 0, len = aa.length; i < len; i++) {
+                if (aa[i].nodeType == Node.TEXT_NODE && aa[i].data.length > 0) {
+                    v.push(e);
+                    break;
+                }
+            }
+        });
+        elements = filterOverlapElements(elements);
+        elements = elements.map(function(e) {
+            var aa = e.childNodes;
+            for (var i = 0, len = aa.length; i < len; i++) {
+                if (aa[i].nodeType == Node.TEXT_NODE && aa[i].data.length > 0) {
+                    return aa[i];
+                }
+            }
+        });
 
         var positions;
         if (rxp.flags.indexOf('g') === -1) {
@@ -323,13 +358,12 @@ var Hints = (function(mode) {
                 return $('<div/>').css('position', 'fixed').css('top', pos.top).css('left', pos.left)
                     .css('z-index', 9999)
                     .data('z-index', 9999)
-                    .data('link', e[0])
-                    .data('offset', e[1])
-                    .data('match', e[2]);
+                    .data('link', e);
             }
         }).filter(function(e) {
             return e !== null;
         });
+        document.getSelection().collapseToStart();
 
         if (elements.length > 0) {
             holder.attr('mode', 'text').show().html('');
@@ -360,8 +394,9 @@ var Hints = (function(mode) {
         _lastCreateAttrs = attrs;
 
         var start = new Date().getTime();
-        if (createHints(cssSelector, attrs) > 1) {
-            self.statusLine += " - " + (new Date().getTime() - start) + "ms";
+        var found = createHints(cssSelector, attrs);
+        if (found > 1) {
+            self.statusLine += " - " + (new Date().getTime() - start) + "ms / " + found;
             self.enter();
         } else {
             handleHint();

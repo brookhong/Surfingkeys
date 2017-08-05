@@ -273,13 +273,13 @@ map('C', 'gf');
 mapkey('<Ctrl-h>', '#1Mouse over elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseover"]})');
 mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]})');
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
-    Hints.create('*[href]', function(element, event) {
+    Hints.create('*[href]', function(element) {
         Front.writeClipboard(element.href);
     })
 });
 mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
     Hints.linksToYank = [];
-    Hints.create('*[href]', function(element, event) {
+    Hints.create('*[href]', function(element) {
         Hints.linksToYank.push(element.href);
         Front.writeClipboard(Hints.linksToYank.join('\n'));
     }, {multipleHits: true})
@@ -289,13 +289,13 @@ mapkey('gi', '#1Go to the first edit box', function() {
     Hints.create("input[type=text]:visible:nth(0)", Hints.dispatchMouseClick);
 });
 mapkey('I', '#1Go to edit box with vim editor', function() {
-    Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element, event) {
+    Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element) {
         Front.showEditor(element);
     });
 });
 mapkey('O', '#1Open detected links from text', function() {
-    Hints.create(runtime.conf.clickablePat, function(element, event, match) {
-        $(`<a href=${match}>`)[0].click()
+    Hints.create(runtime.conf.clickablePat, function(element) {
+        $(`<a href=${element[2]}>`)[0].click()
     }, {statusLine: "Open detected links from text"});
 });
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {

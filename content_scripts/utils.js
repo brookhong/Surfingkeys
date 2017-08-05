@@ -74,9 +74,40 @@ function isElementPartiallyInViewport(el) {
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
     return rect.width > 4 && rect.height > 4
-        && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
-        && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
+        && (rect.top <= windowHeight) && (rect.bottom >= 0)
+        && (rect.left <= windowWidth) && (rect.right >= 0);
 }
+
+function getVisibleElements(filter) {
+    var all = document.documentElement.getElementsByTagName("*");
+    var visibleElements = [];
+    for (var i = 0, len = all.length; i < len; i++) {
+        var e = all[i];
+        var rect = e.getBoundingClientRect();
+        if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
+            && (rect.left <= window.innerWidth) && (rect.right >= 0)
+            && rect.height < window.innerHeight && rect.height > 0
+        ) {
+            filter(e, visibleElements);
+        }
+    }
+    return visibleElements;
+}
+
+function filterOverlapElements(elements) {
+    // filter out tiny elements
+    elements = elements.filter(function(e) {
+        var be = e.getBoundingClientRect();
+        return !e.disabled && !e.readOnly && be.width > 4;
+    });
+    // filter out element which has his children covered
+    return elements.filter(function(e) {
+        return !$(e.children).toArray().some(function(element, index, array) {
+            return elements.indexOf(element) !== -1;
+        });
+    });
+}
+
 
 function getTextNodes(root, pattern, flag) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
@@ -161,15 +192,6 @@ RegExp.prototype.toJSON = function() {
                 }
             }
             return ret !== null;
-        });
-    };
-    $.fn.filterChildren = function() {
-        var elements = this;
-        return this.filter(function() {
-            // filter out element which has his children covered
-            return !$(this.children).toArray().some(function(element, index, array) {
-                return elements.toArray().indexOf(element) !== -1;
-            });
         });
     };
 })(jQuery);

@@ -538,9 +538,9 @@ var Visual = (function(mode) {
                 _incState();
                 break;
             default:
-                Hints.create(/./, function(element, event) {
+                Hints.create(/./, function(element) {
                     setTimeout(function() {
-                        selection.setPosition(element, 0);
+                        selection.setPosition(element[0], element[1]);
                         self.showCursor();
                         self.enter();
                         _incState();
