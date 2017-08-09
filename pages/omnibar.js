@@ -977,7 +977,7 @@ var SearchEngine = (function() {
     };
     self.onEnter = function() {
         var fi = Omnibar.resultsDiv.find('li.focused');
-        var url = fi.data('url') || constructSearchURL(self.url, (fi.data('query') || Omnibar.input.val()) );
+        var url = fi.data('url') || constructSearchURL(self.url, (fi.data('query') || encodeURIComponent(Omnibar.input.val())) );
         runtime.command({
             action: "openLink",
             tab: {
@@ -992,7 +992,7 @@ var SearchEngine = (function() {
         if (!self.suggestionURL || typeof(self.listSuggestion) !== "function") {
             return;
         }
-        var val = Omnibar.input.val();
+        var val = encodeURIComponent(Omnibar.input.val());
         if (_pendingRequest) {
             clearTimeout(_pendingRequest);
             _pendingRequest = undefined;
@@ -1008,7 +1008,7 @@ var SearchEngine = (function() {
             }, function(resp) {
                 var resp = self.listSuggestion(resp);
                 if (Array.isArray(resp)) {
-                    Omnibar.detectAndInsertURLItem(val, resp);
+                    Omnibar.detectAndInsertURLItem(Omnibar.input.val(), resp);
                     var rxp = _regexFromString(val, true);
                     Omnibar.listResults(resp, function(w) {
                         if (w.hasOwnProperty('url')) {
