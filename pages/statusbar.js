@@ -88,15 +88,17 @@ var Find = (function(mode) {
                 });
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.val();
-                if (event.ctrlKey) {
-                    query = '\\b' + query + '\\b';
+                if (query.length > 0) {
+                    if (event.ctrlKey) {
+                        query = '\\b' + query + '\\b';
+                    }
+                    reset();
+                    runtime.updateHistory('find', query);
+                    Front.visualCommand({
+                        action: 'visualEnter',
+                        query: query
+                    });
                 }
-                reset();
-                runtime.updateHistory('find', query);
-                Front.visualCommand({
-                    action: 'visualEnter',
-                    query: query
-                });
             } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
                 if (findHistory.length) {
                     historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (historyInc + 1) : (historyInc + findHistory.length - 1);

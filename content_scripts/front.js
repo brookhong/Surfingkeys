@@ -236,19 +236,27 @@ var Front = (function() {
     };
 
     var _pendingQuery;
-    _actions["visualUpdate"] = function(message) {
+    function clearPendingQuery() {
         if (_pendingQuery) {
             clearTimeout(_pendingQuery);
             _pendingQuery = undefined;
         }
+    }
+
+    _actions["visualUpdate"] = function(message) {
+        clearPendingQuery();
         _pendingQuery = setTimeout(function() {
             Visual.visualUpdateForContentWindow(message.query);
         }, 500);
     };
 
-    _actions["visualClear"] = Visual.visualClear;
+    _actions["visualClear"] = function(message) {
+        clearPendingQuery();
+        Visual.visualClear();
+    };
 
     _actions["visualEnter"] = function(message) {
+        clearPendingQuery();
         Visual.visualEnter(message.query);
     };
 
