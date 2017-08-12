@@ -203,9 +203,8 @@ var Front = (function() {
             onEditorSaved(response.data);
         }
         if (runtime.conf.focusOnSaved && isEditable(elementBehindEditor)) {
-            elementBehindEditor.focus();
             window.focus();
-            Insert.enter();
+            Insert.enter(elementBehindEditor);
         }
     };
     _actions["nextEdit"] = function(response) {

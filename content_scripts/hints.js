@@ -419,10 +419,7 @@ var Hints = (function(mode) {
         self.flashPressedLink(element);
         if (isEditable(element)) {
             self.exit();
-            Insert.enter();
-            // Enter Insert mode before element focused, so that pushState could be suppressed.
-            // #196 http://www.inoreader.com/all_articles
-            element.focus();
+            Insert.enter(element);
         } else {
             if (!behaviours.multipleHits) {
                 self.exit();

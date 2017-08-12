@@ -342,9 +342,6 @@ var Insert = (function(mode) {
             self.exit();
         }
     });
-    self.addEventListener('pushState', function(event) {
-        event.sk_suppressed = true;
-    });
 
     function nextNonWord(str, dir, cur) {
         var nonWord = /\W/;
@@ -374,6 +371,19 @@ var Insert = (function(mode) {
         }
         return [s, pos];
     }
+
+    var _element;
+    self.enter = function(elm) {
+        if (Mode.stack().indexOf(self) === -1) {
+            mode.enter.apply(self, arguments);
+            Normal.passFocus(true);
+        }
+        if (_element !== elm) {
+            _element = elm;
+            Normal.passFocus(true);
+        }
+        elm.focus();
+    };
 
     return self;
 })(Mode);

@@ -597,23 +597,6 @@ function applySettings(rs) {
     }
 }
 
-Normal.insertJS(function() {
-    var _wr = function(type) {
-        var orig = history[type];
-        return function() {
-            var rv = orig.apply(this, arguments);
-            var e = new NativeEventForSK(type);
-            e.arguments = arguments;
-            window.dispatchEvent(e);
-            return rv;
-        };
-    };
-    // Hold Event at NativeEventForSK in case of it is overrided
-    // test with http://search.bilibili.com/
-    var NativeEventForSK = Event;
-    history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
-});
-
 runtime.on('settingsUpdated', function(response) {
     var rs = response.settings;
     applySettings(rs);
@@ -666,8 +649,6 @@ function _init(onInit) {
                 }, function(resp) {
                     if (resp.disabled) {
                         Disabled.enter(0, true);
-                    } else {
-                        GetBackFocus.enter(0, true);
                     }
 
                     runtime.command({
