@@ -135,7 +135,7 @@ command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', f
     var hosts = args.join('');
     return toggleProxySite(hosts);
 });
-command('listVoices', '#13list tts voices', function() {
+command('listVoices', 'list tts voices', function() {
     runtime.command({
         action: 'getVoices'
     }, function(response) {
@@ -148,7 +148,7 @@ command('listVoices', '#13list tts voices', function() {
 
     });
 });
-command('testVoices', '#13list tts voices', function(args) {
+command('testVoices', 'testVoices <locale> <text>', function(args) {
     runtime.command({
         action: 'getVoices'
     }, function(response) {
@@ -537,7 +537,7 @@ mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
 mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
 mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
 mapkey('gh', '#12Open Chrome History', 'tabOpenLink("chrome://history/")');
-mapkey('gk', '#12Open Chrome Cookies', 'tabOpenLink("chrome://settings/cookies")');
+mapkey('gk', '#12Open Chrome Cookies', 'tabOpenLink("chrome://settings/content/cookies")');
 mapkey('ge', '#12Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
 mapkey('gn', '#12Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
 mapkey('gs', '#12View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');

@@ -221,13 +221,13 @@ var Hints = (function(mode) {
                 // work around for svg elements, https://github.com/jquery/jquery/issues/3182
                 pos = this.getBoundingClientRect();
             }
-            var left;
+            var left, width = Math.min($(this).width(), window.innerWidth);
             if (runtime.conf.hintAlign === "right") {
-                left = pos.left - bof.left + $(this).width();
+                left = pos.left - bof.left + width / 2;
             } else if (runtime.conf.hintAlign === "left") {
                 left = pos.left - bof.left;
             } else {
-                left = pos.left - bof.left + $(this).width() / 2;
+                left = pos.left - bof.left + width / 2;
             }
             left = Math.max(left, 0);
             var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)

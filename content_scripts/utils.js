@@ -98,7 +98,12 @@ function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
         var be = e.getBoundingClientRect();
-        return !e.disabled && !e.readOnly && be.width > 4;
+        var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
+        if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
+            return true;
+        } else {
+            return (!el || (el.contains(e) || e.contains(el))) && !e.disabled && !e.readOnly && be.width > 4;
+        }
     });
     // filter out element which has his children covered
     return elements.filter(function(e) {
