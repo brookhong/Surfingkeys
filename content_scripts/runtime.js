@@ -21,7 +21,7 @@ var runtime = window.runtime || (function() {
             hintAlign: "center",
             hintGroups: true,
             hintGroupCycleKey: "f",
-            hintGroupCharacters: "qwertyasdghzxcvb",
+            hintGroupCharacters: "qwertasdgzxcv",
             hintGroupCollation: "sequence",
             defaultSearchEngine: "g",
             showModeStatus: false,
