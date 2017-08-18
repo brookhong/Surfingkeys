@@ -116,9 +116,9 @@ var Hints = (function(mode) {
         }
         var hints = holder.find('>div');
         hints.removeClass('inactive-group');
-        var selector = '[data-group="' + currentHintGroup + '"]'
+        var selector = '[data-group="' + currentHintGroup + '"]';
         hints.not(selector)
-            .addClass('inactive-group')
+            .addClass('inactive-group');
     }
 
     function refresh() {
@@ -213,9 +213,9 @@ var Hints = (function(mode) {
 
         return {
             groups: groups,
-            groupLen: glen,
-        }
-    }
+            groupLen: glen
+        };
+    };
 
     self.genLabels = function(M) {
         if (M <= self.characters.length) {
@@ -293,7 +293,7 @@ var Hints = (function(mode) {
                     .attr('data-label', char)
                     .html(char);
                 if (groupNum !== 0) {
-                    link.addClass('inactive-group')
+                    link.addClass('inactive-group');
                 }
             } else {
                 link.data('label', hintLabels[i])
@@ -431,11 +431,8 @@ var Hints = (function(mode) {
         if (elements.length > 0) {
             holder.attr('mode', 'text').show().html('');
             var hintLabels = self.genLabels(elements.length);
-            // var hintGroups = self.genGroups(elements.length);
             elements.forEach(function(e, i) {
                 e.data('label', hintLabels[i])
-                    // .data('group', hintGroups[i])
-                    // .attr('data-group', hintGroups[i])
                     .html(hintLabels[i]);
                 holder.append(e);
             });
@@ -448,7 +445,7 @@ var Hints = (function(mode) {
 
     function createHints(cssSelector, attrs) {
         if (cssSelector.constructor.name === "RegExp") {
-            return createHintsForTextNode(cssSelector, attrs)
+            return createHintsForTextNode(cssSelector, attrs);
         }
         return createHintsForClick(cssSelector, attrs);
     }
