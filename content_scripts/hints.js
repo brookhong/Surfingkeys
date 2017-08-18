@@ -117,19 +117,15 @@ var Hints = (function(mode) {
         var hints = holder.find('>div');
         hints.removeClass('inactive-group');
         var selector = '[data-group="' + currentHintGroup + '"]'
-        console.log(selector)
         hints.not(selector)
             .addClass('inactive-group')
     }
 
     function refresh() {
-        console.log(prefix)
         var matches = [];
         var hints = holder.find('>div');
-        console.log(hints)
         if (runtime.conf.hintGroups === true) {
             hints = hints.not('.inactive-group');
-            console.log(hints)
         }
         hints.each(function(i) {
             var label = $(this).data('label');
@@ -141,7 +137,6 @@ var Hints = (function(mode) {
                 $(this).css('opacity', 0);
             }
         });
-        console.log(matches)
         return matches;
     }
 
