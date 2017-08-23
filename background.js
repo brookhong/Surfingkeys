@@ -450,6 +450,16 @@ var ChromeService = (function() {
             case 'restartext':
                 chrome.runtime.reload();
                 break;
+            case 'previousTab':
+            case 'nextTab':
+                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                    var tab = tabs[0];
+                    var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
+                    chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
+                        chrome.tabs.update(tabs[index].id, { active: true });
+                    });
+                });
+                break;
             case 'proxyThis':
                 chrome.tabs.query({
                     currentWindow: true,

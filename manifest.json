@@ -13,6 +13,12 @@
         "restartext": {
             "description": "Restart this extenstion."
         },
+        "previousTab": {
+            "description": "Go to the previous tab."
+        },
+        "nextTab": {
+            "description": "Go to the next tab."
+        },
         "proxyThis": {
             "description": "Toggle current site in autoproxy_hosts."
         }
