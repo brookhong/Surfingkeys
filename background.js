@@ -456,6 +456,7 @@ var ChromeService = (function() {
                     var tab = tabs[0];
                     var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
                     chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
+                        index = ((index % tabs.length) + tabs.length) % tabs.length;
                         chrome.tabs.update(tabs[index].id, { active: true });
                     });
                 });
