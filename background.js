@@ -138,6 +138,7 @@ var ChromeService = (function() {
     var activePorts = [],
         tabHistory = [],
         tabHistoryIndex = 0,
+        chromelikeNewTabPosition = 0,
         historyTabAction = false;
 
     // data by tab id
@@ -444,6 +445,7 @@ var ChromeService = (function() {
         }
         tabActivated[activeInfo.tabId] = new Date().getTime();
         historyTabAction = false;
+        chromelikeNewTabPosition = 0;
     });
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
@@ -931,6 +933,10 @@ var ChromeService = (function() {
                         break;
                     case 'first':
                         newTabPosition = 0;
+                        break;
+                    case 'chromelike':
+                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
+                        chromelikeNewTabPosition++;
                         break;
                     default:
                         break;
