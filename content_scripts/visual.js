@@ -458,12 +458,17 @@ var Visual = (function(mode) {
             var mtches;
             while ((mtches = pattern.exec(node.data)) !== null) {
                 var match = mtches[0];
-                var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
-                matches.push(mark);
+                if (match.length) {
+                    var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
+                    matches.push(mark);
 
-                node = mark.nextSibling;
-                // node changed, reset pattern.lastIndex
-                pattern.lastIndex = 0;
+                    node = mark.nextSibling;
+                    // node changed, reset pattern.lastIndex
+                    pattern.lastIndex = 0;
+                } else {
+                    // matches like \b
+                    break;
+                }
             }
         });
         document.body.normalize();
