@@ -271,16 +271,20 @@ var Normal = (function(mode) {
     });
 
     self.toggleBlacklist = function() {
-        runtime.command({
-            action: 'toggleBlacklist',
-            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-        }, function(resp) {
-            if (resp.disabled) {
-                Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
-            } else {
-                Front.showBanner('Surfingkeys turned ON for ' + resp.url, 3000);
-            }
-        });
+        if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
+            runtime.command({
+                action: 'toggleBlacklist',
+                blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+            }, function(resp) {
+                if (resp.disabled) {
+                    Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
+                } else {
+                    Front.showBanner('Surfingkeys turned ON for ' + resp.url, 3000);
+                }
+            });
+        } else {
+            Front.showBanner('You could not toggle Surfingkeys on its own pages.', 3000);
+        }
     };
 
     self.mappings = new Trie();
