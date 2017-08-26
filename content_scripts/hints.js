@@ -298,7 +298,7 @@ var Hints = (function(mode) {
 
     function getTextNodePos(node, offset) {
         var selection = document.getSelection();
-        selection.setBaseAndExtent(node, offset, node, offset+1)
+        selection.setBaseAndExtent(node, offset, node, node.data.length);
         var br = selection.getRangeAt(0).getBoundingClientRect();
         var pos = {
             left: -1,
@@ -351,7 +351,7 @@ var Hints = (function(mode) {
 
         elements = positions.map(function(e) {
             var pos = getTextNodePos(e[0], e[1]);
-            if (pos.top < 0 || pos.top > window.innerHeight
+            if (e[0].data.trim().length === 0 || pos.top < 0 || pos.top > window.innerHeight
                 || pos.left < 0 || pos.left > window.innerWidth) {
                 return null;
             } else {

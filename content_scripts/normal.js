@@ -229,6 +229,7 @@ var Normal = (function(mode) {
         } else if (event.sk_keyName.length) {
             self._handleMapKey(event);
         }
+        self.passFocus(runtime.conf.enableAutoFocus);
     });
     self.addEventListener('blur', function(event) {
         self.scrollOptions[5] = false;
@@ -258,7 +259,9 @@ var Normal = (function(mode) {
         // when the event was created or modified by a script or dispatched via dispatchEvent.
 
         // enable only mouse click from human being to focus input
-        self.passFocus(event.isTrusted);
+        if (!runtime.conf.enableAutoFocus) {
+            self.passFocus(event.isTrusted);
+        }
 
         if (isEditable(event.target)) {
             Insert.enter(event.target);
