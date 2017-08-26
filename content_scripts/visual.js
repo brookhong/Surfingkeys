@@ -318,12 +318,14 @@ var Visual = (function(mode) {
     function visualSeek(dir, chr) {
         self.hideCursor();
         var lastPosBeforeF = [selection.anchorNode, selection.anchorOffset];
-        if (selection.anchorNode && selection.anchorNode.data && selection.anchorNode.data.length
-            && selection.anchorNode.data[selection.anchorOffset] === chr
+        if (selection.focusNode
+            && selection.focusNode.textContent
+            && selection.focusNode.textContent.length
+            && selection.focusNode.textContent[selection.focusOffset] === chr
             && dir === 1
         ) {
             // if the char after cursor is the char to find, forward one step.
-            selection.setPosition(selection.anchorNode, selection.anchorOffset + 1);
+            selection.setPosition(selection.focusNode, selection.focusOffset + 1);
         }
         if (findNextTextNodeBy(chr, true, (dir === -1))) {
             if (state === 1) {
