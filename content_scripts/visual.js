@@ -8,6 +8,7 @@ var Visual = (function(mode) {
     self.addEventListener('keydown', function(event) {
         if (visualf) {
             var exitf = false;
+            event.sk_stopPropagation = true;
             event.sk_suppressed = true;
 
             if (KeyboardUtils.isWordChar(event)) {
@@ -388,11 +389,13 @@ var Visual = (function(mode) {
 
     self.hideCursor = function () {
         var lastPos = cursor.parentNode;
-        cursor.remove();
         if (lastPos) {
+            lastPos.insertBefore(document.createTextNode(cursor.textContent), cursor);
+            cursor.textContent = "";
+            cursor.remove();
             lastPos.normalize();
+            $(document).trigger("surfingkeys:cursorHidden");
         }
-        $(document).trigger("surfingkeys:cursorHidden");
         return lastPos;
     };
 
@@ -400,10 +403,18 @@ var Visual = (function(mode) {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
+            var ch = "";
             if (selection.focusNode.nodeType === Node.TEXT_NODE) {
                 var node = selection.focusNode;
+                ch = node.textContent[selection.focusOffset];
+                if (/^[\s\n]+$/.test(ch)) {
+                    ch = "";
+                }
                 var pos = node.splitText(selection.focusOffset);
                 node.parentNode.insertBefore(cursor, pos);
+                if (ch !== "") {
+                    pos.data = pos.data.substr(1);
+                }
             } else {
                 selection.focusNode.insertBefore(cursor, selection.focusNode.childNodes[selection.focusOffset]);
             }
@@ -414,9 +425,8 @@ var Visual = (function(mode) {
             }
 
             // set content of cursor to enable scrollIntoViewIfNeeded
-            $(cursor).html('|');
+            $(cursor).html(ch);
             cursor.scrollIntoViewIfNeeded();
-            $(cursor).html('');
         }
     };
     self.getCursorPixelPos = function () {
@@ -439,7 +449,10 @@ var Visual = (function(mode) {
         var alter = (state === 2) ? "extend" : "move";
         self.hideCursor();
         var prevPos = [selection.focusNode, selection.focusOffset];
-        selection.modify(alter, sel[0], sel[1]);
+        do {
+            selection.modify(alter, sel[0], sel[1]);
+        } while (selection.focusNode !== prevPos[0] && selection.focusNode.nodeType !== Node.TEXT_NODE);
+
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
         }
