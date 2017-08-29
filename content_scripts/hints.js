@@ -277,7 +277,7 @@ var Hints = (function(mode) {
                 elements = getVisibleElements(function(e, v) {
                     if (jQuery.find.matchesSelector(e, cssSelector)) {
                         v.push(e);
-                    } else if (getComputedStyle(e).cursor === "pointer") {
+                    } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
                         v.push(e);
                     } else if (e.closest('a') !== null) {
                         v.push(e);
@@ -363,7 +363,9 @@ var Hints = (function(mode) {
         }).filter(function(e) {
             return e !== null;
         });
-        document.getSelection().collapseToStart();
+        if (document.getSelection().anchorNode) {
+            document.getSelection().collapseToStart();
+        }
 
         if (elements.length > 0) {
             holder.attr('mode', 'text').show().html('');

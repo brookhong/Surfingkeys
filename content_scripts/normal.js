@@ -240,7 +240,10 @@ var Normal = (function(mode) {
             var elm = event.target;
             if (isEditable(elm)) {
                 if (_passFocus) {
-                    _passFocus = false;
+                    if (!runtime.conf.enableAutoFocus) {
+                        // prevent focus on input only when enableAutoFocus is turned off.
+                        _passFocus = false;
+                    }
                 } else {
                     elm.blur();
                     event.sk_stopPropagation = true;

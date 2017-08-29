@@ -643,6 +643,7 @@ For example,
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
+| settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visibile after user clicks on some other link. If you don't like the input to be focused when it's turned to visibile, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 
 ### Example of settings.theme, below is to set font size of status bar

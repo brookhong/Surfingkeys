@@ -8,6 +8,7 @@ div.surfingkeys_cursor {
 }
 div.surfingkeys_cursor:empty {
     padding: 0px 2px;
+    min-height: 12px;
 }
 #sk_hints>div {
     position: absolute;
