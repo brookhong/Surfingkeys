@@ -286,7 +286,7 @@ mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
-    Hints.create("input[type=text]:visible:nth(0)", Hints.dispatchMouseClick);
+    Hints.create("input:visible:nth(0)", Hints.dispatchMouseClick);
 });
 mapkey('I', '#1Go to edit box with vim editor', function() {
     Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", function(element) {

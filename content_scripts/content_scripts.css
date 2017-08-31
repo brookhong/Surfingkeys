@@ -24,7 +24,7 @@ div.surfingkeys_cursor:empty {
     width: auto;
 }
 #sk_hints[mode=text]>div {
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff)) !important;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
 #sk_emoji {
     z-index: 2147483000;

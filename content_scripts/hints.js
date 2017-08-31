@@ -47,7 +47,6 @@ var Hints = (function(mode) {
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
-        style = $("<style></style>"),
         holder = $('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
         shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
@@ -213,7 +212,7 @@ var Hints = (function(mode) {
         holder.attr('mode', 'click').show().html('');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        style.appendTo(holder);
+        $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
         elements.each(function(i) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
@@ -374,7 +373,7 @@ var Hints = (function(mode) {
                 e.data('label', hintLabels[i]).html(hintLabels[i]);
                 holder.append(e);
             });
-            style.appendTo(holder);
+            $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
             holder.appendTo('body');
         }
 
@@ -450,8 +449,13 @@ var Hints = (function(mode) {
         }
     };
 
-    self.style = function(css) {
-        style.html("#sk_hints>div{" + css + "}");
+    var _styleForText = "", _styleForClick = "";
+    self.style = function(css, mode) {
+        if (mode === "text") {
+            _styleForText = css;
+        } else {
+            _styleForClick = css;
+        }
     };
 
     self.feedkeys = function(keys) {
