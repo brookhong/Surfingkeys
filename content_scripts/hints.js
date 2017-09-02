@@ -311,7 +311,9 @@ var Hints = (function(mode) {
     }
 
     function createHintsForTextNode(rxp, attrs) {
-
+        for (var attr in attrs) {
+            behaviours[attr] = attrs[attr];
+        }
         self.statusLine = (attrs && attrs.statusLine) || "Hints to select text";
 
         var elements = getVisibleElements(function(e, v) {

@@ -278,11 +278,11 @@ mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     })
 });
 mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
-    Hints.linksToYank = [];
+    var linksToYank = [];
     Hints.create('*[href]', function(element) {
-        Hints.linksToYank.push(element.href);
-        Front.writeClipboard(Hints.linksToYank.join('\n'));
-    }, {multipleHits: true})
+        linksToYank.push(element.href);
+        Front.writeClipboard(linksToYank.join('\n'));
+    }, {multipleHits: true});
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
@@ -420,6 +420,9 @@ command('timeStamp', 'print time stamp in human readable format', function(args)
     Omnibar.listWords([dt.toString()]);
 });
 mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');
+mapkey('zv', '#9Enter visual mode, and select whole element', 'Visual.toggle("z")');
+mapkey('yv', '#9Yank text of an element', 'Visual.toggle("y")');
+mapkey('ymv', '#9Yank text of multiple elements', 'Visual.toggle("ym")');
 mapkey('V', '#9Restore visual mode', 'Visual.restore()');
 mapkey('/', '#9Find in current page', 'Front.openFinder()');
 mapkey('*', '#9Find selected text in current page', function() {

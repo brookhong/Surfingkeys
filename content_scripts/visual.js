@@ -519,6 +519,7 @@ var Visual = (function(mode) {
     self.enter = function() {
         mode.enter.apply(self, arguments);
         $(document).on('surfingkeys:cursorHidden', onCursorHiden);
+        _incState();
     };
 
     var _lastPos = null;
@@ -542,10 +543,9 @@ var Visual = (function(mode) {
             selection.setPosition(_lastPos[0], _lastPos[1]);
             self.showCursor();
             self.enter();
-            _incState();
         }
     };
-    self.toggle = function() {
+    self.toggle = function(ex) {
         switch (state) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
@@ -558,14 +558,29 @@ var Visual = (function(mode) {
                 _incState();
                 break;
             default:
-                Hints.create(/./, function(element) {
-                    setTimeout(function() {
-                        selection.setPosition(element[0], element[1]);
-                        self.showCursor();
-                        self.enter();
-                        _incState();
-                    }, 0);
-                });
+                if (ex === "ym") {
+                    var textToYank = [];
+                    Hints.create(/./, function(element) {
+                        textToYank.push(element[0].data);
+                        Front.writeClipboard(textToYank.join('\n'));
+                    }, {multipleHits: true});
+                } else {
+                    Hints.create(/./, function(element) {
+                        if (ex === "y") {
+                            Front.writeClipboard(element[0].data);
+                        } else {
+                            setTimeout(function() {
+                                selection.setPosition(element[0], element[1]);
+                                self.enter();
+                                if (ex === "z") {
+                                    selection.extend(element[0], element[0].data.length);
+                                    _incState();
+                                }
+                                self.showCursor();
+                            }, 0);
+                        }
+                    });
+                }
                 break;
         }
     };
@@ -592,9 +607,10 @@ var Visual = (function(mode) {
             if (pe.tagName === "SURFINGKEYS_MARK") {
                 pe = pe.parentElement;
             }
+            var ch = cursor.innerText;
             cursor.innerText = "🇿";
             var pos = pe.innerText.indexOf(cursor.innerText);
-            cursor.innerText = "";
+            cursor.innerText = ch;
             word = getNearestWord(pe.innerText, pos);
         }
         return word;
@@ -615,7 +631,6 @@ var Visual = (function(mode) {
             // need enter visual mode again when modeAfterYank is set to Normal / Caret.
             if (state === 0) {
                 self.enter();
-                _incState();
             }
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
@@ -699,10 +714,8 @@ var Visual = (function(mode) {
         self.visualClear();
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
-            state = 1;
-            _onStateChange();
-            select(matches[currentOccurrence]);
             self.enter();
+            select(matches[currentOccurrence]);
         } else {
             Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }

@@ -590,9 +590,13 @@ works like
 
 ### Styling
 
-Change the style of the link hints:
+To change style for link hints:
 
     Hints.style('border: solid 3px #552a48; color:#efe1eb; background: initial; background-color: #552a48;');
+
+To Change style for text hints:
+
+    Hints.style("border: solid 8px #C38A22;padding: 1px;background: #e39913", "text");
 
 Change the style of the search marks and cursor:
 
