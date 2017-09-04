@@ -561,21 +561,22 @@ var ChromeService = (function() {
     }
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
-            if (sender.tab) {
-                var origin = new URL(sender.tab.url).origin;
-                if (data.blacklist.hasOwnProperty(origin)) {
-                    delete data.blacklist[origin];
-                } else {
-                    data.blacklist[origin] = 1;
-                }
-                _updateAndPostSettings({blacklist: data.blacklist}, function() {
-                    _response(message, sendResponse, {
-                        disabled: _getDisabled(data, sender.tab ? new URL(sender.tab.url) : null, message.blacklistPattern),
-                        blacklist: data.blacklist,
-                        url: origin
-                    });
-                });
+            var origin = ".*";
+            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
+                origin = new URL(sender.tab.url).origin;
             }
+            if (data.blacklist.hasOwnProperty(origin)) {
+                delete data.blacklist[origin];
+            } else {
+                data.blacklist[origin] = 1;
+            }
+            _updateAndPostSettings({blacklist: data.blacklist}, function() {
+                _response(message, sendResponse, {
+                    disabled: _getDisabled(data, sender.tab ? new URL(sender.tab.url) : null, message.blacklistPattern),
+                    blacklist: data.blacklist,
+                    url: origin
+                });
+            });
         });
     };
     self.getDisabled = function(message, sender, sendResponse) {
