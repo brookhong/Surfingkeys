@@ -297,7 +297,7 @@ var Normal = (function(mode) {
     self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
 
     var scrollNodes, scrollIndex = 0,
-        lastKeys;
+        lastKeys, scrollingRoot = document.scrollingElement;
 
     function easeFn(t, b, c, d) {
         // t: current time, b: begInnIng value, c: change In value, d: duration
@@ -316,13 +316,13 @@ var Normal = (function(mode) {
                 $(document).trigger("surfingkeys:scrollDone");
             }
         };
-        if (elm === document.body) {
+        if (elm === scrollingRoot) {
             var f = elm.skScrollBy;
             elm.skScrollBy = function(x, y) {
                 if (runtime.conf.smartPageBoundary) {
-                    if (document.body.scrollTop === 0 && y <= 0) {
+                    if (scrollingRoot.scrollTop === 0 && y <= 0) {
                         previousPage() && Front.showBanner("Top margin hit, jump to previous page");
-                    } else if (document.body.scrollHeight - document.body.scrollTop <= window.innerHeight && y > 0) {
+                    } else if (scrollingRoot.scrollHeight - scrollingRoot.scrollTop <= window.innerHeight && y > 0) {
                         nextPage() && Front.showBanner("Bottom margin hit, jump to next page");
                     }
                 }
@@ -377,7 +377,7 @@ var Normal = (function(mode) {
                     }
                 });
                 var sn = scrollNodes[scrollIndex];
-                if (sn === document.body) {
+                if (sn === scrollingRoot) {
                     break;
                 } else {
                     sn.scrollIntoViewIfNeeded();
@@ -394,6 +394,10 @@ var Normal = (function(mode) {
 
     function getScrollableElements() {
         var nodes = [];
+        if (scrollingRoot.scrollHeight > window.innerHeight
+            || scrollingRoot.scrollWidth > window.innerWidth) {
+            nodes.push(scrollingRoot);
+        }
         var nodeIterator = document.createNodeIterator(
             document.body,
             NodeFilter.SHOW_ELEMENT, {
@@ -406,6 +410,18 @@ var Normal = (function(mode) {
         return nodes;
     }
 
+    function _highlightElement(elm) {
+        var rc = elm.getBoundingClientRect();
+        Front.highlightElement({
+            duration: 200,
+            rect: {
+                top: rc.top,
+                left: rc.left,
+                width: rc.width,
+                height: rc.height
+            }
+        });
+    }
     self.changeScrollTarget = function(silent) {
         scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
@@ -420,27 +436,22 @@ var Normal = (function(mode) {
                 sn.scrollIntoViewIfNeeded();
             }
             if (!silent) {
-                var rc = sn.getBoundingClientRect();
-                Front.highlightElement({
-                    duration: 200,
-                    rect: {
-                        top: rc.top,
-                        left: rc.left,
-                        width: rc.width,
-                        height: rc.height
-                    }
-                });
+                _highlightElement(sn);
             }
         }
     };
     self.resetScrollTarget = function() {
         scrollNodes = null;
         initScrollIndex();
+        if (scrollNodes.length > 0) {
+            scrollNode = scrollNodes[scrollIndex];
+            _highlightElement(scrollNode);
+        }
     };
 
     self.scroll = function(type) {
         initScrollIndex();
-        var scrollNode = document.body;
+        var scrollNode = scrollingRoot;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
             if (!$(scrollNode).is(':visible')) {
@@ -451,7 +462,7 @@ var Normal = (function(mode) {
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
         }
-        var size = (scrollNode === document.body) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
+        var size = (scrollNode === scrollingRoot) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
         switch (type) {
             case 'down':
                 scrollNode.skScrollBy(0, runtime.conf.scrollStepSize);
@@ -628,8 +639,8 @@ var Normal = (function(mode) {
         if (/^[a-z]$/.test(mark)) {
             // local mark
             localMarks[mark] = {
-                scrollLeft: document.body.scrollLeft,
-                scrollTop: document.body.scrollTop
+                scrollLeft: scrollingRoot.scrollLeft,
+                scrollTop: scrollingRoot.scrollTop
             };
         } else {
             // global mark
@@ -637,8 +648,8 @@ var Normal = (function(mode) {
             var mo = {};
             mo[mark] = {
                 url: url,
-                scrollLeft: document.body.scrollLeft,
-                scrollTop: document.body.scrollTop
+                scrollLeft: scrollingRoot.scrollLeft,
+                scrollTop: scrollingRoot.scrollTop
             };
             RUNTIME('addVIMark', {mark: mo});
             Front.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
@@ -648,8 +659,8 @@ var Normal = (function(mode) {
     self.jumpVIMark = function(mark, newTab) {
         if (localMarks.hasOwnProperty(mark)) {
             var markInfo = localMarks[mark];
-            document.body.scrollLeft = markInfo.scrollLeft;
-            document.body.scrollTop = markInfo.scrollTop;
+            scrollingRoot.scrollLeft = markInfo.scrollLeft;
+            scrollingRoot.scrollTop = markInfo.scrollTop;
         } else {
             runtime.command({
                 action: 'getSettings',
@@ -716,7 +727,7 @@ var Normal = (function(mode) {
             Front.toggleStatus();
 
             var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
-            if (elm === document.body) {
+            if (elm === scrollingRoot) {
                 ww = window.innerWidth;
                 wh = window.innerHeight;
                 sx = 0;
@@ -810,11 +821,11 @@ var Normal = (function(mode) {
     };
 
     self.captureFullPage = function() {
-        self.captureElement(document.body);
+        self.captureElement(scrollingRoot);
     };
 
     self.captureScrollingElement = function() {
-        var scrollNode = document.body;
+        var scrollNode = scrollingRoot;
         initScrollIndex();
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];

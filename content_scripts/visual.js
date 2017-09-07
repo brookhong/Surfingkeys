@@ -449,9 +449,7 @@ var Visual = (function(mode) {
         var alter = (state === 2) ? "extend" : "move";
         self.hideCursor();
         var prevPos = [selection.focusNode, selection.focusOffset];
-        do {
-            selection.modify(alter, sel[0], sel[1]);
-        } while (selection.focusNode !== prevPos[0] && selection.focusNode.nodeType !== Node.TEXT_NODE);
+        selection.modify(alter, sel[0], sel[1]);
 
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
