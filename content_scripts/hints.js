@@ -202,7 +202,7 @@ var Hints = (function(mode) {
     self.coordinate = function() {
         // a hack to get co-ordinate
         var link = $('<div/>').css('top', 0).css('left', 0).html('A').appendTo(holder);
-        holder.prependTo('body');
+        holder.prependTo(document.documentElement);
         var ordinate = link.offset();
         holder.html('');
         return ordinate;
@@ -248,7 +248,7 @@ var Hints = (function(mode) {
             }
             bcr = h.getBoundingClientRect();
         }
-        holder.prependTo('body');
+        holder.prependTo(document.documentElement);
     }
 
     function createHintsForClick(cssSelector, attrs) {
@@ -356,9 +356,10 @@ var Hints = (function(mode) {
                 || pos.left < 0 || pos.left > window.innerWidth) {
                 return null;
             } else {
+                var z = getZIndex(e[0].parentNode);
                 return $('<div/>').css('position', 'fixed').css('top', pos.top).css('left', pos.left)
-                    .css('z-index', 9999)
-                    .data('z-index', 9999)
+                    .css('z-index', z + 9999)
+                    .data('z-index', z + 9999)
                     .data('link', e);
             }
         }).filter(function(e) {
@@ -376,7 +377,7 @@ var Hints = (function(mode) {
                 holder.append(e);
             });
             $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
-            holder.appendTo('body');
+            holder.prependTo(document.documentElement);
         }
 
         return elements.length;
