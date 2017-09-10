@@ -21,17 +21,17 @@
 // ************************* WARNING *************************
 
 function toggleQuote() {
-    var val = document.activeElement.value;
+    var elm = getRealEdit(), val = elm.value;
     if (val[0] === '"') {
-        document.activeElement.value = val.substr(1, val.length - 2);
+        elm.value = val.substr(1, val.length - 2);
     } else {
-        document.activeElement.value = '"' + val + '"';
+        elm.value = '"' + val + '"';
     }
 }
 imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 cmapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
-    var element = document.activeElement;
+    var element = getRealEdit();
     Front.showEditor(element);
 });
 function toggleProxySite(host) {

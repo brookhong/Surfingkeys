@@ -22,6 +22,19 @@ function htmlEncode(str) {
 function htmlDecode(str) {
     return $('<div/>').html(str).text();
 }
+
+function getRealEdit(event) {
+    var rt = event ? event.target : document.activeElement;
+    if (rt && rt.shadowRoot) {
+        if (rt.shadowRoot.activeElement) {
+            rt = rt.shadowRoot.activeElement;
+        } else if (rt.shadowRoot.querySelector('input, textarea, select')) {
+            rt = rt.shadowRoot.querySelector('input, textarea, select');
+        }
+    }
+    return rt;
+}
+
 function isEditable(element) {
     return element.localName === 'textarea'
         || element.localName === 'select'

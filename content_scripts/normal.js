@@ -209,19 +209,21 @@ var Normal = (function(mode) {
     self.enter = function() {
         mode.enter.apply(self, arguments);
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            document.activeElement && document.activeElement.blur();
+            var elm = getRealEdit();
+            elm && elm.blur();
         }
     };
 
     self.addEventListener('keydown', function(event) {
-        if (isEditable(event.target)) {
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget)) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-                document.activeElement.blur();
+                realTarget.blur();
                 Insert.exit();
             } else if (event.key === "Tab"){
                 // enable Tab key to focus next input
                 Normal.passFocus(true);
-                Insert.enter(event.target);
+                Insert.enter(realTarget);
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist();
@@ -237,7 +239,7 @@ var Normal = (function(mode) {
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            var elm = event.target;
+            var elm = getRealEdit(event);
             if (isEditable(elm)) {
                 if (_passFocus) {
                     if (!runtime.conf.enableAutoFocus) {
@@ -266,8 +268,9 @@ var Normal = (function(mode) {
             self.passFocus(event.isTrusted);
         }
 
-        if (isEditable(event.target)) {
-            Insert.enter(event.target);
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget)) {
+            Insert.enter(realTarget);
         } else {
             Insert.exit();
         }
