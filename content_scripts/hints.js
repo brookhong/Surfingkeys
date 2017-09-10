@@ -54,7 +54,6 @@ var Hints = (function(mode) {
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
-        style = $("<style></style>"),
         holder = $('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
         shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
@@ -263,7 +262,7 @@ var Hints = (function(mode) {
             var hintLabels = self.genLabels(elements.length);
         }
         var bof = self.coordinate();
-        style.appendTo(holder);
+        $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
         elements.each(function(i) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
@@ -340,7 +339,7 @@ var Hints = (function(mode) {
                 elements = getVisibleElements(function(e, v) {
                     if (jQuery.find.matchesSelector(e, cssSelector)) {
                         v.push(e);
-                    } else if (getComputedStyle(e).cursor === "pointer") {
+                    } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
                         v.push(e);
                     } else if (e.closest('a') !== null) {
                         v.push(e);
@@ -361,7 +360,7 @@ var Hints = (function(mode) {
 
     function getTextNodePos(node, offset) {
         var selection = document.getSelection();
-        selection.setBaseAndExtent(node, offset, node, offset+1)
+        selection.setBaseAndExtent(node, offset, node, node.data.length);
         var br = selection.getRangeAt(0).getBoundingClientRect();
         var pos = {
             left: -1,
@@ -375,7 +374,9 @@ var Hints = (function(mode) {
     }
 
     function createHintsForTextNode(rxp, attrs) {
-
+        for (var attr in attrs) {
+            behaviours[attr] = attrs[attr];
+        }
         self.statusLine = (attrs && attrs.statusLine) || "Hints to select text";
 
         var elements = getVisibleElements(function(e, v) {
@@ -414,7 +415,7 @@ var Hints = (function(mode) {
 
         elements = positions.map(function(e) {
             var pos = getTextNodePos(e[0], e[1]);
-            if (pos.top < 0 || pos.top > window.innerHeight
+            if (e[0].data.trim().length === 0 || pos.top < 0 || pos.top > window.innerHeight
                 || pos.left < 0 || pos.left > window.innerWidth) {
                 return null;
             } else {
@@ -426,7 +427,9 @@ var Hints = (function(mode) {
         }).filter(function(e) {
             return e !== null;
         });
-        document.getSelection().collapseToStart();
+        if (document.getSelection().anchorNode) {
+            document.getSelection().collapseToStart();
+        }
 
         if (elements.length > 0) {
             holder.attr('mode', 'text').show().html('');
@@ -436,7 +439,7 @@ var Hints = (function(mode) {
                     .html(hintLabels[i]);
                 holder.append(e);
             });
-            style.appendTo(holder);
+            $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
             holder.appendTo('body');
         }
 
@@ -515,8 +518,13 @@ var Hints = (function(mode) {
         }
     };
 
-    self.style = function(css) {
-        style.html("#sk_hints>div{" + css + "}");
+    var _styleForText = "", _styleForClick = "";
+    self.style = function(css, mode) {
+        if (mode === "text") {
+            _styleForText = css;
+        } else {
+            _styleForClick = css;
+        }
     };
 
     self.feedkeys = function(keys) {

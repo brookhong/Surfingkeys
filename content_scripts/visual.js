@@ -8,6 +8,7 @@ var Visual = (function(mode) {
     self.addEventListener('keydown', function(event) {
         if (visualf) {
             var exitf = false;
+            event.sk_stopPropagation = true;
             event.sk_suppressed = true;
 
             if (KeyboardUtils.isWordChar(event)) {
@@ -318,12 +319,14 @@ var Visual = (function(mode) {
     function visualSeek(dir, chr) {
         self.hideCursor();
         var lastPosBeforeF = [selection.anchorNode, selection.anchorOffset];
-        if (selection.anchorNode && selection.anchorNode.data && selection.anchorNode.data.length
-            && selection.anchorNode.data[selection.anchorOffset] === chr
+        if (selection.focusNode
+            && selection.focusNode.textContent
+            && selection.focusNode.textContent.length
+            && selection.focusNode.textContent[selection.focusOffset] === chr
             && dir === 1
         ) {
             // if the char after cursor is the char to find, forward one step.
-            selection.setPosition(selection.anchorNode, selection.anchorOffset + 1);
+            selection.setPosition(selection.focusNode, selection.focusOffset + 1);
         }
         if (findNextTextNodeBy(chr, true, (dir === -1))) {
             if (state === 1) {
@@ -386,11 +389,13 @@ var Visual = (function(mode) {
 
     self.hideCursor = function () {
         var lastPos = cursor.parentNode;
-        cursor.remove();
         if (lastPos) {
+            lastPos.insertBefore(document.createTextNode(cursor.textContent), cursor);
+            cursor.textContent = "";
+            cursor.remove();
             lastPos.normalize();
+            $(document).trigger("surfingkeys:cursorHidden");
         }
-        $(document).trigger("surfingkeys:cursorHidden");
         return lastPos;
     };
 
@@ -398,10 +403,18 @@ var Visual = (function(mode) {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
+            var ch = "";
             if (selection.focusNode.nodeType === Node.TEXT_NODE) {
                 var node = selection.focusNode;
+                ch = node.textContent[selection.focusOffset];
+                if (/^[\s\n]+$/.test(ch)) {
+                    ch = "";
+                }
                 var pos = node.splitText(selection.focusOffset);
                 node.parentNode.insertBefore(cursor, pos);
+                if (ch !== "") {
+                    pos.data = pos.data.substr(1);
+                }
             } else {
                 selection.focusNode.insertBefore(cursor, selection.focusNode.childNodes[selection.focusOffset]);
             }
@@ -412,9 +425,8 @@ var Visual = (function(mode) {
             }
 
             // set content of cursor to enable scrollIntoViewIfNeeded
-            $(cursor).html('|');
+            $(cursor).html(ch);
             cursor.scrollIntoViewIfNeeded();
-            $(cursor).html('');
         }
     };
     self.getCursorPixelPos = function () {
@@ -438,6 +450,7 @@ var Visual = (function(mode) {
         self.hideCursor();
         var prevPos = [selection.focusNode, selection.focusOffset];
         selection.modify(alter, sel[0], sel[1]);
+
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
         }
@@ -458,12 +471,17 @@ var Visual = (function(mode) {
             var mtches;
             while ((mtches = pattern.exec(node.data)) !== null) {
                 var match = mtches[0];
-                var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
-                matches.push(mark);
+                if (match.length) {
+                    var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
+                    matches.push(mark);
 
-                node = mark.nextSibling;
-                // node changed, reset pattern.lastIndex
-                pattern.lastIndex = 0;
+                    node = mark.nextSibling;
+                    // node changed, reset pattern.lastIndex
+                    pattern.lastIndex = 0;
+                } else {
+                    // matches like \b
+                    break;
+                }
             }
         });
         document.body.normalize();
@@ -499,6 +517,7 @@ var Visual = (function(mode) {
     self.enter = function() {
         mode.enter.apply(self, arguments);
         $(document).on('surfingkeys:cursorHidden', onCursorHiden);
+        _incState();
     };
 
     var _lastPos = null;
@@ -522,10 +541,9 @@ var Visual = (function(mode) {
             selection.setPosition(_lastPos[0], _lastPos[1]);
             self.showCursor();
             self.enter();
-            _incState();
         }
     };
-    self.toggle = function() {
+    self.toggle = function(ex) {
         switch (state) {
             case 1:
                 selection.extend(selection.anchorNode, selection.anchorOffset);
@@ -538,14 +556,29 @@ var Visual = (function(mode) {
                 _incState();
                 break;
             default:
-                Hints.create(/./, function(element) {
-                    setTimeout(function() {
-                        selection.setPosition(element[0], element[1]);
-                        self.showCursor();
-                        self.enter();
-                        _incState();
-                    }, 0);
-                });
+                if (ex === "ym") {
+                    var textToYank = [];
+                    Hints.create(/./, function(element) {
+                        textToYank.push(element[0].data);
+                        Front.writeClipboard(textToYank.join('\n'));
+                    }, {multipleHits: true});
+                } else {
+                    Hints.create(/./, function(element) {
+                        if (ex === "y") {
+                            Front.writeClipboard(element[0].data);
+                        } else {
+                            setTimeout(function() {
+                                selection.setPosition(element[0], element[1]);
+                                self.enter();
+                                if (ex === "z") {
+                                    selection.extend(element[0], element[0].data.length);
+                                    _incState();
+                                }
+                                self.showCursor();
+                            }, 0);
+                        }
+                    });
+                }
                 break;
         }
     };
@@ -572,9 +605,10 @@ var Visual = (function(mode) {
             if (pe.tagName === "SURFINGKEYS_MARK") {
                 pe = pe.parentElement;
             }
+            var ch = cursor.innerText;
             cursor.innerText = "🇿";
             var pos = pe.innerText.indexOf(cursor.innerText);
-            cursor.innerText = "";
+            cursor.innerText = ch;
             word = getNearestWord(pe.innerText, pos);
         }
         return word;
@@ -595,7 +629,6 @@ var Visual = (function(mode) {
             // need enter visual mode again when modeAfterYank is set to Normal / Caret.
             if (state === 0) {
                 self.enter();
-                _incState();
             }
             currentOccurrence = (backward ? (matches.length + currentOccurrence - 1) : (currentOccurrence + 1)) % matches.length;
             select(matches[currentOccurrence]);
@@ -679,10 +712,8 @@ var Visual = (function(mode) {
         self.visualClear();
         highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
         if (matches.length) {
-            state = 1;
-            _onStateChange();
-            select(matches[currentOccurrence]);
             self.enter();
+            select(matches[currentOccurrence]);
         } else {
             Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }

@@ -4,8 +4,11 @@ surfingkeys_mark {
 }
 div.surfingkeys_cursor {
     background-color: #0642CE;
-    color: #0642CE;
+    color: #f0f8ff;
+}
+div.surfingkeys_cursor:empty {
     padding: 0px 2px;
+    min-height: 12px;
 }
 #sk_hints>div {
     position: absolute;
@@ -24,7 +27,7 @@ div.surfingkeys_cursor {
     opacity:0.25;
 }
 #sk_hints[mode=text]>div {
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff)) !important;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
 #sk_emoji {
     z-index: 2147483000;

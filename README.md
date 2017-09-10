@@ -365,7 +365,7 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
         byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
         always      Chrome will connect to all sites through proxy.
         system      Use proxy configuration taken from the operating system.
-        clear       Surfingkeys will take on control of proxy settings, this is the default mode.
+        clear       Surfingkeys will not take control of proxy settings, this is the default mode.
 
 * addProxySite, removeProxySite, toggleProxySite, to make Chrome connect to site through proxy or not, examples:
 
@@ -590,9 +590,13 @@ works like
 
 ### Styling
 
-Change the style of the link hints:
+To change style for link hints:
 
     Hints.style('border: solid 3px #552a48; color:#efe1eb; background: initial; background-color: #552a48;');
+
+To Change style for text hints:
+
+    Hints.style("border: solid 8px #C38A22;padding: 1px;background: #e39913", "text");
 
 Change the style of the search marks and cursor:
 
@@ -643,6 +647,7 @@ For example,
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
+| settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visibile after user clicks on some other link. If you don't like the input to be focused when it's turned to visibile, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 
 ### Example of settings.theme, below is to set font size of status bar

@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Map your keys for web surfing",
-    "version": "0.9.2",
+    "version": "0.9.7",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
         "128": "icons/128.png",
@@ -12,6 +12,15 @@
     "commands": {
         "restartext": {
             "description": "Restart this extenstion."
+        },
+        "previousTab": {
+            "description": "Go to the previous tab."
+        },
+        "nextTab": {
+            "description": "Go to the next tab."
+        },
+        "closeTab": {
+            "description": "Close the current tab."
         },
         "proxyThis": {
             "description": "Toggle current site in autoproxy_hosts."

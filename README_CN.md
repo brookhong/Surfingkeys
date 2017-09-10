@@ -626,6 +626,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.startToShowEmoji | 2 | 在冒号后输入多少个字符才显示表情下拉选项。 |
 | settings.language | undefined | 帮助中使用何种语言，目前只支持中英文，设为"zh-CN"显示中文帮助。 |
 | settings.stealFocusOnLoad | true | 是否阻止光标定位到输入框，默认为true，这样我们可以在页面加载结束之后直接使用Surfingkeys提供的各类按键，否则需要按Esc退出输入框。 |
+| settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
 
 ### settings.theme示例，修改状态栏字体

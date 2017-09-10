@@ -34,6 +34,7 @@ var runtime = window.runtime || (function() {
             focusFirstCandidate: false,
             language: undefined,
             stealFocusOnLoad: true,
+            enableAutoFocus: true,
             defaultVoice: "Daniel",
             experiment: false,
             lastQuery: ""

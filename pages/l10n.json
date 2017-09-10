@@ -206,6 +206,9 @@
         "vim-like marks": "类VIM标签",
         "zoom in": "放大页面",
         "zoom out": "缩小页面",
+        "Enter visual mode, and select whole element": "进入可视模式，并全选指定文本",
+        "Yank text of an element": "选择复制指定文本",
+        "Yank text of multiple elements": "选择复制多个指定文本",
         "zoom reset": "重置缩放比例"
     }
 }
