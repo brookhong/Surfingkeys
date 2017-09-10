@@ -335,7 +335,7 @@ var Normal = (function(mode) {
         elm.smoothScrollBy = function(x, y, d) {
             if (!self.scrollOptions[5]) {
                 // scrollOptions: prop, step, duration, previousTimestamp, delta, keyHeld
-                self.scrollOptions = y ? ['scrollTop', y, d, 0, 0, true] : ['scrollLeft', x, d, 0, 0, true];
+                self.scrollOptions = y ? ['scrollTop', y, d, 0, elm.scrollTop, true] : ['scrollLeft', x, d, 0, elm.scrollLeft, true];
                 function step(t) {
                     var so = self.scrollOptions;
                     if (so[3] === 0) {
@@ -345,13 +345,21 @@ var Normal = (function(mode) {
                         return window.requestAnimationFrame(step);
                     }
                     var old = elm[so[0]], delta = (t - so[3]) * so[1] / so[2];
-                    elm[so[0]] += delta;
-                    so[3] = t;
-                    so[4] += delta;
-
                     var keyHeld = so[5];
+                    if (Math.abs(old + delta - so[4]) >= Math.abs(so[1])) {
+                        if (keyHeld) {
+                            elm[so[0]] += delta;
+                            so[4] = elm[so[0]];
+                        } else {
+                            elm[so[0]] = so[4] + so[1];
+                        }
+                    } else {
+                        elm[so[0]] += delta;
+                    }
+                    so[3] = t;
+
                     if (elm[so[0]] === old // boundary hit
-                        || (!keyHeld && Math.abs(so[4]) >= Math.abs(so[1])) // step completed
+                        || (!keyHeld && Math.abs(elm[so[0]] - so[4]) >= Math.abs(so[1])) // step completed
                     ) {
                         so[5] = false;
                         $(document).trigger("surfingkeys:scrollDone");
@@ -477,13 +485,13 @@ var Normal = (function(mode) {
                 scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize);
                 break;
             case 'pageDown':
-                scrollNode.skScrollBy(0, size[1] / 2);
+                scrollNode.skScrollBy(0, Math.round(size[1] / 2));
                 break;
             case 'fullPageDown':
                 scrollNode.skScrollBy(0, size[1]);
                 break;
             case 'pageUp':
-                scrollNode.skScrollBy(0, -size[1] / 2);
+                scrollNode.skScrollBy(0, -Math.round(size[1] / 2));
                 break;
             case 'fullPageUp':
                 scrollNode.skScrollBy(0, -size[1]);
@@ -495,10 +503,10 @@ var Normal = (function(mode) {
                 scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop);
                 break;
             case 'left':
-                scrollNode.skScrollBy(-runtime.conf.scrollStepSize / 2, 0);
+                scrollNode.skScrollBy(-Math.round(runtime.conf.scrollStepSize / 2), 0);
                 break;
             case 'right':
-                scrollNode.skScrollBy(runtime.conf.scrollStepSize / 2, 0);
+                scrollNode.skScrollBy(Math.round(runtime.conf.scrollStepSize / 2), 0);
                 break;
             case 'leftmost':
                 scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0);
