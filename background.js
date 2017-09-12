@@ -918,7 +918,18 @@ var ChromeService = (function() {
             });
         }, message.sortByMostUsed);
     };
+    function normalizeURL(url) {
+        if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
+            if (/^[\w-]+?:\/\//i.test(url)) {
+                url = url
+            } else {
+                url = "http://" + url;
+            }
+        }
+        return url;
+    }
     self.openLink = function(message, sender, sendResponse) {
+        var url = normalizeURL(message.url);
         if (message.tab.tabbed) {
             var newTabPosition;
             if (sender.tab) {
@@ -937,7 +948,7 @@ var ChromeService = (function() {
                 }
             }
             chrome.tabs.create({
-                url: message.url,
+                url: url,
                 active: message.tab.active,
                 index: newTabPosition,
                 pinned: message.tab.pinned
@@ -951,7 +962,7 @@ var ChromeService = (function() {
             });
         } else {
             chrome.tabs.update({
-                url: message.url,
+                url: url,
                 pinned: message.tab.pinned || sender.tab.pinned
             }, function(tab) {
                 if (message.scrollLeft || message.scrollTop) {
