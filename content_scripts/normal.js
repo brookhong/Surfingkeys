@@ -234,7 +234,7 @@ var Normal = (function(mode) {
         self.passFocus(runtime.conf.enableAutoFocus);
     });
     self.addEventListener('blur', function(event) {
-        self.scrollOptions[5] = false;
+        keyHeld = false;
     });
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
@@ -255,7 +255,7 @@ var Normal = (function(mode) {
     });
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
-            self.scrollOptions[5] = false;
+            keyHeld = false;
         }, 0);
     });
     self.addEventListener('mousedown', function(event) {
@@ -297,7 +297,7 @@ var Normal = (function(mode) {
     self.map_node = self.mappings;
 
     self.repeats = "";
-    self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
+    var keyHeld = false;
 
     var scrollNodes, scrollIndex = 0,
         lastKeys, scrollingRoot = document.scrollingElement;
@@ -333,35 +333,38 @@ var Normal = (function(mode) {
             };
         }
         elm.smoothScrollBy = function(x, y, d) {
-            if (!self.scrollOptions[5]) {
-                // scrollOptions: prop, step, duration, previousTimestamp, delta, keyHeld
-                self.scrollOptions = y ? ['scrollTop', y, d, 0, elm.scrollTop, true] : ['scrollLeft', x, d, 0, elm.scrollLeft, true];
+            if (!keyHeld) {
+                var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
+                    duration = d,
+                    previousTimestamp = 0,
+                    originValue = elm[prop],
+                    stepCompleted = false;
+                keyHeld = true;
                 function step(t) {
-                    var so = self.scrollOptions;
-                    if (so[3] === 0) {
+                    if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
-                        so[3] = t;
+                        previousTimestamp = t;
                         $(document).trigger("surfingkeys:scrollStarted");
                         return window.requestAnimationFrame(step);
                     }
-                    var old = elm[so[0]], delta = (t - so[3]) * so[1] / so[2];
-                    var keyHeld = so[5];
-                    if (Math.abs(old + delta - so[4]) >= Math.abs(so[1])) {
+                    var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
+                    if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
+                        stepCompleted = true;
                         if (keyHeld) {
-                            elm[so[0]] += delta;
-                            so[4] = elm[so[0]];
+                            elm[prop] += delta;
+                            originValue = elm[prop];
                         } else {
-                            elm[so[0]] = so[4] + so[1];
+                            elm[prop] = originValue + distance;
                         }
                     } else {
-                        elm[so[0]] += delta;
+                        elm[prop] += delta;
                     }
-                    so[3] = t;
+                    previousTimestamp = t;
 
-                    if (elm[so[0]] === old // boundary hit
-                        || (!keyHeld && Math.abs(elm[so[0]] - so[4]) >= Math.abs(so[1])) // step completed
+                    if (elm[prop] === old // boundary hit
+                        || (!keyHeld && stepCompleted) // distance completed
                     ) {
-                        so[5] = false;
+                        keyHeld = false;
                         $(document).trigger("surfingkeys:scrollDone");
                     } else {
                         return window.requestAnimationFrame(step);
