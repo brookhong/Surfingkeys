@@ -264,7 +264,9 @@ var Normal = (function(mode) {
         // when the event was created or modified by a script or dispatched via dispatchEvent.
 
         // enable only mouse click from human being to focus input
-        if (!runtime.conf.enableAutoFocus) {
+        if (runtime.conf.enableAutoFocus) {
+            self.passFocus(true);
+        } else {
             self.passFocus(event.isTrusted);
         }
 

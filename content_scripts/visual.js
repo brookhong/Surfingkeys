@@ -30,7 +30,7 @@ var Visual = (function(mode) {
                 event.sk_suppressed = true;
             } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 if (state > 1) {
-                    cursor.remove();
+                    self.hideCursor();
                     selection.collapse(selection.anchorNode, selection.anchorOffset);
                     self.showCursor();
                 } else {
