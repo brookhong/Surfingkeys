@@ -205,7 +205,7 @@ var Hints = (function(mode) {
         for (var i = 0; i < M; i += glen) {
             var group = [];
             for (var j = 0; j < glen && i + j < M; j++) {
-                group.push(chars[j]);
+                group.push(chars[j] + (groups.length + 1));
             }
             groups.push(group);
         }
