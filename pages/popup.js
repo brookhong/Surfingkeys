@@ -1,6 +1,5 @@
 var disableAll = document.getElementById('disableAll'),
-    version = "Surfingkeys " + chrome.runtime.getManifest().version,
-    lnkSettings = document.getElementById('lnkSettings');
+    version = "Surfingkeys " + chrome.runtime.getManifest().version;
 
 function updateStatus(blacklist) {
     var disabled = blacklist.hasOwnProperty('.*');
@@ -26,14 +25,3 @@ disableAll.addEventListener('click', function() {
         updateStatus(response.blacklist);
     });
 });
-
-lnkSettings.addEventListener('click', function() {
-    chrome.runtime.sendMessage({
-        action: 'openLink',
-        tab: {
-            tabbed: true
-        },
-        url: chrome.extension.getURL('/pages/options.html')
-    });
-});
-

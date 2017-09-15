@@ -7,7 +7,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor to the end of the line",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 element.setSelectionRange(element.value.length, element.value.length);
             } else {
@@ -24,7 +24,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor to the beginning of the line",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 element.setSelectionRange(0, 0);
             } else {
@@ -41,7 +41,7 @@ var Insert = (function(mode) {
         annotation: "Delete all entered characters before the cursor",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 element.value = element.value.substr(element.selectionStart);
                 element.setSelectionRange(0, 0);
@@ -56,7 +56,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor Backward 1 word",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = nextNonWord(element.value, -1, element.selectionStart);
                 element.setSelectionRange(pos, pos);
@@ -70,7 +70,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor Forward 1 word",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = nextNonWord(element.value, 1, element.selectionStart);
                 element.setSelectionRange(pos, pos);
@@ -84,7 +84,7 @@ var Insert = (function(mode) {
         annotation: "Delete a word backwards",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = deleteNextWord(element.value, -1, element.selectionStart);
                 element.value = pos[0];
@@ -104,7 +104,7 @@ var Insert = (function(mode) {
         annotation: "Delete a word forwards",
         feature_group: 15,
         code: function() {
-            var element = document.activeElement;
+            var element = getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = deleteNextWord(element.value, 1, element.selectionStart);
                 element.value = pos[0];
@@ -124,7 +124,7 @@ var Insert = (function(mode) {
         annotation: "Exit insert mode",
         feature_group: 15,
         code: function() {
-            document.activeElement.blur();
+            getRealEdit().blur();
             self.exit();
         }
     });
@@ -138,8 +138,9 @@ var Insert = (function(mode) {
         feature_group: 15,
         keepPropagation: true,
         code: function() {
-            if (document.activeElement.selectionStart !== undefined) {
-                _emojiPending = document.activeElement.selectionStart;
+            var element = getRealEdit();
+            if (element.selectionStart !== undefined) {
+                _emojiPending = element.selectionStart;
             } else {
                 _emojiPending = document.getSelection().focusOffset;
             }
@@ -153,7 +154,7 @@ var Insert = (function(mode) {
     });
 
     function listEmoji() {
-        var input = document.activeElement, query = "", isInput = true;
+        var input = getRealEdit(), query = "", isInput = true;
         if (input.selectionStart !== undefined && input.value !== undefined) {
             query = input.value.substr(_emojiPending, input.selectionStart - _emojiPending);
         } else {
@@ -244,6 +245,7 @@ var Insert = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
+        var realTarget = getRealEdit(event);
         if (_emojiDiv.is(":visible")) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 _emojiDiv.remove();
@@ -255,12 +257,11 @@ var Insert = (function(mode) {
                 _suppressKeyup = true;
                 event.sk_stopPropagation = true;
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-                var elm = document.activeElement,
-                    emoji = _emojiDiv.find(">div.selected>span").html();
-                if (elm.setSelectionRange !== undefined) {
-                    var val = elm.value;
-                    elm.value = val.substr(0, _emojiPending - 1) + emoji + val.substr(elm.selectionStart);
-                    elm.setSelectionRange(_emojiPending, _emojiPending);
+                var emoji = _emojiDiv.find(">div.selected>span").html();
+                if (realTarget.setSelectionRange !== undefined) {
+                    var val = realTarget.value;
+                    realTarget.value = val.substr(0, _emojiPending - 1) + emoji + val.substr(realTarget.selectionStart);
+                    realTarget.setSelectionRange(_emojiPending, _emojiPending);
                 } else {
                     // for contenteditable div
                     var selection = document.getSelection(), val = selection.focusNode.data;
@@ -272,14 +273,12 @@ var Insert = (function(mode) {
                 _emojiPending = -1;
                 event.sk_stopPropagation = true;
             }
-        } else if (!isEditable(event.target)) {
+        } else if (!isEditable(realTarget)) {
             self.exit();
-        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && event.target.localName === "input") {
+        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && realTarget.localName === "input") {
             // leave time 300ms for origin event handler of the input widget
             setTimeout(function() {
-                if (document.activeElement === event.target) {
-                    event.target.blur();
-                }
+                realTarget.blur();
                 self.exit();
             }, 300);
         } else if (event.sk_keyName.length) {
@@ -288,7 +287,7 @@ var Insert = (function(mode) {
                 // such as, to insert `,m` in case of mapkey `,,` defined.
                 var pw = last.getPrefixWord();
                 if (pw) {
-                    var elm = document.activeElement, str = elm.value, pos = elm.selectionStart;
+                    var elm = getRealEdit(), str = elm.value, pos = elm.selectionStart;
                     if (str !== undefined && pos !== undefined) {
                         elm.value = str.substr(0, elm.selectionStart) + pw + str.substr(elm.selectionEnd);
                         pos += pw.length;
@@ -318,11 +317,12 @@ var Insert = (function(mode) {
         }
     });
     self.addEventListener('keyup', function(event) {
+        var realTarget = getRealEdit(event);
         if (!_suppressKeyup && _emojiPending !== -1) {
             var v, ss;
-            if (event.target.selectionStart !== undefined && event.target.value !== undefined) {
-                v = event.target.value;
-                ss = event.target.selectionStart;
+            if (realTarget.selectionStart !== undefined && realTarget.value !== undefined) {
+                v = realTarget.value;
+                ss = realTarget.selectionStart;
             } else {
                 // for contenteditable div
                 var selection = document.getSelection();
@@ -338,7 +338,8 @@ var Insert = (function(mode) {
         _suppressKeyup = false;
     });
     self.addEventListener('focus', function(event) {
-        if (!isEditable(event.target)) {
+        var realTarget = getRealEdit(event);
+        if (!isEditable(realTarget)) {
             self.exit();
         }
     });

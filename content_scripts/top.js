@@ -19,7 +19,9 @@ var frontendFrame = (function() {
         }, frontEndURL);
     }, false);
 
-    document.documentElement.appendChild(uiHost);
+    setTimeout(function() {
+        document.documentElement.appendChild(uiHost);
+    }, 0);
 
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null, _initialized = false;

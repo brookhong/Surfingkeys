@@ -382,13 +382,6 @@ function tabOpenLink(str, simultaneousness) {
     });
     // open the first batch links immediately
     urls.slice(0, simultaneousness).forEach(function(url) {
-        if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-            if (/^[\w-]+?:\/\//i.test(url)) {
-                url = url
-            } else {
-                url = "http://" + url;
-            }
-        }
         RUNTIME("openLink", {
             tab: {
                 tabbed: true

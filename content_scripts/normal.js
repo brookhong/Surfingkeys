@@ -209,19 +209,21 @@ var Normal = (function(mode) {
     self.enter = function() {
         mode.enter.apply(self, arguments);
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            document.activeElement && document.activeElement.blur();
+            var elm = getRealEdit();
+            elm && elm.blur();
         }
     };
 
     self.addEventListener('keydown', function(event) {
-        if (isEditable(event.target)) {
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget)) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
-                document.activeElement.blur();
+                realTarget.blur();
                 Insert.exit();
             } else if (event.key === "Tab"){
                 // enable Tab key to focus next input
                 Normal.passFocus(true);
-                Insert.enter(event.target);
+                Insert.enter(realTarget);
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist();
@@ -232,12 +234,12 @@ var Normal = (function(mode) {
         self.passFocus(runtime.conf.enableAutoFocus);
     });
     self.addEventListener('blur', function(event) {
-        self.scrollOptions[5] = false;
+        keyHeld = false;
     });
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            var elm = event.target;
+            var elm = getRealEdit(event);
             if (isEditable(elm)) {
                 if (_passFocus) {
                     if (!runtime.conf.enableAutoFocus) {
@@ -253,7 +255,7 @@ var Normal = (function(mode) {
     });
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
-            self.scrollOptions[5] = false;
+            keyHeld = false;
         }, 0);
     });
     self.addEventListener('mousedown', function(event) {
@@ -262,12 +264,15 @@ var Normal = (function(mode) {
         // when the event was created or modified by a script or dispatched via dispatchEvent.
 
         // enable only mouse click from human being to focus input
-        if (!runtime.conf.enableAutoFocus) {
+        if (runtime.conf.enableAutoFocus) {
+            self.passFocus(true);
+        } else {
             self.passFocus(event.isTrusted);
         }
 
-        if (isEditable(event.target)) {
-            Insert.enter(event.target);
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget)) {
+            Insert.enter(realTarget);
         } else {
             Insert.exit();
         }
@@ -294,7 +299,7 @@ var Normal = (function(mode) {
     self.map_node = self.mappings;
 
     self.repeats = "";
-    self.scrollOptions = ['scrollTop', 0, 0, 0, 0, false];
+    var keyHeld = false;
 
     var scrollNodes, scrollIndex = 0,
         lastKeys, scrollingRoot = document.scrollingElement;
@@ -330,27 +335,38 @@ var Normal = (function(mode) {
             };
         }
         elm.smoothScrollBy = function(x, y, d) {
-            if (!self.scrollOptions[5]) {
-                // scrollOptions: prop, step, duration, previousTimestamp, delta, keyHeld
-                self.scrollOptions = y ? ['scrollTop', y, d, 0, 0, true] : ['scrollLeft', x, d, 0, 0, true];
+            if (!keyHeld) {
+                var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
+                    duration = d,
+                    previousTimestamp = 0,
+                    originValue = elm[prop],
+                    stepCompleted = false;
+                keyHeld = true;
                 function step(t) {
-                    var so = self.scrollOptions;
-                    if (so[3] === 0) {
+                    if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
-                        so[3] = t;
+                        previousTimestamp = t;
                         $(document).trigger("surfingkeys:scrollStarted");
                         return window.requestAnimationFrame(step);
                     }
-                    var old = elm[so[0]], delta = (t - so[3]) * so[1] / so[2];
-                    elm[so[0]] += delta;
-                    so[3] = t;
-                    so[4] += delta;
+                    var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
+                    if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
+                        stepCompleted = true;
+                        if (keyHeld) {
+                            elm[prop] += delta;
+                            originValue = elm[prop];
+                        } else {
+                            elm[prop] = originValue + distance;
+                        }
+                    } else {
+                        elm[prop] += delta;
+                    }
+                    previousTimestamp = t;
 
-                    var keyHeld = so[5];
-                    if (elm[so[0]] === old // boundary hit
-                        || (!keyHeld && Math.abs(so[4]) >= Math.abs(so[1])) // step completed
+                    if (elm[prop] === old // boundary hit
+                        || (!keyHeld && stepCompleted) // distance completed
                     ) {
-                        so[5] = false;
+                        keyHeld = false;
                         $(document).trigger("surfingkeys:scrollDone");
                     } else {
                         return window.requestAnimationFrame(step);
@@ -474,13 +490,13 @@ var Normal = (function(mode) {
                 scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize);
                 break;
             case 'pageDown':
-                scrollNode.skScrollBy(0, size[1] / 2);
+                scrollNode.skScrollBy(0, Math.round(size[1] / 2));
                 break;
             case 'fullPageDown':
                 scrollNode.skScrollBy(0, size[1]);
                 break;
             case 'pageUp':
-                scrollNode.skScrollBy(0, -size[1] / 2);
+                scrollNode.skScrollBy(0, -Math.round(size[1] / 2));
                 break;
             case 'fullPageUp':
                 scrollNode.skScrollBy(0, -size[1]);
@@ -492,10 +508,10 @@ var Normal = (function(mode) {
                 scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop);
                 break;
             case 'left':
-                scrollNode.skScrollBy(-runtime.conf.scrollStepSize / 2, 0);
+                scrollNode.skScrollBy(-Math.round(runtime.conf.scrollStepSize / 2), 0);
                 break;
             case 'right':
-                scrollNode.skScrollBy(runtime.conf.scrollStepSize / 2, 0);
+                scrollNode.skScrollBy(Math.round(runtime.conf.scrollStepSize / 2), 0);
                 break;
             case 'leftmost':
                 scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0);
