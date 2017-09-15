@@ -117,7 +117,15 @@ var Hints = (function(mode) {
         hints.removeClass('inactive-group');
         var selector = '[data-group="' + currentHintGroup + '"]';
         hints.not(selector)
-            .addClass('inactive-group');
+            .addClass('inactive-group')
+            .each(function() {
+                var dist = $(this).data('group') - currentHintGroup;
+                $(this).text(dist);
+            });
+        hints.not('.inactive-group')
+            .each(function() {
+                $(this).text($(this).data('label'));
+            });
     }
 
     function refresh() {
@@ -205,7 +213,7 @@ var Hints = (function(mode) {
         for (var i = 0; i < M; i += glen) {
             var group = [];
             for (var j = 0; j < glen && i + j < M; j++) {
-                group.push(chars[j] + (groups.length + 1));
+                group.push(chars[j]);
             }
             groups.push(group);
         }
@@ -290,9 +298,10 @@ var Hints = (function(mode) {
                 var char = groups.groups[groupNum][groupIndex];
                 link.attr('data-group', groupNum)
                     .attr('data-label', char)
-                    .html(char);
+                    .text(char);
                 if (groupNum !== 0) {
                     link.addClass('inactive-group');
+                    link.text(groupNum);
                 }
             } else {
                 link.data('label', hintLabels[i])
