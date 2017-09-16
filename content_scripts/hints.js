@@ -407,9 +407,9 @@ var Hints = (function(mode) {
         }
     };
 
-    var flashElem = $('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>')[0];
     self.flashPressedLink = function(link) {
         var rect = link.getBoundingClientRect();
+        var flashElem = $('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>')[0];
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';
         flashElem.style.width = rect.width + 'px';
@@ -467,7 +467,6 @@ var Hints = (function(mode) {
             handleHint();
         }, 1);
     };
-
 
     return self;
 })(Mode);

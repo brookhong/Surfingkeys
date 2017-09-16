@@ -361,7 +361,8 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.detectAndInsertURLItem = function(str, toList) {
-        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i;
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i,
+            urlPat1 = /^https?:\/\/(?:[^@\/\n]+@)?([^:\/\n\s]+)/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {
@@ -370,6 +371,11 @@ var Omnibar = (function(mode, ui) {
             toList.unshift({
                 title: str,
                 url: url
+            });
+        } else if (urlPat1.test(str)) {
+            toList.unshift({
+                title: str,
+                url: str
             });
         }
     };
@@ -441,7 +447,13 @@ var Omnibar = (function(mode, ui) {
     };
 
     ui.onHide = function() {
+        // clear cache
+        delete self.cachedPromise;
+        // delete only deletes properties of an object and
+        // cannot normally delete a variable declared using var, whatever the scope.
         _items = null;
+        bookmarkFolders = null;
+
         lastInput = "";
         self.input.val('');
         self.resultsDiv.html("");
@@ -759,7 +771,7 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 var OpenHistory = (function() {
     var self = {
         prompt: 'history≫'
-    }, cachedPromise;
+    };
 
     self.onOpen = function(arg) {
         self.getResults();
@@ -767,7 +779,7 @@ var OpenHistory = (function() {
     };
 
     self.getResults = function() {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
                 action: 'getHistory',
                 sortByMostUsed: runtime.conf.historyMUOrder
@@ -779,7 +791,7 @@ var OpenHistory = (function() {
 
     self.onReset = function() {
         runtime.conf.historyMUOrder = !runtime.conf.historyMUOrder;
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             if (runtime.conf.historyMUOrder) {
                 cached = cached.sort(function(a, b) {
                     return b.visitCount - a.visitCount;
@@ -796,7 +808,7 @@ var OpenHistory = (function() {
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
             Omnibar.listURLs(filtered, false);
         });
@@ -808,11 +820,11 @@ Omnibar.addHandler('History', OpenHistory);
 var OpenURLs = (function() {
     var self = {
         prompt: '≫'
-    }, cachedPromise;
+    };
 
     self.getResults = function() {
         if (self.action === "getAllSites") {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
                     action: 'getTabs',
                     queryInfo: runtime.conf.omnibarTabsQuery
@@ -834,7 +846,7 @@ var OpenURLs = (function() {
                 });
             });
         } else {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
                     action: self.action
                 }, function(response) {
@@ -858,7 +870,7 @@ var OpenURLs = (function() {
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var val = Omnibar.input.val();
             var filtered = _filterByTitleOrUrl(cached, val);
             if (filtered.length === 0) {
@@ -876,10 +888,10 @@ Omnibar.addHandler('URLs', OpenURLs);
 var OpenTabs = (function() {
     var self = {
         prompt: 'tabs≫'
-    }, cachedPromise;
+    };
 
     self.getResults = function () {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
                 action: 'getTabs',
                 query: ''
@@ -894,7 +906,7 @@ var OpenTabs = (function() {
         self.onInput();
     };
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
             Omnibar.listURLs(filtered, false);
         });
@@ -947,6 +959,12 @@ var SearchEngine = (function() {
     self.aliases = {};
 
     var _pendingRequest = undefined; // timeout ID
+    function clearPendingRequest() {
+        if (_pendingRequest) {
+            clearTimeout(_pendingRequest);
+            _pendingRequest = undefined;
+        }
+    }
 
     function formatURL(url, query) {
         if (url.indexOf("%s") !== -1) {
@@ -967,6 +985,7 @@ var SearchEngine = (function() {
         }
     };
     self.onClose = function() {
+        clearPendingRequest();
         self.prompt = undefined;
         self.url = undefined;
         self.suggestionURL = undefined;
@@ -993,10 +1012,7 @@ var SearchEngine = (function() {
             return;
         }
         var val = encodeURIComponent(Omnibar.input.val());
-        if (_pendingRequest) {
-            clearTimeout(_pendingRequest);
-            _pendingRequest = undefined;
-        }
+        clearPendingRequest();
         // Set a timeout before the request is dispatched so that it can be canceled if necessary.
         // This helps prevent rate-limits when typing a long query.
         // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
