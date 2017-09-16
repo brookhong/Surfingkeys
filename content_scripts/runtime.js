@@ -23,6 +23,7 @@ var runtime = window.runtime || (function() {
             hintGroupCycleKey: "f",
             hintGroupCharacters: "qwertasdgzxcv",
             hintGroupCollation: "sequence",
+            hintGroupStart: "first", // first, middle, last
             defaultSearchEngine: "g",
             showModeStatus: false,
             showProxyInStatusBar: false,

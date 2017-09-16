@@ -265,7 +265,18 @@ var Hints = (function(mode) {
         if (runtime.conf.hintGroups === true) {
             var groups = self.genGroups(elements.length);
             hintGroupLen = groups.groups.length;
-            currentHintGroup = 0;
+            switch(runtime.conf.hintGroupStart) {
+                case "middle":
+                    currentHintGroup = Math.floor(groups.groups.length / 2);
+                    break;
+                case "last":
+                    currentHintGroup = groups.groups.length;
+                    break;
+                default:
+                case "first":
+                    currentHintGroup = 0;
+                    break;
+            }
         } else {
             var hintLabels = self.genLabels(elements.length);
         }
@@ -299,9 +310,9 @@ var Hints = (function(mode) {
                 link.attr('data-group', groupNum)
                     .attr('data-label', char)
                     .text(char);
-                if (groupNum !== 0) {
+                if (groupNum !== currentHintGroup) {
                     link.addClass('inactive-group');
-                    link.text(groupNum);
+                    link.text(groupNum - currentHintGroup);
                 }
             } else {
                 link.data('label', hintLabels[i])
