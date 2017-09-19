@@ -1,3 +1,6 @@
+const separator = '≫';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     var elm = evt.srcElement;
     if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
@@ -274,7 +277,7 @@ function onAceVimKeymapInit(fn) {
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
     if (typeof(SearchEngine) !== 'undefined') {
         SearchEngine.aliases[alias] = {
-            prompt: prompt + "≫",
+            prompt: `${prompt}${separatorHtml}`,
             url: url,
             suggestionURL: suggestionURL || "",
             listSuggestion: listSuggestion
