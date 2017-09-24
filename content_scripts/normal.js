@@ -302,7 +302,7 @@ var Normal = (function(mode) {
     var keyHeld = false;
 
     var scrollNodes, scrollIndex = 0,
-        lastKeys, scrollingRoot = document.scrollingElement;
+        lastKeys, scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
 
     function easeFn(t, b, c, d) {
         // t: current time, b: begInnIng value, c: change In value, d: duration
@@ -379,9 +379,6 @@ var Normal = (function(mode) {
 
     // set scrollIndex to the highest node
     function initScrollIndex() {
-        if (!scrollingRoot) {
-            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
-        }
         if (!scrollNodes || scrollNodes.length === 0) {
             $('html, body').css('overflow', 'visible');
             scrollNodes = getScrollableElements(100, 1.1);
