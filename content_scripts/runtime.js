@@ -1,3 +1,6 @@
+const separator = '≫';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 var runtime = window.runtime || (function() {
     var self = {
         conf: {

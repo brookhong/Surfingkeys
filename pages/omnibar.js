@@ -1,6 +1,3 @@
-const separator = '≫';
-const separatorHtml = `<span class='separator'>${separator}</span>`;
-
 function _regexFromString(str, highlight) {
     var rxp = null;
     if (/^\/.+\/([gimuy]*)$/.test(str)) {

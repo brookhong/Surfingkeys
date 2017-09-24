@@ -1,6 +1,3 @@
-const separator = '≫';
-const separatorHtml = `<span class='separator'>${separator}</span>`;
-
 document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     var elm = evt.srcElement;
     if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
