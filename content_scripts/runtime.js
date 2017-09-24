@@ -33,6 +33,7 @@ var runtime = window.runtime || (function() {
             enableAutoFocus: true,
             defaultVoice: "Daniel",
             experiment: false,
+            caseSensitive: false,
             lastQuery: ""
         },
         runtime_handlers: {}
