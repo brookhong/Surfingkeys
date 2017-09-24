@@ -649,6 +649,8 @@ For example,
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
 | settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visibile after user clicks on some other link. If you don't like the input to be focused when it's turned to visibile, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
+| settings.caseSensitive | false | Whether finding in page is case sensitive. |
+| settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

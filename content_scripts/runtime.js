@@ -34,6 +34,7 @@ var runtime = window.runtime || (function() {
             defaultVoice: "Daniel",
             experiment: false,
             caseSensitive: false,
+            cursorAtEndOfInput: true,
             lastQuery: ""
         },
         runtime_handlers: {}
