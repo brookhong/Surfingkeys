@@ -1,3 +1,6 @@
+const separator = '≫';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 function _regexFromString(str, highlight) {
     var rxp = null;
     if (/^\/.+\/([gimuy]*)$/.test(str)) {
@@ -558,7 +561,7 @@ var Omnibar = (function(mode, ui) {
 
 var OpenBookmarks = (function() {
     var self = {
-        prompt: 'bookmark≫',
+        prompt: `bookmark${separatorHtml}`,
         inFolder: []
     };
 
@@ -596,7 +599,7 @@ var OpenBookmarks = (function() {
                 folderId: currentFolderId,
                 focused: fi.index()
             });
-            self.prompt = fi.data('folder_name') + "≫";
+            self.prompt = fi.data('folder_name') + separator;
             Omnibar.promptSpan.html(self.prompt)
             Omnibar.input.val('');
             currentFolderId = folderId;
@@ -621,7 +624,7 @@ var OpenBookmarks = (function() {
 
     self.onClose = function() {
         self.inFolder = [];
-        self.prompt = "bookmark≫";
+        self.prompt = `bookmark${separatorHtml}`;
         currentFolderId = undefined;
     };
 
@@ -629,7 +632,7 @@ var OpenBookmarks = (function() {
         var eaten = false;
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
-            self.prompt = folderOnly ? "bookmark folder≫" : "bookmark≫";
+            self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
             Omnibar.promptSpan.html(self.prompt)
             runtime.command({
                 action: 'getBookmarks',
@@ -676,7 +679,7 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 
 var AddBookmark = (function() {
     var self = {
-        prompt: 'add bookmark≫'
+        prompt: `add bookmark${separatorHtml}`
     }, folders, origFFC;
 
     self.onOpen = function(arg) {
@@ -694,7 +697,7 @@ var AddBookmark = (function() {
             }, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
-                    Omnibar.promptSpan.html('edit bookmark≫');
+                    Omnibar.promptSpan.html(`edit bookmark${separatorHtml}`);
                     Omnibar.resultsDiv.find('li.focused').removeClass('focused');
                     Omnibar.focusItem(`li[folder=${b.parentId}]`);
                 }
@@ -770,7 +773,7 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 
 var OpenHistory = (function() {
     var self = {
-        prompt: 'history≫'
+        prompt: `history${separatorHtml}`
     };
 
     self.onOpen = function(arg) {
@@ -819,7 +822,7 @@ Omnibar.addHandler('History', OpenHistory);
 
 var OpenURLs = (function() {
     var self = {
-        prompt: '≫'
+        prompt: `${separatorHtml}`
     };
 
     self.getResults = function() {
@@ -859,11 +862,11 @@ var OpenURLs = (function() {
     self.onOpen = function(arg) {
         self.action = arg;
         if (self.action === "getRecentlyClosed") {
-            self.prompt = 'Recently closed≫';
+            self.prompt = `Recently closed${separatorHtml}`;
         } else if (self.action === "getTabURLs") {
-            self.prompt = 'Tab History≫';
+            self.prompt = `Tab History${separatorHtml}`;
         } else {
-            self.prompt = '≫';
+            self.prompt = `${separatorHtml}`;
         }
         self.getResults();
         self.onInput();
@@ -887,7 +890,7 @@ Omnibar.addHandler('URLs', OpenURLs);
 
 var OpenTabs = (function() {
     var self = {
-        prompt: 'tabs≫'
+        prompt: `tabs${separatorHtml}`
     };
 
     self.getResults = function () {
@@ -917,7 +920,7 @@ Omnibar.addHandler('Tabs', OpenTabs);
 
 var OpenVIMarks = (function() {
     var self = {
-        prompt: 'VIMarks≫'
+        prompt: `VIMarks${separatorHtml}`
     };
 
     self.onOpen = function() {
