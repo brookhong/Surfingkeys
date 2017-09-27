@@ -379,6 +379,9 @@ var Normal = (function(mode) {
 
     // set scrollIndex to the highest node
     function initScrollIndex() {
+        if (!scrollingRoot) {
+            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
+        }
         if (!scrollNodes || scrollNodes.length === 0) {
             $('html, body').css('overflow', 'visible');
             scrollNodes = getScrollableElements(100, 1.1);
@@ -652,6 +655,9 @@ var Normal = (function(mode) {
 
     var localMarks = {};
     self.addVIMark = function(mark, url) {
+        if (!scrollingRoot) {
+            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
+        }
         if (/^[a-z]$/.test(mark)) {
             // local mark
             localMarks[mark] = {
@@ -673,6 +679,9 @@ var Normal = (function(mode) {
     };
 
     self.jumpVIMark = function(mark, newTab) {
+        if (!scrollingRoot) {
+            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
+        }
         if (localMarks.hasOwnProperty(mark)) {
             var markInfo = localMarks[mark];
             scrollingRoot.scrollLeft = markInfo.scrollLeft;
@@ -837,10 +846,16 @@ var Normal = (function(mode) {
     };
 
     self.captureFullPage = function() {
+        if (!scrollingRoot) {
+            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
+        }
         self.captureElement(scrollingRoot);
     };
 
     self.captureScrollingElement = function() {
+        if (!scrollingRoot) {
+            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
+        }
         var scrollNode = scrollingRoot;
         initScrollIndex();
         if (scrollNodes.length > 0) {
