@@ -307,9 +307,23 @@ mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
             window.location.replace(pdfUrl);
         });
     } else {
-        chrome.storage.local.remove("noPdfViewer", function() {
-            window.location.replace(pdfUrl);
-        });
+        if ($("EMBED").attr("type") === "application/pdf") {
+            chrome.storage.local.remove("noPdfViewer", function() {
+                window.location.replace(pdfUrl);
+            });
+        } else {
+            chrome.storage.local.get("noPdfViewer", function(resp) {
+                if(!resp.noPdfViewer) {
+                    chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                        Front.showBanner("PDF viewer disabled.");
+                    });
+                } else {
+                    chrome.storage.local.remove("noPdfViewer", function() {
+                        Front.showBanner("PDF viewer enabled.");
+                    });
+                }
+            });
+        }
     }
 });
 map('<Ctrl-i>', 'I');
