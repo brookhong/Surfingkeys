@@ -286,6 +286,7 @@ mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
+    $("input:visible:nth(0)")[0].scrollIntoViewIfNeeded();
     Hints.create("input:visible:nth(0)", Hints.dispatchMouseClick);
 });
 mapkey('I', '#1Go to edit box with vim editor', function() {

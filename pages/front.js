@@ -426,9 +426,14 @@ var Front = (function(mode) {
     self.writeClipboard = function(data) {
         _actions['writeClipboard']({content: data});
     };
-    var _key = "";
+    var _key = "", _pendingHint, _hintToken = 0;
     _actions['hideKeystroke'] = function() {
-        if (runtime.conf.richHintsForKeystroke) {
+        if (runtime.conf.richHintsForKeystroke > 0) {
+            if (_pendingHint) {
+                clearTimeout(_pendingHint);
+                _pendingHint = undefined;
+            }
+            _hintToken = 0;
             _richKeystroke.hide();
             _key = "";
             self.flush();
@@ -460,27 +465,32 @@ var Front = (function(mode) {
     _actions['showKeystroke'] = function(message) {
         var key = message.key,
             mode = message.mode;
-        if (runtime.conf.richHintsForKeystroke) {
-            _initL10n(function(locale) {
-                _key += key;
-                var words = _key;
-                var cc = {};
-                getMetas(window[mode].mappings, _key, cc);
-                getMetas(_userMappings, _key, cc);
-                words = Object.keys(cc).sort().map(function(w) {
-                    var meta = cc[w];
-                    if (meta.annotation) {
-                        return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
-                    } else {
-                        return "";
+        if (runtime.conf.richHintsForKeystroke > 0) {
+            _hintToken = 1;
+            _pendingHint = setTimeout(function() {
+                _initL10n(function(locale) {
+                    _key += key;
+                    var words = _key;
+                    var cc = {};
+                    getMetas(window[mode].mappings, _key, cc);
+                    getMetas(_userMappings, _key, cc);
+                    words = Object.keys(cc).sort().map(function(w) {
+                        var meta = cc[w];
+                        if (meta.annotation) {
+                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                        } else {
+                            return "";
+                        }
+                    }).join("");
+                    if (words.length === 0) {
+                        words = _key;
                     }
-                }).join("");
-                if (words.length === 0) {
-                    words = _key;
-                }
-                _richKeystroke.html(words).show();
-                self.flush();
-            });
+                    if (_hintToken > 0) {
+                        _richKeystroke.html(words).show();
+                        self.flush();
+                    }
+                });
+            }, runtime.conf.richHintsForKeystroke);
         } else {
             if (keystroke.is(':animated')) {
                 keystroke.finish()

@@ -598,7 +598,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
-| settings.richHintsForKeystroke | true | 是否启用实时按键提示。 |
+| settings.richHintsForKeystroke | 500 | 超过指定毫秒数后显示按键提示，如果指定值等于0会禁用按键提示。 |
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |

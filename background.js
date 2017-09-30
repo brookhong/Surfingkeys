@@ -919,7 +919,7 @@ var ChromeService = (function() {
         }, message.sortByMostUsed);
     };
     function normalizeURL(url) {
-        if (!/^view-source:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
+        if (!/^view-source:|^javascript:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
             if (/^[\w-]+?:\/\//i.test(url)) {
                 url = url
             } else {
