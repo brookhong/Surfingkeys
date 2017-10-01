@@ -184,7 +184,7 @@ RegExp.prototype.toJSON = function() {
     };
     $.fn.topInView = function() {
         return this.filter(function() {
-            return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
+            return $(this).width() * $(this).height() > 0 && $(this).offset().top > (document.scrollingElement || document.body).scrollTop;
         });
     };
 

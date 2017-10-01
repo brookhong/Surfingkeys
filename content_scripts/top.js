@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 function _setScrollPos(x, y) {
     $(document).ready(function() {
-        document.body.scrollLeft = x;
-        document.body.scrollTop = y;
+        document.scrollingElement.scrollLeft = x;
+        document.scrollingElement.scrollTop = y;
     });
 }
