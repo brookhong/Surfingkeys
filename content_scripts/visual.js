@@ -588,13 +588,13 @@ var Visual = (function(mode) {
                 if (ex === "ym") {
                     var textToYank = [];
                     Hints.create(/./, function(element) {
-                        textToYank.push(element[0].data);
+                        textToYank.push(element[0].data.trim());
                         Front.writeClipboard(textToYank.join('\n'));
                     }, {multipleHits: true});
                 } else {
                     Hints.create(/./, function(element) {
                         if (ex === "y") {
-                            Front.writeClipboard(element[0].data);
+                            Front.writeClipboard(element[0].data.trim());
                         } else {
                             setTimeout(function() {
                                 selection.setPosition(element[0], element[1]);

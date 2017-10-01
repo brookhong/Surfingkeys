@@ -530,7 +530,7 @@ var Normal = (function(mode) {
         if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
             mode.map_node = mode.mappings;
             mode.pendingMap = null;
-            Front.hideKeystroke();
+            mode.isTrustedEvent && Front.hideKeystroke();
             if (mode.repeats) {
                 mode.repeats = "";
             }
@@ -542,6 +542,8 @@ var Normal = (function(mode) {
     self._handleMapKey = function(event, onNoMatched) {
         var thisMode = this,
             key = event.sk_keyName;
+        this.isTrustedEvent = event.isTrusted;
+
         if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
             event.sk_stopPropagation = true;
             event.sk_suppressed = true;
@@ -558,7 +560,7 @@ var Normal = (function(mode) {
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
-            Front.showKeystroke(key, this.name);
+            this.isTrustedEvent && Front.showKeystroke(key, this.name);
             event.sk_stopPropagation = true;
         } else {
             var last = this.map_node;
@@ -573,7 +575,7 @@ var Normal = (function(mode) {
                     if (code.length) {
                         // bound function needs arguments
                         this.pendingMap = code;
-                        Front.showKeystroke(key, this.name);
+                        this.isTrustedEvent && Front.showKeystroke(key, this.name);
                         event.sk_stopPropagation = true;
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
@@ -589,7 +591,7 @@ var Normal = (function(mode) {
                         }, 0);
                     }
                 } else {
-                    Front.showKeystroke(key, this.name);
+                    this.isTrustedEvent && Front.showKeystroke(key, this.name);
                     event.sk_stopPropagation = true;
                 }
             }

@@ -72,7 +72,7 @@ var Front = (function(mode) {
         var visibleDivs = $('body>div:visible').toArray();
         var pointerEvents = visibleDivs.map(function(d) {
             var id = $(d).attr('id');
-            var divNoPointerEvents = ["sk_keystroke", "sk_richKeystroke", "sk_bubble", "sk_banner", "sk_frame"];
+            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner", "sk_frame"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
@@ -121,7 +121,6 @@ var Front = (function(mode) {
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
-    var _richKeystroke = $('<div id=sk_richKeystroke class=sk_theme>').appendTo('body').hide();
 
     var _display;
     _actions['hidePopup'] = function() {
@@ -421,24 +420,25 @@ var Front = (function(mode) {
     self.writeClipboard = function(data) {
         _actions['writeClipboard']({content: data});
     };
-    var _key = "", _pendingHint, _hintToken = 0;
+    var _key = "", _pendingHint;
+    function clearPendingHint() {
+        if (_pendingHint) {
+            clearTimeout(_pendingHint);
+            _pendingHint = undefined;
+        }
+    }
     _actions['hideKeystroke'] = function() {
+        _key = "";
         if (keystroke.is(":visible")) {
-            keystroke.addClass("slideOutRight").one('animationend', function() {
+            var outClass = keystroke.hasClass("expandRichHints") ? "collapseRichHints" : "slideOutRight";
+            keystroke.removeClass("expandRichHints").addClass(outClass).one('animationend', function() {
                 keystroke.html("");
                 keystroke.hide();
                 self.flush();
             });
         }
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
-            if (_pendingHint) {
-                clearTimeout(_pendingHint);
-                _pendingHint = undefined;
-            }
-            _hintToken = 0;
-            _richKeystroke.hide();
-            _key = "";
-            self.flush();
+            clearPendingHint();
         }
     };
     self.hideKeystroke = _actions['hideKeystroke'];
@@ -460,18 +460,19 @@ var Front = (function(mode) {
         var key = message.key,
             mode = message.mode;
 
+        _key += key;
+        clearPendingHint();
+
         keystroke.show();
         self.flush();
         var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
         keystroke.html(keys);
 
-        keystroke.removeClass("slideInRight slideOutRight").addClass("slideInRight");
+        keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight");
 
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
-            _hintToken = 1;
             _pendingHint = setTimeout(function() {
                 _initL10n(function(locale) {
-                    _key += key;
                     var words = _key;
                     var cc = {};
                     getMetas(window[mode].mappings, _key, cc);
@@ -487,9 +488,9 @@ var Front = (function(mode) {
                     if (words.length === 0) {
                         words = _key;
                     }
-                    if (_hintToken > 0) {
-                        keystroke.html("").hide();
-                        _richKeystroke.html(words).show();
+                    if (_pendingHint) {
+                        keystroke.html(words)
+                        keystroke.removeClass("expandRichHints").addClass("expandRichHints");
                         self.flush();
                     }
                 });
