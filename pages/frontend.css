@@ -388,3 +388,47 @@ div.sk_arrow[dir=up]>div:nth-of-type(2) {
     z-index: 2147483300 !important;
     width: 80% !important;
 }
+
+@keyframes slideInBanner {
+    0%, 100% {
+        top: -3rem;
+    }
+
+    18%, 82% {
+        top: 0px;
+    }
+}
+
+.slideInBanner {
+    animation: 1.6s ease-in-out 1 both slideInBanner;
+}
+
+@keyframes slideInRight {
+    0% {
+        right: -2rem;
+    }
+
+    100% {
+        right: 0px;
+    }
+}
+
+.slideInRight {
+    right: -2rem;
+    animation: 0.3s ease-in-out 1 forwards slideInRight;
+}
+
+@keyframes slideOutRight {
+    0% {
+        right: 0px;
+    }
+
+    100% {
+        right: -2rem;
+    }
+}
+
+.slideOutRight {
+    right: -2rem;
+    animation: 0.3s ease-in-out 1 forwards slideOutRight;
+}

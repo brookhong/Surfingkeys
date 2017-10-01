@@ -25,7 +25,7 @@ var runtime = window.runtime || (function() {
             defaultSearchEngine: "g",
             showModeStatus: false,
             showProxyInStatusBar: false,
-            richHintsForKeystroke: 500,
+            richHintsForKeystroke: 1000,
             smartPageBoundary: false,
             clickableSelector: "",
             blacklistPattern: undefined,

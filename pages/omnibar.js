@@ -308,19 +308,6 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.scrollIntoView = function() {
-        var start = self.resultsDiv.position().top;
-        var end = start + self.resultsDiv.outerHeight();
-        var fi = self.resultsDiv.find('li.focused');
-        var pos = fi.position();
-        if (pos && (pos.top < start || (pos.top + fi.outerHeight()) > end)) {
-            var pos = fi.offset().top - self.resultsDiv.find('>ul').offset().top;
-            self.resultsDiv.animate({
-                scrollTop: pos
-            }, 100);
-        }
-    };
-
     self.highlight = function(rxp, str) {
         if (str.substr(0, 11) === "data:image/") {
             str = str.substr(0, 1024);

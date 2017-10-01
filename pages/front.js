@@ -117,7 +117,7 @@ var Front = (function(mode) {
     var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
-    var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body').hide();
+    var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body');
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
@@ -335,17 +335,12 @@ var Front = (function(mode) {
     };
     self.openFinder = _actions['openFinder'];
     self.showBanner = function(content, linger_time) {
-        banner.finish();
-        banner.html(htmlEncode(content)).show();
+        banner.removeClass("slideInBanner");
+        banner.html(htmlEncode(content));
         self.flush();
-        banner.animate({
-            "top": "0"
-        }, 300);
-        banner.delay(linger_time || 1000).animate({
-            "top": "-3rem"
-        }, 300, function() {
-            banner.html("").hide();
-            self.flush();
+
+        banner.addClass("slideInBanner").one('animationend', function() {
+            banner.removeClass("slideInBanner");
         });
     };
     _actions['showBanner'] = function(message) {
@@ -428,7 +423,14 @@ var Front = (function(mode) {
     };
     var _key = "", _pendingHint, _hintToken = 0;
     _actions['hideKeystroke'] = function() {
-        if (runtime.conf.richHintsForKeystroke > 0) {
+        if (keystroke.is(":visible")) {
+            keystroke.addClass("slideOutRight").one('animationend', function() {
+                keystroke.html("");
+                keystroke.hide();
+                self.flush();
+            });
+        }
+        if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             if (_pendingHint) {
                 clearTimeout(_pendingHint);
                 _pendingHint = undefined;
@@ -437,14 +439,6 @@ var Front = (function(mode) {
             _richKeystroke.hide();
             _key = "";
             self.flush();
-        } else {
-            keystroke.animate({
-                right: "-2rem"
-            }, 300, function() {
-                keystroke.html("");
-                keystroke.hide();
-                self.flush();
-            });
         }
     };
     self.hideKeystroke = _actions['hideKeystroke'];
@@ -465,7 +459,15 @@ var Front = (function(mode) {
     _actions['showKeystroke'] = function(message) {
         var key = message.key,
             mode = message.mode;
-        if (runtime.conf.richHintsForKeystroke > 0) {
+
+        keystroke.show();
+        self.flush();
+        var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
+        keystroke.html(keys);
+
+        keystroke.removeClass("slideInRight slideOutRight").addClass("slideInRight");
+
+        if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             _hintToken = 1;
             _pendingHint = setTimeout(function() {
                 _initL10n(function(locale) {
@@ -486,24 +488,12 @@ var Front = (function(mode) {
                         words = _key;
                     }
                     if (_hintToken > 0) {
+                        keystroke.html("").hide();
                         _richKeystroke.html(words).show();
                         self.flush();
                     }
                 });
             }, runtime.conf.richHintsForKeystroke);
-        } else {
-            if (keystroke.is(':animated')) {
-                keystroke.finish()
-            }
-            keystroke.show();
-            self.flush();
-            var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
-            keystroke.html(keys);
-            if (keystroke.css('right') !== '0px') {
-                keystroke.animate({
-                    right: 0
-                }, 300);
-            }
         }
     };
     self.showKeystroke = function() {
