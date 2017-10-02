@@ -327,7 +327,7 @@ var Normal = (function(mode) {
                 if (runtime.conf.smartPageBoundary) {
                     if (document.scrollingElement.scrollTop === 0 && y <= 0) {
                         previousPage() && Front.showBanner("Top margin hit, jump to previous page");
-                    } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight && y > 0) {
+                    } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight + 1 && y > 0) {
                         nextPage() && Front.showBanner("Bottom margin hit, jump to next page");
                     }
                 }
