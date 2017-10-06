@@ -995,9 +995,13 @@ var SearchEngine = (function() {
         return this.activeTab;
     };
     self.onInput = function() {
-        if (!self.suggestionURL || typeof(self.listSuggestion) !== "function") {
-            return;
-        }
+        const showSuggestions = (
+            !self.suggestionURL
+            || typeof(self.listSuggestion) !== "function")
+            && runtime.conf.omnibarSuggestion
+
+        if (!showSuggestions) return false
+
         var val = encodeURIComponent(Omnibar.input.val());
         clearPendingRequest();
         // Set a timeout before the request is dispatched so that it can be canceled if necessary.
