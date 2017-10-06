@@ -648,6 +648,7 @@ function _init(onInit) {
                         action: 'setSurfingkeysIcon',
                         status: resp.disabled
                     });
+                    $(document).trigger("surfingkeys:userSettingsLoaded");
                 });
             }
         });

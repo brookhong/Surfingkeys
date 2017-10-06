@@ -46,7 +46,7 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         'pages/options.html',
         'pages/popup.html',
         'pages/mermaid.html',
-        'pages/fiddle.html',
+        'pages/start.html',
         'pages/pdf_viewer.html',
         'pages/markdown.html'
     ], {base: "."})

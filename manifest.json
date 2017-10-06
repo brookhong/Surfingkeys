@@ -87,6 +87,9 @@
         "run_at": "document_start",
         "all_frames": false
     }],
+    "chrome_url_overrides" : {
+        "newtab": "pages/start.html"
+    },
     "web_accessible_resources": [
         "pages/default.js",
         "pages/emoji.tsv",

@@ -1050,6 +1050,7 @@ var Commands = (function() {
             }
         });
     };
+    self.onReset = self.onOpen;
     self.onInput = function() {
         var cmd = Omnibar.input.val();
         var candidates = Object.keys(self.items).filter(function(c) {

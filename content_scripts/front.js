@@ -32,6 +32,14 @@ var Front = (function() {
         });
     };
 
+    self.getUsage = function(cb) {
+        frontendCommand({
+            action: 'getUsage'
+        }, function(response) {
+            cb(response.data);
+        });
+    };
+
     self.showPopup = function(content) {
         frontendCommand({
             action: 'showPopup',

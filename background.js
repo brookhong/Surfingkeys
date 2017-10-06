@@ -428,8 +428,8 @@ var ChromeService = (function() {
         }
         _setScrollPos_bg(tabId);
     });
-    chrome.tabs.onCreated.addListener(function(tabId, changeInfo, tab) {
-        _setScrollPos_bg(tabId);
+    chrome.tabs.onCreated.addListener(function(tab) {
+        _setScrollPos_bg(tab.id);
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
         if (tabURLs.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {

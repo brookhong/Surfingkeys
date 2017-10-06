@@ -215,7 +215,7 @@ var Front = (function(mode) {
         }
     }
 
-    _usage.onShow = function(message) {
+    function buildUsage(cb) {
         var feature_groups = [
             'Help',                  // 0
             'Mouse Click',           // 1
@@ -265,7 +265,13 @@ var Front = (function(mode) {
             }).join("");
             $(help_groups).appendTo(holder);
             $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>{0}</a>".format(locale("More help"))).appendTo(holder);
-            _usage.html(holder.html());
+            cb(holder.html());
+        });
+    }
+
+    _usage.onShow = function(message) {
+        buildUsage(function(usage) {
+            _usage.html(usage);
         });
     };
 
@@ -279,6 +285,18 @@ var Front = (function(mode) {
 
     _actions['showUsage'] = function(message) {
         showPopup(_usage, message);
+    };
+    _actions['getUsage'] = function(message) {
+        // send response in callback from buildUsage
+        delete message.ack;
+        buildUsage(function(usage) {
+            top.postMessage({
+                data: usage,
+                action: message.action + "Ack",
+                responseToContent: message.commandToFrontend,
+                id: message.id
+            }, topOrigin);
+        });
     };
 
     self.showUsage = self.hidePopup;
@@ -485,10 +503,7 @@ var Front = (function(mode) {
                             return "";
                         }
                     }).join("");
-                    if (words.length === 0) {
-                        words = _key;
-                    }
-                    if (_pendingHint) {
+                    if (words.length > 0 && _pendingHint) {
                         keystroke.html(words)
                         keystroke.removeClass("expandRichHints").addClass("expandRichHints");
                         self.flush();
