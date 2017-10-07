@@ -406,11 +406,15 @@ var Front = (function(mode) {
         StatusBar.show(position, content, duration);
     };
 
-    self.toggleStatus = function() {
-        self.statusBar.toggle();
+    self.toggleStatus = function(visible) {
+        if (visible) {
+            self.statusBar.show();
+        } else {
+            self.statusBar.hide();
+        }
     };
     _actions['toggleStatus'] = function(message) {
-        self.toggleStatus();
+        self.toggleStatus(message.visible);
     };
 
     var clipboard_holder = $('<textarea id=sk_clipboard/>');
