@@ -20,7 +20,15 @@ var Hints = (function(mode) {
                     shiftKey = true;
                 }
                 if (key !== '') {
-                    if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
+                    if (self.numbericHints) {
+                        if (key >= "0" && key <= "9") {
+                            prefix += key;
+                        } else {
+                            textFilter += key;
+                            resetHints();
+                        }
+                        handleHint();
+                    } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key.toUpperCase();
                         handleHint();
                     } else {
@@ -43,6 +51,7 @@ var Hints = (function(mode) {
     });
 
     var prefix = "",
+        textFilter = "",
         lastMouseTarget = null,
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
@@ -124,6 +133,7 @@ var Hints = (function(mode) {
         };
         holder.html("").remove();
         prefix = "";
+        textFilter = "";
         shiftKey = false;
         self.exit();
     }
@@ -148,7 +158,7 @@ var Hints = (function(mode) {
         prefix = "";
     }
 
-    function onScrollDone(evt) {
+    function resetHints(evt) {
         var start = new Date().getTime();
         var found = createHints(_cssSelector, _lastCreateAttrs);
         if (found > 1) {
@@ -163,14 +173,14 @@ var Hints = (function(mode) {
         document.body.style.overflowX = "hidden";
         mode.enter.call(self);
         $(document).on('surfingkeys:scrollStarted', onScrollStarted);
-        $(document).on('surfingkeys:scrollDone', onScrollDone);
+        $(document).on('surfingkeys:scrollDone', resetHints);
     };
 
     self.exit = function() {
         document.body.style.overflowX = _origOverflow;
         mode.exit.call(self);
         $(document).off('surfingkeys:scrollStarted', onScrollStarted);
-        $(document).off('surfingkeys:scrollDone', onScrollDone);
+        $(document).off('surfingkeys:scrollDone', resetHints);
     };
 
     self.genLabels = function(M) {
@@ -266,9 +276,14 @@ var Hints = (function(mode) {
         var elements;
         if (behaviours.tabbed) {
             elements = $('a').regex(/^(?:(?!javascript:\/\/).)+.*$/, $.fn.attr, ['href']).filterInvisible();
+            if (textFilter.length > 0) {
+                elements = $(elements).filter(function(e) {
+                    return this.innerText && this.innerText.indexOf(textFilter) !== -1;
+                });
+            }
         } else {
             if (cssSelector === "") {
-                cssSelector = "a, button, select, input, textarea, *[onclick]";
+                cssSelector = "a, button, select, input, textarea, *[onclick], *.jfk-button, *.goog-flat-menu-button, *[role=button]";
                 if (runtime.conf.clickableSelector.length) {
                     cssSelector += ", " + runtime.conf.clickableSelector;
                 }
@@ -285,7 +300,13 @@ var Hints = (function(mode) {
             } else {
                 elements = $(document.documentElement).find(cssSelector).filterInvisible().toArray();
             }
-            elements = $(filterOverlapElements(elements));
+            if (textFilter.length > 0) {
+                elements = $(elements).filter(function(e) {
+                    return this.innerText && this.innerText.indexOf(textFilter) !== -1;
+                });
+            } else {
+                elements = $(filterOverlapElements(elements));
+            }
         }
 
         if (elements.length > 0) {
@@ -325,7 +346,13 @@ var Hints = (function(mode) {
                 }
             }
         });
-        elements = filterOverlapElements(elements);
+        if (textFilter.length > 0) {
+            elements = elements.filter(function(e) {
+                return e.innerText && e.innerText.indexOf(textFilter) !== -1;
+            });
+        } else {
+            elements = filterOverlapElements(elements);
+        }
         elements = elements.map(function(e) {
             var aa = e.childNodes;
             for (var i = 0, len = aa.length; i < len; i++) {
@@ -392,6 +419,10 @@ var Hints = (function(mode) {
     };
 
     self.create = function(cssSelector, onHintKey, attrs) {
+        if (self.numbericHints) {
+            self.characters = "1234567890";
+        }
+
         // save last used attributes, which will be reused if the user scrolls while the hints are still open
         _cssSelector = cssSelector;
         _onHintKey = onHintKey;
