@@ -995,11 +995,8 @@ var SearchEngine = (function() {
         return this.activeTab;
     };
     self.onInput = function() {
-        const showSuggestions = (
-            self.suggestionURL
-            && typeof(self.listSuggestion) !== "function"
-            && runtime.conf.omnibarSuggestion
-        )
+        const canSuggest = self.suggestionURL && typeof(self.listSuggestion) === "function"
+        const showSuggestions = canSuggest && runtime.conf.omnibarSuggestion
 
         if (!showSuggestions) return false
 
