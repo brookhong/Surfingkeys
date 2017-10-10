@@ -996,9 +996,10 @@ var SearchEngine = (function() {
     };
     self.onInput = function() {
         const showSuggestions = (
-            !self.suggestionURL
-            || typeof(self.listSuggestion) !== "function")
+            self.suggestionURL
+            && typeof(self.listSuggestion) !== "function"
             && runtime.conf.omnibarSuggestion
+        )
 
         if (!showSuggestions) return false
 
