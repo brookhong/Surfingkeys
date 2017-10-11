@@ -366,7 +366,7 @@ function tabOpenLink(str, simultaneousness) {
 
     var urls;
     if (str.constructor.name === "Array") {
-        urls = str
+        urls = str;
     } else if (str.constructor.name === "jQuery") {
         urls = str.map(function() {
             return this.href;

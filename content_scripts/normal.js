@@ -112,7 +112,7 @@ var Mode = (function() {
                 } else {
                     var pathname = window.location.pathname.split('/');
                     if (pathname.length) {
-                        sl += " - frame: " + pathname[pathname.length - 1]
+                        sl += " - frame: " + pathname[pathname.length - 1];
                     }
                 }
             }
@@ -389,7 +389,7 @@ var Normal = (function(mode) {
                     var h = n.scrollHeight;
                     if (h > maxHeight) {
                         scrollIndex = i;
-                        maxHeight = h
+                        maxHeight = h;
                     }
                 });
                 var sn = scrollNodes[scrollIndex];
@@ -645,7 +645,7 @@ var Normal = (function(mode) {
                     var hints = modeKey[1];
                     return function() {
                         Hints.feedkeys(hints);
-                    }
+                    };
                 }
                 setTimeout(closureWrapper(), 120 + i*100);
             }
@@ -692,7 +692,7 @@ var Normal = (function(mode) {
                             url: markInfo,
                             scrollLeft: 0,
                             scrollTop: 0
-                        }
+                        };
                     }
                     markInfo.tab = {
                         tabbed: newTab,

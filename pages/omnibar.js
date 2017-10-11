@@ -203,7 +203,7 @@ var Omnibar = (function(mode, ui) {
             handler = SearchEngine;
             $.extend(SearchEngine, SearchEngine.aliases[alias]);
             self.resultsDiv.html("");
-            self.promptSpan.html(handler.prompt)
+            self.promptSpan.html(handler.prompt);
             resultPageSpan.html("");
             _items = null;
             self.collapsingPoint = val;
@@ -221,7 +221,7 @@ var Omnibar = (function(mode, ui) {
         if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
-            self.promptSpan.html(handler.prompt)
+            self.promptSpan.html(handler.prompt);
             if (val.length) {
                 self.input.val(val.substr(0, val.length - 1));
             }
@@ -428,8 +428,8 @@ var Omnibar = (function(mode, ui) {
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
-        self.promptSpan.html(handler.prompt)
-        resultPageSpan.html("")
+        self.promptSpan.html(handler.prompt);
+        resultPageSpan.html("");
         ui[0].scrollTop = 0;
     };
 
@@ -568,7 +568,7 @@ var OpenBookmarks = (function() {
             }, self.onResponse);
         }
         self.prompt = fl.prompt;
-        Omnibar.promptSpan.html(self.prompt)
+        Omnibar.promptSpan.html(self.prompt);
         lastFocused = fl.focused;
         eaten = true;
     }
@@ -584,7 +584,7 @@ var OpenBookmarks = (function() {
                 focused: fi.index()
             });
             self.prompt = fi.data('folder_name') + separator;
-            Omnibar.promptSpan.html(self.prompt)
+            Omnibar.promptSpan.html(self.prompt);
             Omnibar.input.val('');
             currentFolderId = folderId;
             lastFocused = 0;
@@ -617,7 +617,7 @@ var OpenBookmarks = (function() {
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
             self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
-            Omnibar.promptSpan.html(self.prompt)
+            Omnibar.promptSpan.html(self.prompt);
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId,
@@ -921,7 +921,7 @@ var OpenVIMarks = (function() {
                         url: markInfo,
                         scrollLeft: 0,
                         scrollTop: 0
-                    }
+                    };
                 }
                 if (query === "" || markInfo.url.indexOf(query) !== -1) {
                     urls.push({

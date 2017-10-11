@@ -77,7 +77,7 @@ var runtime = window.runtime || (function() {
                 }
             });
         } else {
-            console.log("[unexpected runtime message] " + JSON.stringify(_message))
+            console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
     });
 

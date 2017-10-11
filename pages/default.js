@@ -275,7 +275,7 @@ mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMous
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element) {
         Front.writeClipboard(element.href);
-    })
+    });
 });
 mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
     var linksToYank = [];
@@ -296,7 +296,7 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
 });
 mapkey('O', '#1Open detected links from text', function() {
     Hints.create(runtime.conf.clickablePat, function(element) {
-        $(`<a href=${element[2]}>`)[0].click()
+        $(`<a href=${element[2]}>`)[0].click();
     }, {statusLine: "Open detected links from text"});
 });
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {

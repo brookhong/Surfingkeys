@@ -86,6 +86,6 @@ var Gist = (function() {
 
     return self;
 })();
-Gist.initGist('****************************************')
+Gist.initGist('****************************************');
 Gist.readComment(1);
 // Gist.newComment("abc");
