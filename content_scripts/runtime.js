@@ -22,6 +22,11 @@ var runtime = window.runtime || (function() {
             pageUrlRegex: [],
             clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
             hintAlign: "center",
+            hintGroups: true,
+            hintGroupCycleKey: "f",
+            hintGroupCharacters: "qwertasdgzxcv",
+            hintGroupCollation: "sequence",
+            hintGroupStart: "first", // first, middle, last
             defaultSearchEngine: "g",
             showModeStatus: false,
             showProxyInStatusBar: false,

@@ -10,6 +10,12 @@ var Hints = (function(mode) {
             holder.hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.shiftKey) {
             flip();
+        } else if (event.sk_keyName.toLowerCase() === runtime.conf.hintGroupCycleKey) {
+            if (isCapital(event.sk_keyName)) {
+                cycle(-1);
+            } else {
+                cycle(1);
+            }
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 prefix = prefix.substr(0, prefix.length - 1);
@@ -53,6 +59,7 @@ var Hints = (function(mode) {
     var prefix = "",
         textFilter = "",
         lastMouseTarget = null,
+        currentHintGroup = 0,
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
@@ -107,9 +114,35 @@ var Hints = (function(mode) {
         lastMouseTarget = element;
     }
 
+
+    function cycle(dir) {
+        currentHintGroup += dir;
+        if(currentHintGroup < 0) {
+            currentHintGroup = hintGroupLen - 1;
+        } else if (currentHintGroup > hintGroupLen - 1) {
+            currentHintGroup = 0;
+        }
+        var hints = holder.find('>div');
+        hints.removeClass('inactive-group');
+        var selector = '[data-group="' + currentHintGroup + '"]';
+        hints.not(selector)
+            .addClass('inactive-group')
+            .each(function() {
+                var dist = $(this).data('group') - currentHintGroup;
+                $(this).text(dist);
+            });
+        hints.not('.inactive-group')
+            .each(function() {
+                $(this).text($(this).data('label'));
+            });
+    }
+
     function refresh() {
         var matches = [];
         var hints = holder.find('>div');
+        if (runtime.conf.hintGroups === true) {
+            hints = hints.not('.inactive-group');
+        }
         hints.each(function(i) {
             var label = $(this).data('label');
             if (label.indexOf(prefix) === 0) {
@@ -183,6 +216,24 @@ var Hints = (function(mode) {
         $(document).off('surfingkeys:scrollDone', resetHints);
     };
 
+    self.genGroups = function(M) {
+        var chars = runtime.conf.hintGroupCharacters.toUpperCase();
+        var glen = chars.length;
+        var groups = [];
+        for (var i = 0; i < M; i += glen) {
+            var group = [];
+            for (var j = 0; j < glen && i + j < M; j++) {
+                group.push(chars[j]);
+            }
+            groups.push(group);
+        }
+
+        return {
+            groups: groups,
+            groupLen: glen
+        };
+    };
+
     self.genLabels = function(M) {
         if (M <= self.characters.length) {
             return self.characters.slice(0, M).toUpperCase().split('');
@@ -220,7 +271,25 @@ var Hints = (function(mode) {
 
     function placeHints(elements) {
         holder.attr('mode', 'click').show().html('');
-        var hintLabels = self.genLabels(elements.length);
+        var groups, hintLabels;
+        if (runtime.conf.hintGroups === true) {
+            var groups = self.genGroups(elements.length);
+            hintGroupLen = groups.groups.length;
+            switch(runtime.conf.hintGroupStart) {
+                case "middle":
+                    currentHintGroup = Math.floor(groups.groups.length / 2);
+                    break;
+                case "last":
+                    currentHintGroup = groups.groups.length;
+                    break;
+                default:
+                case "first":
+                    currentHintGroup = 0;
+                    break;
+            }
+        } else {
+            var hintLabels = self.genLabels(elements.length);
+        }
         var bof = self.coordinate();
         $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
         elements.each(function(i) {
@@ -242,9 +311,23 @@ var Hints = (function(mode) {
             var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)
                 .css('z-index', z + 9999)
                 .data('z-index', z + 9999)
-                .data('label', hintLabels[i])
                 .data('link', this)
-                .html(hintLabels[i]);
+            // Grouping
+            if (runtime.conf.hintGroups === true) {
+                var groupNum = Math.floor(i / groups.groupLen);
+                var groupIndex = i % groups.groupLen;
+                var char = groups.groups[groupNum][groupIndex];
+                link.attr('data-group', groupNum)
+                    .attr('data-label', char)
+                    .text(char);
+                if (groupNum !== currentHintGroup) {
+                    link.addClass('inactive-group');
+                    link.text(groupNum - currentHintGroup);
+                }
+            } else {
+                link.data('label', hintLabels[i])
+                    .html(hintLabels[i]);
+            }
             holder.append(link);
         });
         var hints = holder.find('>div');
@@ -400,7 +483,8 @@ var Hints = (function(mode) {
             holder.attr('mode', 'text').show().html('');
             var hintLabels = self.genLabels(elements.length);
             elements.forEach(function(e, i) {
-                e.data('label', hintLabels[i]).html(hintLabels[i]);
+                e.data('label', hintLabels[i])
+                    .html(hintLabels[i]);
                 holder.append(e);
             });
             $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
@@ -411,7 +495,10 @@ var Hints = (function(mode) {
     }
 
     function createHints(cssSelector, attrs) {
-        return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector, attrs) : createHintsForClick(cssSelector, attrs);
+        if (cssSelector.constructor.name === "RegExp") {
+            return createHintsForTextNode(cssSelector, attrs);
+        }
+        return createHintsForClick(cssSelector, attrs);
     }
 
     self.getSelector = function() {
