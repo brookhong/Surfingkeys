@@ -995,10 +995,10 @@ var SearchEngine = (function() {
         return this.activeTab;
     };
     self.onInput = function() {
-        const canSuggest = self.suggestionURL && typeof(self.listSuggestion) === "function"
-        const showSuggestions = canSuggest && runtime.conf.omnibarSuggestion
+        const canSuggest = self.suggestionURL && typeof(self.listSuggestion) === "function";
+        const showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
 
-        if (!showSuggestions) return false
+        if (!showSuggestions) return false;
 
         var val = encodeURIComponent(Omnibar.input.val());
         clearPendingRequest();
