@@ -198,9 +198,10 @@ var Front = (function() {
             position: pos
         });
     };
-    self.toggleStatus = function () {
+    self.toggleStatus = function (visible) {
         frontendCommand({
-            action: "toggleStatus"
+            action: "toggleStatus",
+            visible: visible
         });
     };
 

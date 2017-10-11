@@ -521,12 +521,12 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
     Front.writeClipboard(JSON.stringify(aa, null, 4));
 });
 mapkey('yg', '#7Capture current page', function() {
-    Front.toggleStatus();
+    Front.toggleStatus(false);
     setTimeout(function() {
         runtime.command({
             action: 'captureVisibleTab'
         }, function(response) {
-            Front.toggleStatus();
+            Front.toggleStatus(true);
             Front.showPopup("<img src='{0}' />".format(response.dataUrl));
         });
     }, 500);
