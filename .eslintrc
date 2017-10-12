@@ -5,6 +5,7 @@
         "es6": true
     },
     "rules": {
-        "semi": ["error", "always"]
+        "semi": ["error", "always"],
+        "no-tabs": 2
     }
 }
