@@ -3,3 +3,4 @@ dist/
 .DS_Store
 .vscode/
 package-lock.json
+jsconfig.json

@@ -8,15 +8,7 @@ var gulp = require('gulp'),
     gp_uglify = require('gulp-uglify'),
     eslint = require('gulp-eslint');
 
-function isFixed(file) {
-	// Has ESLint fixed the file contents?
-	return file.eslint != null && file.eslint.fixed;
-}
-
 gulp.task('lint', () => {
-	// Basic CLI flag check.
-    const hasFixFlag = (process.argv.slice(2).indexOf('--fix') >= 0);
-
     // ESLint ignores files with "node_modules" paths.
     // So, it's best to have gulp ignore the directory as well.
     // Also, Be sure to return the stream from the task;
@@ -28,6 +20,9 @@ gulp.task('lint', () => {
         'pages/*.js',
         '!node_modules/**'
         ])
+        // eslint() attaches the lint output to the "eslint" property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint())
         // eslint.format() outputs the lint results to the console.
         // Alternatively use eslint.formatEach() (see Docs).
         .pipe(eslint.format())
