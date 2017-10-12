@@ -1030,6 +1030,11 @@ var SearchEngine = (function() {
 })();
 Omnibar.addHandler('SearchEngine', SearchEngine);
 
+/**
+ * Execute any pre-defined or customized command
+ *
+ * @returns {Object} Commands
+ */
 var Commands = (function() {
     var self = {
         prompt: ':',
@@ -1038,6 +1043,11 @@ var Commands = (function() {
 
     var historyInc = 0;
 
+    /**
+     * List commands when OmniBar opens
+     *
+     * @returns undefined
+     */
     self.onOpen = function() {
         historyInc = -1;
         runtime.command({
@@ -1052,7 +1062,14 @@ var Commands = (function() {
             }
         });
     };
+
     self.onReset = self.onOpen;
+
+    /**
+     * Filter commands on keyboard input
+     *
+     * @returns undefined
+     */
     self.onInput = function() {
         var cmd = Omnibar.input.val();
         var candidates = Object.keys(self.items).filter(function(c) {
@@ -1064,9 +1081,17 @@ var Commands = (function() {
             });
         }
     };
+
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('cmd'));
     };
+
+    /**
+     * Ececute command after pressing the return key.
+     * Displays any output if the command returns any results.
+     *
+     * @returns {boolean}
+     */
     self.onEnter = function() {
         var ret = false;
         var cmdline = Omnibar.input.val();
@@ -1097,6 +1122,7 @@ var Commands = (function() {
         }
         return ret;
     };
+
     return self;
 })();
 Omnibar.addHandler('Commands', Commands);
