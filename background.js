@@ -934,11 +934,11 @@ var ChromeService = (function() {
                     case 'first':
                         newTabPosition = 0;
                         break;
-                    case 'chromelike':
-                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
-                        chromelikeNewTabPosition++;
+                    case 'last':
                         break;
                     default:
+                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
+                        chromelikeNewTabPosition++;
                         break;
                 }
             }
