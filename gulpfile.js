@@ -5,6 +5,7 @@ var gulp = require('gulp'),
     zip = require('gulp-zip'),
     gulpUtil = require('gulp-util'),
     babel = require('gulp-babel'),
+    gulpDocumentation = require('gulp-documentation'),
     gp_uglify = require('gulp-uglify');
 
 gulp.task('clean', function () {
@@ -87,7 +88,20 @@ gulp.task('copy-es-files', ['clean'], function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['copy-pretty-default-js', 'build_common_content_min', 'use_common_content_min', 'use_common_content_min_manifest'], function() {
+gulp.task('documentation', function () {
+  // Generating README documentation
+  return gulp.src('./{content_scripts/*.js,pages/*.js}')
+    .pipe(gulpDocumentation('md'))
+    .pipe(gulp.dest('docs'));
+});
+
+gulp.task('default', [
+    'copy-pretty-default-js',
+    'build_common_content_min',
+    'use_common_content_min',
+    'use_common_content_min_manifest',
+    'documentation'
+], function() {
     return gulp.src('dist/**')
         .pipe(zip('sk.zip'))
         .pipe(gulp.dest('dist'));
