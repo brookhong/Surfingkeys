@@ -1,6 +1,6 @@
 {
   "name": "surfingkeys",
-  "version": "0.4.1",
+  "version": "0.9.10",
   "description": "Map your keys for web surfing, expand your browser with javascript and keyboard.",
   "main": "background.js",
   "dependencies": {
