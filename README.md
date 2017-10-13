@@ -643,7 +643,7 @@ For example,
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
-| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
+| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "last", "default"] |
 | settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
