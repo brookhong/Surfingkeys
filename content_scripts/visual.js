@@ -257,7 +257,7 @@ var Visual = (function(mode) {
         annotation: "make cursor at center of window.",
         feature_group: 9,
         code: function() {
-            document.scrollingElement.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2
+            document.scrollingElement.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2;
         }
     });
     self.mappings.add("f", {

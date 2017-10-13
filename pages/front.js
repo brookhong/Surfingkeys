@@ -172,13 +172,13 @@ var Front = (function(mode) {
             tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, htmlEncode(t.title)));
             tab.data('url', t.url);
             tabs_fg.append(tab);
-        })
+        });
         tabs_fg.find('div.sk_tab').each(function() {
             $(this).css('width', $(this).width() + 10);
             $(this).append($("<div class=sk_tab_url>{0}</div>".format($(this).data('url'))));
         });
         _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
-    }
+    };
     _actions['chooseTab'] = function() {
         runtime.command({
             action: 'getTabs'
@@ -205,7 +205,7 @@ var Front = (function(mode) {
                     l10n = l10n[lang];
                     cb(function(str) {
                         return l10n[str] ? l10n[str] : str;
-                    })
+                    });
                 } else {
                     cb(function(str) {
                         return str;
@@ -508,7 +508,7 @@ var Front = (function(mode) {
                         }
                     }).join("");
                     if (words.length > 0 && _pendingHint) {
-                        keystroke.html(words)
+                        keystroke.html(words);
                         keystroke.removeClass("expandRichHints").addClass("expandRichHints");
                         self.flush();
                     }

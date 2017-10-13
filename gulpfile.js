@@ -5,7 +5,31 @@ var gulp = require('gulp'),
     zip = require('gulp-zip'),
     gulpUtil = require('gulp-util'),
     babel = require('gulp-babel'),
-    gp_uglify = require('gulp-uglify');
+    gp_uglify = require('gulp-uglify'),
+    eslint = require('gulp-eslint');
+
+gulp.task('lint', () => {
+    // ESLint ignores files with "node_modules" paths.
+    // So, it's best to have gulp ignore the directory as well.
+    // Also, Be sure to return the stream from the task;
+    // Otherwise, the task may end before the stream has finished.
+    return gulp.src([
+        'background.js',
+        'gulpfile.js',
+        'content_scripts/*.js',
+        'pages/*.js',
+        '!node_modules/**'
+        ])
+        // eslint() attaches the lint output to the "eslint" property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint())
+        // eslint.format() outputs the lint results to the console.
+        // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format())
+        // To have the process exit with an error code (1) on
+        // lint error, return the stream and pipe to failAfterError last.
+        .pipe(eslint.failAfterError());
+});
 
 gulp.task('clean', function () {
     return gulp.src('dist', {read: false})
@@ -87,7 +111,7 @@ gulp.task('copy-es-files', ['clean'], function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['copy-pretty-default-js', 'build_common_content_min', 'use_common_content_min', 'use_common_content_min_manifest'], function() {
+gulp.task('default', ['lint', 'copy-pretty-default-js', 'build_common_content_min', 'use_common_content_min', 'use_common_content_min_manifest'], function() {
     return gulp.src('dist/**')
         .pipe(zip('sk.zip'))
         .pipe(gulp.dest('dist'));

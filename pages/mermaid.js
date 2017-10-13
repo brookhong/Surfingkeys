@@ -48,7 +48,7 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
 
     mermaid.parseError = function(err) {
         Front.showPopup(err);
-    }
+    };
     function drawDiagram(code) {
         Front.source = code;
         $('div.mermaid').removeAttr('data-processed').html(code);
