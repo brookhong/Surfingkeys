@@ -1,14 +1,38 @@
-var gulp = require('gulp'),
-    replace = require('gulp-replace'),
-    gp_concat = require('gulp-concat'),
-    clean = require('gulp-clean'),
-    zip = require('gulp-zip'),
-    gulpUtil = require('gulp-util'),
-    babel = require('gulp-babel'),
-    gulpDocumentation = require('gulp-documentation'),
-    ghPages = require('gulp-gh-pages'),
-    clean = require('gulp-clean'),
-    gp_uglify = require('gulp-uglify');
+const gulp = require('gulp'),
+      babel = require('gulp-babel'),
+      clean = require('gulp-clean'),
+      clean = require('gulp-clean'),
+      eslint = require('gulp-eslint'),
+      ghPages = require('gulp-gh-pages'),
+      gp_concat = require('gulp-concat'),
+      gp_uglify = require('gulp-uglify'),
+      gulpDocumentation = require('gulp-documentation'),
+      gulpUtil = require('gulp-util'),
+      replace = require('gulp-replace'),
+      zip = require('gulp-zip');
+
+gulp.task('lint', () => {
+    // ESLint ignores files with "node_modules" paths.
+    // So, it's best to have gulp ignore the directory as well.
+    // Also, Be sure to return the stream from the task;
+    // Otherwise, the task may end before the stream has finished.
+    return gulp.src([
+        'background.js',
+        'gulpfile.js',
+        'content_scripts/*.js',
+        'pages/*.js',
+        '!node_modules/**'
+        ])
+        // eslint() attaches the lint output to the "eslint" property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint())
+        // eslint.format() outputs the lint results to the console.
+        // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format())
+        // To have the process exit with an error code (1) on
+        // lint error, return the stream and pipe to failAfterError last.
+        .pipe(eslint.failAfterError());
+});
 
 gulp.task('clean', function () {
     return gulp.src('dist', {read: false})
@@ -118,6 +142,7 @@ gulp.task('clean', function () {
 
 gulp.task('build', [
     'clean',
+    'lint',
     'copy-pretty-default-js',
     'build_common_content_min',
     'use_common_content_min',

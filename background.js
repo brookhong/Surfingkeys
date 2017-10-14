@@ -138,6 +138,7 @@ var ChromeService = (function() {
     var activePorts = [],
         tabHistory = [],
         tabHistoryIndex = 0,
+        chromelikeNewTabPosition = 0,
         historyTabAction = false;
 
     // data by tab id
@@ -222,7 +223,7 @@ var ChromeService = (function() {
                 }
             } else {
                 var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
-                console.log(type + JSON.stringify(_message))
+                console.log(type + JSON.stringify(_message));
             }
         }
     }
@@ -377,7 +378,7 @@ var ChromeService = (function() {
             return handleMessage(message, port.sender, function(resp) {
                 try {
                     if (!port.isDisconnected) {
-                        port.postMessage(resp)
+                        port.postMessage(resp);
                     }
                 } catch (e) {
                     console.log(message.action + ": " + e);
@@ -444,6 +445,7 @@ var ChromeService = (function() {
         }
         tabActivated[activeInfo.tabId] = new Date().getTime();
         historyTabAction = false;
+        chromelikeNewTabPosition = 0;
     });
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
@@ -636,7 +638,7 @@ var ChromeService = (function() {
             _response(message, sendResponse, {
                 urls: tabs
             });
-        })
+        });
     };
     self.getTopSites = function(message, sender, sendResponse) {
         chrome.topSites.get(function(urls) {
@@ -644,7 +646,7 @@ var ChromeService = (function() {
             _response(message, sendResponse, {
                 urls: urls
             });
-        })
+        });
     };
     function _getHistory(cb, sortByMostUsed) {
         chrome.history.search({
@@ -821,7 +823,7 @@ var ChromeService = (function() {
         });
     };
 
-    self.closeTabLeft  = function(message, sender, senderResponse) { _closeTab(sender, -message.repeats)};
+    self.closeTabLeft  = function(message, sender, senderResponse) { _closeTab(sender, -message.repeats);};
     self.closeTabRight = function(message, sender, senderResponse) { _closeTab(sender, message.repeats); };
     self.closeTabsToLeft = function(message, sender, senderResponse) { _closeTab(sender, -sender.tab.index); };
     self.closeTabsToRight = function(message, sender, senderResponse) {
@@ -921,7 +923,7 @@ var ChromeService = (function() {
     function normalizeURL(url) {
         if (!/^view-source:|^javascript:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
             if (/^[\w-]+?:\/\//i.test(url)) {
-                url = url
+                url = url;
             } else {
                 url = "http://" + url;
             }
@@ -943,7 +945,11 @@ var ChromeService = (function() {
                     case 'first':
                         newTabPosition = 0;
                         break;
+                    case 'last':
+                        break;
                     default:
+                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
+                        chromelikeNewTabPosition++;
                         break;
                 }
             }
@@ -1108,8 +1114,8 @@ var ChromeService = (function() {
                     url: newTabUrl
                 }, function(tabs) {
                     chrome.tabs.remove(tabs.map(function(t) {
-                        return t.id
-                    }))
+                        return t.id;
+                    }));
                 });
             }
         });
@@ -1130,7 +1136,7 @@ var ChromeService = (function() {
             _response(message, sendResponse, {
                 downloads: items
             });
-        })
+        });
     };
     self.executeScript = function(message, sender, sendResponse) {
         chrome.tabs.executeScript(sender.tab.id, {

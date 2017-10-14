@@ -90,7 +90,7 @@ var AceEditor = (function(mode, elmId) {
                 value: u.url,
                 score: typedCount*10 + visitCount,
                 meta: 'local'
-            }
+            };
         });
     });
     var urlCompleter = {
@@ -121,7 +121,7 @@ var AceEditor = (function(mode, elmId) {
                 value: w,
                 score: wordScores[w],
                 meta: 'local'
-            }
+            };
         });
     };
 
@@ -204,16 +204,16 @@ var AceEditor = (function(mode, elmId) {
         vim.defineEx("wq", "wq", function(cm, input) {
             self.exit(self._getValue());
             // tell vim editor that command is done
-            self.state.cm.signal('vim-command-done', '')
+            self.state.cm.signal('vim-command-done', '');
         });
-        vim.map('<CR>', ':wq', 'normal')
+        vim.map('<CR>', ':wq', 'normal');
         vim.defineEx("bnext", "bn", function(cm, input) {
             Front.contentCommand({
                 action: 'nextEdit',
                 backward: false
             });
         });
-        vim.map('<C-b>', ':bn', 'normal')
+        vim.map('<C-b>', ':bn', 'normal');
         vim.defineEx("bprevious", "bp", function(cm, input) {
             Front.contentCommand({
                 action: 'nextEdit',
@@ -222,7 +222,7 @@ var AceEditor = (function(mode, elmId) {
         });
         vim.defineEx("quit", "q", function(cm, input) {
             self.exit();
-            self.state.cm.signal('vim-command-done', '')
+            self.state.cm.signal('vim-command-done', '');
         });
         Front.vimMappings.forEach(function(a) {
             vim.map.apply(vim, a);
@@ -238,7 +238,7 @@ var AceEditor = (function(mode, elmId) {
             originValue = message.content;
             $(self.container).find('textarea').focus();
             self.enter();
-            vim.map('<CR>', ':wq', 'insert')
+            vim.map('<CR>', ':wq', 'insert');
             self.type = message.type;
             self.setFontSize(16);
             if (message.type === 'url') {
@@ -252,12 +252,12 @@ var AceEditor = (function(mode, elmId) {
             } else {
                 self.renderer.setOption('showLineNumbers', true);
                 self.language_tools.setCompleters([pageWordCompleter]);
-                vim.unmap('<CR>', 'insert')
-                vim.map('<C-CR>', ':wq', 'insert')
+                vim.unmap('<CR>', 'insert');
+                vim.map('<C-CR>', ':wq', 'insert');
                 self.css('height', '30%');
             }
             self.setReadOnly(message.type === 'select');
-            vim.map('<C-d>', '<C-w>', 'insert')
+            vim.map('<C-d>', '<C-w>', 'insert');
             vim.exitInsertMode(self.state.cm);
 
             // set cursor at initial line

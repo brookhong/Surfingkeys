@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Map your keys for web surfing",
-    "version": "0.9.10",
+    "version": "0.9.12",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
         "128": "icons/128.png",
@@ -87,9 +87,6 @@
         "run_at": "document_start",
         "all_frames": false
     }],
-    "chrome_url_overrides" : {
-        "newtab": "pages/start.html"
-    },
     "web_accessible_resources": [
         "pages/default.js",
         "pages/emoji.tsv",
