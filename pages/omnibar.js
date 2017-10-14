@@ -1132,8 +1132,9 @@ var Commands = (function() {
     };
 
     /**
-     * Ececute command after pressing the return key.
-     * Displays any output if the command returns any results.
+     * Execute command after pressing the return key.
+     *
+     * Displays any output if the command.
      *
      * @memberof Omnibar
      * @instance
