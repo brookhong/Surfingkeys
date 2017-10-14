@@ -1,7 +1,6 @@
 const gulp = require('gulp'),
       babel = require('gulp-babel'),
       clean = require('gulp-clean'),
-      clean = require('gulp-clean'),
       eslint = require('gulp-eslint'),
       ghPages = require('gulp-gh-pages'),
       gp_concat = require('gulp-concat'),
@@ -157,4 +156,4 @@ gulp.task('build', [
 
 gulp.task('deploy', ['deploy:docs']);
 
-gulp.task('default', ['build'])
+gulp.task('default', ['build']);
