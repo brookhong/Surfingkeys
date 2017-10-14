@@ -669,6 +669,8 @@ For example,
 
 ## API Documentation
 
+> The API documentation is currently a work in progress.
+
 * [Markdown](docs/API.md)
 * [HTML](http://brookhong.github.io/Surfingkeys)
 
