@@ -123,9 +123,10 @@ gulp.task('build', [
     'use_common_content_min',
     'use_common_content_min_manifest',
     'documentation:md',
+    'documentation:html',
 ], function() {
     return gulp.src('dist/extension/**')
-        .pipe(zip('sk.zip'))
+        .pipe(zip('extension/sk.zip'))
         .pipe(gulp.dest('dist'));
 });
 
