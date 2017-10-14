@@ -667,6 +667,11 @@ For example,
     npm install
     npm run build
 
+## API Documentation
+
+    * (Markdown)[docs/API.md]
+    * (HTML)[http://brookhong.github.io/Surfingkeys]
+
 ## Credits
 
 * [jQuery](https://github.com/jquery/jquery), for clean coding.
