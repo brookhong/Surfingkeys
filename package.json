@@ -21,6 +21,7 @@
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "documentation": "^5.3.2",
+    "git-guppy": "^2.1.0",
     "gulp-clean": "^0.3.2",
     "gulp-documentation": "^3.2.1",
     "gulp-gh-pages": "^0.5.4"
