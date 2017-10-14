@@ -669,8 +669,8 @@ For example,
 
 ## API Documentation
 
-    * (Markdown)[docs/API.md]
-    * (HTML)[http://brookhong.github.io/Surfingkeys]
+* [Markdown](docs/API.md)
+* [HTML](http://brookhong.github.io/Surfingkeys)
 
 ## Credits
 
