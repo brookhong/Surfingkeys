@@ -369,7 +369,7 @@ var Visual = (function(mode) {
 
     function getTextNodeByY(y) {
         var node = null;
-        var treeWalker = getTextNodes(document.body, /./, 0);
+        var treeWalker = Utils.getTextNodes(document.body, /./, 0);
         while (treeWalker.nextNode()) {
             if ($(treeWalker.currentNode.parentNode).offset().top > (document.scrollingElement.scrollTop + window.innerHeight * y)) {
                 node = treeWalker.currentNode;
@@ -496,7 +496,7 @@ var Visual = (function(mode) {
     }
 
     function highlight(pattern) {
-        getTextNodes(document.body, pattern).forEach(function(node) {
+        Utils.getTextNodes(document.body, pattern).forEach(function(node) {
             var mtches;
             while ((mtches = pattern.exec(node.data)) !== null) {
                 var match = mtches[0];

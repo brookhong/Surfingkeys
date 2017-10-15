@@ -214,55 +214,58 @@ const Utils = (function (global) {
         });
     }
 
+    function getTextNodes(root, pattern, flag) {
+        var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
+        var treeWalker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT, {
+                acceptNode: function(node) {
+                    if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
+                        return NodeFilter.FILTER_REJECT;
+                    var br = node.parentNode.getBoundingClientRect();
+                    if (br.width < 4 || br.height < 4) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            }, false);
+
+        var nodes = [];
+        if (flag === 1) {
+            nodes.push(treeWalker.firstChild());
+        } else if (flag === -1) {
+            nodes.push(treeWalker.lastChild());
+        } else if (flag === 0) {
+            return treeWalker;
+        } else if (flag === 2) {
+            while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode.parentNode);
+        } else {
+            while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
+        }
+        return nodes;
+    }
+
     return {
         decodeKeystroke,
         encodeKeystroke,
+        filterOverlapElements,
         generateQuickGuid,
         getDocumentOrigin,
         getRealEdit,
+        getTextNodes,
+        getVisibleElements,
         hasScroll,
         htmlDecode,
         htmlEncode,
         isEditable,
+        isElementPartiallyInViewport,
         parseQueryString,
         reportIssue,
-        timeStampString,
-        isElementPartiallyInViewport,
-        getVisibleElements,
-        filterOverlapElements
+        timeStampString
     };
 })(window);
 
-function getTextNodes(root, pattern, flag) {
-    var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
-    var treeWalker = document.createTreeWalker(
-        root,
-        NodeFilter.SHOW_TEXT, {
-            acceptNode: function(node) {
-                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
-                    return NodeFilter.FILTER_REJECT;
-                var br = node.parentNode.getBoundingClientRect();
-                if (br.width < 4 || br.height < 4) {
-                    return NodeFilter.FILTER_REJECT;
-                }
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        }, false);
 
-    var nodes = [];
-    if (flag === 1) {
-        nodes.push(treeWalker.firstChild());
-    } else if (flag === -1) {
-        nodes.push(treeWalker.lastChild());
-    } else if (flag === 0) {
-        return treeWalker;
-    } else if (flag === 2) {
-        while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode.parentNode);
-    } else {
-        while (treeWalker.nextNode()) nodes.push(treeWalker.currentNode);
-    }
-    return nodes;
-}
 
 String.prototype.format = function() {
     var formatted = this;
