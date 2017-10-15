@@ -6,16 +6,19 @@ const Utils = (function () {
         return (document.origin === "null" ? "*" : document.origin);
     }
 
+    function timeStampString(t) {
+        var dt = new Date();
+        dt.setTime(t);
+        return dt.toLocaleString();
+    }
+
     return {
-        getDocumentOrigin
+        getDocumentOrigin,
+        timeStampString
     };
 })();
 
-function timeStampString(t) {
-    var dt = new Date();
-    dt.setTime(t);
-    return dt.toLocaleString();
-}
+
 
 function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);

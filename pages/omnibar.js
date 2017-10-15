@@ -323,12 +323,12 @@ var Omnibar = (function(mode, ui) {
         if (!type) {
             if (b.hasOwnProperty('lastVisitTime')) {
                 type = "☼";
-                additional = "<span class=omnibar_timestamp># {0}</span>".format(timeStampString(b.lastVisitTime));
+                additional = "<span class=omnibar_timestamp># {0}</span>".format(Utils.timeStampString(b.lastVisitTime));
                 additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
                 type = "☆";
-                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId].title || "", timeStampString(b.dateAdded));
+                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId].title || "", Utils.timeStampString(b.dateAdded));
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
                 type = "▓";
