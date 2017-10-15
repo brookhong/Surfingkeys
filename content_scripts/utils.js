@@ -1,4 +1,6 @@
-const Utils = (function () {
+const Utils = (function (global) {
+    console.log(Front);
+    const { document, location } = global;
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
     // file:// cannot be used as a security restriction; this restriction may be modified in the future.
@@ -57,6 +59,15 @@ const Utils = (function () {
         return params;
     }
 
+    function reportIssue(title, description) {
+        title = encodeURIComponent(title);
+        description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0AURL%3A+{3}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent), encodeURIComponent(location.href));
+
+        const error = '<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2> <p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>'.format(title, description);
+
+        Front.showPopup(error);
+    }
+
     return {
         getDocumentOrigin,
         timeStampString,
@@ -65,19 +76,10 @@ const Utils = (function () {
         htmlDecode,
         getRealEdit,
         isEditable,
-        parseQueryString
+        parseQueryString,
+        reportIssue
     };
-})();
-
-
-
-function reportIssue(title, description) {
-    title = encodeURIComponent(title);
-    description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0AURL%3A+{3}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent), encodeURIComponent(window.location.href));
-    var error = '<h2>Uh-oh! The SurfingKeys extension encountered a bug.</h2> <p>Please click <a href="https://github.com/brookhong/Surfingkeys/issues/new?title={0}&body={1}" target=_blank>here</a> to start filing a new issue, append a description of how you were using SurfingKeys before this message appeared, then submit it.  Thanks for your help!</p>'.format(title, description);
-
-    Front.showPopup(error);
-}
+})(window);
 
 function hasScroll(el, direction, barSize) {
     var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];

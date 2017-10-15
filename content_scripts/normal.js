@@ -80,7 +80,7 @@ var Mode = (function() {
                 mode_stack = mode_stack.slice(pos);
             } else {
                 var modeList = Mode.stack().map(function(u) { return u.name; }).join(',');
-                reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
+                Utils.reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
             }
             // stackTrace();
         }

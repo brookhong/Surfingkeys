@@ -41,7 +41,7 @@ var Front = (function(mode) {
                         composed: event.composed,
                         key: event.key
                     }, null, 4);
-                    reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
+                    Utils.reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
                 } else {
                     var s = Utils.htmlEncode(decodeKeystroke(event.sk_keyName));
                     if (!s) {
