@@ -90,9 +90,9 @@ var runtime = window.runtime || (function() {
     };
 
     self.command = function(args, cb) {
-        args.id = generateQuickGuid();
+        args.id = Utils.generateQuickGuid();
         if (!window.frameId && window.innerHeight && window.innerWidth) {
-            window.frameId = generateQuickGuid();
+            window.frameId = Utils.generateQuickGuid();
         }
         args.windowId = window.frameId;
         if (cb) {

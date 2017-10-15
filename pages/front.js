@@ -15,7 +15,7 @@ var Front = (function(mode) {
         _callbacks = {};
     self.contentCommand = function(args, successById) {
         args.commandToContent = true;
-        args.id = generateQuickGuid();
+        args.id = Utils.generateQuickGuid();
         if (successById) {
             args.ack = true;
             _callbacks[args.id] = successById;

@@ -12,17 +12,16 @@ const Utils = (function () {
         return dt.toLocaleString();
     }
 
+    function generateQuickGuid() {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
     return {
         getDocumentOrigin,
-        timeStampString
+        timeStampString,
+        generateQuickGuid
     };
 })();
-
-
-
-function generateQuickGuid() {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
 
 function htmlEncode(str) {
     return $('<div/>').text(str).html();
