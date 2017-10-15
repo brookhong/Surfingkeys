@@ -452,7 +452,7 @@ var Hints = (function(mode) {
 
     self.dispatchMouseClick = function(element, event) {
         self.flashPressedLink(element);
-        if (isEditable(element)) {
+        if (Utils.isEditable(element)) {
             self.exit();
             Insert.enter(element);
         } else {

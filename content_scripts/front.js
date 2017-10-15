@@ -211,7 +211,7 @@ var Front = (function() {
         if (response.data !== undefined) {
             onEditorSaved(response.data);
         }
-        if (runtime.conf.focusOnSaved && isEditable(elementBehindEditor)) {
+        if (runtime.conf.focusOnSaved && Utils.isEditable(elementBehindEditor)) {
             window.focus();
             Insert.enter(elementBehindEditor);
         }

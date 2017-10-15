@@ -36,22 +36,23 @@ const Utils = (function () {
         return rt;
     }
 
+    function isEditable(element) {
+        return element.localName === 'textarea'
+            || element.localName === 'select'
+            || element.isContentEditable
+            || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
+    }
+
     return {
         getDocumentOrigin,
         timeStampString,
         generateQuickGuid,
         htmlEncode,
         htmlDecode,
-        getRealEdit
+        getRealEdit,
+        isEditable
     };
 })();
-
-function isEditable(element) {
-    return element.localName === 'textarea'
-        || element.localName === 'select'
-        || element.isContentEditable
-        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
-}
 
 function parseQueryString(query) {
     var params = {};

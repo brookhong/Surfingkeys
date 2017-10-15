@@ -216,7 +216,7 @@ var Normal = (function(mode) {
 
     self.addEventListener('keydown', function(event) {
         var realTarget = Utils.getRealEdit(event);
-        if (isEditable(realTarget)) {
+        if (Utils.isEditable(realTarget)) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 realTarget.blur();
                 Insert.exit();
@@ -240,7 +240,7 @@ var Normal = (function(mode) {
         Mode.showStatus();
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
             var elm = Utils.getRealEdit(event);
-            if (isEditable(elm)) {
+            if (Utils.isEditable(elm)) {
                 if (_passFocus) {
                     if (!runtime.conf.enableAutoFocus) {
                         // prevent focus on input only when enableAutoFocus is turned off.
@@ -271,7 +271,7 @@ var Normal = (function(mode) {
         }
 
         var realTarget = Utils.getRealEdit(event);
-        if (isEditable(realTarget)) {
+        if (Utils.isEditable(realTarget)) {
             Insert.enter(realTarget);
         } else {
             Insert.exit();

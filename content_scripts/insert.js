@@ -278,7 +278,7 @@ var Insert = (function(mode) {
                 _emojiPending = -1;
                 event.sk_stopPropagation = true;
             }
-        } else if (!isEditable(realTarget)) {
+        } else if (!Utils.isEditable(realTarget)) {
             self.exit();
         } else if (KeyboardUtils.keyCodes.enter === event.keyCode && realTarget.localName === "input") {
             // leave time 300ms for origin event handler of the input widget
@@ -344,7 +344,7 @@ var Insert = (function(mode) {
     });
     self.addEventListener('focus', function(event) {
         var realTarget = Utils.getRealEdit(event);
-        if (!isEditable(realTarget)) {
+        if (!Utils.isEditable(realTarget)) {
             self.exit();
         }
     });
