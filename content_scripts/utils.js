@@ -1,5 +1,4 @@
 const Utils = (function (global) {
-    console.log(Front);
     const { document, location } = global;
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
@@ -59,6 +58,23 @@ const Utils = (function (global) {
         return params;
     }
 
+    function hasScroll(el, direction, barSize) {
+        var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
+        var result = el[offset[0]];
+
+        if (result < barSize) {
+            // set scroll offset to barSize, and verify if we can get scroll offset as barSize
+            var originOffset = el[offset[0]];
+            el[offset[0]] = el.getBoundingClientRect()[offset[1]];
+            result = el[offset[0]];
+            el[offset[0]] = originOffset;
+        }
+        return result >= barSize && (
+            el === document.body
+            || $(el).css('overflow-' + direction) === 'auto'
+            || $(el).css('overflow-' + direction) === 'scroll');
+    }
+
     function reportIssue(title, description) {
         title = encodeURIComponent(title);
         description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0AURL%3A+{3}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent), encodeURIComponent(location.href));
@@ -77,26 +93,10 @@ const Utils = (function (global) {
         getRealEdit,
         isEditable,
         parseQueryString,
-        reportIssue
+        reportIssue,
+        hasScroll
     };
 })(window);
-
-function hasScroll(el, direction, barSize) {
-    var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
-    var result = el[offset[0]];
-
-    if (result < barSize) {
-        // set scroll offset to barSize, and verify if we can get scroll offset as barSize
-        var originOffset = el[offset[0]];
-        el[offset[0]] = el.getBoundingClientRect()[offset[1]];
-        result = el[offset[0]];
-        el[offset[0]] = originOffset;
-    }
-    return result >= barSize && (
-        el === document.body
-        || $(el).css('overflow-' + direction) === 'auto'
-        || $(el).css('overflow-' + direction) === 'scroll');
-}
 
 function isElementPartiallyInViewport(el) {
     var rect = el.getBoundingClientRect();
