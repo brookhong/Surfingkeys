@@ -1,3 +1,9 @@
+const Utils = (function () {
+    return {
+
+    };
+})();
+
 function timeStampString(t) {
     var dt = new Date();
     dt.setTime(t);
