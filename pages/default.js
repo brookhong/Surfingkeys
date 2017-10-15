@@ -21,7 +21,7 @@
 // ************************* WARNING *************************
 
 function toggleQuote() {
-    var elm = getRealEdit(), val = elm.value;
+    var elm = Utils.getRealEdit(), val = elm.value;
     if (val[0] === '"') {
         elm.value = val.substr(1, val.length - 2);
     } else {
@@ -31,7 +31,7 @@ function toggleQuote() {
 imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 cmapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
-    var element = getRealEdit();
+    var element = Utils.getRealEdit();
     Front.showEditor(element);
 });
 function toggleProxySite(host) {

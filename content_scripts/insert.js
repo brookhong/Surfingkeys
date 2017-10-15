@@ -2,7 +2,7 @@ var Insert = (function(mode) {
     var self = $.extend({name: "Insert", eventListeners: {}}, mode);
 
     function moveCusorEOL() {
-        var element = getRealEdit();
+        var element = Utils.getRealEdit();
         if (element.setSelectionRange !== undefined) {
             if (element.type !== "email") {
                 // The input element's type ('email') does not support selection.
@@ -29,7 +29,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor to the beginning of the line",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 element.setSelectionRange(0, 0);
             } else {
@@ -46,7 +46,7 @@ var Insert = (function(mode) {
         annotation: "Delete all entered characters before the cursor",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 element.value = element.value.substr(element.selectionStart);
                 element.setSelectionRange(0, 0);
@@ -61,7 +61,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor Backward 1 word",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = nextNonWord(element.value, -1, element.selectionStart);
                 element.setSelectionRange(pos, pos);
@@ -75,7 +75,7 @@ var Insert = (function(mode) {
         annotation: "Move the cursor Forward 1 word",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = nextNonWord(element.value, 1, element.selectionStart);
                 element.setSelectionRange(pos, pos);
@@ -89,7 +89,7 @@ var Insert = (function(mode) {
         annotation: "Delete a word backwards",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = deleteNextWord(element.value, -1, element.selectionStart);
                 element.value = pos[0];
@@ -109,7 +109,7 @@ var Insert = (function(mode) {
         annotation: "Delete a word forwards",
         feature_group: 15,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.setSelectionRange !== undefined) {
                 var pos = deleteNextWord(element.value, 1, element.selectionStart);
                 element.value = pos[0];
@@ -129,7 +129,7 @@ var Insert = (function(mode) {
         annotation: "Exit insert mode",
         feature_group: 15,
         code: function() {
-            getRealEdit().blur();
+            Utils.getRealEdit().blur();
             self.exit();
         }
     });
@@ -143,7 +143,7 @@ var Insert = (function(mode) {
         feature_group: 15,
         keepPropagation: true,
         code: function() {
-            var element = getRealEdit();
+            var element = Utils.getRealEdit();
             if (element.selectionStart !== undefined) {
                 _emojiPending = element.selectionStart;
             } else {
@@ -159,7 +159,7 @@ var Insert = (function(mode) {
     });
 
     function listEmoji() {
-        var input = getRealEdit(), query = "", isInput = true;
+        var input = Utils.getRealEdit(), query = "", isInput = true;
         if (input.selectionStart !== undefined && input.value !== undefined) {
             query = input.value.substr(_emojiPending, input.selectionStart - _emojiPending);
         } else {
@@ -250,7 +250,7 @@ var Insert = (function(mode) {
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        var realTarget = getRealEdit(event);
+        var realTarget = Utils.getRealEdit(event);
         if (_emojiDiv.is(":visible")) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 _emojiDiv.remove();
@@ -292,7 +292,7 @@ var Insert = (function(mode) {
                 // such as, to insert `,m` in case of mapkey `,,` defined.
                 var pw = last.getPrefixWord();
                 if (pw) {
-                    var elm = getRealEdit(), str = elm.value, pos = elm.selectionStart;
+                    var elm = Utils.getRealEdit(), str = elm.value, pos = elm.selectionStart;
                     if (str !== undefined && pos !== undefined) {
                         elm.value = str.substr(0, elm.selectionStart) + pw + str.substr(elm.selectionEnd);
                         pos += pw.length;
@@ -322,7 +322,7 @@ var Insert = (function(mode) {
         }
     });
     self.addEventListener('keyup', function(event) {
-        var realTarget = getRealEdit(event);
+        var realTarget = Utils.getRealEdit(event);
         if (!_suppressKeyup && _emojiPending !== -1) {
             var v, ss;
             if (realTarget.selectionStart !== undefined && realTarget.value !== undefined) {
@@ -343,7 +343,7 @@ var Insert = (function(mode) {
         _suppressKeyup = false;
     });
     self.addEventListener('focus', function(event) {
-        var realTarget = getRealEdit(event);
+        var realTarget = Utils.getRealEdit(event);
         if (!isEditable(realTarget)) {
             self.exit();
         }

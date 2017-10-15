@@ -209,13 +209,13 @@ var Normal = (function(mode) {
     self.enter = function() {
         mode.enter.apply(self, arguments);
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            var elm = getRealEdit();
+            var elm = Utils.getRealEdit();
             elm && elm.blur();
         }
     };
 
     self.addEventListener('keydown', function(event) {
-        var realTarget = getRealEdit(event);
+        var realTarget = Utils.getRealEdit(event);
         if (isEditable(realTarget)) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 realTarget.blur();
@@ -239,7 +239,7 @@ var Normal = (function(mode) {
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            var elm = getRealEdit(event);
+            var elm = Utils.getRealEdit(event);
             if (isEditable(elm)) {
                 if (_passFocus) {
                     if (!runtime.conf.enableAutoFocus) {
@@ -270,7 +270,7 @@ var Normal = (function(mode) {
             self.passFocus(event.isTrusted);
         }
 
-        var realTarget = getRealEdit(event);
+        var realTarget = Utils.getRealEdit(event);
         if (isEditable(realTarget)) {
             Insert.enter(realTarget);
         } else {
