@@ -397,7 +397,7 @@ var Normal = (function(mode) {
                     break;
                 } else {
                     sn.scrollIntoViewIfNeeded();
-                    if (isElementPartiallyInViewport(sn)) {
+                    if (Utils.isElementPartiallyInViewport(sn)) {
                         break;
                     } else {
                         // remove the node that could not be scrolled into view.
@@ -444,7 +444,7 @@ var Normal = (function(mode) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
             sn.scrollIntoViewIfNeeded();
-            while (!isElementPartiallyInViewport(sn) && scrollNodes.length) {
+            while (!Utils.isElementPartiallyInViewport(sn) && scrollNodes.length) {
                 // remove the node that could not be scrolled into view.
                 scrollNodes.splice(scrollIndex, 1);
                 scrollIndex = scrollIndex % scrollNodes.length;

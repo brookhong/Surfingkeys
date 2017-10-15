@@ -185,6 +185,16 @@ const Utils = (function (global) {
         return ret;
     }
 
+    function isElementPartiallyInViewport(el) {
+        var rect = el.getBoundingClientRect();
+        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+
+        return rect.width > 4 && rect.height > 4
+            && (rect.top <= windowHeight) && (rect.bottom >= 0)
+            && (rect.left <= windowWidth) && (rect.right >= 0);
+    }
+
     return {
         decodeKeystroke,
         encodeKeystroke,
@@ -198,19 +208,12 @@ const Utils = (function (global) {
         parseQueryString,
         reportIssue,
         timeStampString,
+        isElementPartiallyInViewport,
         getVisibleElements
     };
 })(window);
 
-function isElementPartiallyInViewport(el) {
-    var rect = el.getBoundingClientRect();
-    var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-    var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return rect.width > 4 && rect.height > 4
-        && (rect.top <= windowHeight) && (rect.bottom >= 0)
-        && (rect.left <= windowWidth) && (rect.right >= 0);
-}
 
 function filterOverlapElements(elements) {
     // filter out tiny elements
