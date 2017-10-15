@@ -339,7 +339,7 @@ var Omnibar = (function(mode, ui) {
         }
         var li = $('<li/>').html('<div class="title">{0} {1} {2}</div>'.format(
             type,
-            self.highlight(rxp, htmlEncode(b.title)),
+            self.highlight(rxp, Utils.htmlEncode(b.title)),
             additional
         ));
         $('<div class="url">').html(self.highlight(rxp, b.url)).appendTo(li);
@@ -1060,7 +1060,7 @@ var Commands = (function() {
         });
         if (candidates.length) {
             Omnibar.listResults(candidates, function(c) {
-                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
+                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, Utils.htmlEncode(self.items[c].annotation)));
             });
         }
     };
@@ -1087,7 +1087,7 @@ var Commands = (function() {
                 }
                 if (out !== undefined) {
                     out = JSON.stringify(out);
-                    out = htmlEncode(out);
+                    out = Utils.htmlEncode(out);
                     Omnibar.listResults([out], function(c) {
                         return $('<li/>').html(c);
                     });

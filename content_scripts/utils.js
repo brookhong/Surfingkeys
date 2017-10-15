@@ -16,20 +16,22 @@ const Utils = (function () {
         return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
 
+    function htmlEncode(str) {
+        return $('<div/>').text(str).html();
+    }
+
+    function htmlDecode(str) {
+        return $('<div/>').html(str).text();
+    }
+
     return {
         getDocumentOrigin,
         timeStampString,
-        generateQuickGuid
+        generateQuickGuid,
+        htmlEncode,
+        htmlDecode
     };
 })();
-
-function htmlEncode(str) {
-    return $('<div/>').text(str).html();
-}
-
-function htmlDecode(str) {
-    return $('<div/>').html(str).text();
-}
 
 function getRealEdit(event) {
     var rt = event ? event.target : document.activeElement;
