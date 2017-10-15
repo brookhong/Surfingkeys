@@ -12,7 +12,7 @@ var Front = (function() {
     var _callbacks = {};
     function frontendCommand(args, successById) {
         args.commandToFrontend = true;
-        args.origin = getDocumentOrigin();
+        args.origin = Utils.getDocumentOrigin();
         args.id = generateQuickGuid();
         if (successById) {
             args.ack = true;

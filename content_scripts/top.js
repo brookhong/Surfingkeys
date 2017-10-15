@@ -15,7 +15,7 @@ var frontendFrame = (function() {
         this.contentWindow.postMessage({
             action: 'initFrontend',
             ack: true,
-            origin: getDocumentOrigin()
+            origin: Utils.getDocumentOrigin()
         }, frontEndURL);
     }, false);
 

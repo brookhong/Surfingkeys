@@ -1,6 +1,13 @@
 const Utils = (function () {
-    return {
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+    // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
+    // file:// cannot be used as a security restriction; this restriction may be modified in the future.
+    function getDocumentOrigin () {
+        return (document.origin === "null" ? "*" : document.origin);
+    }
 
+    return {
+        getDocumentOrigin
     };
 })();
 
@@ -8,13 +15,6 @@ function timeStampString(t) {
     var dt = new Date();
     dt.setTime(t);
     return dt.toLocaleString();
-}
-
-function getDocumentOrigin() {
-    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
-    // file:// cannot be used as a security restriction; this restriction may be modified in the future.
-    return (document.origin === "null" ? "*" : document.origin);
 }
 
 function generateQuickGuid() {
