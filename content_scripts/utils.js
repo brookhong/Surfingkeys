@@ -187,12 +187,31 @@ const Utils = (function (global) {
 
     function isElementPartiallyInViewport(el) {
         var rect = el.getBoundingClientRect();
-        var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-        var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+        var windowHeight = (global.innerHeight || document.documentElement.clientHeight);
+        var windowWidth = (global.innerWidth || document.documentElement.clientWidth);
 
         return rect.width > 4 && rect.height > 4
             && (rect.top <= windowHeight) && (rect.bottom >= 0)
             && (rect.left <= windowWidth) && (rect.right >= 0);
+    }
+
+    function filterOverlapElements(elements) {
+        // filter out tiny elements
+        elements = elements.filter(function(e) {
+            var be = e.getBoundingClientRect();
+            var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
+            if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
+                return true;
+            } else {
+                return (!el || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
+            }
+        });
+        // filter out element which has his children covered
+        return elements.filter(function(e) {
+            return !$(e.children).toArray().some(function(element, index, array) {
+                return elements.indexOf(element) !== -1;
+            });
+        });
     }
 
     return {
@@ -209,30 +228,10 @@ const Utils = (function (global) {
         reportIssue,
         timeStampString,
         isElementPartiallyInViewport,
-        getVisibleElements
+        getVisibleElements,
+        filterOverlapElements
     };
 })(window);
-
-
-
-function filterOverlapElements(elements) {
-    // filter out tiny elements
-    elements = elements.filter(function(e) {
-        var be = e.getBoundingClientRect();
-        var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
-        if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
-            return true;
-        } else {
-            return (!el || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
-        }
-    });
-    // filter out element which has his children covered
-    return elements.filter(function(e) {
-        return !$(e.children).toArray().some(function(element, index, array) {
-            return elements.indexOf(element) !== -1;
-        });
-    });
-}
 
 function getTextNodes(root, pattern, flag) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];

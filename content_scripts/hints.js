@@ -305,7 +305,7 @@ var Hints = (function(mode) {
                     return this.innerText && this.innerText.indexOf(textFilter) !== -1;
                 });
             } else {
-                elements = $(filterOverlapElements(elements));
+                elements = $(Utils.filterOverlapElements(elements));
             }
         }
 
@@ -351,7 +351,7 @@ var Hints = (function(mode) {
                 return e.innerText && e.innerText.indexOf(textFilter) !== -1;
             });
         } else {
-            elements = filterOverlapElements(elements);
+            elements = Utils.filterOverlapElements(elements);
         }
         elements = elements.map(function(e) {
             var aa = e.childNodes;
