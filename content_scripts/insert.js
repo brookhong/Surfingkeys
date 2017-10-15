@@ -20,12 +20,12 @@ var Insert = (function(mode) {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
-    self.mappings.add(encodeKeystroke("<Ctrl-e>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Ctrl-e>"), {
         annotation: "Move the cursor to the end of the line",
         feature_group: 15,
         code: moveCusorEOL
     });
-    self.mappings.add(encodeKeystroke("<Ctrl-f>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Ctrl-f>"), {
         annotation: "Move the cursor to the beginning of the line",
         feature_group: 15,
         code: function() {
@@ -42,7 +42,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Ctrl-u>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Ctrl-u>"), {
         annotation: "Delete all entered characters before the cursor",
         feature_group: 15,
         code: function() {
@@ -57,7 +57,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Alt-b>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Alt-b>"), {
         annotation: "Move the cursor Backward 1 word",
         feature_group: 15,
         code: function() {
@@ -71,7 +71,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Alt-f>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Alt-f>"), {
         annotation: "Move the cursor Forward 1 word",
         feature_group: 15,
         code: function() {
@@ -85,7 +85,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Alt-w>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Alt-w>"), {
         annotation: "Delete a word backwards",
         feature_group: 15,
         code: function() {
@@ -105,7 +105,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Alt-d>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Alt-d>"), {
         annotation: "Delete a word forwards",
         feature_group: 15,
         code: function() {
@@ -125,7 +125,7 @@ var Insert = (function(mode) {
             }
         }
     });
-    self.mappings.add(encodeKeystroke("<Esc>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Esc>"), {
         annotation: "Exit insert mode",
         feature_group: 15,
         code: function() {

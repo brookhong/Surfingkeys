@@ -43,7 +43,7 @@ var Front = (function(mode) {
                     }, null, 4);
                     Utils.reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
                 } else {
-                    var s = Utils.htmlEncode(decodeKeystroke(event.sk_keyName));
+                    var s = Utils.htmlEncode(Utils.decodeKeystroke(event.sk_keyName));
                     if (!s) {
                         s = "&nbsp;";
                     }
@@ -249,7 +249,7 @@ var Front = (function(mode) {
                 for (var i = 0; i < words.length; i++) {
                     var w = words[i];
                     var meta = mappings.find(w).meta;
-                    w = decodeKeystroke(w);
+                    w = Utils.decodeKeystroke(w);
                     if (meta.annotation && meta.annotation.length) {
                         var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(Utils.htmlEncode(w), locale(meta.annotation));
                         help_groups[meta.feature_group].push(item);
@@ -487,7 +487,7 @@ var Front = (function(mode) {
 
         keystroke.show();
         self.flush();
-        var keys = keystroke.html() + Utils.htmlEncode(decodeKeystroke(key));
+        var keys = keystroke.html() + Utils.htmlEncode(Utils.decodeKeystroke(key));
         keystroke.html(keys);
 
         keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight");
@@ -502,7 +502,7 @@ var Front = (function(mode) {
                     words = Object.keys(cc).sort().map(function(w) {
                         var meta = cc[w];
                         if (meta.annotation) {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(Utils.htmlEncode(decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(Utils.htmlEncode(Utils.decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
                         } else {
                             return "";
                         }

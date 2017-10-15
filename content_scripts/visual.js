@@ -246,7 +246,7 @@ var Visual = (function(mode) {
             self.star();
         }
     });
-    self.mappings.add(encodeKeystroke("<Enter>"), {
+    self.mappings.add(Utils.encodeKeystroke("<Enter>"), {
         annotation: "Click on node under cursor.",
         feature_group: 9,
         code: function() {

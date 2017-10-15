@@ -237,7 +237,7 @@ map('ZQ', ':quit');
 mapkey(".", '#0Repeat last action', Normal.repeatLast, {repeatIgnore: true});
 mapkey("sql", '#0Show last action', function() {
     Front.showPopup(Utils.htmlEncode(runtime.conf.lastKeys.map(function(k) {
-        return decodeKeystroke(k);
+        return Utils.decodeKeystroke(k);
     }).join(' → ')));
 }, {repeatIgnore: true});
 mapkey('ZZ', '#5Save session and quit', function() {

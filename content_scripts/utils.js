@@ -84,17 +84,104 @@ const Utils = (function (global) {
         Front.showPopup(error);
     }
 
+    function encodeKeystroke(s) {
+        // <Esc>: ✐: <Esc>
+        // <Alt-Space>: ⤑: <Alt-Space>
+        // <Ctrl-Alt-F7>: ⨘: <Ctrl-Alt-F7>
+        // <Ctrl-'>: ⠷: <Ctrl-'>
+        // <Alt-i>: ⥹: <Alt-i>
+        // <Ctrl-Alt-z>: ⪊: <Ctrl-Alt-z>
+        // <Ctrl-Alt-Meta-h>: ⹸: <Ctrl-Alt-Meta-h>
+        function encode(s, k) {
+            var mod = 0;
+            if (s.indexOf("Ctrl-") !== -1) {
+                mod |= 1;
+            }
+            if (s.indexOf("Alt-") !== -1) {
+                mod |= 2;
+            }
+            if (s.indexOf("Meta-") !== -1) {
+                mod |= 4;
+            }
+            if (s.indexOf("Shift-") !== -1) {
+                mod |= 8;
+            }
+            var code;
+            if (k.length > 1) {
+                code = 256 + encodeKeystroke.specialKeys.indexOf(k);
+            } else {
+                code = k.charCodeAt(0);
+            }
+
+            // <flag: always 1><flag: 1 bit, 0 for visible keys, 1 for invisible keys><key: 8 bits><mod: 4 bits>
+            code = 8192 + (code << 4) + mod;
+            return String.fromCharCode(code);
+        }
+
+        var ekp = /<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(?:Shift-)?([^>]+|.)>/g;
+        var mtches, ret = "", lastIndex = 0;
+        while ((mtches = ekp.exec(s)) !== null) {
+            ret += s.substr(lastIndex, mtches.index - lastIndex);
+            ret += encode(mtches[0], mtches[1]);
+            lastIndex = ekp.lastIndex;
+        }
+        ret += s.substr(lastIndex);
+        return ret;
+    }
+
+    encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5',
+    'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete', 'End',
+    'Home', 'Insert', 'NumLock', 'PageDown', 'PageUp', 'Pause', 'ScrollLock',
+    'CapsLock', 'PrintScreen', 'Escape', 'Hyper'];
+
+    function decodeKeystroke(s) {
+        var ret = "";
+        for (var i = 0; i < s.length; i++) {
+            var r = s[i].charCodeAt(0);
+            if (r > 8192) {
+                r = r - 8192;
+                var flag = r >> 12,
+                    key = (r % 4096) >> 4,
+                    mod = r & 15;
+                if (flag) {
+                    r = encodeKeystroke.specialKeys[key % 256];
+                } else {
+                    r = String.fromCharCode(key);
+                }
+                if (mod & 8) {
+                    r = "Shift-" + r;
+                }
+                if (mod & 4) {
+                    r = "Meta-" + r;
+                }
+                if (mod & 2) {
+                    r = "Alt-" + r;
+                }
+                if (mod & 1) {
+                    r = "Ctrl-" + r;
+                }
+                ret += "<" + r + ">";
+            } else {
+                ret += s[i];
+            }
+        }
+        return ret;
+    }
+
     return {
-        getDocumentOrigin,
-        timeStampString,
+        decodeKeystroke,
+        encodeKeystroke,
         generateQuickGuid,
-        htmlEncode,
-        htmlDecode,
+        getDocumentOrigin,
         getRealEdit,
+        hasScroll,
+        htmlDecode,
+        htmlEncode,
         isEditable,
         parseQueryString,
         reportIssue,
-        hasScroll
+        timeStampString
     };
 })(window);
 
@@ -370,8 +457,8 @@ RegExp.prototype.toJSON = function() {
                     character = "<{0}>".format(character);
                 }
             }
-            if (decodeKeystroke(encodeKeystroke(character)) === character) {
-                character = encodeKeystroke(character);
+            if (Utils.decodeKeystroke(Utils.encodeKeystroke(character)) === character) {
+                character = Utils.encodeKeystroke(character);
             }
             return character;
         },
@@ -390,91 +477,14 @@ RegExp.prototype.toJSON = function() {
 
 }).call(this);
 
-// <Esc>: ✐: <Esc>
-// <Alt-Space>: ⤑: <Alt-Space>
-// <Ctrl-Alt-F7>: ⨘: <Ctrl-Alt-F7>
-// <Ctrl-'>: ⠷: <Ctrl-'>
-// <Alt-i>: ⥹: <Alt-i>
-// <Ctrl-Alt-z>: ⪊: <Ctrl-Alt-z>
-// <Ctrl-Alt-Meta-h>: ⹸: <Ctrl-Alt-Meta-h>
-function _encodeKeystroke(s, k) {
-    var mod = 0;
-    if (s.indexOf("Ctrl-") !== -1) {
-        mod |= 1;
-    }
-    if (s.indexOf("Alt-") !== -1) {
-        mod |= 2;
-    }
-    if (s.indexOf("Meta-") !== -1) {
-        mod |= 4;
-    }
-    if (s.indexOf("Shift-") !== -1) {
-        mod |= 8;
-    }
-    var code;
-    if (k.length > 1) {
-        code = 256 + encodeKeystroke.specialKeys.indexOf(k);
-    } else {
-        code = k.charCodeAt(0);
-    }
 
-    // <flag: always 1><flag: 1 bit, 0 for visible keys, 1 for invisible keys><key: 8 bits><mod: 4 bits>
-    code = 8192 + (code << 4) + mod;
-    return String.fromCharCode(code);
-}
-function encodeKeystroke(s) {
-    var ekp = /<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(?:Shift-)?([^>]+|.)>/g;
-    var mtches, ret = "", lastIndex = 0;
-    while ((mtches = ekp.exec(s)) !== null) {
-        ret += s.substr(lastIndex, mtches.index - lastIndex);
-        ret += _encodeKeystroke(mtches[0], mtches[1]);
-        lastIndex = ekp.lastIndex;
-    }
-    ret += s.substr(lastIndex);
-    return ret;
-}
-encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete', 'End', 'Home', 'Insert', 'NumLock', 'PageDown', 'PageUp', 'Pause', 'ScrollLock', 'CapsLock', 'PrintScreen', 'Escape', 'Hyper'];
-
-function decodeKeystroke(s) {
-    var ret = "";
-    for (var i = 0; i < s.length; i++) {
-        var r = s[i].charCodeAt(0);
-        if (r > 8192) {
-            r = r - 8192;
-            var flag = r >> 12,
-                key = (r % 4096) >> 4,
-                mod = r & 15;
-            if (flag) {
-                r = encodeKeystroke.specialKeys[key % 256];
-            } else {
-                r = String.fromCharCode(key);
-            }
-            if (mod & 8) {
-                r = "Shift-" + r;
-            }
-            if (mod & 4) {
-                r = "Meta-" + r;
-            }
-            if (mod & 2) {
-                r = "Alt-" + r;
-            }
-            if (mod & 1) {
-                r = "Ctrl-" + r;
-            }
-            ret += "<" + r + ">";
-        } else {
-            ret += s[i];
-        }
-    }
-    return ret;
-}
 /*
  * test code
  *
 
 function _testEncode(keystr) {
-    var encoded = encodeKeystroke(keystr);
-    var decoded = decodeKeystroke(encoded);
+    var encoded = Utils.encodeKeystroke(keystr);
+    var decoded = Utils.decodeKeystroke(encoded);
     if (keystr !== decoded) {
         console.log(keystr + ": " + encoded + ": " + decoded);
     }

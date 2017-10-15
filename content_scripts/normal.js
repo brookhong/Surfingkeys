@@ -6,7 +6,7 @@ var Mode = (function() {
     };
 
     self.isSpecialKeyOf = function(specialKey, keyToCheck) {
-        return (-1 !== self.specialKeys[specialKey].indexOf(decodeKeystroke(keyToCheck)));
+        return (-1 !== self.specialKeys[specialKey].indexOf(Utils.decodeKeystroke(keyToCheck)));
     };
 
     self.postHandler = function(event) {
