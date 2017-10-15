@@ -288,7 +288,7 @@ var Hints = (function(mode) {
                     cssSelector += ", " + runtime.conf.clickableSelector;
                 }
 
-                elements = getVisibleElements(function(e, v) {
+                elements = Utils.getVisibleElements(function(e, v) {
                     if (jQuery.find.matchesSelector(e, cssSelector)) {
                         v.push(e);
                     } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
@@ -337,7 +337,7 @@ var Hints = (function(mode) {
         }
         self.statusLine = (attrs && attrs.statusLine) || "Hints to select text";
 
-        var elements = getVisibleElements(function(e, v) {
+        var elements = Utils.getVisibleElements(function(e, v) {
             var aa = e.childNodes;
             for (var i = 0, len = aa.length; i < len; i++) {
                 if (aa[i].nodeType == Node.TEXT_NODE && aa[i].data.length > 0) {

@@ -75,6 +75,22 @@ const Utils = (function (global) {
             || $(el).css('overflow-' + direction) === 'scroll');
     }
 
+    function getVisibleElements(filter) {
+        var all = document.documentElement.getElementsByTagName("*");
+        var visibleElements = [];
+        for (var i = 0, len = all.length; i < len; i++) {
+            var e = all[i];
+            var rect = e.getBoundingClientRect();
+            if ( (rect.top <= global.innerHeight) && (rect.bottom >= 0)
+                && (rect.left <= global.innerWidth) && (rect.right >= 0)
+                && rect.height < global.innerHeight && rect.height > 0
+            ) {
+                filter(e, visibleElements);
+            }
+        }
+        return visibleElements;
+    }
+
     function reportIssue(title, description) {
         title = encodeURIComponent(title);
         description = "%23%23+Error+details%0A%0A{0}%0A%0ASurfingKeys%3A+{1}%0A%0AChrome%3A+{2}%0A%0AURL%3A+{3}%0A%0A%23%23+Context%0A%0A%2A%2APlease+replace+this+with+a+description+of+how+you+were+using+SurfingKeys.%2A%2A".format(encodeURIComponent(description), chrome.runtime.getManifest().version, encodeURIComponent(navigator.userAgent), encodeURIComponent(location.href));
@@ -181,7 +197,8 @@ const Utils = (function (global) {
         isEditable,
         parseQueryString,
         reportIssue,
-        timeStampString
+        timeStampString,
+        getVisibleElements
     };
 })(window);
 
@@ -193,22 +210,6 @@ function isElementPartiallyInViewport(el) {
     return rect.width > 4 && rect.height > 4
         && (rect.top <= windowHeight) && (rect.bottom >= 0)
         && (rect.left <= windowWidth) && (rect.right >= 0);
-}
-
-function getVisibleElements(filter) {
-    var all = document.documentElement.getElementsByTagName("*");
-    var visibleElements = [];
-    for (var i = 0, len = all.length; i < len; i++) {
-        var e = all[i];
-        var rect = e.getBoundingClientRect();
-        if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
-            && (rect.left <= window.innerWidth) && (rect.right >= 0)
-            && rect.height < window.innerHeight && rect.height > 0
-        ) {
-            filter(e, visibleElements);
-        }
-    }
-    return visibleElements;
 }
 
 function filterOverlapElements(elements) {
