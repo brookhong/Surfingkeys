@@ -231,7 +231,6 @@ function filterOverlapElements(elements) {
     });
 }
 
-
 function getTextNodes(root, pattern, flag) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
     var treeWalker = document.createTreeWalker(
@@ -477,7 +476,6 @@ RegExp.prototype.toJSON = function() {
     root.keyCodes = KeyboardUtils.keyCodes;
 
 }).call(this);
-
 
 /*
  * test code
