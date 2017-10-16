@@ -1,3 +1,11 @@
+/**
+ * The status bar displays the status of Surfingkeys current mode: Normal, visual, etc.
+ *
+ * @kind function
+ *
+ * @param {Object} ui
+ * @return {StatusBar} StatusBar instance
+ */
 var StatusBar = (function(ui) {
     var self = {};
 
@@ -64,6 +72,14 @@ var Find = (function(mode) {
         self.exit();
     }
 
+    /**
+     * Opens the status bar
+     *
+     * @memberof StatusBar
+     * @instance
+     *
+     * @return {undefined}
+     */
     self.open = function() {
         historyInc = -1;
         StatusBar.show(1, input);

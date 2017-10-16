@@ -38,12 +38,54 @@ function _filterByTitleOrUrl(urls, query) {
     return urls;
 }
 
+/**
+ * The omnibar provides kinds of functions that need user input, for example,
+ *
+ *  * Open url(from both bookmarks and history) with `t`
+ *  * Open bookmarks with `b`
+ *  * Open search engines with `og` / `ow` ...
+ *  * Open commands with `:`
+ *
+ * Key bindings in Omnibar:
+ *  * `Enter` to open selected item and close omnibar.
+ *  * `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+ *  * `Shift-Enter` to open selected item in current tab and close omnibar.
+ *    If you'd like to open in current tab by default, please use go.
+ *  * Tab to forward cycle through the candidates.
+ *  * `Shift-Tab` to backward cycle through the candidates.
+ *  * `Ctrl-`. to show results of next page
+ *  * `Ctrl-`, to show results of previous page
+ *  * `Ctrl-c` to copy all listed items
+ *  * In omnibar opened with `t:`
+ *
+ * `Ctrl - d` to delete from bookmark or history
+ *
+ *  * In omnibar opened with `b:`
+ *
+ * `Ctrl - Shift - <any letter>` to create vim-like global mark
+ * To create new map keys for Omnibar using cmapkey.
+ *
+ * cmap could be used for Omnibar to change mappings, for example:
+ *
+ * ```js
+ * cmap('<Ctrl-n>', '<Tab>');
+ * cmap('<Ctrl-p>', '<Shift-Tab>');
+ * ```
+ * ---------
+ *
+ * @kind function
+ *
+ * @param {Object} mode
+ * @param {Object} ui
+ * @return {Omnibar} Omnibar instance
+ */
 var Omnibar = (function(mode, ui) {
     var self = $.extend({
         name: "Omnibar",
         frontendOnly: true,
         eventListeners: {}
     }, mode);
+
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
@@ -368,11 +410,21 @@ var Omnibar = (function(mode, ui) {
     };
 
     var _start, _items, _showFolder, _pageSize, _page;
+
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
+     *
+     * @example
+     *
+     * Omnibar.listURLs ([{url: 'http://google.com', title: 'Google'}], false)
+     *
+     * @memberof Omnibar
+     * @instance
+     *
      * @param {Array} items - Array of url items with title.
      * @param {boolean} showFolder - True to show a item as folder if it has no property url.
      *
+     * @return {undefined}
      */
     self.listURLs = function(items, showFolder) {
         _pageSize = (runtime.conf.omnibarMaxResults || 10);
@@ -1038,6 +1090,14 @@ var Commands = (function() {
 
     var historyInc = 0;
 
+    /**
+     * List commands when OmniBar opens
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @return {undefined}
+     */
     self.onOpen = function() {
         historyInc = -1;
         runtime.command({
@@ -1052,7 +1112,9 @@ var Commands = (function() {
             }
         });
     };
+
     self.onReset = self.onOpen;
+
     self.onInput = function() {
         var cmd = Omnibar.input.val();
         var candidates = Object.keys(self.items).filter(function(c) {
@@ -1064,9 +1126,21 @@ var Commands = (function() {
             });
         }
     };
+
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('cmd'));
     };
+
+    /**
+     * Execute command after pressing the return key.
+     *
+     * Displays any output if the command.
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @returns {boolean}
+     */
     self.onEnter = function() {
         var ret = false;
         var cmdline = Omnibar.input.val();
@@ -1097,6 +1171,7 @@ var Commands = (function() {
         }
         return ret;
     };
+
     return self;
 })();
 Omnibar.addHandler('Commands', Commands);
