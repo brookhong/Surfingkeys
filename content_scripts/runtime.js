@@ -1,21 +1,33 @@
+const separator = '≫';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 var runtime = window.runtime || (function() {
     var self = {
         conf: {
             lastKeys: "",
             // local part from settings
-            useLocalMarkdownAPI: true,
+            blacklistPattern: undefined,
+            caseSensitive: false,
+            clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
+            clickableSelector: "",
+            cursorAtEndOfInput: true,
+            defaultSearchEngine: "g",
+            defaultVoice: "Daniel",
+            enableAutoFocus: true,
+            experiment: false,
+            focusFirstCandidate: false,
             focusOnSaved: true,
+            hintAlign: "center",
+            historyMUOrder: true,
+            language: undefined,
+            lastQuery: "",
+            modeAfterYank: "",
+            nextLinkRegex: /(\b(next)\b)|下页|下一页|>>/i,
             omnibarMaxResults: 10,
             omnibarPosition: "middle",
+            omnibarSuggestion: true,
             omnibarSuggestionTimeout: 200,
             omnibarTabsQuery: {},
-            historyMUOrder: true,
-            tabsThreshold: 9,
-            smoothScroll: true,
-            modeAfterYank: "",
-            scrollStepSize: 70,
-            nextLinkRegex: /(\b(next)\b)|下页|下一页|>>/i,
-            prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|<</i,
             pageUrlRegex: [],
             clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
             hintAlign: "center",
@@ -25,20 +37,20 @@ var runtime = window.runtime || (function() {
             hintGroupCollation: "sequence",
             hintGroupStart: "first", // first, middle, last
             defaultSearchEngine: "g",
+            clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
+            hintAlign: "center",
+            defaultSearchEngine: "g",
+            prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|<</i,
+            richHintsForKeystroke: 1000,
+            scrollStepSize: 70,
             showModeStatus: false,
             showProxyInStatusBar: false,
-            richHintsForKeystroke: true,
             smartPageBoundary: false,
-            clickableSelector: "",
-            blacklistPattern: undefined,
+            smoothScroll: true,
             startToShowEmoji: 2,
-            focusFirstCandidate: false,
-            language: undefined,
             stealFocusOnLoad: true,
-            enableAutoFocus: true,
-            defaultVoice: "Daniel",
-            experiment: false,
-            lastQuery: ""
+            tabsThreshold: 9,
+            useLocalMarkdownAPI: true,
         },
         runtime_handlers: {}
     }, actions = {};
@@ -77,7 +89,7 @@ var runtime = window.runtime || (function() {
                 }
             });
         } else {
-            console.log("[unexpected runtime message] " + JSON.stringify(_message))
+            console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
     });
 

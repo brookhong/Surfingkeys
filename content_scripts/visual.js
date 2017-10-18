@@ -143,7 +143,7 @@ var Visual = (function(mode) {
         annotation: "forward documentboundary",
         feature_group: 9,
         code: function() {
-            document.body.scrollTop = document.body.scrollHeight;
+            document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
             modifySelection();
             if (matches.length) {
                 currentOccurrence = matches.length - 1;
@@ -158,12 +158,37 @@ var Visual = (function(mode) {
             // there may be some fixed-position div for navbar on top on some pages.
             // so scrollIntoView can not send us top, as it's already in view.
             // explicitly set scrollTop 0 here.
-            document.body.scrollTop = 0;
+            document.scrollingElement.scrollTop = 0;
             currentOccurrence = 0;
             if (matches.length) {
                 Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
             }
             modifySelection();
+        }
+    });
+
+    function reconstructSelectionAfterCursorPlaced() {
+        var pos = [selection.anchorOffset, selection.focusOffset];
+        self.showCursor();
+        selection.collapseToStart();
+        selection.setPosition(cursor.nextSibling, pos[0] - pos[1] - 1);
+        selection.extend(cursor.previousSibling, cursor.previousSibling.data.length);
+    }
+
+    self.mappings.add("o", {
+        annotation: "forward documentboundary",
+        feature_group: 9,
+        code: function() {
+            self.hideCursor();
+            var pos = [selection.anchorNode, selection.anchorOffset];
+            selection.collapse(selection.focusNode, selection.focusOffset);
+            selection.extend(pos[0], pos[1]);
+            if (selection.anchorNode === selection.focusNode && selection.anchorOffset > selection.focusOffset) {
+                // need to re-construct selection after curosr placed, as cursor breaks selection in this case.
+                reconstructSelectionAfterCursorPlaced();
+            } else {
+                self.showCursor();
+            }
         }
     });
     var _units = {
@@ -232,7 +257,7 @@ var Visual = (function(mode) {
         annotation: "make cursor at center of window.",
         feature_group: 9,
         code: function() {
-            document.body.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2
+            document.scrollingElement.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2;
         }
     });
     self.mappings.add("f", {
@@ -305,7 +330,6 @@ var Visual = (function(mode) {
     };
 
     var selection = document.getSelection(),
-        caseSensitive = false,
         matches = [],
         currentOccurrence,
         state = 0,
@@ -347,7 +371,7 @@ var Visual = (function(mode) {
         var node = null;
         var treeWalker = getTextNodes(document.body, /./, 0);
         while (treeWalker.nextNode()) {
-            if ($(treeWalker.currentNode.parentNode).offset().top > (document.body.scrollTop + window.innerHeight * y)) {
+            if ($(treeWalker.currentNode.parentNode).offset().top > (document.scrollingElement.scrollTop + window.innerHeight * y)) {
                 node = treeWalker.currentNode;
                 break;
             }
@@ -454,7 +478,12 @@ var Visual = (function(mode) {
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
         }
-        self.showCursor();
+        if (selection.anchorNode === selection.focusNode && selection.anchorOffset > selection.focusOffset) {
+            // need to re-construct selection after curosr placed, as cursor breaks selection in this case.
+            reconstructSelectionAfterCursorPlaced();
+        } else {
+            self.showCursor();
+        }
     }
 
     function createMatchMark(node, pos, len) {
@@ -559,13 +588,13 @@ var Visual = (function(mode) {
                 if (ex === "ym") {
                     var textToYank = [];
                     Hints.create(/./, function(element) {
-                        textToYank.push(element[0].data);
+                        textToYank.push(element[0].data.trim());
                         Front.writeClipboard(textToYank.join('\n'));
                     }, {multipleHits: true});
                 } else {
                     Hints.create(/./, function(element) {
                         if (ex === "y") {
-                            Front.writeClipboard(element[0].data);
+                            Front.writeClipboard(element[0].data.trim());
                         } else {
                             setTimeout(function() {
                                 selection.setPosition(element[0], element[1]);
@@ -591,7 +620,7 @@ var Visual = (function(mode) {
                 var pos = [selection.focusNode, selection.focusOffset];
                 runtime.updateHistory('find', query);
                 self.visualClear();
-                highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+                highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
             }
@@ -634,7 +663,7 @@ var Visual = (function(mode) {
             select(matches[currentOccurrence]);
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         } else if (runtime.conf.lastQuery) {
-            highlight(new RegExp(runtime.conf.lastQuery, "g" + (caseSensitive ? "" : "i")));
+            highlight(new RegExp(runtime.conf.lastQuery, "g" + (runtime.conf.caseSensitive ? "" : "i")));
             self.visualEnter(runtime.conf.lastQuery);
         }
     };
@@ -671,32 +700,32 @@ var Visual = (function(mode) {
         // set caret to top in view
         selection.setPosition(getTextNodeByY(0), 0);
 
-        var scrollTop = document.body.scrollTop,
+        var scrollTop = document.scrollingElement.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
 
-        if (findNextTextNodeBy(query, caseSensitive, false)) {
+        if (findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         } else {
             // start from beginning if no found from current position
             selection.setPosition(document.body.firstChild, 0);
         }
 
-        if (findNextTextNodeBy(query, caseSensitive, false)) {
-            if (document.body.scrollTop !== scrollTop) {
+        if (findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
+            if (document.scrollingElement.scrollTop !== scrollTop) {
                 // set new start position if there is no occurrence in current view.
-                scrollTop = document.body.scrollTop;
+                scrollTop = document.scrollingElement.scrollTop;
                 posToStartFind = [selection.anchorNode, selection.anchorOffset];
             }
             var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
             matches.push(mark);
             selection.setPosition(mark.nextSibling, 0);
 
-            while (document.body.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive, false)) {
+            while (document.scrollingElement.scrollTop === scrollTop && findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
                 var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
                 matches.push(mark);
                 selection.setPosition(mark.nextSibling, 0);
             }
-            document.body.scrollTop = scrollTop;
+            document.scrollingElement.scrollTop = scrollTop;
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         }
 
@@ -705,12 +734,12 @@ var Visual = (function(mode) {
     // this is only for finding in frontend.html, like in usage popover.
     self.visualUpdate = function(query) {
         self.visualClear();
-        highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+        highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
     };
 
     self.visualEnter = function (query) {
         self.visualClear();
-        highlight(new RegExp(query, "g" + (caseSensitive ? "" : "i")));
+        highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
         if (matches.length) {
             self.enter();
             select(matches[currentOccurrence]);

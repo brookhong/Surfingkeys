@@ -38,12 +38,54 @@ function _filterByTitleOrUrl(urls, query) {
     return urls;
 }
 
+/**
+ * The omnibar provides kinds of functions that need user input, for example,
+ *
+ *  * Open url(from both bookmarks and history) with `t`
+ *  * Open bookmarks with `b`
+ *  * Open search engines with `og` / `ow` ...
+ *  * Open commands with `:`
+ *
+ * Key bindings in Omnibar:
+ *  * `Enter` to open selected item and close omnibar.
+ *  * `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+ *  * `Shift-Enter` to open selected item in current tab and close omnibar.
+ *    If you'd like to open in current tab by default, please use go.
+ *  * Tab to forward cycle through the candidates.
+ *  * `Shift-Tab` to backward cycle through the candidates.
+ *  * `Ctrl-`. to show results of next page
+ *  * `Ctrl-`, to show results of previous page
+ *  * `Ctrl-c` to copy all listed items
+ *  * In omnibar opened with `t:`
+ *
+ * `Ctrl - d` to delete from bookmark or history
+ *
+ *  * In omnibar opened with `b:`
+ *
+ * `Ctrl - Shift - <any letter>` to create vim-like global mark
+ * To create new map keys for Omnibar using cmapkey.
+ *
+ * cmap could be used for Omnibar to change mappings, for example:
+ *
+ * ```js
+ * cmap('<Ctrl-n>', '<Tab>');
+ * cmap('<Ctrl-p>', '<Shift-Tab>');
+ * ```
+ * ---------
+ *
+ * @kind function
+ *
+ * @param {Object} mode
+ * @param {Object} ui
+ * @return {Omnibar} Omnibar instance
+ */
 var Omnibar = (function(mode, ui) {
     var self = $.extend({
         name: "Omnibar",
         frontendOnly: true,
         eventListeners: {}
     }, mode);
+
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
@@ -203,7 +245,7 @@ var Omnibar = (function(mode, ui) {
             handler = SearchEngine;
             $.extend(SearchEngine, SearchEngine.aliases[alias]);
             self.resultsDiv.html("");
-            self.promptSpan.html(handler.prompt)
+            self.promptSpan.html(handler.prompt);
             resultPageSpan.html("");
             _items = null;
             self.collapsingPoint = val;
@@ -221,7 +263,7 @@ var Omnibar = (function(mode, ui) {
         if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
-            self.promptSpan.html(handler.prompt)
+            self.promptSpan.html(handler.prompt);
             if (val.length) {
                 self.input.val(val.substr(0, val.length - 1));
             }
@@ -308,19 +350,6 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.scrollIntoView = function() {
-        var start = self.resultsDiv.position().top;
-        var end = start + self.resultsDiv.outerHeight();
-        var fi = self.resultsDiv.find('li.focused');
-        var pos = fi.position();
-        if (pos && (pos.top < start || (pos.top + fi.outerHeight()) > end)) {
-            var pos = fi.offset().top - self.resultsDiv.find('>ul').offset().top;
-            self.resultsDiv.animate({
-                scrollTop: pos
-            }, 100);
-        }
-    };
-
     self.highlight = function(rxp, str) {
         if (str.substr(0, 11) === "data:image/") {
             str = str.substr(0, 1024);
@@ -361,7 +390,8 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.detectAndInsertURLItem = function(str, toList) {
-        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i;
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i,
+            urlPat1 = /^https?:\/\/(?:[^@\/\n]+@)?([^:\/\n\s]+)/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {
@@ -371,15 +401,30 @@ var Omnibar = (function(mode, ui) {
                 title: str,
                 url: url
             });
+        } else if (urlPat1.test(str)) {
+            toList.unshift({
+                title: str,
+                url: str
+            });
         }
     };
 
     var _start, _items, _showFolder, _pageSize, _page;
+
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
+     *
+     * @example
+     *
+     * Omnibar.listURLs ([{url: 'http://google.com', title: 'Google'}], false)
+     *
+     * @memberof Omnibar
+     * @instance
+     *
      * @param {Array} items - Array of url items with title.
      * @param {boolean} showFolder - True to show a item as folder if it has no property url.
      *
+     * @return {undefined}
      */
     self.listURLs = function(items, showFolder) {
         _pageSize = (runtime.conf.omnibarMaxResults || 10);
@@ -435,13 +480,19 @@ var Omnibar = (function(mode, ui) {
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
-        self.promptSpan.html(handler.prompt)
-        resultPageSpan.html("")
+        self.promptSpan.html(handler.prompt);
+        resultPageSpan.html("");
         ui[0].scrollTop = 0;
     };
 
     ui.onHide = function() {
+        // clear cache
+        delete self.cachedPromise;
+        // delete only deletes properties of an object and
+        // cannot normally delete a variable declared using var, whatever the scope.
         _items = null;
+        bookmarkFolders = null;
+
         lastInput = "";
         self.input.val('');
         self.resultsDiv.html("");
@@ -546,7 +597,7 @@ var Omnibar = (function(mode, ui) {
 
 var OpenBookmarks = (function() {
     var self = {
-        prompt: 'bookmark≫',
+        prompt: `bookmark${separatorHtml}`,
         inFolder: []
     };
 
@@ -569,7 +620,7 @@ var OpenBookmarks = (function() {
             }, self.onResponse);
         }
         self.prompt = fl.prompt;
-        Omnibar.promptSpan.html(self.prompt)
+        Omnibar.promptSpan.html(self.prompt);
         lastFocused = fl.focused;
         eaten = true;
     }
@@ -584,8 +635,8 @@ var OpenBookmarks = (function() {
                 folderId: currentFolderId,
                 focused: fi.index()
             });
-            self.prompt = fi.data('folder_name') + "≫";
-            Omnibar.promptSpan.html(self.prompt)
+            self.prompt = fi.data('folder_name') + separator;
+            Omnibar.promptSpan.html(self.prompt);
             Omnibar.input.val('');
             currentFolderId = folderId;
             lastFocused = 0;
@@ -609,7 +660,7 @@ var OpenBookmarks = (function() {
 
     self.onClose = function() {
         self.inFolder = [];
-        self.prompt = "bookmark≫";
+        self.prompt = `bookmark${separatorHtml}`;
         currentFolderId = undefined;
     };
 
@@ -617,8 +668,8 @@ var OpenBookmarks = (function() {
         var eaten = false;
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
-            self.prompt = folderOnly ? "bookmark folder≫" : "bookmark≫";
-            Omnibar.promptSpan.html(self.prompt)
+            self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
+            Omnibar.promptSpan.html(self.prompt);
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId,
@@ -664,7 +715,7 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 
 var AddBookmark = (function() {
     var self = {
-        prompt: 'add bookmark≫'
+        prompt: `add bookmark${separatorHtml}`
     }, folders, origFFC;
 
     self.onOpen = function(arg) {
@@ -682,7 +733,7 @@ var AddBookmark = (function() {
             }, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
-                    Omnibar.promptSpan.html('edit bookmark≫');
+                    Omnibar.promptSpan.html(`edit bookmark${separatorHtml}`);
                     Omnibar.resultsDiv.find('li.focused').removeClass('focused');
                     Omnibar.focusItem(`li[folder=${b.parentId}]`);
                 }
@@ -758,8 +809,8 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 
 var OpenHistory = (function() {
     var self = {
-        prompt: 'history≫'
-    }, cachedPromise;
+        prompt: `history${separatorHtml}`
+    };
 
     self.onOpen = function(arg) {
         self.getResults();
@@ -767,7 +818,7 @@ var OpenHistory = (function() {
     };
 
     self.getResults = function() {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
                 action: 'getHistory',
                 sortByMostUsed: runtime.conf.historyMUOrder
@@ -779,7 +830,7 @@ var OpenHistory = (function() {
 
     self.onReset = function() {
         runtime.conf.historyMUOrder = !runtime.conf.historyMUOrder;
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             if (runtime.conf.historyMUOrder) {
                 cached = cached.sort(function(a, b) {
                     return b.visitCount - a.visitCount;
@@ -796,7 +847,7 @@ var OpenHistory = (function() {
 
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
             Omnibar.listURLs(filtered, false);
         });
@@ -807,12 +858,12 @@ Omnibar.addHandler('History', OpenHistory);
 
 var OpenURLs = (function() {
     var self = {
-        prompt: '≫'
-    }, cachedPromise;
+        prompt: `${separatorHtml}`
+    };
 
     self.getResults = function() {
         if (self.action === "getAllSites") {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
                     action: 'getTabs',
                     queryInfo: runtime.conf.omnibarTabsQuery
@@ -834,7 +885,7 @@ var OpenURLs = (function() {
                 });
             });
         } else {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
                     action: self.action
                 }, function(response) {
@@ -847,18 +898,18 @@ var OpenURLs = (function() {
     self.onOpen = function(arg) {
         self.action = arg;
         if (self.action === "getRecentlyClosed") {
-            self.prompt = 'Recently closed≫';
+            self.prompt = `Recently closed${separatorHtml}`;
         } else if (self.action === "getTabURLs") {
-            self.prompt = 'Tab History≫';
+            self.prompt = `Tab History${separatorHtml}`;
         } else {
-            self.prompt = '≫';
+            self.prompt = `${separatorHtml}`;
         }
         self.getResults();
         self.onInput();
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var val = Omnibar.input.val();
             var filtered = _filterByTitleOrUrl(cached, val);
             if (filtered.length === 0) {
@@ -875,11 +926,11 @@ Omnibar.addHandler('URLs', OpenURLs);
 
 var OpenTabs = (function() {
     var self = {
-        prompt: 'tabs≫'
-    }, cachedPromise;
+        prompt: `tabs${separatorHtml}`
+    };
 
     self.getResults = function () {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
                 action: 'getTabs',
                 query: ''
@@ -894,7 +945,7 @@ var OpenTabs = (function() {
         self.onInput();
     };
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
+        Omnibar.cachedPromise.then(function(cached) {
             var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
             Omnibar.listURLs(filtered, false);
         });
@@ -905,7 +956,7 @@ Omnibar.addHandler('Tabs', OpenTabs);
 
 var OpenVIMarks = (function() {
     var self = {
-        prompt: 'VIMarks≫'
+        prompt: `VIMarks${separatorHtml}`
     };
 
     self.onOpen = function() {
@@ -922,7 +973,7 @@ var OpenVIMarks = (function() {
                         url: markInfo,
                         scrollLeft: 0,
                         scrollTop: 0
-                    }
+                    };
                 }
                 if (query === "" || markInfo.url.indexOf(query) !== -1) {
                     urls.push({
@@ -947,6 +998,12 @@ var SearchEngine = (function() {
     self.aliases = {};
 
     var _pendingRequest = undefined; // timeout ID
+    function clearPendingRequest() {
+        if (_pendingRequest) {
+            clearTimeout(_pendingRequest);
+            _pendingRequest = undefined;
+        }
+    }
 
     function formatURL(url, query) {
         if (url.indexOf("%s") !== -1) {
@@ -967,6 +1024,7 @@ var SearchEngine = (function() {
         }
     };
     self.onClose = function() {
+        clearPendingRequest();
         self.prompt = undefined;
         self.url = undefined;
         self.suggestionURL = undefined;
@@ -989,14 +1047,13 @@ var SearchEngine = (function() {
         return this.activeTab;
     };
     self.onInput = function() {
-        if (!self.suggestionURL || typeof(self.listSuggestion) !== "function") {
-            return;
-        }
+        const canSuggest = self.suggestionURL && typeof(self.listSuggestion) === "function";
+        const showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
+
+        if (!showSuggestions) return false;
+
         var val = encodeURIComponent(Omnibar.input.val());
-        if (_pendingRequest) {
-            clearTimeout(_pendingRequest);
-            _pendingRequest = undefined;
-        }
+        clearPendingRequest();
         // Set a timeout before the request is dispatched so that it can be canceled if necessary.
         // This helps prevent rate-limits when typing a long query.
         // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
@@ -1033,6 +1090,14 @@ var Commands = (function() {
 
     var historyInc = 0;
 
+    /**
+     * List commands when OmniBar opens
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @return {undefined}
+     */
     self.onOpen = function() {
         historyInc = -1;
         runtime.command({
@@ -1047,6 +1112,9 @@ var Commands = (function() {
             }
         });
     };
+
+    self.onReset = self.onOpen;
+
     self.onInput = function() {
         var cmd = Omnibar.input.val();
         var candidates = Object.keys(self.items).filter(function(c) {
@@ -1058,9 +1126,21 @@ var Commands = (function() {
             });
         }
     };
+
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('cmd'));
     };
+
+    /**
+     * Execute command after pressing the return key.
+     *
+     * Displays any output if the command.
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @returns {boolean}
+     */
     self.onEnter = function() {
         var ret = false;
         var cmdline = Omnibar.input.val();
@@ -1091,6 +1171,7 @@ var Commands = (function() {
         }
         return ret;
     };
+
     return self;
 })();
 Omnibar.addHandler('Commands', Commands);

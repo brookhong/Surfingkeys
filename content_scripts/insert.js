@@ -1,24 +1,29 @@
 var Insert = (function(mode) {
     var self = $.extend({name: "Insert", eventListeners: {}}, mode);
 
+    function moveCusorEOL() {
+        var element = getRealEdit();
+        if (element.setSelectionRange !== undefined) {
+            if (element.type !== "email") {
+                // The input element's type ('email') does not support selection.
+                element.setSelectionRange(element.value.length, element.value.length);
+            }
+        } else {
+            // for contenteditable div
+            var selection = document.getSelection();
+            selection.setPosition(selection.focusNode, selection.focusNode.data.length - 1);
+            // blink cursor to bring cursor into view
+            Visual.showCursor();
+            Visual.hideCursor();
+        }
+    }
+
     self.mappings = new Trie();
     self.map_node = self.mappings;
     self.mappings.add(encodeKeystroke("<Ctrl-e>"), {
         annotation: "Move the cursor to the end of the line",
         feature_group: 15,
-        code: function() {
-            var element = getRealEdit();
-            if (element.setSelectionRange !== undefined) {
-                element.setSelectionRange(element.value.length, element.value.length);
-            } else {
-                // for contenteditable div
-                var selection = document.getSelection();
-                selection.setPosition(selection.focusNode, selection.focusNode.data.length - 1);
-                // blink cursor to bring cursor into view
-                Visual.showCursor();
-                Visual.hideCursor();
-            }
-        }
+        code: moveCusorEOL
     });
     self.mappings.add(encodeKeystroke("<Ctrl-f>"), {
         annotation: "Move the cursor to the beginning of the line",
@@ -384,6 +389,9 @@ var Insert = (function(mode) {
             Normal.passFocus(true);
         }
         elm.focus();
+        if (runtime.conf.cursorAtEndOfInput) {
+            moveCusorEOL();
+        }
     };
 
     return self;

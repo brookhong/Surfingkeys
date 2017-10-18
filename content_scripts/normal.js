@@ -112,7 +112,7 @@ var Mode = (function() {
                 } else {
                     var pathname = window.location.pathname.split('/');
                     if (pathname.length) {
-                        sl += " - frame: " + pathname[pathname.length - 1]
+                        sl += " - frame: " + pathname[pathname.length - 1];
                     }
                 }
             }
@@ -302,7 +302,7 @@ var Normal = (function(mode) {
     var keyHeld = false;
 
     var scrollNodes, scrollIndex = 0,
-        lastKeys, scrollingRoot = document.scrollingElement;
+        lastKeys;
 
     function easeFn(t, b, c, d) {
         // t: current time, b: begInnIng value, c: change In value, d: duration
@@ -321,13 +321,13 @@ var Normal = (function(mode) {
                 $(document).trigger("surfingkeys:scrollDone");
             }
         };
-        if (elm === scrollingRoot) {
+        if (elm === document.scrollingElement) {
             var f = elm.skScrollBy;
             elm.skScrollBy = function(x, y) {
                 if (runtime.conf.smartPageBoundary) {
-                    if (scrollingRoot.scrollTop === 0 && y <= 0) {
+                    if (document.scrollingElement.scrollTop === 0 && y <= 0) {
                         previousPage() && Front.showBanner("Top margin hit, jump to previous page");
-                    } else if (scrollingRoot.scrollHeight - scrollingRoot.scrollTop <= window.innerHeight && y > 0) {
+                    } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight + 1 && y > 0) {
                         nextPage() && Front.showBanner("Bottom margin hit, jump to next page");
                     }
                 }
@@ -379,9 +379,6 @@ var Normal = (function(mode) {
 
     // set scrollIndex to the highest node
     function initScrollIndex() {
-        if (!scrollingRoot) {
-            scrollingRoot = (document.scrollingElement) ? document.scrollingElement : document.body;
-        }
         if (!scrollNodes || scrollNodes.length === 0) {
             $('html, body').css('overflow', 'visible');
             scrollNodes = getScrollableElements(100, 1.1);
@@ -392,11 +389,11 @@ var Normal = (function(mode) {
                     var h = n.scrollHeight;
                     if (h > maxHeight) {
                         scrollIndex = i;
-                        maxHeight = h
+                        maxHeight = h;
                     }
                 });
                 var sn = scrollNodes[scrollIndex];
-                if (sn === scrollingRoot) {
+                if (sn === document.scrollingElement) {
                     break;
                 } else {
                     sn.scrollIntoViewIfNeeded();
@@ -413,9 +410,9 @@ var Normal = (function(mode) {
 
     function getScrollableElements() {
         var nodes = [];
-        if (scrollingRoot.scrollHeight > window.innerHeight
-            || scrollingRoot.scrollWidth > window.innerWidth) {
-            nodes.push(scrollingRoot);
+        if (document.scrollingElement.scrollHeight > window.innerHeight
+            || document.scrollingElement.scrollWidth > window.innerWidth) {
+            nodes.push(document.scrollingElement);
         }
         var nodeIterator = document.createNodeIterator(
             document.body,
@@ -470,7 +467,7 @@ var Normal = (function(mode) {
 
     self.scroll = function(type) {
         initScrollIndex();
-        var scrollNode = scrollingRoot;
+        var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
             if (!$(scrollNode).is(':visible')) {
@@ -481,7 +478,7 @@ var Normal = (function(mode) {
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
         }
-        var size = (scrollNode === scrollingRoot) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
+        var size = (scrollNode === document.scrollingElement) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
         switch (type) {
             case 'down':
                 scrollNode.skScrollBy(0, runtime.conf.scrollStepSize);
@@ -533,7 +530,7 @@ var Normal = (function(mode) {
         if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
             mode.map_node = mode.mappings;
             mode.pendingMap = null;
-            Front.hideKeystroke();
+            mode.isTrustedEvent && Front.hideKeystroke();
             if (mode.repeats) {
                 mode.repeats = "";
             }
@@ -545,6 +542,8 @@ var Normal = (function(mode) {
     self._handleMapKey = function(event, onNoMatched) {
         var thisMode = this,
             key = event.sk_keyName;
+        this.isTrustedEvent = event.isTrusted;
+
         if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
             event.sk_stopPropagation = true;
             event.sk_suppressed = true;
@@ -561,7 +560,7 @@ var Normal = (function(mode) {
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
-            Front.showKeystroke(key, this.name);
+            this.isTrustedEvent && Front.showKeystroke(key, this.name);
             event.sk_stopPropagation = true;
         } else {
             var last = this.map_node;
@@ -576,7 +575,7 @@ var Normal = (function(mode) {
                     if (code.length) {
                         // bound function needs arguments
                         this.pendingMap = code;
-                        Front.showKeystroke(key, this.name);
+                        this.isTrustedEvent && Front.showKeystroke(key, this.name);
                         event.sk_stopPropagation = true;
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
@@ -592,7 +591,7 @@ var Normal = (function(mode) {
                         }, 0);
                     }
                 } else {
-                    Front.showKeystroke(key, this.name);
+                    this.isTrustedEvent && Front.showKeystroke(key, this.name);
                     event.sk_stopPropagation = true;
                 }
             }
@@ -646,7 +645,7 @@ var Normal = (function(mode) {
                     var hints = modeKey[1];
                     return function() {
                         Hints.feedkeys(hints);
-                    }
+                    };
                 }
                 setTimeout(closureWrapper(), 120 + i*100);
             }
@@ -658,8 +657,8 @@ var Normal = (function(mode) {
         if (/^[a-z]$/.test(mark)) {
             // local mark
             localMarks[mark] = {
-                scrollLeft: scrollingRoot.scrollLeft,
-                scrollTop: scrollingRoot.scrollTop
+                scrollLeft: document.scrollingElement.scrollLeft,
+                scrollTop: document.scrollingElement.scrollTop
             };
         } else {
             // global mark
@@ -667,8 +666,8 @@ var Normal = (function(mode) {
             var mo = {};
             mo[mark] = {
                 url: url,
-                scrollLeft: scrollingRoot.scrollLeft,
-                scrollTop: scrollingRoot.scrollTop
+                scrollLeft: document.scrollingElement.scrollLeft,
+                scrollTop: document.scrollingElement.scrollTop
             };
             RUNTIME('addVIMark', {mark: mo});
             Front.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
@@ -678,8 +677,8 @@ var Normal = (function(mode) {
     self.jumpVIMark = function(mark, newTab) {
         if (localMarks.hasOwnProperty(mark)) {
             var markInfo = localMarks[mark];
-            scrollingRoot.scrollLeft = markInfo.scrollLeft;
-            scrollingRoot.scrollTop = markInfo.scrollTop;
+            document.scrollingElement.scrollLeft = markInfo.scrollLeft;
+            document.scrollingElement.scrollTop = markInfo.scrollTop;
         } else {
             runtime.command({
                 action: 'getSettings',
@@ -693,7 +692,7 @@ var Normal = (function(mode) {
                             url: markInfo,
                             scrollLeft: 0,
                             scrollTop: 0
-                        }
+                        };
                     }
                     markInfo.tab = {
                         tabbed: newTab,
@@ -743,10 +742,10 @@ var Normal = (function(mode) {
             // hide borders
             var borderStyle = elm.style.borderStyle;
             elm.style.borderStyle = "none";
-            Front.toggleStatus();
+            Front.toggleStatus(false);
 
             var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
-            if (elm === scrollingRoot) {
+            if (elm === document.scrollingElement) {
                 ww = window.innerWidth;
                 wh = window.innerHeight;
                 sx = 0;
@@ -781,7 +780,7 @@ var Normal = (function(mode) {
                 if (lastScrollTop === elm.scrollTop) {
                     if (lastScrollLeft === elm.scrollLeft) {
                         // done
-                        Front.toggleStatus();
+                        Front.toggleStatus(true);
                         Front.showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                         // restore overflow
                         elm.style.overflowY = overflowY;
@@ -840,11 +839,11 @@ var Normal = (function(mode) {
     };
 
     self.captureFullPage = function() {
-        self.captureElement(scrollingRoot);
+        self.captureElement(document.scrollingElement);
     };
 
     self.captureScrollingElement = function() {
-        var scrollNode = scrollingRoot;
+        var scrollNode = document.scrollingElement;
         initScrollIndex();
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];

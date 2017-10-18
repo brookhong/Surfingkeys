@@ -275,7 +275,7 @@ mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMous
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element) {
         Front.writeClipboard(element.href);
-    })
+    });
 });
 mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
     var linksToYank = [];
@@ -286,6 +286,7 @@ mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
+    $("input:visible:nth(0)")[0].scrollIntoViewIfNeeded();
     Hints.create("input:visible:nth(0)", Hints.dispatchMouseClick);
 });
 mapkey('I', '#1Go to edit box with vim editor', function() {
@@ -295,7 +296,7 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
 });
 mapkey('O', '#1Open detected links from text', function() {
     Hints.create(runtime.conf.clickablePat, function(element) {
-        $(`<a href=${element[2]}>`)[0].click()
+        $(`<a href=${element[2]}>`)[0].click();
     }, {statusLine: "Open detected links from text"});
 });
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
@@ -306,9 +307,23 @@ mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
             window.location.replace(pdfUrl);
         });
     } else {
-        chrome.storage.local.remove("noPdfViewer", function() {
-            window.location.replace(pdfUrl);
-        });
+        if ($("EMBED").attr("type") === "application/pdf") {
+            chrome.storage.local.remove("noPdfViewer", function() {
+                window.location.replace(pdfUrl);
+            });
+        } else {
+            chrome.storage.local.get("noPdfViewer", function(resp) {
+                if(!resp.noPdfViewer) {
+                    chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                        Front.showBanner("PDF viewer disabled.");
+                    });
+                } else {
+                    chrome.storage.local.remove("noPdfViewer", function() {
+                        Front.showBanner("PDF viewer enabled.");
+                    });
+                }
+            });
+        }
     }
 });
 map('<Ctrl-i>', 'I');
@@ -506,12 +521,12 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
     Front.writeClipboard(JSON.stringify(aa, null, 4));
 });
 mapkey('yg', '#7Capture current page', function() {
-    Front.toggleStatus();
+    Front.toggleStatus(false);
     setTimeout(function() {
         runtime.command({
             action: 'captureVisibleTab'
         }, function(response) {
-            Front.toggleStatus();
+            Front.toggleStatus(true);
             Front.showPopup("<img src='{0}' />".format(response.dataUrl));
         });
     }, 500);

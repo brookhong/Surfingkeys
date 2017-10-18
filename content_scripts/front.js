@@ -32,6 +32,14 @@ var Front = (function() {
         });
     };
 
+    self.getUsage = function(cb) {
+        frontendCommand({
+            action: 'getUsage'
+        }, function(response) {
+            cb(response.data);
+        });
+    };
+
     self.showPopup = function(content) {
         frontendCommand({
             action: 'showPopup',
@@ -116,7 +124,7 @@ var Front = (function() {
                 });
             });
         };
-        self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}))
+        self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}));
     };
 
     self.openFinder = function() {
@@ -190,9 +198,10 @@ var Front = (function() {
             position: pos
         });
     };
-    self.toggleStatus = function () {
+    self.toggleStatus = function (visible) {
         frontendCommand({
-            action: "toggleStatus"
+            action: "toggleStatus",
+            visible: visible
         });
     };
 

@@ -115,7 +115,7 @@ function filterOverlapElements(elements) {
         if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
             return true;
         } else {
-            return (!el || (el.contains(e) || e.contains(el))) && !e.disabled && !e.readOnly && be.width > 4;
+            return (!el || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
         }
     });
     // filter out element which has his children covered
@@ -184,7 +184,7 @@ RegExp.prototype.toJSON = function() {
     };
     $.fn.topInView = function() {
         return this.filter(function() {
-            return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
+            return $(this).width() * $(this).height() > 0 && $(this).offset().top > (document.scrollingElement || document.body).scrollTop;
         });
     };
 

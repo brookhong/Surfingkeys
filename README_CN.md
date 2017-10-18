@@ -595,10 +595,11 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | 属性 | 默认值 | 解释 |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | 可用于生成拨号盘的字符。 |
+| Hints.numbericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
 | Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
-| settings.richHintsForKeystroke | true | 是否启用实时按键提示。 |
+| settings.richHintsForKeystroke | 500 | 超过指定毫秒数后显示按键提示，如果指定值等于0会禁用按键提示。 |
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
@@ -628,6 +629,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.stealFocusOnLoad | true | 是否阻止光标定位到输入框，默认为true，这样我们可以在页面加载结束之后直接使用Surfingkeys提供的各类按键，否则需要按Esc退出输入框。 |
 | settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
+| settings.caseSensitive | false | 网页内搜索是否大小写敏感。 |
+| settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
 
 ### settings.theme示例，修改状态栏字体
 

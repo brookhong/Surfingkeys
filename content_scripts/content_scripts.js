@@ -274,7 +274,7 @@ function onAceVimKeymapInit(fn) {
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
     if (typeof(SearchEngine) !== 'undefined') {
         SearchEngine.aliases[alias] = {
-            prompt: prompt + "≫",
+            prompt: `${prompt}${separatorHtml}`,
             url: url,
             suggestionURL: suggestionURL || "",
             listSuggestion: listSuggestion
@@ -366,7 +366,7 @@ function tabOpenLink(str, simultaneousness) {
 
     var urls;
     if (str.constructor.name === "Array") {
-        urls = str
+        urls = str;
     } else if (str.constructor.name === "jQuery") {
         urls = str.map(function() {
             return this.href;
@@ -648,6 +648,7 @@ function _init(onInit) {
                         action: 'setSurfingkeysIcon',
                         status: resp.disabled
                     });
+                    $(document).trigger("surfingkeys:userSettingsLoaded");
                 });
             }
         });

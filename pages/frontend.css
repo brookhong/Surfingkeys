@@ -147,29 +147,19 @@ body {
 #sk_status>span {
     line-height: 16px;
 }
-#sk_richKeystroke {
-    z-index: 2147483001;
-    position: absolute;
-    background: #fff;
-    max-width: 18%;
-    bottom: -4px;
-    right: -4px;
-    padding: 4px 20px 8px 4px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
-}
-#sk_richKeystroke span.annotation {
+.expandRichHints span.annotation {
     padding-left: 4px;
 }
-#sk_richKeystroke .kbd-span {
+.expandRichHints .kbd-span {
     min-width: 30px;
     text-align: right;
     display: inline-block;
 }
-#sk_richKeystroke kbd>.candidates {
+.expandRichHints kbd>.candidates {
     color: #de0606;
     font-weight: bold;
 }
-#sk_richKeystroke kbd {
+.expandRichHints kbd {
     padding: 1px 2px;
 }
 #sk_find {
@@ -183,7 +173,6 @@ body {
     position: fixed;
     float: right;
     bottom: 0px;
-    right: -2rem;
     z-index: 2147483000;
 }
 #sk_usage, #sk_popup, #sk_editor {
@@ -387,4 +376,88 @@ div.sk_arrow[dir=up]>div:nth-of-type(2) {
 .ace_editor.ace_autocomplete {
     z-index: 2147483300 !important;
     width: 80% !important;
+}
+
+@keyframes slideInBanner {
+    0%, 100% {
+        top: -3rem;
+    }
+
+    18%, 82% {
+        top: 0px;
+    }
+}
+
+.slideInBanner {
+    animation: 1.6s ease-in-out 1 both slideInBanner;
+}
+
+@keyframes slideInRight {
+    0% {
+        right: -2rem;
+    }
+
+    100% {
+        right: 0px;
+    }
+}
+
+.slideInRight {
+    right: 0rem;
+    animation: 0.3s ease-in-out 1 forwards slideInRight;
+}
+
+@keyframes slideOutRight {
+    0% {
+        right: 0px;
+    }
+
+    100% {
+        right: -2rem;
+    }
+}
+
+.slideOutRight {
+    right: -2rem;
+    animation: 0.3s ease-in-out 1 forwards slideOutRight;
+}
+
+@keyframes expandRichHints {
+    0% {
+        opacity: 0.4;
+        background: #000;
+        box-shadow: 0px 0px 0px;
+        transform: scale3d(.3, .3, .3);
+        transform-origin: right bottom;
+    }
+
+    100% {
+        opacity: 1;
+        background: #fff;
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
+    }
+}
+
+.expandRichHints {
+    animation: 0.2s ease-in-out 1 forwards expandRichHints;
+}
+
+@keyframes collapseRichHints {
+    0% {
+        opacity: 1;
+        background: #fff;
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    100% {
+        opacity: 0;
+        background: #000;
+        box-shadow: 0px 0px 0px;
+        transform: scale3d(.3, .3, .3);
+        transform-origin: right bottom;
+    }
+}
+
+.collapseRichHints {
+    animation: 0.2s ease-in-out 1 forwards collapseRichHints;
 }

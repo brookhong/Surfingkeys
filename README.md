@@ -616,14 +616,16 @@ For example,
 | key | default value | explanation |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
+| Hints.numbericHints | false | Whether to use digit as hint label, if it is on, you could type text to filter links. |
 | Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
 | settings.showModeStatus | false | Whether always to show mode status. |
 | settings.showProxyInStatusBar | false | Whether to show proxy info in status bar. |
-| settings.richHintsForKeystroke | true | Whether to show rich hints for keystroke. |
+| settings.richHintsForKeystroke | 500 | Timeout(ms) to show rich hints for keystroke, 0 will disable rich hints. |
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
 | settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
 | settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
 | settings.omnibarPosition | "middle" | Where to position Omnibar. ["middle", "bottom"] |
+| settings.omnibarSuggestion | false | Show suggestion URLs|
 | settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
@@ -642,13 +644,15 @@ For example,
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
-| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
+| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "last", "default"] |
 | settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
 | settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visibile after user clicks on some other link. If you don't like the input to be focused when it's turned to visibile, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
+| settings.caseSensitive | false | Whether finding in page is case sensitive. |
+| settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
 
 ### Example of settings.theme, below is to set font size of status bar
 
@@ -662,6 +666,13 @@ For example,
 
     npm install
     npm run build
+
+## API Documentation
+
+> The API documentation is currently a work in progress.
+
+* [Markdown](docs/API.md)
+* [HTML](http://brookhong.github.io/Surfingkeys)
 
 ## Credits
 
