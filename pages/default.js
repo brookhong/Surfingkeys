@@ -254,6 +254,7 @@ mapkey('ZR', '#5Restore last session', function() {
 mapkey('T', '#3Choose a tab', 'Front.chooseTab()');
 mapkey('?', '#0Show usage', 'Front.showUsage()');
 mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+map('u', 'e');
 mapkey('d', '#2Scroll a page down', 'Normal.scroll("pageDown")', {repeatIgnore: true});
 mapkey('j', '#2Scroll down', 'Normal.scroll("down")', {repeatIgnore: true});
 mapkey('k', '#2Scroll up', 'Normal.scroll("up")', {repeatIgnore: true});
