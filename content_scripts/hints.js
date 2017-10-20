@@ -283,7 +283,7 @@ var Hints = (function(mode) {
             }
         } else {
             if (cssSelector === "") {
-                cssSelector = "a, button, select, input, textarea, *[onclick], *.jfk-button, *.goog-flat-menu-button, *[role=button]";
+                cssSelector = "a, button, select, input, textarea, *[onclick], *.jfk-button, *.goog-flat-menu-button, *[role]";
                 if (runtime.conf.clickableSelector.length) {
                     cssSelector += ", " + runtime.conf.clickableSelector;
                 }

@@ -25,11 +25,15 @@ function htmlDecode(str) {
 
 function getRealEdit(event) {
     var rt = event ? event.target : document.activeElement;
-    if (rt && rt.shadowRoot) {
+    // on some pages like chrome://history/, input is in shadowRoot of several other recursive shadowRoots.
+    while (rt && rt.shadowRoot) {
         if (rt.shadowRoot.activeElement) {
             rt = rt.shadowRoot.activeElement;
         } else if (rt.shadowRoot.querySelector('input, textarea, select')) {
             rt = rt.shadowRoot.querySelector('input, textarea, select');
+            break;
+        } else {
+            break;
         }
     }
     return rt;
