@@ -96,10 +96,17 @@ function isElementPartiallyInViewport(el) {
 }
 
 function getVisibleElements(filter) {
-    var all = document.documentElement.getElementsByTagName("*");
+    var all = Array.from(document.documentElement.getElementsByTagName("*"));
     var visibleElements = [];
-    for (var i = 0, len = all.length; i < len; i++) {
+    for (var i = 0; i < all.length; i++) {
         var e = all[i];
+        // include elements in a shadowRoot.
+        if (e.shadowRoot) {
+            var cc = e.shadowRoot.querySelectorAll('*');
+            for (var j = 0; j < cc.length; j++) {
+                all.push(cc[j]);
+            }
+        }
         var rect = e.getBoundingClientRect();
         if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
             && (rect.left <= window.innerWidth) && (rect.right >= 0)
@@ -119,7 +126,7 @@ function filterOverlapElements(elements) {
         if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
             return true;
         } else {
-            return (!el || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
+            return (!el || (el.shadowRoot && el.childElementCount === 0) || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
         }
     });
     // filter out element which has his children covered

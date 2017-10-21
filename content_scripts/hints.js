@@ -75,7 +75,7 @@ var Hints = (function(mode) {
             var i = parseInt(getComputedStyle(node).getPropertyValue('z-index'));
             z += (isNaN(i) || i < 0) ? 0 : i;
             node = node.parentNode;
-        } while (node && node !== document.body && node !== document);
+        } while (node && node !== document.body && node !== document && node.nodeType !== node.DOCUMENT_FRAGMENT_NODE);
         return z;
     }
 
