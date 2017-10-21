@@ -117,7 +117,7 @@ var Front = (function(mode) {
     var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
-    var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body');
+    var banner = $('<div id=sk_banner>').appendTo('body');
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
@@ -490,7 +490,7 @@ var Front = (function(mode) {
         var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
         keystroke.html(keys);
 
-        keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight");
+        keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight simpleHint");
 
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             _pendingHint = setTimeout(function() {
@@ -509,7 +509,7 @@ var Front = (function(mode) {
                     }).join("");
                     if (words.length > 0 && _pendingHint) {
                         keystroke.html(words);
-                        keystroke.removeClass("expandRichHints").addClass("expandRichHints");
+                        keystroke.removeClass("expandRichHints simpleHint").addClass("expandRichHints");
                         self.flush();
                     }
                 });

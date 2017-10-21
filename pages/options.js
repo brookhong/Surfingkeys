@@ -60,10 +60,6 @@ function createMappingEditor(mode, elmId) {
     self.getSession().setMode("ace/mode/javascript");
     self.$blockScrolling = Infinity;
 
-    self.setExampleValue = function() {
-        self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.\n// set theme\nsettings.theme = `\n.sk_theme {\n    background: #000;\n    color: #fff;\n}\n.sk_theme tbody {\n    color: #000;\n}\n.sk_theme input {\n    color: #317ef3;\n}\n.sk_theme .url {\n    color: #38f;\n}\n.sk_theme .annotation {\n    color: #38f;\n}\n\n.sk_theme .focused {\n    background: #aaa;\n}`;\n", -1);
-    };
-
     return self;
 }
 
@@ -77,7 +73,7 @@ function renderSettings(rs) {
     if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
-        mappingsEditor.setExampleValue();
+        mappingsEditor.setValue($('#sample').html());
     }
 }
 
@@ -86,7 +82,7 @@ runtime.on('settingsUpdated', function(resp) {
         if (resp.settings.snippets.length) {
             mappingsEditor.setValue(resp.settings.snippets, -1);
         } else {
-            mappingsEditor.setExampleValue();
+            mappingsEditor.setValue($('#sample').html());
         }
     }
 });
