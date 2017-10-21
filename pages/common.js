@@ -15,7 +15,9 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
         Front.getContentFromClipboard(function(response) {
             Front.renderDataFromClipboard(response.data);
         });
+    }
 
+    Front.renderHeaderDescription = function() {
         var words = Normal.mappings.getWords().map(function(w) {
             var meta = Normal.mappings.find(w).meta;
             w = decodeKeystroke(w);
@@ -27,8 +29,10 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
             return w !== null;
         });
 
+        $('div.description').remove();
         content = $('div.content');
         desc = $('<div class="description">').html(words.join("")).insertBefore('div.content');
         content.css('height', window.innerHeight - desc.outerHeight());
-    }
+    };
+    Front.renderHeaderDescription();
 });

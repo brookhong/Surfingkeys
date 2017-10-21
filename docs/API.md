@@ -70,8 +70,9 @@ Returns **[undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Re
 
 ### onEnter
 
-Ececute command after pressing the return key.
-Displays any output if the command returns any results.
+Execute command after pressing the return key.
+
+Displays any output if the command.
 
 Returns **[boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** 
 

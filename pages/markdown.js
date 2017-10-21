@@ -28,5 +28,39 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
         Front.writeClipboard($('.markdown-body').html());
     });
 
-    Front.renderDataFromClipboard = previewMarkdown;
+    var mdUrl = window.location.search.substr(3);
+
+    if (mdUrl !== "") {
+        httpRequest({
+            url: mdUrl
+        }, function(res) {
+            previewMarkdown(res.text);
+        });
+    } else {
+        Front.renderDataFromClipboard = previewMarkdown;
+    }
+
+    var reader = new FileReader(), inputFile;
+    reader.onload = function(){
+        previewMarkdown(reader.result);
+    };
+    function previewMarkdownFile() {
+        reader.readAsText(inputFile);
+    }
+    $('input[type=file]').on('change', function(evt) {
+        if (!inputFile) {
+            mapkey('or', '#99Reload from selected local file.', function() {
+                previewMarkdownFile();
+                Front.showBanner("Reloaded!", 100);
+            });
+            Front.renderHeaderDescription();
+        }
+        inputFile = evt.target.files[0];
+        previewMarkdownFile();
+    });
+
+    mapkey('of', '#99Open local file.', function() {
+        $('input[type=file]').click();
+    });
+
 });
