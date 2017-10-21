@@ -77,14 +77,12 @@ gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
         'pages/markdown.html'
     ], {base: "."})
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
-        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-0MujXiVB1Z1j6vda9QAWnGZUT7RNwJIjccsEzO1Jtcw='))
         .pipe(gulp.dest('dist/extension'));
 });
 
 gulp.task('use_common_content_min_manifest', ['copy-non-js-files', 'clean'], function() {
     return gulp.src('manifest.json')
         .pipe(replace(/.*build:common_content[^]*endbuild.*/, '            "content_scripts/common_content.min.js",'))
-        .pipe(replace('sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=', 'sha256-0MujXiVB1Z1j6vda9QAWnGZUT7RNwJIjccsEzO1Jtcw='))
         .pipe(gulp.dest('dist/extension'));
 });
 
