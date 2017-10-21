@@ -6,6 +6,13 @@
     padding: 10 5%;
     width: 50%;
 }
+#topSites i {
+    vertical-align: middle;
+    margin-right: 4px;
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+}
 
 #back {
     font-size: 20pt;

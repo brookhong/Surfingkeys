@@ -285,6 +285,16 @@ mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
         Front.writeClipboard(linksToYank.join('\n'));
     }, {multipleHits: true});
 });
+mapkey('yc', '#7Copy a column of a table', function() {
+    Hints.create($("table").find('tr:first').find('>*'), function(element) {
+        var column = $(element).closest('table')
+            .find('tr').find(`>*:nth(${$(element).index()})`)
+            .toArray().map(function(t) {
+                return t.innerText;
+            }).join("\n");
+        Front.writeClipboard(column);
+    });
+});
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
     $("input:visible:nth(0)")[0].scrollIntoViewIfNeeded();
@@ -339,6 +349,7 @@ mapkey('<Alt-p>', '#3pin/unpin current tab', 'RUNTIME("togglePinTab")');
 mapkey('<Alt-m>', '#3mute/unmute current tab', 'RUNTIME("muteTab")');
 mapkey('B', '#4Go one tab history back', 'RUNTIME("historyTab", {backward: true})', {repeatIgnore: true});
 mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: false})', {repeatIgnore: true});
+mapkey('<Ctrl-6>', '#4Go to last used tab', 'RUNTIME("goToLastTab")');
 mapkey('gT', '#4Go to first activated tab', 'RUNTIME("historyTab", {index: 0})', {repeatIgnore: true});
 mapkey('gt', '#4Go to last activated tab', 'RUNTIME("historyTab", {index: -1})', {repeatIgnore: true});
 mapkey('S', '#4Go back in history', 'history.go(-1)', {repeatIgnore: true});

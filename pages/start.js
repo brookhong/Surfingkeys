@@ -2,7 +2,7 @@ runtime.command({
     action: "getTopSites"
 }, function(response) {
     var urls = response.urls.map(function(u) {
-        return `<li><a href="${u.url}">${u.title}</a></li>`;
+        return `<li><a href="${u.url}"><i style="background:url('chrome://favicon/${u.url}') no-repeat"></i>${u.title}</a></li>`;
     });
     $("#topSites>ul").html(urls.join("\n"));
     var source = $('#quickIntroSource').html();

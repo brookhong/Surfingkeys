@@ -389,7 +389,7 @@ var Insert = (function(mode) {
             Normal.passFocus(true);
         }
         elm.focus();
-        if (runtime.conf.cursorAtEndOfInput) {
+        if (runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
             moveCusorEOL();
         }
     };

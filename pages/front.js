@@ -169,7 +169,7 @@ var Front = (function(mode) {
         var items = tabs.forEach(function(t, i) {
             var tab = $(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, htmlEncode(t.title)));
+            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.url, htmlEncode(t.title)));
             tab.data('url', t.url);
             tabs_fg.append(tab);
         });
@@ -185,7 +185,7 @@ var Front = (function(mode) {
         }, function(response) {
             if (response.tabs.length > runtime.conf.tabsThreshold) {
                 showPopup(self.omnibar, {type: 'Tabs'});
-            } else {
+            } else if (response.tabs.length > 0) {
                 showPopup(_tabs, response.tabs);
             }
         });

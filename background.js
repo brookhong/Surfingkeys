@@ -583,9 +583,11 @@ var ChromeService = (function() {
     };
     self.getDisabled = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
-            _response(message, sendResponse, {
-                disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
-            });
+            if (sender.tab) {
+                _response(message, sendResponse, {
+                    disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
+                });
+            }
         });
     };
 
@@ -727,6 +729,14 @@ var ChromeService = (function() {
                 });
             }
         });
+    };
+    self.goToLastTab = function(message, sender, sendResponse) {
+        if (tabHistory.length > 1) {
+            var lastTab = tabHistory[tabHistory.length - 2];
+            chrome.tabs.update(lastTab, {
+                active: true
+            });
+        }
     };
     self.historyTab = function(message, sender, sendResponse) {
         if (tabHistory.length > 0) {
@@ -1150,11 +1160,13 @@ var ChromeService = (function() {
         });
     };
     self.tabURLAccessed = function(message, sender, sendResponse) {
-        var tabId = sender.tab.id;
-        if (!tabURLs.hasOwnProperty(tabId)) {
-            tabURLs[tabId] = {};
+        if (sender.tab) {
+            var tabId = sender.tab.id;
+            if (!tabURLs.hasOwnProperty(tabId)) {
+                tabURLs[tabId] = {};
+            }
+            tabURLs[tabId][message.url] = message.title;
         }
-        tabURLs[tabId][message.url] = message.title;
     };
     self.getTabURLs = function(message, sender, sendResponse) {
         var tabURL = tabURLs[sender.tab.id] || {};
