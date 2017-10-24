@@ -22,6 +22,9 @@
         "closeTab": {
             "description": "Close the current tab."
         },
+        "chooseTab": {
+            "description": "Invoke tab selector."
+        },
         "proxyThis": {
             "description": "Toggle current site in autoproxy_hosts."
         }

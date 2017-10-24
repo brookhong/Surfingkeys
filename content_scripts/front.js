@@ -290,6 +290,10 @@ var Front = (function() {
         });
     };
 
+    runtime.runtime_handlers['chooseTab'] = function(msg, sender, response) {
+        self.chooseTab();
+    };
+
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
