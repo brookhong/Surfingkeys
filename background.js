@@ -468,6 +468,18 @@ var ChromeService = (function() {
                     chrome.tabs.remove(tabs[0].id);
                 });
                 break;
+            case 'chooseTab':
+                chrome.tabs.query({
+                    currentWindow: true,
+                    active: true
+                }, function(resp) {
+                    var cur = resp[0].id;
+                    chrome.tabs.sendMessage(cur, {
+                        target: 'content_runtime',
+                        subject: 'chooseTab'
+                    });
+                });
+                break;
             case 'proxyThis':
                 chrome.tabs.query({
                     currentWindow: true,
