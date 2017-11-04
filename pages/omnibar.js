@@ -275,8 +275,10 @@ var Omnibar = (function(mode, ui) {
 
     self.focusItem = function(sel) {
         var fi = self.resultsDiv.find(sel);
-        fi.addClass('focused');
-        fi[0].scrollIntoViewIfNeeded();
+        if (fi.length) {
+            fi.addClass('focused');
+            fi[0].scrollIntoViewIfNeeded();
+        }
     };
 
     function rotateResult(backward) {

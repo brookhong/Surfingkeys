@@ -295,6 +295,11 @@ mapkey('yc', '#7Copy a column of a table', function() {
         Front.writeClipboard(column);
     });
 });
+mapkey('yq', '#7Copy pre text.', function() {
+    Hints.create("pre", function(element) {
+        Front.writeClipboard(element.innerText);
+    });
+});
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
 mapkey('gi', '#1Go to the first edit box', function() {
     $("input:visible:nth(0)")[0].scrollIntoViewIfNeeded();

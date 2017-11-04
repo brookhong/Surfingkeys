@@ -40,10 +40,10 @@ function getRealEdit(event) {
 }
 
 function isEditable(element) {
-    return element.localName === 'textarea'
+    return !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
-        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
+        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
 }
 
 function parseQueryString(query) {

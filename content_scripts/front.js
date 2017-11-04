@@ -62,6 +62,9 @@ var Front = (function() {
 
     function updateElementBehindEditor(data) {
         $(elementBehindEditor).val(data);
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("change", false, true);
+        elementBehindEditor.dispatchEvent(evt);
     }
 
     var onEditorSaved, elementBehindEditor;

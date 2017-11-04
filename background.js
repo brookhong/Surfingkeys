@@ -608,9 +608,16 @@ var ChromeService = (function() {
         chrome.storage.local.clear();
         chrome.storage.sync.clear();
         loadSettings(null, function(data) {
-            _applyProxySettings();
+            _applyProxySettings(data);
             _response(message, sendResponse, {
                 settings: data
+            });
+
+            activePorts.forEach(function(port) {
+                port.postMessage({
+                    action: 'settingsUpdated',
+                    settings: data
+                });
             });
         });
     };
