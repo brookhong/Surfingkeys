@@ -201,8 +201,6 @@
         "set proxy mode `direct`": "不使用代理",
         "set proxy mode `system`": "使用系统设置",
         "show failed web requests of current page": "显示当前页失败的请求",
-        "show pressed key": "按的什么键",
-        "show proxy info": "显示代理信息",
         "vim-like marks": "类VIM标签",
         "zoom in": "放大页面",
         "zoom out": "缩小页面",

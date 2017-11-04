@@ -162,12 +162,6 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
 Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\bkeyword\b`.
 
-### Show pressed keys
-
-This is helper mode for you to see what keys Surfingkeys recognized when you press one. It helps you when you don't know how to specify the keys that you need map.
-
-`spk` to open it.
-
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,

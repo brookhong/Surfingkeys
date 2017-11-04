@@ -6,7 +6,7 @@ var Front = (function() {
 
     // this object is stub of UI, it's UI consumer
     self.isProvider = function() {
-        return chrome.extension.getURL("/pages/frontend.html") === document.location.href;
+        return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
     };
 
     var _callbacks = {};
@@ -50,13 +50,6 @@ var Front = (function() {
     self.hidePopup = function() {
         frontendCommand({
             action: 'hidePopup'
-        });
-    };
-
-
-    self.showPressed = function(content) {
-        frontendCommand({
-            action: 'showPressed'
         });
     };
 

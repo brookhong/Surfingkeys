@@ -63,26 +63,113 @@ function createMappingEditor(mode, elmId) {
     return self;
 }
 
+function renderProxy(proxy) {
+    var p = proxy.split(/\s+/);
+    if (p.length > 0) {
+        $("#proxy>select").val(p[0]);
+        $("#proxy>input").val(p[1]);
+    } else {
+        $("#proxy>select").val("PROXY");
+    }
+}
+
+function renderProxySettings(rs) {
+    $('#proxyMode>select').val(rs.proxyMode);
+    $("#proxy").hide();
+    $('#autoproxy_hosts').hide();
+    $('#proxyMode span[mode]').hide();
+    $(`#proxyMode span[mode=${rs.proxyMode}]`).show();
+    if (rs.proxyMode === "byhost") {
+        $("#proxy").show();
+        renderProxy(rs.proxy);
+
+        var autoproxy_hosts = rs.autoproxy_hosts.sort().map(function(h) {
+            return `<aphost><i role='remove'>␡</i><span>${h}</span></aphost>`;
+        }).join("");
+        $('#autoproxy_hosts').show();
+        $('#autoproxy_hosts>div').html(autoproxy_hosts);
+
+        $('#autoproxy_hosts').find('aphost>i').click(function() {
+            var elm = $(this).closest('aphost');
+            runtime.command({
+                action: 'updateProxy',
+                host: elm.find("span").text(),
+                operation: 'remove'
+            }, function() {
+                elm.remove();
+            });
+        });
+    } else if (rs.proxyMode === "always") {
+        $("#proxy").show();
+        renderProxy(rs.proxy);
+    }
+}
+
+function _updateProxy(data) {
+    data.action = 'updateProxy';
+    runtime.command(data, function(res) {
+        renderProxySettings(res);
+    });
+}
+
+function __updateProxy(data) {
+    _updateProxy({
+        proxy: $('#proxy>select').val() + " " + $('#proxy>input').val()
+    });
+}
+
+$('#proxyMode>select').change(function() {
+    _updateProxy({
+        mode: $(this).val()
+    });
+});
+
+$('#proxy>select').change(__updateProxy);
+$('#proxy>input').blur(__updateProxy);
+
+$('#autoproxy_hosts>button').click(function() {
+    _updateProxy({
+        host: $('#autoproxy_hosts>input').val(),
+        operation: 'add'
+    });
+});
+
+function showAdvanced(flag) {
+    if (flag) {
+        $('#basicMappings').hide();
+        $('#advancedSetting').show();
+        $('#advancedToggler').attr('checked', 'checked');
+    } else {
+        $('#basicMappings').show();
+        $('#advancedSetting').hide();
+        $('#advancedToggler').removeAttr('checked');
+    }
+}
+
 var localPathSaved = "";
 function renderSettings(rs) {
+    showAdvanced(rs.showAdvanced);
     $('#localPath').val(rs.localPath);
     localPathSaved = rs.localPath;
-    var h = $(window).height() - $('#save_container').outerHeight() * 4;
+    var h = $(window).height() / 2;
     $(mappingsEditor.container).css('height', h);
     $(defaultMappingsEditor.container).css('height', h);
     if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
-        mappingsEditor.setValue($('#sample').html());
+        mappingsEditor.setValue($('#sample').html(), -1);
     }
+
+    renderProxySettings(rs);
 }
 
 runtime.on('settingsUpdated', function(resp) {
     if ('snippets' in resp.settings) {
+        renderKeyMappings(resp.settings);
         if (resp.settings.snippets.length) {
             mappingsEditor.setValue(resp.settings.snippets, -1);
         } else {
-            mappingsEditor.setValue($('#sample').html());
+            mappingsEditor.setValue($('#sample').html(), -1);
         }
     }
 });
@@ -97,11 +184,21 @@ runtime.command({
     }
 });
 
-$('#reset_button').click(function() {
+$('#advancedToggler').click(function() {
+    var newFlag = ($(this).attr('checked') === undefined);
+    showAdvanced(newFlag);
+    RUNTIME('updateSettings', {
+        settings: {
+            showAdvanced: newFlag
+        }
+    });
+});
+$('#resetSettings').click(function() {
     runtime.command({
         action: "resetSettings"
     }, function(response) {
         renderSettings(response.settings);
+        renderKeyMappings(response.settings);
         Front.showBanner('Settings reset', 300);
     });
 });
@@ -162,3 +259,160 @@ function saveSettings() {
     }
 }
 $('#save_button').click(saveSettings);
+
+
+var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'ge', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gb', 'gU', 'W', 'B', 'ga', 'F', ';j'];
+
+$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+    basicMappings = basicMappings.map(function(w, i) {
+        if (!Normal.mappings.find(encodeKeystroke(w))) {
+            console.log(w);
+        }
+        return {
+            origin: w,
+            annotation: Normal.mappings.find(encodeKeystroke(w)).meta.annotation
+        };
+    });
+});
+
+function renderKeyMappings(rs) {
+    var delta = runScript(`
+settings.map = {};
+settings.unmapAllExcept = {};
+function map(a, b) {
+    var f = false;
+    for (var k in settings.map) {
+        if (settings.map[k] === b) {
+            settings.map[k] = a;
+            f = true;
+        }
+    }
+    if (!f) {
+        settings.map[b] = a;
+    }
+}
+function unmap(a) {
+    settings.map[a] = "";
+}
+function unmapAllExcept(a, b) {
+    settings.unmapAllExcept[b] = a;
+}
+${rs.snippets}`);
+
+    var customization = basicMappings.map(function(w, i) {
+        var newKey = w.origin;
+        if (delta.settings.map.hasOwnProperty(w.origin)) {
+            newKey = delta.settings.map[w.origin];
+        }
+        return `<div>
+    <span class=annotation>${w.annotation}</span>
+    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
+    </div>`;
+    });
+
+    $('#basicMappings').html(customization);
+    $('#basicMappings').find("kbd").click(function() {
+        KeyPicker.enter(this);
+    });
+}
+
+$(document).on('surfingkeys:userSettingsLoaded', function(evt, rs) {
+    renderKeyMappings(rs);
+});
+
+var KeyPicker = (function(mode) {
+    var self = $.extend({
+        name: "KeyPicker",
+        frontendOnly: true,
+        eventListeners: {}
+    }, mode);
+
+    function showKey() {
+        var s = htmlEncode(_key);
+        if (!s) {
+            s = "&nbsp;";
+        }
+        $('#keyPicker').find("#inputKey").html(s);
+    }
+
+    var _key = "";
+    self.addEventListener('keydown', function(event) {
+        if (event.keyCode === 27) {
+            $('#keyPicker').hide();
+            self.exit();
+        } else if (event.keyCode === 8) {
+            var ek = encodeKeystroke(_key);
+            ek = ek.substr(0, ek.length - 1);
+            _key = decodeKeystroke(ek);
+            showKey();
+        } else if (event.keyCode === 13) {
+            $('#keyPicker').hide();
+            self.exit();
+            _elm.innerHTML = (_key !== "") ? htmlEncode(_key) : "🚫";
+            $(_elm).attr('new', _key);
+            var kbds = $('#basicMappings').find("kbd").toArray();
+            var originalKeys = kbds.map(function(m) {
+                return $(m).attr('origin');
+            }, {} );
+            var realDefMap = [];
+            var kbdMap = kbds.map(function(m, i) {
+                var n = $(m).attr('new'), o = $(m).attr('origin');
+                var c = [];
+                if (n === "") {
+                    c.push(`unmap("${o}");`);
+                } else if (n !== o) {
+                    var j = originalKeys.indexOf(n);
+                    if (j !== -1 && i < j) {
+                        // if the new key that user choosed was in default mappings
+                        // and has not been modified (i < j)
+                        // we need save the default binding first
+                        c.push(`map(">_${n}", "${n}");`);
+                        realDefMap.push(n);
+                    }
+                    if (realDefMap.indexOf(o) === -1) {
+                        c.push(`map("${n}", "${o}");`);
+                    } else {
+                        c.push(`map("${n}", ">_${o}");`);
+                    }
+                }
+                return c.join("\n");
+            }).filter(function(m) {
+                return m != "";
+            }).join("\n");
+            RUNTIME('updateSettings', {
+                settings: {
+                    snippets: kbdMap
+                }
+            });
+        } else {
+            if (event.sk_keyName.length > 1) {
+                var keyStr = JSON.stringify({
+                    metaKey: event.metaKey,
+                    altKey: event.altKey,
+                    ctrlKey: event.ctrlKey,
+                    shiftKey: event.shiftKey,
+                    keyCode: event.keyCode,
+                    code: event.code,
+                    composed: event.composed,
+                    key: event.key
+                }, null, 4);
+                reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
+            } else {
+                _key += decodeKeystroke(event.sk_keyName);
+                showKey();
+            }
+        }
+        event.sk_stopPropagation = true;
+    });
+
+    var _elm;
+    self.enter = function(elm) {
+        mode.enter.apply(self, arguments);
+        _key = $(elm).attr('new');
+        showKey();
+        $('#keyPicker').show();
+        _elm = elm;
+    };
+
+    return self;
+})(Mode);

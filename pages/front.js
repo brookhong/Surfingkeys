@@ -23,34 +23,12 @@ var Front = (function(mode) {
         top.postMessage(args, topOrigin);
     };
 
-    var _showPressed;
     self.addEventListener('keydown', function(event) {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
             event.sk_stopPropagation = true;
         } else {
-            if (_showPressed) {
-                if (event.sk_keyName.length > 1) {
-                    var keyStr = JSON.stringify({
-                        metaKey: event.metaKey,
-                        altKey: event.altKey,
-                        ctrlKey: event.ctrlKey,
-                        shiftKey: event.shiftKey,
-                        keyCode: event.keyCode,
-                        code: event.code,
-                        composed: event.composed,
-                        key: event.key
-                    }, null, 4);
-                    reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
-                } else {
-                    var s = htmlEncode(decodeKeystroke(event.sk_keyName));
-                    if (!s) {
-                        s = "&nbsp;";
-                    }
-                    _popup.find("kbd").html(s);
-                }
-                event.sk_stopPropagation = true;
-            } else if (_tabs.trie) {
+            if (_tabs.trie) {
                 _tabs.trie = _tabs.trie.find(event.sk_keyName);
                 if (!_tabs.trie) {
                     self.hidePopup();
@@ -128,7 +106,6 @@ var Front = (function(mode) {
             _display.hide();
             self.flush();
             _display.onHide && _display.onHide();
-            _showPressed = false;
             self.exit();
         }
     };
@@ -310,11 +287,6 @@ var Front = (function(mode) {
         showPopup(_popup);
     };
 
-    _actions['showPressed'] = function(message) {
-        _showPressed = true;
-        self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
-    };
-    self.showPressed = _actions['showPressed'];
     self.vimMappings = [];
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {

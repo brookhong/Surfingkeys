@@ -94,47 +94,6 @@ map('spb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
 map('spd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
 map('sps', ':setProxyMode system', 0, '#13set proxy mode `system`');
 map('spc', ':setProxyMode clear', 0, '#13set proxy mode `clear`');
-command('proxyInfo', '#13show proxy info', function() {
-    runtime.command({
-        action: 'getSettings',
-        key: ['proxyMode', 'proxy', 'autoproxy_hosts']
-    }, function(response) {
-
-        var infos = [ {name: 'mode', value: response.settings.proxyMode} ];
-        if (response.settings.proxyMode === "byhost") {
-            infos.push({name: 'proxy', value: response.settings.proxy});
-            infos.push({name: 'hosts', value: response.settings.autoproxy_hosts.join(', ')});
-        } else if (response.settings.proxyMode === "always") {
-            infos.push({name: 'proxy', value: response.settings.proxy});
-        }
-        infos = infos.map(function(s) {
-            return "<tr><td>{0}</td><td>{1}</td></tr>".format(s.name, s.value);
-        });
-        Front.showPopup("<table style='width:100%'>{0}</table>".format(infos.join('')));
-
-    });
-});
-map('spi', ':proxyInfo');
-command('addProxySite', 'addProxySite <host[,host]>, make hosts accessible through proxy.', function(args) {
-    var host = args.join('');
-    RUNTIME('updateProxy', {
-        host: host,
-        operation: 'add'
-    });
-    return true;
-});
-command('removeProxySite', 'removeProxySite <host[,host]>, make hosts accessible directly.', function(args) {
-    var host = args.join('');
-    RUNTIME('updateProxy', {
-        host: host,
-        operation: 'remove'
-    });
-    return true;
-});
-command('toggleProxySite', 'toggleProxySite <host>, toggle proxy for a site.', function(args) {
-    var hosts = args.join('');
-    return toggleProxySite(hosts);
-});
 command('listVoices', 'list tts voices', function() {
     runtime.command({
         action: 'getVoices'
@@ -470,9 +429,6 @@ vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
 mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
 mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
 mapkey('W', '#3New window with current tab',  'RUNTIME("newWindow")');
-mapkey('spk', '#0show pressed key', function() {
-    Front.showPressed();
-});
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
 mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
