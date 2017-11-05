@@ -265,9 +265,6 @@ var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k'
 
 $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     basicMappings = basicMappings.map(function(w, i) {
-        if (!Normal.mappings.find(encodeKeystroke(w))) {
-            console.log(w);
-        }
         return {
             origin: w,
             annotation: Normal.mappings.find(encodeKeystroke(w)).meta.annotation
@@ -299,20 +296,22 @@ function unmapAllExcept(a, b) {
 }
 ${rs.snippets}`);
 
-    var customization = basicMappings.map(function(w, i) {
-        var newKey = w.origin;
-        if (delta.settings.map.hasOwnProperty(w.origin)) {
-            newKey = delta.settings.map[w.origin];
-        }
-        return `<div>
-    <span class=annotation>${w.annotation}</span>
+    initL10n(function(locale) {
+        var customization = basicMappings.map(function(w, i) {
+            var newKey = w.origin;
+            if (delta.settings.map.hasOwnProperty(w.origin)) {
+                newKey = delta.settings.map[w.origin];
+            }
+            return `<div>
+    <span class=annotation>${locale(w.annotation)}</span>
     <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
     </div>`;
-    });
+        });
 
-    $('#basicMappings').html(customization);
-    $('#basicMappings').find("kbd").click(function() {
-        KeyPicker.enter(this);
+        $('#basicMappings').html(customization);
+        $('#basicMappings').find("kbd").click(function() {
+            KeyPicker.enter(this);
+        });
     });
 }
 

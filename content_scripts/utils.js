@@ -169,6 +169,30 @@ function getTextNodes(root, pattern, flag) {
     return nodes;
 }
 
+function initL10n(cb) {
+    var lang = runtime.conf.language || window.navigator.language;
+    if (lang === "en-US") {
+        cb(function(str) {
+            return str;
+        });
+    } else {
+        fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
+            return res.json();
+        }).then(function(l10n) {
+            if (typeof(l10n[lang]) === "object") {
+                l10n = l10n[lang];
+                cb(function(str) {
+                    return l10n[str] ? l10n[str] : str;
+                });
+            } else {
+                cb(function(str) {
+                    return str;
+                });
+            }
+        });
+    }
+}
+
 String.prototype.format = function() {
     var formatted = this;
     for (var i = 0; i < arguments.length; i++) {

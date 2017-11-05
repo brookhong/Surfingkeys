@@ -168,30 +168,6 @@ var Front = (function(mode) {
         });
     };
 
-    function _initL10n(cb) {
-        var lang = runtime.conf.language || window.navigator.language;
-        if (lang === "en-US") {
-            cb(function(str) {
-                return str;
-            });
-        } else {
-            fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
-                return res.json();
-            }).then(function(l10n) {
-                if (typeof(l10n[lang]) === "object") {
-                    l10n = l10n[lang];
-                    cb(function(str) {
-                        return l10n[str] ? l10n[str] : str;
-                    });
-                } else {
-                    cb(function(str) {
-                        return str;
-                    });
-                }
-            });
-        }
-    }
-
     function buildUsage(cb) {
         var feature_groups = [
             'Help',                  // 0
@@ -214,7 +190,7 @@ var Front = (function(mode) {
         var holder = $('<div/>');
         var help_groups = feature_groups.map(function(){return [];});
 
-        _initL10n(function(locale) {
+        initL10n(function(locale) {
             help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
 
             [ Normal.mappings,
@@ -466,7 +442,7 @@ var Front = (function(mode) {
 
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             _pendingHint = setTimeout(function() {
-                _initL10n(function(locale) {
+                initL10n(function(locale) {
                     var words = _key;
                     var cc = {};
                     getMetas(window[mode].mappings, _key, cc);
