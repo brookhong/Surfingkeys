@@ -1146,7 +1146,12 @@ var ChromeService = (function() {
         });
     };
     self.closeDownloadsShelf = function(message, sender, sendResponse) {
-        chrome.downloads.erase({"urlRegex": ".*"});
+        if (message.clearHistory) {
+            chrome.downloads.erase({"urlRegex": ".*"});
+        } else {
+            chrome.downloads.setShelfEnabled(false);
+            chrome.downloads.setShelfEnabled(true);
+        }
     };
     self.getDownloads = function(message, sender, sendResponse) {
         chrome.downloads.search(message.query, function(items) {

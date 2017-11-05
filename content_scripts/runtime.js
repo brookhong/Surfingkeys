@@ -8,7 +8,7 @@ var runtime = window.runtime || (function() {
             // local part from settings
             blacklistPattern: undefined,
             caseSensitive: false,
-            clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
+            clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
             clickableSelector: "",
             cursorAtEndOfInput: true,
             defaultSearchEngine: "g",

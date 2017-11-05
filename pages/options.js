@@ -27,7 +27,7 @@ function createMappingEditor(mode, elmId) {
         setTimeout(function() {
             Hints.exit();
             Insert.exit();
-            self.enter();
+            self.enter(0, true);
         }, 10);
     });
 
