@@ -445,7 +445,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 1. 复制markdown代码到系统剪贴板。
 1. `sm`预览剪贴板里的markdown。
 1. 在预览页，再按`sm`会打开vim编辑器编辑markdown。
-1. `:wp`刷新预览。
+1. `:wq`刷新预览。
 1. `r`可以从系统剪贴板里重新加载markdown.
 
 ![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)

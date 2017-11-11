@@ -440,7 +440,7 @@ Then `.` will not repeat action to page up, even `e` is just pressed.
 1. copy your markdown source into clipboard.
 1. `sm` to open markdown preview, which will preview markdown from clipboard.
 1. Then on the preview page, another `sm` will open vim editor to edit markdown source.
-1. `:wp` to refresh preview.
+1. `:wq` to refresh preview.
 1. `r` to reload markdown source from clipboard.
 
 ![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)
