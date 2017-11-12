@@ -610,7 +610,7 @@ For example,
 | key | default value | explanation |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
-| Hints.numbericHints | false | Whether to use digit as hint label, if it is on, you could type text to filter links. |
+| Hints.numericHints | false | Whether to use digit as hint label, if it is on, you could type text to filter links. |
 | Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
 | settings.showModeStatus | false | Whether always to show mode status. |
 | settings.showProxyInStatusBar | false | Whether to show proxy info in status bar. |

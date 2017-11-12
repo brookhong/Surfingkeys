@@ -20,7 +20,7 @@ var Hints = (function(mode) {
                     shiftKey = true;
                 }
                 if (key !== '') {
-                    if (self.numbericHints) {
+                    if (self.numericHints) {
                         if (key >= "0" && key <= "9") {
                             prefix += key;
                         } else {
@@ -419,7 +419,7 @@ var Hints = (function(mode) {
     };
 
     self.create = function(cssSelector, onHintKey, attrs) {
-        if (self.numbericHints) {
+        if (self.numericHints) {
             self.characters = "1234567890";
         }
 

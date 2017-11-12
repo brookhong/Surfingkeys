@@ -595,7 +595,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | 属性 | 默认值 | 解释 |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | 可用于生成拨号盘的字符。 |
-| Hints.numbericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
+| Hints.numericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
 | Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
