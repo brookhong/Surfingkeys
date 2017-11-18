@@ -311,6 +311,11 @@ var Normal = (function(mode) {
 
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
+            if (RUNTIME.repeats > 1) {
+                x = RUNTIME.repeats * x;
+                y = RUNTIME.repeats * y;
+                RUNTIME.repeats = 0;
+            }
             if (runtime.conf.smoothScroll) {
                 var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
@@ -515,6 +520,11 @@ var Normal = (function(mode) {
                 break;
             case 'rightmost':
                 scrollNode.skScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0);
+                break;
+            case 'byRatio':
+                var y = parseInt(RUNTIME.repeats * scrollNode.scrollHeight / 100) - size[1] / 2 - scrollNode.scrollTop;
+                RUNTIME.repeats = 0;
+                scrollNode.skScrollBy(0, y);
                 break;
             default:
                 break;

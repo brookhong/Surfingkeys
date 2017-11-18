@@ -223,6 +223,7 @@ mapkey('gg', '#2Scroll to the top of the page', 'Normal.scroll("top")', {repeatI
 mapkey('G', '#2Scroll to the bottom of the page', 'Normal.scroll("bottom")', {repeatIgnore: true});
 mapkey('0', '#2Scroll all the way to the left', 'Normal.scroll("leftmost")', {repeatIgnore: true});
 mapkey('$', '#2Scroll all the way to the right', 'Normal.scroll("rightmost")', {repeatIgnore: true});
+mapkey('%', '#2Scroll to percentage of current page', 'Normal.scroll("byRatio")', {repeatIgnore: true});
 mapkey('cs', '#2Change scroll target', 'Normal.changeScrollTarget()');
 mapkey('cS', '#2Reset scroll target', 'Normal.resetScrollTarget()');
 mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', 'Hints.create("", Hints.dispatchMouseClick)');
