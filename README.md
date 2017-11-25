@@ -55,9 +55,17 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * Rich hints for keystroke
 * Everything in Surfingkeys works for PDF
 
+## Firefox
+
+Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exceptions:
+
+* Sync settings across devices for same account
+* Proxy settings
+* Markdown preview
+
 ## Quick start
 
-After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
+After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
 
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 
@@ -660,6 +668,8 @@ For example,
 
     npm install
     npm run build
+
+    npm run build firefox # build webextension for firefox
 
 ## API Documentation
 

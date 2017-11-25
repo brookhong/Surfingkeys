@@ -74,6 +74,10 @@ function renderProxy(proxy) {
 }
 
 function renderProxySettings(rs) {
+    if (window.navigator.userAgent.indexOf("Firefox") > 0) {
+        $('#proxyMode').closest('div.section').hide();
+        return;
+    }
     $('#proxyMode>select').val(rs.proxyMode);
     $("#proxy").hide();
     $('#autoproxy_hosts').hide();
@@ -261,7 +265,7 @@ function saveSettings() {
 $('#save_button').click(saveSettings);
 
 
-var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'ge', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gb', 'gU', 'W', 'B', 'ga', 'F', ';j'];
+var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
 $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     basicMappings = basicMappings.map(function(w, i) {

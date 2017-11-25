@@ -523,15 +523,20 @@ mapkey('yp', '#7Copy form data for POST on current page', function() {
 mapkey('ob', '#8Open Search with alias b', 'Front.openOmnibar({type: "SearchEngine", extra: "b"})');
 mapkey('og', '#8Open Search with alias g', 'Front.openOmnibar({type: "SearchEngine", extra: "g"})');
 mapkey('ow', '#8Open Search with alias w', 'Front.openOmnibar({type: "SearchEngine", extra: "w"})');
-mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
-mapkey('ga', '#12Open Chrome About', 'tabOpenLink("chrome://help/")');
-mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
-mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
-mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
-mapkey('gh', '#12Open Chrome History', 'tabOpenLink("chrome://history/")');
-mapkey('gk', '#12Open Chrome Cookies', 'tabOpenLink("chrome://settings/content/cookies")');
-mapkey('ge', '#12Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
-mapkey('gn', '#12Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
+if (window.navigator.userAgent.indexOf("Firefox") > 0) {
+    mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("/pages/start.html")');
+} else {
+    mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
+    mapkey('ga', '#12Open Chrome About', 'tabOpenLink("chrome://help/")');
+    mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
+    mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
+    mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
+    mapkey('gh', '#12Open Chrome History', 'tabOpenLink("chrome://history/")');
+    mapkey('gk', '#12Open Chrome Cookies', 'tabOpenLink("chrome://settings/content/cookies")');
+    mapkey('ge', '#12Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
+    mapkey('gn', '#12Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
+    mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
+}
 mapkey('gs', '#12View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');
 mapkey('gu', '#4Go up one path in the URL', function() {
     var pathname = location.pathname;
@@ -560,7 +565,6 @@ mapkey('gxT', '#3Close tab on right', 'RUNTIME("closeTabRight")');
 mapkey('gx0', '#3Close all tabs on left', 'RUNTIME("closeTabsToLeft")');
 mapkey('gx$', '#3Close all tabs on right', 'RUNTIME("closeTabsToRight")');
 mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
-mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
 mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/markdown.html")');
 mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', 'tabOpenLink("/pages/mermaid.html")');
 mapkey('su', '#4Edit current URL with vim editor', function() {

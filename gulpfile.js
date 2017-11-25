@@ -1,35 +1,24 @@
 const gulp = require('gulp'),
-      babel = require('gulp-babel'),
-      clean = require('gulp-clean'),
-      eslint = require('gulp-eslint'),
-      ghPages = require('gulp-gh-pages'),
-      gp_concat = require('gulp-concat'),
-      gp_uglify = require('gulp-uglify'),
-      gulpDocumentation = require('gulp-documentation'),
-      gulpUtil = require('gulp-util'),
-      replace = require('gulp-replace'),
-      zip = require('gulp-zip');
+    babel = require('gulp-babel'),
+    clean = require('gulp-clean'),
+    eslint = require('gulp-eslint'),
+    ghPages = require('gulp-gh-pages'),
+    gp_concat = require('gulp-concat'),
+    gp_uglify = require('gulp-uglify'),
+    gulpDocumentation = require('gulp-documentation'),
+    gulpUtil = require('gulp-util'),
+    fs = require('fs'),
+    zip = require('gulp-zip');
 
 gulp.task('lint', () => {
-    // ESLint ignores files with "node_modules" paths.
-    // So, it's best to have gulp ignore the directory as well.
-    // Also, Be sure to return the stream from the task;
-    // Otherwise, the task may end before the stream has finished.
     return gulp.src([
-        'background.js',
         'gulpfile.js',
         'content_scripts/*.js',
         'pages/*.js',
         '!node_modules/**'
-        ])
-        // eslint() attaches the lint output to the "eslint" property
-        // of the file object so it can be used by other modules.
+    ])
         .pipe(eslint())
-        // eslint.format() outputs the lint results to the console.
-        // Alternatively use eslint.formatEach() (see Docs).
         .pipe(eslint.format())
-        // To have the process exit with an error code (1) on
-        // lint error, return the stream and pipe to failAfterError last.
         .pipe(eslint.failAfterError());
 });
 
@@ -40,16 +29,32 @@ gulp.task('clean', function () {
 
 gulp.task('copy-non-js-files', ['clean'], function() {
     return gulp.src(['icons/**', 'content_scripts/**', '!content_scripts/**/*.js', 'pages/**', '!pages/**/*.js'], {base: "."})
-        .pipe(gulp.dest('dist/extension'));
+        .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
 gulp.task('copy-pretty-default-js', ['copy-js-files'], function() {
     return gulp.src(['pages/default.js'], {base: "."})
-        .pipe(gulp.dest('dist/extension'));
+        .pipe(gulp.dest(`dist/${buildTarget}-extension`));
+});
+
+gulp.task('build_background', ['clean'], function() {
+    var background = [
+        "background.js"
+    ];
+    if (buildTarget === "Firefox") {
+        background.unshift("firefox_bg.js");
+    } else {
+        background.unshift("chrome_bg.js");
+    }
+    return gulp.src(background)
+        .pipe(gp_concat('background.js'))
+        .pipe(babel({presets: ['es2015']}))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
 gulp.task('build_common_content_min', ['clean'], function() {
-    return gulp.src([
+    var common_content = [
         "libs/trie.js",
         "libs/jquery.js",
         "content_scripts/utils.js",
@@ -58,44 +63,51 @@ gulp.task('build_common_content_min', ['clean'], function() {
         "content_scripts/insert.js",
         "content_scripts/visual.js",
         "content_scripts/hints.js",
-    ])
-    .pipe(gp_concat('common_content.min.js'))
-    .pipe(babel({presets: ['es2015']}))
-    .pipe(gp_uglify().on('error', gulpUtil.log))
-    .pipe(gulp.dest('dist/extension/content_scripts'));
+        "content_scripts/clipboard.js",
+    ];
+    if (buildTarget === "Firefox") {
+        common_content.push("libs/shadydom.min.js");
+        common_content.push("content_scripts/firefox_fg.js");
+    } else {
+        common_content.push("content_scripts/chrome_fg.js");
+    }
+    return gulp.src(common_content)
+        .pipe(gp_concat('common_content.min.js'))
+        .pipe(babel({presets: ['es2015']}))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
 
-gulp.task('use_common_content_min', ['copy-non-js-files', 'clean'], function() {
-    return gulp.src([
-        'pages/frontend.html',
-        'pages/error.html',
-        'pages/options.html',
-        'pages/popup.html',
-        'pages/mermaid.html',
-        'pages/start.html',
-        'pages/pdf_viewer.html',
-        'pages/markdown.html'
-    ], {base: "."})
-        .pipe(replace(/.*build:common_content[^]*endbuild.*/, '        <script src="../content_scripts/common_content.min.js"></script>'))
-        .pipe(gulp.dest('dist/extension'));
-});
-
-gulp.task('use_common_content_min_manifest', ['copy-non-js-files', 'clean'], function() {
-    return gulp.src('manifest.json')
-        .pipe(replace(/.*build:common_content[^]*endbuild.*/, '            "content_scripts/common_content.min.js",'))
-        .pipe(gulp.dest('dist/extension'));
+gulp.task('build_manifest', ['copy-non-js-files', 'clean'], function() {
+    var json = JSON.parse(fs.readFileSync('manifest.json'));
+    if (buildTarget === "Firefox") {
+        json.options_ui = {
+            page: "pages/options.html"
+        };
+    } else {
+        json.permissions.push("tts");
+        json.permissions.push("downloads.shelf");
+        json.background.persistant = false;
+        json.options_page = "pages/options.html";
+    }
+    return fs.writeFile(`dist/${buildTarget}-extension/manifest.json`, JSON.stringify(json, null, 4), function() {
+    });
 });
 
 gulp.task('copy-js-files', ['copy-es-files'], function() {
-    return gulp.src([
+    var libs = [
         'libs/ace/*.js',
         'pages/pdf/*.js',
         'libs/marked.min.js',
         'libs/mermaid.min.js',
         'libs/webfontloader.js'
-    ], {base: "."})
-    .pipe(gp_uglify().on('error', gulpUtil.log))
-    .pipe(gulp.dest('dist/extension'));
+    ];
+    if (buildTarget === "Firefox") {
+        libs.push('libs/shadydom.min.js');
+    }
+    return gulp.src(libs, {base: "."})
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
 gulp.task('copy-es-files', ['clean'], function() {
@@ -103,37 +115,36 @@ gulp.task('copy-es-files', ['clean'], function() {
         'content_scripts/front.js',
         'content_scripts/content_scripts.js',
         'content_scripts/top.js',
-        'background.js',
         'pages/*.js'
     ], {base: "."})
-    .pipe(babel({presets: ['es2015']}))
-    .pipe(gp_uglify().on('error', gulpUtil.log))
-    .pipe(gulp.dest('dist/extension'));
+        .pipe(babel({presets: ['es2015']}))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
 // Documentation
 gulp.task('documentation:html', function () {
-  // Generating README documentation
-  return gulp.src('./{content_scripts/*.js,pages/*.js}')
-    .pipe(gulpDocumentation('html'))
-    .pipe(gulp.dest('dist/documentation'));
+    // Generating README documentation
+    return gulp.src('./{content_scripts/*.js,pages/*.js}')
+        .pipe(gulpDocumentation('html'))
+        .pipe(gulp.dest('dist/documentation'));
 });
 
 gulp.task('documentation:md', function () {
-  // Generating README documentation
-  return gulp.src('./{content_scripts/*.js,pages/*.js}')
-    .pipe(gulpDocumentation('md'))
-    .pipe(gulp.dest('docs'));
+    // Generating README documentation
+    return gulp.src('./{content_scripts/*.js,pages/*.js}')
+        .pipe(gulpDocumentation('md'))
+        .pipe(gulp.dest('docs'));
 });
 
 // Deploy
 gulp.task('deploy:docs', function() {
     return gulp.src('dist/documentation/**/*')
-    .pipe(ghPages());
+        .pipe(ghPages());
 });
 
 gulp.task('clean', function () {
-    return gulp.src('dist', {read: false})
+    return gulp.src(`dist/${buildTarget}-extension`, {read: false})
         .pipe(clean());
 });
 
@@ -142,16 +153,22 @@ gulp.task('build', [
     'lint',
     'copy-pretty-default-js',
     'build_common_content_min',
-    'use_common_content_min',
-    'use_common_content_min_manifest',
+    'build_manifest',
+    'build_background',
     'documentation:md',
     'documentation:html',
 ], function() {
-    return gulp.src('dist/extension/**')
-        .pipe(zip('extension/sk.zip'))
+    return gulp.src(`dist/${buildTarget}-extension/**`)
+        .pipe(zip(`${buildTarget}-extension/sk.zip`))
         .pipe(gulp.dest('dist'));
 });
 
 gulp.task('deploy', ['deploy:docs']);
 
+var buildTarget = "Chrome";
 gulp.task('default', ['build']);
+gulp.task('firefox', ['set_target_firefox', 'build']);
+
+gulp.task('set_target_firefox', function () {
+    buildTarget = "Firefox";
+});

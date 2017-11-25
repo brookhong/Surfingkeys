@@ -88,7 +88,7 @@ function hasScroll(el, direction, barSize) {
 function scrollIntoViewIfNeeded(elm) {
     if (elm.scrollIntoViewIfNeeded) {
         elm.scrollIntoViewIfNeeded();
-    } else {
+    } else if (!isElementPartiallyInViewport(elm)) {
         elm.scrollIntoView();
     }
 }

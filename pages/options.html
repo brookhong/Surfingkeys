@@ -51,8 +51,7 @@ settings.theme = `
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
         </div>
-        <h3>Key mappings
-        </h3>
+        <h3>Key mappings</h3>
         <input id="advancedToggler" type="checkbox" /> Advanced mode
         <span class="tip">If you're an advanced user, turn on it here.</span>
         <div class="section" id="basicMappings">
@@ -76,8 +75,8 @@ settings.theme = `
             </div>
         </div>
 
-        <h3>Proxy Settings</h3>
         <div class="section">
+            <h3>Proxy Settings</h3>
             <div id="proxyMode">
                 Mode:
                 <select>
@@ -115,18 +114,7 @@ settings.theme = `
             </div>
         </div>
         <h3 id="resetSettings">Reset</h3>
-        <!-- build:common_content -->
-        <script src="../libs/trie.js"></script>
-        <script src="../libs/jquery.js"></script>
-        <script src="../content_scripts/utils.js"></script>
-        <script src="../content_scripts/debug_utils.js"></script>
-        <script src="../content_scripts/runtime.js"></script>
-        <script src="../content_scripts/normal.js"></script>
-        <script src="../content_scripts/insert.js"></script>
-        <script src="../content_scripts/visual.js"></script>
-        <script src="../content_scripts/hints.js"></script>
-        <script src="../content_scripts/clipboard.js"></script>
-        <!-- endbuild -->
+        <script src="../content_scripts/common_content.min.js"></script>
         <script src="../content_scripts/front.js"></script>
         <script src="../content_scripts/content_scripts.js"></script>
         <script src="../content_scripts/top.js"></script>

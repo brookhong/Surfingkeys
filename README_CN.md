@@ -57,7 +57,18 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * 按键实时提示
 * 所有按键对PDF适用
 
+## 火狐
+
+Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
+* 同步不同设备间的设置
+* 代理设置
+* Markdown预览
+
 ## 快速上手
+
+* [Chrome插件安装地址](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Firefox插件安装地址](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
 试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
@@ -644,6 +655,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
     npm install
     npm run build
+
+    npm run build firefox # build webextension for firefox
 
 ## Credits
 
