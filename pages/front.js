@@ -365,31 +365,6 @@ var Front = (function(mode) {
         self.toggleStatus(message.visible);
     };
 
-    var clipboard_holder = $('<textarea id=sk_clipboard/>');
-    clipboard_holder = clipboard_holder[0];
-    _actions['getContentFromClipboard'] = function() {
-        var result = '';
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = '';
-        clipboard_holder.select();
-        if (document.execCommand('paste')) {
-            result = clipboard_holder.value;
-        }
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
-        return result;
-    };
-    _actions['writeClipboard'] = function(message) {
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = message.content;
-        clipboard_holder.select();
-        document.execCommand('copy');
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
-    };
-    self.writeClipboard = function(data) {
-        _actions['writeClipboard']({content: data});
-    };
     var _key = "", _pendingHint;
     function clearPendingHint() {
         if (_pendingHint) {

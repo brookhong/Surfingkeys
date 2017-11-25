@@ -371,7 +371,7 @@ var ChromeService = (function() {
         urls: ["<all_urls>"]
     });
 
-    chrome.extension.onConnect.addListener(function(port) {
+    chrome.runtime.onConnect.addListener(function(port) {
         var sender = port.sender;
         activePorts.push(port);
         port.onMessage.addListener(function(message, port) {

@@ -8,7 +8,7 @@ function getDocumentOrigin() {
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
     // file:// cannot be used as a security restriction; this restriction may be modified in the future.
-    return (document.origin === "null" ? "*" : document.origin);
+    return (!document.origin ? "*" : document.origin);
 }
 
 function generateQuickGuid() {
@@ -83,6 +83,14 @@ function hasScroll(el, direction, barSize) {
         el === document.body
         || $(el).css('overflow-' + direction) === 'auto'
         || $(el).css('overflow-' + direction) === 'scroll');
+}
+
+function scrollIntoViewIfNeeded(elm) {
+    if (elm.scrollIntoViewIfNeeded) {
+        elm.scrollIntoViewIfNeeded();
+    } else {
+        elm.scrollIntoView();
+    }
 }
 
 function isElementPartiallyInViewport(el) {

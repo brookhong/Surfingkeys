@@ -73,19 +73,12 @@
             "content_scripts/hints.js",
             // endbuild
             "content_scripts/front.js",
-            "content_scripts/content_scripts.js"
+            "content_scripts/content_scripts.js",
+            "content_scripts/top.js"
         ],
         "css": ["content_scripts/content_scripts.css"],
         "run_at": "document_start",
         "all_frames": true
-    }, {
-        "matches": ["<all_urls>"],
-        "match_about_blank": true,
-        "js": [
-            "content_scripts/top.js"
-        ],
-        "run_at": "document_start",
-        "all_frames": false
     }],
     "web_accessible_resources": [
         "pages/default.js",

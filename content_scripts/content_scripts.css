@@ -47,3 +47,10 @@ div.surfingkeys_cursor:empty {
     background: #3174e2;
     color: white;
 }
+#sk_clipboard {
+    position: fixed;
+    z-index: -999;
+    top: 0;
+    left: 0;
+    opacity: 0;
+}

@@ -401,7 +401,7 @@ var Normal = (function(mode) {
                 if (sn === document.scrollingElement) {
                     break;
                 } else {
-                    sn.scrollIntoViewIfNeeded();
+                    scrollIntoViewIfNeeded(sn);
                     if (isElementPartiallyInViewport(sn)) {
                         break;
                     } else {
@@ -448,13 +448,13 @@ var Normal = (function(mode) {
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
-            sn.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(sn);
             while (!isElementPartiallyInViewport(sn) && scrollNodes.length) {
                 // remove the node that could not be scrolled into view.
                 scrollNodes.splice(scrollIndex, 1);
                 scrollIndex = scrollIndex % scrollNodes.length;
                 sn = scrollNodes[scrollIndex];
-                sn.scrollIntoViewIfNeeded();
+                scrollIntoViewIfNeeded(sn);
             }
             if (!silent) {
                 _highlightElement(sn);

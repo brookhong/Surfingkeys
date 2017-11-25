@@ -277,7 +277,7 @@ var Omnibar = (function(mode, ui) {
         var fi = self.resultsDiv.find(sel);
         if (fi.length) {
             fi.addClass('focused');
-            fi[0].scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(fi[0]);
         }
     };
 
@@ -309,7 +309,8 @@ var Omnibar = (function(mode, ui) {
         }
         handler.onInput && handler.onInput.call(this);
     }
-    function _onKeyDown() {
+    function _onKeyDown(evt) {
+        var event = evt.originalEvent;
         if (handler && handler.onKeydown) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
@@ -560,7 +561,7 @@ var Omnibar = (function(mode, ui) {
         });
         results.appendTo(self.resultsDiv);
         if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
-            results.find('>li:last')[0].scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(results.find('>li:last')[0]);
         }
         if (runtime.conf.focusFirstCandidate) {
             var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;

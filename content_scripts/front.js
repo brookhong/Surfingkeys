@@ -151,25 +151,44 @@ var Front = (function() {
         });
     };
 
+    function clipboardActionWithSelectionPreserved(cb) {
+        // var oe = document.activeElement;
+        var selection = document.getSelection();
+        var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
+        document.body.appendChild(clipboard_holder);
+
+        cb();
+
+        clipboard_holder.remove();
+        if (pos[0] === "Caret") {
+            selection.setPosition(pos[3], pos[4]);
+        } else if (pos[0] === "Range") {
+            selection.setPosition(pos[1], pos[2]);
+            selection.extend(pos[3], pos[4]);
+        }
+        // oe.focus();
+    }
+
+    var clipboard_holder = document.createElement('textarea');
+    clipboard_holder.contentEditable = true;
+    clipboard_holder.id = 'sk_clipboard';
     self.getContentFromClipboard = function(onReady) {
-        frontendCommand({
-            action: 'getContentFromClipboard'
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            onReady(response);
+        clipboardActionWithSelectionPreserved(function() {
+            clipboard_holder.value = '';
+            clipboard_holder.focus();
+            document.execCommand("Paste");
         });
+        onReady({data: clipboard_holder.value});
     };
 
     self.writeClipboard = function(text) {
-        frontendCommand({
-            action: 'writeClipboard',
-            content: text
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            Front.showBanner("Copied: " + text);
+        clipboardActionWithSelectionPreserved(function() {
+            clipboard_holder.value = text;
+            clipboard_holder.select();
+            document.execCommand('copy');
+            clipboard_holder.value = '';
         });
+        Front.showBanner("Copied: " + text);
     };
 
     self.hideKeystroke = function() {
@@ -219,7 +238,7 @@ var Front = (function() {
             var i = sel.indexOf(elementBehindEditor);
             i = (i + (response.backward ? -1 : 1)) % sel.length;
             sel = sel[i];
-            sel.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(sel);
             Hints.flashPressedLink(sel);
 
             self.showEditor(sel);
@@ -289,7 +308,7 @@ var Front = (function() {
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
-            document.body.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(document.body);
             var rc = (window.frameElement || document.body).getBoundingClientRect();
             self.highlightElement({
                 duration: 500,

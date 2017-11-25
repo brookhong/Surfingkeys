@@ -231,7 +231,7 @@ var Insert = (function(mode) {
             mask.insertBefore(span, fp);
         }
         document.body.appendChild(mask);
-        span.scrollIntoViewIfNeeded();
+        scrollIntoViewIfNeeded(span);
 
         br = span.getBoundingClientRect();
 
