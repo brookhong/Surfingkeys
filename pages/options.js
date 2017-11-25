@@ -27,7 +27,7 @@ function createMappingEditor(mode, elmId) {
         setTimeout(function() {
             Hints.exit();
             Insert.exit();
-            self.enter();
+            self.enter(0, true);
         }, 10);
     });
 
@@ -74,6 +74,10 @@ function renderProxy(proxy) {
 }
 
 function renderProxySettings(rs) {
+    if (window.navigator.userAgent.indexOf("Firefox") > 0) {
+        $('#proxyMode').closest('div.section').hide();
+        return;
+    }
     $('#proxyMode>select').val(rs.proxyMode);
     $("#proxy").hide();
     $('#autoproxy_hosts').hide();
@@ -261,13 +265,10 @@ function saveSettings() {
 $('#save_button').click(saveSettings);
 
 
-var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'ge', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gb', 'gU', 'W', 'B', 'ga', 'F', ';j'];
+var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
 $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     basicMappings = basicMappings.map(function(w, i) {
-        if (!Normal.mappings.find(encodeKeystroke(w))) {
-            console.log(w);
-        }
         return {
             origin: w,
             annotation: Normal.mappings.find(encodeKeystroke(w)).meta.annotation
@@ -299,20 +300,22 @@ function unmapAllExcept(a, b) {
 }
 ${rs.snippets}`);
 
-    var customization = basicMappings.map(function(w, i) {
-        var newKey = w.origin;
-        if (delta.settings.map.hasOwnProperty(w.origin)) {
-            newKey = delta.settings.map[w.origin];
-        }
-        return `<div>
-    <span class=annotation>${w.annotation}</span>
+    initL10n(function(locale) {
+        var customization = basicMappings.map(function(w, i) {
+            var newKey = w.origin;
+            if (delta.settings.map.hasOwnProperty(w.origin)) {
+                newKey = delta.settings.map[w.origin];
+            }
+            return `<div>
+    <span class=annotation>${locale(w.annotation)}</span>
     <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
     </div>`;
-    });
+        });
 
-    $('#basicMappings').html(customization);
-    $('#basicMappings').find("kbd").click(function() {
-        KeyPicker.enter(this);
+        $('#basicMappings').html(customization);
+        $('#basicMappings').find("kbd").click(function() {
+            KeyPicker.enter(this);
+        });
     });
 }
 

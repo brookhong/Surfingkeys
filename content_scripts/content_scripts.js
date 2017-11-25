@@ -1,18 +1,3 @@
-document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
-    var elm = evt.srcElement;
-    if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
-        chrome.storage.local.get("noPdfViewer", function(resp) {
-            if (!resp.noPdfViewer) {
-                setTimeout(function() {
-                    // stop before redirect to prevent chrome crash
-                    window.stop();
-                    window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?r=" + elm.src);
-                }, 0);
-            }
-        });
-    }
-}, true);
-
 function command(cmd, annotation, jscode) {
     if (typeof(jscode) === 'string') {
         jscode = new Function(jscode);
@@ -367,7 +352,7 @@ function tabOpenLink(str, simultaneousness) {
     var urls;
     if (str.constructor.name === "Array") {
         urls = str;
-    } else if (str.constructor.name === "jQuery") {
+    } else if (str instanceof jQuery) {
         urls = str.map(function() {
             return this.href;
         }).toArray();
@@ -406,7 +391,7 @@ function constructSearchURL(se, word) {
 }
 
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         var query = window.getSelection().toString() || response.data;
         if (onlyThisSite) {
             query = "site:" + window.location.hostname + " " + query;

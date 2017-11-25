@@ -151,27 +151,6 @@ var Front = (function() {
         });
     };
 
-    self.getContentFromClipboard = function(onReady) {
-        frontendCommand({
-            action: 'getContentFromClipboard'
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            onReady(response);
-        });
-    };
-
-    self.writeClipboard = function(text) {
-        frontendCommand({
-            action: 'writeClipboard',
-            content: text
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            Front.showBanner("Copied: " + text);
-        });
-    };
-
     self.hideKeystroke = function() {
         frontendCommand({
             action: 'hideKeystroke'
@@ -219,7 +198,7 @@ var Front = (function() {
             var i = sel.indexOf(elementBehindEditor);
             i = (i + (response.backward ? -1 : 1)) % sel.length;
             sel = sel[i];
-            sel.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(sel);
             Hints.flashPressedLink(sel);
 
             self.showEditor(sel);
@@ -289,7 +268,7 @@ var Front = (function() {
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
-            document.body.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(document.body);
             var rc = (window.frameElement || document.body).getBoundingClientRect();
             self.highlightElement({
                 duration: 500,

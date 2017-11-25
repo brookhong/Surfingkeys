@@ -57,7 +57,18 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * 按键实时提示
 * 所有按键对PDF适用
 
+## 火狐
+
+Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
+* 同步不同设备间的设置
+* 代理设置
+* Markdown预览
+
 ## 快速上手
+
+* [Chrome插件安装地址](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Firefox插件安装地址](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
 试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
@@ -445,7 +456,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 1. 复制markdown代码到系统剪贴板。
 1. `sm`预览剪贴板里的markdown。
 1. 在预览页，再按`sm`会打开vim编辑器编辑markdown。
-1. `:wp`刷新预览。
+1. `:wq`刷新预览。
 1. `r`可以从系统剪贴板里重新加载markdown.
 
 ![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)
@@ -595,7 +606,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | 属性 | 默认值 | 解释 |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | 可用于生成拨号盘的字符。 |
-| Hints.numbericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
+| Hints.numericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
 | Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
@@ -644,6 +655,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
     npm install
     npm run build
+
+    npm run build firefox # build webextension for firefox
 
 ## Credits
 

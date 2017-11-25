@@ -8,7 +8,7 @@ var runtime = window.runtime || (function() {
             // local part from settings
             blacklistPattern: undefined,
             caseSensitive: false,
-            clickablePat: /(https?|thunder|magnet):\/\/\S+/ig,
+            clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
             clickableSelector: "",
             cursorAtEndOfInput: true,
             defaultSearchEngine: "g",
@@ -22,14 +22,14 @@ var runtime = window.runtime || (function() {
             language: undefined,
             lastQuery: "",
             modeAfterYank: "",
-            nextLinkRegex: /(\b(next)\b)|下页|下一页|>>/i,
+            nextLinkRegex: /(\b(next)\b)|下页|下一页|>>|»/i,
             omnibarMaxResults: 10,
             omnibarPosition: "middle",
             omnibarSuggestion: true,
             omnibarSuggestionTimeout: 200,
             omnibarTabsQuery: {},
             pageUrlRegex: [],
-            prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|<</i,
+            prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|<<|«/i,
             richHintsForKeystroke: 1000,
             scrollStepSize: 70,
             showModeStatus: false,
@@ -77,7 +77,7 @@ var runtime = window.runtime || (function() {
                     _port.postMessage(result);
                 }
             });
-        } else {
+        } else if (window === top) {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
     });

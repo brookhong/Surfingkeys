@@ -232,13 +232,6 @@ kbd {
     background: rgba(129, 120, 222, 0.62);
     box-shadow: 0px 0px 10px rgba(218, 60, 13, 0.8);
 }
-#sk_clipboard {
-    position: fixed;
-    z-index: -999;
-    top: 0;
-    left: 0;
-    opacity: 0;
-}
 #sk_banner {
     padding: 0.5rem;
     position: fixed;

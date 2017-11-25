@@ -190,7 +190,7 @@ var AceEditor = (function(mode, elmId) {
         });
         cm.on('unnamed-register-set', function(data) {
             var lf = document.activeElement;
-            Front.writeClipboard(data.text);
+            Clipboard.write(data.text);
             lf.focus();
         });
         var vim = cm.constructor.Vim;

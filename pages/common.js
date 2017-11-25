@@ -12,7 +12,7 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     });
 
     if (typeof(Front.renderDataFromClipboard) === "function") {
-        Front.getContentFromClipboard(function(response) {
+        Clipboard.read(function(response) {
             Front.renderDataFromClipboard(response.data);
         });
     }

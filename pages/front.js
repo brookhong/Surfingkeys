@@ -168,30 +168,6 @@ var Front = (function(mode) {
         });
     };
 
-    function _initL10n(cb) {
-        var lang = runtime.conf.language || window.navigator.language;
-        if (lang === "en-US") {
-            cb(function(str) {
-                return str;
-            });
-        } else {
-            fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
-                return res.json();
-            }).then(function(l10n) {
-                if (typeof(l10n[lang]) === "object") {
-                    l10n = l10n[lang];
-                    cb(function(str) {
-                        return l10n[str] ? l10n[str] : str;
-                    });
-                } else {
-                    cb(function(str) {
-                        return str;
-                    });
-                }
-            });
-        }
-    }
-
     function buildUsage(cb) {
         var feature_groups = [
             'Help',                  // 0
@@ -214,7 +190,7 @@ var Front = (function(mode) {
         var holder = $('<div/>');
         var help_groups = feature_groups.map(function(){return [];});
 
-        _initL10n(function(locale) {
+        initL10n(function(locale) {
             help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
 
             [ Normal.mappings,
@@ -389,31 +365,6 @@ var Front = (function(mode) {
         self.toggleStatus(message.visible);
     };
 
-    var clipboard_holder = $('<textarea id=sk_clipboard/>');
-    clipboard_holder = clipboard_holder[0];
-    _actions['getContentFromClipboard'] = function() {
-        var result = '';
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = '';
-        clipboard_holder.select();
-        if (document.execCommand('paste')) {
-            result = clipboard_holder.value;
-        }
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
-        return result;
-    };
-    _actions['writeClipboard'] = function(message) {
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = message.content;
-        clipboard_holder.select();
-        document.execCommand('copy');
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
-    };
-    self.writeClipboard = function(data) {
-        _actions['writeClipboard']({content: data});
-    };
     var _key = "", _pendingHint;
     function clearPendingHint() {
         if (_pendingHint) {
@@ -466,7 +417,7 @@ var Front = (function(mode) {
 
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             _pendingHint = setTimeout(function() {
-                _initL10n(function(locale) {
+                initL10n(function(locale) {
                     var words = _key;
                     var cc = {};
                     getMetas(window[mode].mappings, _key, cc);

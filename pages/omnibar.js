@@ -89,7 +89,7 @@ var Omnibar = (function(mode, ui) {
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event);
+            Mode.handleMapKey.call(self, event);
         }
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
@@ -190,7 +190,7 @@ var Omnibar = (function(mode, ui) {
         code: function () {
             // hide Omnibar.input, so that we could use clipboard_holder to make copy
             self.input.hide();
-            Front.writeClipboard(JSON.stringify(_page, null, 4));
+            Clipboard.write(JSON.stringify(_page, null, 4));
             self.input.show();
         }
     });
@@ -277,7 +277,7 @@ var Omnibar = (function(mode, ui) {
         var fi = self.resultsDiv.find(sel);
         if (fi.length) {
             fi.addClass('focused');
-            fi[0].scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(fi[0]);
         }
     };
 
@@ -309,7 +309,8 @@ var Omnibar = (function(mode, ui) {
         }
         handler.onInput && handler.onInput.call(this);
     }
-    function _onKeyDown() {
+    function _onKeyDown(evt) {
+        var event = evt.originalEvent;
         if (handler && handler.onKeydown) {
             handler.onKeydown.call(event.target, event) && event.preventDefault();
         }
@@ -560,7 +561,7 @@ var Omnibar = (function(mode, ui) {
         });
         results.appendTo(self.resultsDiv);
         if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
-            results.find('>li:last')[0].scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(results.find('>li:last')[0]);
         }
         if (runtime.conf.focusFirstCandidate) {
             var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;

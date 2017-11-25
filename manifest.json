@@ -2,12 +2,12 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Map your keys for web surfing",
-    "version": "0.9.13",
+    "version": "0.9.15",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
-        "128": "icons/128.png",
+        "16": "icons/16.png",
         "48": "icons/48.png",
-        "16": "icons/16.png"
+        "128": "icons/128.png"
     },
     "commands": {
         "restartext": {
@@ -36,7 +36,6 @@
     },
     "author": "brook hong",
     "permissions": [
-        "tts",
         "webRequest",
         "proxy",
         "<all_urls>",
@@ -47,46 +46,33 @@
         "sessions",
         "downloads",
         "topSites",
-        "downloads.shelf",
         "clipboardRead",
         "clipboardWrite"
     ],
     "background": {
-        "persistant": false,
         "scripts": [
             "background.js"
         ]
     },
-    "content_scripts": [{
-        "matches": ["<all_urls>"],
-        "match_about_blank": true,
-        "js": [
-            // build:common_content
-            "libs/trie.js",
-            "libs/jquery.js",
-            "content_scripts/utils.js",
-            "content_scripts/debug_utils.js",
-            "content_scripts/runtime.js",
-            "content_scripts/normal.js",
-            "content_scripts/insert.js",
-            "content_scripts/visual.js",
-            "content_scripts/hints.js",
-            // endbuild
-            "content_scripts/front.js",
-            "content_scripts/content_scripts.js"
-        ],
-        "css": ["content_scripts/content_scripts.css"],
-        "run_at": "document_start",
-        "all_frames": true
-    }, {
-        "matches": ["<all_urls>"],
-        "match_about_blank": true,
-        "js": [
-            "content_scripts/top.js"
-        ],
-        "run_at": "document_start",
-        "all_frames": false
-    }],
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "match_about_blank": true,
+            "js": [
+                "content_scripts/common_content.min.js",
+                "content_scripts/front.js",
+                "content_scripts/content_scripts.js",
+                "content_scripts/top.js"
+            ],
+            "css": [
+                "content_scripts/content_scripts.css"
+            ],
+            "run_at": "document_start",
+            "all_frames": true
+        }
+    ],
     "web_accessible_resources": [
         "pages/default.js",
         "pages/emoji.tsv",
@@ -96,6 +82,5 @@
         "pages/shadow.css",
         "pages/default.css"
     ],
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://www.google-analytics.com; object-src 'self'",
-    "options_page": "pages/options.html"
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://www.google-analytics.com; object-src 'self'"
 }

@@ -148,6 +148,79 @@ var Mode = (function() {
         return mode_stack;
     };
 
+    function _finish(mode) {
+        var ret = false;
+        if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
+            mode.map_node = mode.mappings;
+            mode.pendingMap = null;
+            mode.isTrustedEvent && Front.hideKeystroke();
+            if (mode.repeats) {
+                mode.repeats = "";
+            }
+            ret = true;
+        }
+        return ret;
+    };
+
+    self.handleMapKey = function(event, onNoMatched) {
+        var thisMode = this,
+            key = event.sk_keyName;
+        this.isTrustedEvent = event.isTrusted;
+
+        if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
+            event.sk_stopPropagation = true;
+            event.sk_suppressed = true;
+        } else if (this.pendingMap) {
+            this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
+            var pf = this.pendingMap.bind(this);
+            event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
+            setTimeout(function() {
+                pf(key);
+                _finish(thisMode);
+                thisMode.postHandler(event);
+            }, 0);
+        } else if (this.repeats !== undefined &&
+            this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            // reset only after target action executed or cancelled
+            this.repeats += key;
+            this.isTrustedEvent && Front.showKeystroke(key, this.name);
+            event.sk_stopPropagation = true;
+        } else {
+            var last = this.map_node;
+            this.map_node = this.map_node.find(key);
+            if (!this.map_node) {
+                onNoMatched && onNoMatched(last);
+                event.sk_suppressed = (last !== this.mappings);
+                _finish(this);
+            } else {
+                if (this.map_node.meta) {
+                    var code = this.map_node.meta.code;
+                    if (code.length) {
+                        // bound function needs arguments
+                        this.pendingMap = code;
+                        this.isTrustedEvent && Front.showKeystroke(key, this.name);
+                        event.sk_stopPropagation = true;
+                    } else {
+                        this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
+                        RUNTIME.repeats = parseInt(this.repeats) || 1;
+                        event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
+                        setTimeout(function() {
+                            while(RUNTIME.repeats > 0) {
+                                code();
+                                RUNTIME.repeats--;
+                            }
+                            _finish(thisMode);
+                            thisMode.postHandler(event);
+                        }, 0);
+                    }
+                } else {
+                    this.isTrustedEvent && Front.showKeystroke(key, this.name);
+                    event.sk_stopPropagation = true;
+                }
+            }
+        }
+    };
+
     return self;
 })();
 
@@ -229,7 +302,7 @@ var Normal = (function(mode) {
             self.toggleBlacklist();
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
-            self._handleMapKey(event);
+            Mode.handleMapKey.call(self, event);
         }
         self.passFocus(runtime.conf.enableAutoFocus);
     });
@@ -311,6 +384,11 @@ var Normal = (function(mode) {
 
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
+            if (RUNTIME.repeats > 1) {
+                x = RUNTIME.repeats * x;
+                y = RUNTIME.repeats * y;
+                RUNTIME.repeats = 0;
+            }
             if (runtime.conf.smoothScroll) {
                 var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
@@ -396,7 +474,7 @@ var Normal = (function(mode) {
                 if (sn === document.scrollingElement) {
                     break;
                 } else {
-                    sn.scrollIntoViewIfNeeded();
+                    scrollIntoViewIfNeeded(sn);
                     if (isElementPartiallyInViewport(sn)) {
                         break;
                     } else {
@@ -443,13 +521,13 @@ var Normal = (function(mode) {
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
-            sn.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(sn);
             while (!isElementPartiallyInViewport(sn) && scrollNodes.length) {
                 // remove the node that could not be scrolled into view.
                 scrollNodes.splice(scrollIndex, 1);
                 scrollIndex = scrollIndex % scrollNodes.length;
                 sn = scrollNodes[scrollIndex];
-                sn.scrollIntoViewIfNeeded();
+                scrollIntoViewIfNeeded(sn);
             }
             if (!silent) {
                 _highlightElement(sn);
@@ -516,6 +594,11 @@ var Normal = (function(mode) {
             case 'rightmost':
                 scrollNode.skScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0);
                 break;
+            case 'byRatio':
+                var y = parseInt(RUNTIME.repeats * scrollNode.scrollHeight / 100) - size[1] / 2 - scrollNode.scrollTop;
+                RUNTIME.repeats = 0;
+                scrollNode.skScrollBy(0, y);
+                break;
             default:
                 break;
         }
@@ -525,85 +608,12 @@ var Normal = (function(mode) {
         RUNTIME('nextFrame');
     };
 
-    function _finish(mode) {
-        var ret = false;
-        if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
-            mode.map_node = mode.mappings;
-            mode.pendingMap = null;
-            mode.isTrustedEvent && Front.hideKeystroke();
-            if (mode.repeats) {
-                mode.repeats = "";
-            }
-            ret = true;
-        }
-        return ret;
-    };
-
-    self._handleMapKey = function(event, onNoMatched) {
-        var thisMode = this,
-            key = event.sk_keyName;
-        this.isTrustedEvent = event.isTrusted;
-
-        if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
-            event.sk_stopPropagation = true;
-            event.sk_suppressed = true;
-        } else if (this.pendingMap) {
-            this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
-            var pf = this.pendingMap.bind(this);
-            event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
-            setTimeout(function() {
-                pf(key);
-                _finish(thisMode);
-                thisMode.postHandler(event);
-            }, 0);
-        } else if (this.repeats !== undefined &&
-            this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
-            // reset only after target action executed or cancelled
-            this.repeats += key;
-            this.isTrustedEvent && Front.showKeystroke(key, this.name);
-            event.sk_stopPropagation = true;
-        } else {
-            var last = this.map_node;
-            this.map_node = this.map_node.find(key);
-            if (!this.map_node) {
-                onNoMatched && onNoMatched(last);
-                event.sk_suppressed = (last !== this.mappings);
-                _finish(this);
-            } else {
-                if (this.map_node.meta) {
-                    var code = this.map_node.meta.code;
-                    if (code.length) {
-                        // bound function needs arguments
-                        this.pendingMap = code;
-                        this.isTrustedEvent && Front.showKeystroke(key, this.name);
-                        event.sk_stopPropagation = true;
-                    } else {
-                        this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
-                        RUNTIME.repeats = parseInt(this.repeats) || 1;
-                        event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
-                        setTimeout(function() {
-                            while(RUNTIME.repeats > 0) {
-                                code();
-                                RUNTIME.repeats--;
-                            }
-                            _finish(thisMode);
-                            thisMode.postHandler(event);
-                        }, 0);
-                    }
-                } else {
-                    this.isTrustedEvent && Front.showKeystroke(key, this.name);
-                    event.sk_stopPropagation = true;
-                }
-            }
-        }
-    };
-
     self.feedkeys = function(keys) {
         setTimeout(function() {
             var evt = new Event("keydown");
             for (var i = 0; i < keys.length; i ++) {
                 evt.sk_keyName = keys[i];
-                self._handleMapKey(evt);
+                Mode.handleMapKey.call(self, evt);
             }
         }, 1);
     };

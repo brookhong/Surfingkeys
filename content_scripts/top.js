@@ -1,11 +1,10 @@
-var frontendFrame = (function() {
-    var self = {};
+if (window === top) {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = $('<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="{0}" />'.format(frontEndURL));
-    uiHost.createShadowRoot();
+    uiHost.attachShadow({mode:'open'});
     var sk_style = document.createElement("style");
     sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
     uiHost.shadowRoot.appendChild(sk_style);
@@ -105,31 +104,29 @@ var frontendFrame = (function() {
         }
     }, true);
 
-    return self;
-})();
+    document.addEventListener('DOMContentLoaded', function(e) {
 
-document.addEventListener('DOMContentLoaded', function(e) {
+        runtime.command({
+            action: 'tabURLAccessed',
+            title: document.title,
+            url: window.location.href
+        });
 
-    runtime.command({
-        action: 'tabURLAccessed',
-        title: document.title,
-        url: window.location.href
-    });
-
-    setTimeout(function() {
-        // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
-        for (var p in AutoCommands) {
-            var c = AutoCommands[p];
-            if (c.regex.test(window.location.href)) {
-                c.code();
+        setTimeout(function() {
+            // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
+            for (var p in AutoCommands) {
+                var c = AutoCommands[p];
+                if (c.regex.test(window.location.href)) {
+                    c.code();
+                }
             }
-        }
-    }, 0);
-});
-
-function _setScrollPos(x, y) {
-    $(document).ready(function() {
-        document.scrollingElement.scrollLeft = x;
-        document.scrollingElement.scrollTop = y;
+        }, 0);
     });
+
+    function _setScrollPos(x, y) {
+        $(document).ready(function() {
+            document.scrollingElement.scrollLeft = x;
+            document.scrollingElement.scrollTop = y;
+        });
+    }
 }

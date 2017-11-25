@@ -25,7 +25,7 @@ var Visual = (function(mode) {
                 visualf = 0;
             }
         } else if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event);
+            Mode.handleMapKey.call(self, event);
             if (event.sk_stopPropagation) {
                 event.sk_suppressed = true;
             } else if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
@@ -217,7 +217,7 @@ var Visual = (function(mode) {
             var pos = [selection.focusNode, selection.focusOffset];
             self.hideCursor();
             _selectUnit(w);
-            Front.writeClipboard(selection.toString());
+            Clipboard.write(selection.toString());
             selection.collapseToStart();
             selection.setPosition(pos[0], pos[1]);
             self.showCursor();
@@ -227,7 +227,7 @@ var Visual = (function(mode) {
         feature_group: 9,
         code: function() {
             var pos = [selection.focusNode, selection.focusOffset];
-            Front.writeClipboard(selection.toString());
+            Clipboard.write(selection.toString());
             if (runtime.conf.modeAfterYank === "Caret") {
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
@@ -450,7 +450,7 @@ var Visual = (function(mode) {
 
             // set content of cursor to enable scrollIntoViewIfNeeded
             $(cursor).html(ch);
-            cursor.scrollIntoViewIfNeeded();
+            scrollIntoViewIfNeeded(cursor);
         }
     };
     self.getCursorPixelPos = function () {
@@ -589,12 +589,12 @@ var Visual = (function(mode) {
                     var textToYank = [];
                     Hints.create(/./, function(element) {
                         textToYank.push(element[0].data.trim());
-                        Front.writeClipboard(textToYank.join('\n'));
+                        Clipboard.write(textToYank.join('\n'));
                     }, {multipleHits: true});
                 } else {
                     Hints.create(/./, function(element) {
                         if (ex === "y") {
-                            Front.writeClipboard(element[0].data.trim());
+                            Clipboard.write(element[0].data.trim());
                         } else {
                             setTimeout(function() {
                                 selection.setPosition(element[0], element[1]);
@@ -673,7 +673,7 @@ var Visual = (function(mode) {
             var evt = new Event("keydown");
             for (var i = 0; i < keys.length; i ++) {
                 evt.sk_keyName = keys[i];
-                Normal._handleMapKey.call(self, evt);
+                Mode.handleMapKey.call(self, evt);
             }
         }, 1);
     };
