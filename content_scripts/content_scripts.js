@@ -406,7 +406,7 @@ function constructSearchURL(se, word) {
 }
 
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         var query = window.getSelection().toString() || response.data;
         if (onlyThisSite) {
             query = "site:" + window.location.hostname + " " + query;

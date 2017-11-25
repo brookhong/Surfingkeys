@@ -151,46 +151,6 @@ var Front = (function() {
         });
     };
 
-    function clipboardActionWithSelectionPreserved(cb) {
-        // var oe = document.activeElement;
-        var selection = document.getSelection();
-        var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
-        document.body.appendChild(clipboard_holder);
-
-        cb();
-
-        clipboard_holder.remove();
-        if (pos[0] === "Caret") {
-            selection.setPosition(pos[3], pos[4]);
-        } else if (pos[0] === "Range") {
-            selection.setPosition(pos[1], pos[2]);
-            selection.extend(pos[3], pos[4]);
-        }
-        // oe.focus();
-    }
-
-    var clipboard_holder = document.createElement('textarea');
-    clipboard_holder.contentEditable = true;
-    clipboard_holder.id = 'sk_clipboard';
-    self.getContentFromClipboard = function(onReady) {
-        clipboardActionWithSelectionPreserved(function() {
-            clipboard_holder.value = '';
-            clipboard_holder.focus();
-            document.execCommand("Paste");
-        });
-        onReady({data: clipboard_holder.value});
-    };
-
-    self.writeClipboard = function(text) {
-        clipboardActionWithSelectionPreserved(function() {
-            clipboard_holder.value = text;
-            clipboard_holder.select();
-            document.execCommand('copy');
-            clipboard_holder.value = '';
-        });
-        Front.showBanner("Copied: " + text);
-    };
-
     self.hideKeystroke = function() {
         frontendCommand({
             action: 'hideKeystroke'

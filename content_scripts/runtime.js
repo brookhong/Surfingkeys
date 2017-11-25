@@ -77,7 +77,7 @@ var runtime = window.runtime || (function() {
                     _port.postMessage(result);
                 }
             });
-        } else {
+        } else if (window === top) {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
     });

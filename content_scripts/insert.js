@@ -287,7 +287,7 @@ var Insert = (function(mode) {
                 self.exit();
             }, 300);
         } else if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event, function(last) {
+            Mode.handleMapKey.call(self, event, function(last) {
                 // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
                 // such as, to insert `,m` in case of mapkey `,,` defined.
                 var pw = last.getPrefixWord();

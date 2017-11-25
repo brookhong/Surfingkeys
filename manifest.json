@@ -71,6 +71,7 @@
             "content_scripts/insert.js",
             "content_scripts/visual.js",
             "content_scripts/hints.js",
+            "content_scripts/clipboard.js",
             // endbuild
             "content_scripts/front.js",
             "content_scripts/content_scripts.js",

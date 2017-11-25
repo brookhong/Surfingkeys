@@ -25,7 +25,7 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
     });
 
     mapkey('cc', '#99Copy generated html code', function() {
-        Front.writeClipboard($('.markdown-body').html());
+        Clipboard.write($('.markdown-body').html());
     });
 
     var mdUrl = window.location.search.substr(3);

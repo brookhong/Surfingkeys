@@ -74,11 +74,11 @@ mapkey(';cp', '#13Copy proxy info', function() {
         action: 'getSettings',
         key: ['proxyMode', 'proxy', 'autoproxy_hosts']
     }, function(response) {
-        Front.writeClipboard(JSON.stringify(response.settings, null, 4));
+        Clipboard.write(JSON.stringify(response.settings, null, 4));
     });
 });
 mapkey(';ap', '#13Apply proxy info from clipboard', function() {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         var proxyConf = JSON.parse(response.data);
         RUNTIME('updateProxy', {
             host: proxyConf.autoproxy_hosts.join(","),
@@ -146,7 +146,7 @@ command('stopReading', '#13Stop reading.', function(args) {
     RUNTIME('stopReading');
 });
 mapkey('gr', '#14Read selected text or text from clipboard', function() {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         readText(window.getSelection().toString() || response.data, {verbose: true});
     });
 });
@@ -235,14 +235,14 @@ mapkey('<Ctrl-h>', '#1Mouse over elements.', 'Hints.create("", Hints.dispatchMou
 mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]})');
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element) {
-        Front.writeClipboard(element.href);
+        Clipboard.write(element.href);
     });
 });
 mapkey('yma', '#7Copy multiple link URLs to the clipboard', function() {
     var linksToYank = [];
     Hints.create('*[href]', function(element) {
         linksToYank.push(element.href);
-        Front.writeClipboard(linksToYank.join('\n'));
+        Clipboard.write(linksToYank.join('\n'));
     }, {multipleHits: true});
 });
 mapkey('yc', '#7Copy a column of a table', function() {
@@ -252,12 +252,12 @@ mapkey('yc', '#7Copy a column of a table', function() {
             .toArray().map(function(t) {
                 return t.innerText;
             }).join("\n");
-        Front.writeClipboard(column);
+        Clipboard.write(column);
     });
 });
 mapkey('yq', '#7Copy pre text.', function() {
     Hints.create("pre", function(element) {
-        Front.writeClipboard(element.innerText);
+        Clipboard.write(element.innerText);
     });
 });
 mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
@@ -452,7 +452,7 @@ mapkey('cc', '#7Open selected link or link from clipboard', function() {
     if (window.getSelection().toString()) {
         tabOpenLink(window.getSelection().toString());
     } else {
-        Front.getContentFromClipboard(function(response) {
+        Clipboard.read(function(response) {
             tabOpenLink(response.data);
         });
     }
@@ -461,14 +461,14 @@ mapkey('[[', '#1Click on the previous link on current page', previousPage);
 mapkey(']]', '#1Click on the next link on current page', nextPage);
 mapkey('ys', "#7Copy current page's source", function() {
     var aa = document.documentElement.cloneNode(true);
-    Front.writeClipboard(aa.outerHTML);
+    Clipboard.write(aa.outerHTML);
 });
 mapkey('yj', "#7Copy current settings", function() {
     runtime.command({
         action: 'getSettings',
         key: "RAW"
     }, function(response) {
-        Front.writeClipboard(JSON.stringify(response.settings, null, 4));
+        Clipboard.write(JSON.stringify(response.settings, null, 4));
     });
 });
 mapkey('yd', "#7Copy current downloading URL", function() {
@@ -479,12 +479,12 @@ mapkey('yd', "#7Copy current downloading URL", function() {
         var items = response.downloads.map(function(o) {
             return o.url;
         });
-        Front.writeClipboard(items.join(','));
+        Clipboard.write(items.join(','));
     });
 });
 mapkey('yt', '#3Duplicate current tab', 'RUNTIME("duplicateTab")');
-mapkey('yy', "#7Copy current page's URL", 'Front.writeClipboard(window.location.href)');
-mapkey('yl', "#7Copy current page's title", 'Front.writeClipboard(document.title)');
+mapkey('yy', "#7Copy current page's URL", 'Clipboard.write(window.location.href)');
+mapkey('yl', "#7Copy current page's title", 'Clipboard.write(document.title)');
 mapkey('yf', '#7Copy form data in JSON on current page', function() {
     var aa = [];
     $('form').each(function() {
@@ -492,7 +492,7 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
         fd[(this.method || "get") + "::" + this.action] = getFormData(this, "json");
         aa.push(fd);
     });
-    Front.writeClipboard(JSON.stringify(aa, null, 4));
+    Clipboard.write(JSON.stringify(aa, null, 4));
 });
 mapkey('yg', '#7Capture current page', function() {
     Front.toggleStatus(false);
@@ -518,7 +518,7 @@ mapkey('yp', '#7Copy form data for POST on current page', function() {
         fd[(this.method || "get") + "::" + this.action] = getFormData(this);
         aa.push(fd);
     });
-    Front.writeClipboard(JSON.stringify(aa, null, 4));
+    Clipboard.write(JSON.stringify(aa, null, 4));
 });
 mapkey('ob', '#8Open Search with alias b', 'Front.openOmnibar({type: "SearchEngine", extra: "b"})');
 mapkey('og', '#8Open Search with alias g', 'Front.openOmnibar({type: "SearchEngine", extra: "g"})');
@@ -571,7 +571,7 @@ mapkey('su', '#4Edit current URL with vim editor', function() {
 mapkey(';m', '#1mouse out last element', 'Hints.mouseoutLastElement()');
 mapkey(';j', '#12Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf", {clearHistory: true})');
 mapkey(';pp', '#7Paste html on current page', function() {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         document.body.innerHTML = response.data;
     });
 });

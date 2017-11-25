@@ -89,7 +89,7 @@ var Omnibar = (function(mode, ui) {
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event);
+            Mode.handleMapKey.call(self, event);
         }
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
@@ -190,7 +190,7 @@ var Omnibar = (function(mode, ui) {
         code: function () {
             // hide Omnibar.input, so that we could use clipboard_holder to make copy
             self.input.hide();
-            Front.writeClipboard(JSON.stringify(_page, null, 4));
+            Clipboard.write(JSON.stringify(_page, null, 4));
             self.input.show();
         }
     });

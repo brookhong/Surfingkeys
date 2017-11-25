@@ -1300,9 +1300,6 @@ var ChromeService = (function() {
     self.localData = function(message, sender, sendResponse) {
         if (message.data.constructor === Object) {
             chrome.storage.local.set(message.data, function() {
-                _response(message, sendResponse, {
-                    data: "Done"
-                });
             });
             // broadcast the change also, such as lastKeys
             // we would set lastKeys in sync to avoid breaching chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE
