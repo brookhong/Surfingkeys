@@ -314,7 +314,7 @@ var Normal = (function(mode) {
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
             var elm = getRealEdit(event);
             if (isEditable(elm)) {
-                if (_passFocus) {
+                if (_passFocus || elm.enableAutoFocus) {
                     if (!runtime.conf.enableAutoFocus) {
                         // prevent focus on input only when enableAutoFocus is turned off.
                         _passFocus = false;

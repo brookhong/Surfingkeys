@@ -2,6 +2,7 @@ var Clipboard = (function(mode) {
 
     var holder = document.createElement('textarea');
     holder.contentEditable = true;
+    holder.enableAutoFocus = true;
     holder.id = 'sk_clipboard';
 
     function clipboardActionWithSelectionPreserved(cb) {

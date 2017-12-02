@@ -459,11 +459,16 @@ var Hints = (function(mode) {
             if (!behaviours.multipleHits) {
                 self.exit();
             }
-            if (behaviours.tabbed || behaviours.active === false) {
+            var tabbed = behaviours.tabbed, active = behaviours.active;
+            if (behaviours.multipleHits && element.href) {
+                tabbed = true;
+                active = false;
+            }
+            if (tabbed) {
                 RUNTIME("openLink", {
                     tab: {
-                        tabbed: behaviours.tabbed,
-                        active: behaviours.active
+                        tabbed: tabbed,
+                        active: active
                     },
                     url: element.href
                 });
