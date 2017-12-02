@@ -1,12 +1,17 @@
 # Surfingkeys -- 用javascript和键盘扩展你的chrome
 
-Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用chrome浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
+Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用Chrome/Firefox浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
         Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
+
+Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
+* 同步不同设备间的设置
+* 代理设置
+* Markdown预览
 
 [配置参考](#配置参考).
 
@@ -56,13 +61,6 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * 插入模式下的表情下拉选项
 * 按键实时提示
 * 所有按键对PDF适用
-
-## 火狐
-
-Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
-* 同步不同设备间的设置
-* 代理设置
-* Markdown预览
 
 ## 快速上手
 

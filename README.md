@@ -1,12 +1,19 @@
 # Surfingkeys - Expand your browser with javascript and keyboard.
 
-Surfingkeys is another Chrome extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
+Surfingkeys is another Chrome/Firefox extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
         Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
+
+Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exceptions:
+
+* Sync settings across devices for same account
+* Proxy settings
+* Markdown preview
+
 
 [Reference for editing your own settings](#edit-your-own-settings).
 
@@ -54,14 +61,6 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * Emoji completion in insert mode
 * Rich hints for keystroke
 * Everything in Surfingkeys works for PDF
-
-## Firefox
-
-Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exceptions:
-
-* Sync settings across devices for same account
-* Proxy settings
-* Markdown preview
 
 ## Quick start
 

@@ -1,4 +1,5 @@
 var Clipboard = (function(mode) {
+    var self = {};
 
     var holder = document.createElement('textarea');
     holder.contentEditable = true;
@@ -24,6 +25,7 @@ var Clipboard = (function(mode) {
     self.read = function(onReady) {
         clipboardActionWithSelectionPreserved(function() {
             holder.value = '';
+            holder.innerHTML = '';
             holder.focus();
             document.execCommand("Paste");
         });

@@ -4,6 +4,29 @@ var Hints = (function(mode) {
     self.addEventListener('keydown', function(event) {
         var hints = holder.find('>div');
         event.sk_stopPropagation = true;
+
+        var ai = $('#sk_hints[mode=input]>div.activeInput');
+        if (ai.length) {
+            var elm = ai.data('link');
+            if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+                elm.blur();
+                hide();
+            } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
+                ai.removeClass('activeInput');
+                _lastCreateAttrs.activeInput = (_lastCreateAttrs.activeInput + (event.shiftKey ? -1 : 1 )) % hints.length;
+                ai = $("#sk_hints[mode=input]>div:nth(" + _lastCreateAttrs.activeInput + ")");
+                ai.addClass("activeInput");
+
+                elm = ai.data('link');
+                elm.focus();
+            } else if (event.keyCode !== KeyboardUtils.keyCodes.shiftKey) {
+                event.sk_stopPropagation = false;
+                hide();
+                Insert.enter(elm);
+            }
+            return;
+        }
+
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
@@ -222,7 +245,7 @@ var Hints = (function(mode) {
         holder.attr('mode', 'click').show().html('');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
+        $("<style></style>").html("#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
         elements.each(function(i) {
             var pos = $(this).offset(),
                 z = getZIndex(this);
@@ -403,7 +426,7 @@ var Hints = (function(mode) {
                 e.data('label', hintLabels[i]).html(hintLabels[i]);
                 holder.append(e);
             });
-            $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}\n#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
+            $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}").appendTo(holder);
             holder.prependTo(document.documentElement);
         }
 
@@ -413,6 +436,48 @@ var Hints = (function(mode) {
     function createHints(cssSelector, attrs) {
         return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector, attrs) : createHintsForClick(cssSelector, attrs);
     }
+
+    self.createInputLayer = function() {
+        var cssSelector = "input";
+
+        var elements = getVisibleElements(function(e, v) {
+            if ($.find.matchesSelector(e, cssSelector) && !e.disabled && !e.readOnly
+                && (e.type === "text" || e.type === "password")) {
+                v.push(e);
+            }
+        });
+
+        if (elements.length === 0 && $(cssSelector).length > 0) {
+            $(cssSelector)[0].scrollIntoView();
+            elements = getVisibleElements(function(e, v) {
+                if ($.find.matchesSelector(e, cssSelector) && !e.disabled && !e.readOnly) {
+                    v.push(e);
+                }
+            });
+        }
+
+        if (elements.length > 1) {
+            self.enter();
+            holder.attr('mode', 'input').show().html('');
+            elements.forEach(function(e, i) {
+                var be = e.getBoundingClientRect();
+                var z = getZIndex(e);
+                var mask = $('<div/>').css('position', 'fixed').css('top', be.top).css('left', be.left)
+                    .css('z-index', z + 9999)
+                    .css('width', be.width)
+                    .css('height', be.height)
+                    .data('link', e);
+                holder.append(mask);
+            });
+            holder.prependTo(document.documentElement);
+            _lastCreateAttrs.activeInput = 0;
+            $('#sk_hints[mode=input]>div:nth(0)').addClass("activeInput");
+            $('#sk_hints[mode=input]>div:nth(0)').data('link').focus();
+        } else if (elements.length === 1) {
+            elements[0].focus();
+            Insert.enter(elements[0]);
+        }
+    };
 
     self.getSelector = function() {
         return _cssSelector;
