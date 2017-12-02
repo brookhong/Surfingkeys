@@ -443,7 +443,7 @@ var Front = (function(mode) {
     };
 
     _actions['initFrontend'] = function(message) {
-        $(document).trigger("surfingkeys:frontendReady");
+        document.dispatchEvent(new CustomEvent('surfingkeys:frontendReady'));
         topOrigin = message.origin;
         return new Date().getTime();
     };
@@ -472,6 +472,6 @@ var Front = (function(mode) {
     return self;
 })(Mode);
 
-$(document).on('surfingkeys:themeChanged', function(evt, theme) {
-    $('#sk_theme').html(theme);
+document.addEventListener("surfingkeys:themeChanged", function(evt) {
+    $('#sk_theme').html(evt.detail);
 });

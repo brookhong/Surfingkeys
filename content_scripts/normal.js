@@ -393,10 +393,10 @@ var Normal = (function(mode) {
                 var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
             } else {
-                $(document).trigger("surfingkeys:scrollStarted");
+                document.dispatchEvent(new CustomEvent('surfingkeys:scrollStarted'));
                 elm.scrollLeft = elm.scrollLeft + x;
                 elm.scrollTop = elm.scrollTop + y;
-                $(document).trigger("surfingkeys:scrollDone");
+                document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
             }
         };
         if (elm === document.scrollingElement) {
@@ -424,7 +424,7 @@ var Normal = (function(mode) {
                     if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
                         previousTimestamp = t;
-                        $(document).trigger("surfingkeys:scrollStarted");
+                        document.dispatchEvent(new CustomEvent('surfingkeys:scrollStarted'));
                         return window.requestAnimationFrame(step);
                     }
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
@@ -445,7 +445,7 @@ var Normal = (function(mode) {
                         || (!keyHeld && stepCompleted) // distance completed
                     ) {
                         keyHeld = false;
-                        $(document).trigger("surfingkeys:scrollDone");
+                        document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
                     } else {
                         return window.requestAnimationFrame(step);
                     }

@@ -1,4 +1,4 @@
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
 
     function previewMarkdown(mk) {
         Front.source = mk;

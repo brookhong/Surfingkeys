@@ -267,7 +267,7 @@ $('#save_button').click(saveSettings);
 
 var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     basicMappings = basicMappings.map(function(w, i) {
         return {
             origin: w,
@@ -319,8 +319,8 @@ ${rs.snippets}`);
     });
 }
 
-$(document).on('surfingkeys:userSettingsLoaded', function(evt, rs) {
-    renderKeyMappings(rs);
+document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
+    renderKeyMappings(evt.detail);
 });
 
 var KeyPicker = (function(mode) {

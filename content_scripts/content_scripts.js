@@ -546,7 +546,7 @@ function applySettings(rs) {
         }
         if (!jQuery.isEmptyObject(delta.settings)) {
             if ('theme' in delta.settings) {
-                $(document).trigger("surfingkeys:themeChanged", [delta.settings.theme]);
+                document.dispatchEvent(new CustomEvent('surfingkeys:themeChanged', { 'detail': delta.settings.theme}));
                 delete delta.settings.theme;
             }
             // overrides local settings from snippets
@@ -609,7 +609,7 @@ function _init(onInit) {
         runScript(res.text);
 
         _defaultMapping = false;
-        $(document).trigger("surfingkeys:defaultSettingsLoaded");
+        document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
 
         runtime.command({
             action: 'getSettings'
@@ -633,7 +633,7 @@ function _init(onInit) {
                         action: 'setSurfingkeysIcon',
                         status: resp.disabled
                     });
-                    $(document).trigger("surfingkeys:userSettingsLoaded", [rs]);
+                    document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs}));
                 });
             }
         });
@@ -642,7 +642,7 @@ function _init(onInit) {
 }
 
 if (window === top) {
-    $(document).on('surfingkeys:frontendReady', function() {
+    document.addEventListener("surfingkeys:frontendReady", function(evt) {
         _init();
     });
 } else {

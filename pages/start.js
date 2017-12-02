@@ -25,7 +25,7 @@ runtime.command({
     });
 });
 
-$(document).on('surfingkeys:userSettingsLoaded', function() {
+document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
     Front.getUsage(function(usage) {
         $('#sk_usage').html(usage);
         var keys = $('#sk_usage').find('div:has(>.kbd-span)').toArray();

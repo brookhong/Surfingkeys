@@ -1,4 +1,4 @@
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     var desc, content;
 
     mapkey(';h', '#99Toggle this section', function() {

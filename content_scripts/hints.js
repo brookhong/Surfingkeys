@@ -99,7 +99,7 @@ var Hints = (function(mode) {
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
             var event = document.createEvent('MouseEvents');
-            var mouseButton = (shiftKey === true) ? 1 : 0;
+            var mouseButton = shiftKey ? 1 : 0;
             event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, false,
                 false, false, false, mouseButton, null);
             element.dispatchEvent(event);
@@ -172,15 +172,15 @@ var Hints = (function(mode) {
         _origOverflow = document.body.style.overflowX;
         document.body.style.overflowX = "hidden";
         mode.enter.call(self);
-        $(document).on('surfingkeys:scrollStarted', onScrollStarted);
-        $(document).on('surfingkeys:scrollDone', resetHints);
+        document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
+        document.addEventListener("surfingkeys:scrollDone", resetHints);
     };
 
     self.exit = function() {
         document.body.style.overflowX = _origOverflow;
         mode.exit.call(self);
-        $(document).off('surfingkeys:scrollStarted', onScrollStarted);
-        $(document).off('surfingkeys:scrollDone', resetHints);
+        document.removeEventListener("surfingkeys:scrollStarted", onScrollStarted);
+        document.removeEventListener("surfingkeys:scrollDone", resetHints);
     };
 
     self.genLabels = function(M) {

@@ -91,6 +91,7 @@ gulp.task('build_manifest', ['copy-non-js-files', 'clean'], function() {
         json.options_ui = {
             page: "pages/options.html"
         };
+        json.content_scripts[0].run_at = "document_end";
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");

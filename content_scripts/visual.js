@@ -418,7 +418,7 @@ var Visual = (function(mode) {
             cursor.textContent = "";
             cursor.remove();
             lastPos.normalize();
-            $(document).trigger("surfingkeys:cursorHidden");
+            document.dispatchEvent(new CustomEvent('surfingkeys:cursorHidden'));
         }
         return lastPos;
     };
@@ -545,13 +545,13 @@ var Visual = (function(mode) {
 
     self.enter = function() {
         mode.enter.apply(self, arguments);
-        $(document).on('surfingkeys:cursorHidden', onCursorHiden);
+        document.addEventListener('surfingkeys:cursorHidden', onCursorHiden);
         _incState();
     };
 
     var _lastPos = null;
     self.exit = function() {
-        $(document).off('surfingkeys:cursorHidden', onCursorHiden);
+        document.removeEventListener('surfingkeys:cursorHidden', onCursorHiden);
         _lastPos = [selection.anchorNode, selection.anchorOffset];
         mode.exit.apply(self, arguments);
     };

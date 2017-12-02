@@ -1,4 +1,4 @@
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
 
     mermaid.initialize({
         startOnLoad: false

@@ -27,7 +27,7 @@ if (window === top) {
     _actions['initFrontendAck'] = function(response) {
         if (!_initialized) {
             _initialized = true;
-            $(document).trigger("surfingkeys:frontendReady");
+            document.dispatchEvent(new CustomEvent('surfingkeys:frontendReady'));
         }
     };
     _actions['setFrontFrame'] = function(response) {
