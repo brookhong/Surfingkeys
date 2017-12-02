@@ -71,7 +71,7 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
 
     mapkey('yy', '#99Generate image', function() {
         var content = $('div.content')[0];
-        if (hasScroll(content, 'y', 16) || hasScroll(content, 'x', 16)) {
+        if ($.hasScroll(content, 'y', 16) || $.hasScroll(content, 'x', 16)) {
             Normal.captureElement(content);
         } else {
             Normal.captureElement($('div.content>div.mermaid')[0]);

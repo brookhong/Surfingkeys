@@ -289,7 +289,7 @@ var Hints = (function(mode) {
                 }
 
                 elements = getVisibleElements(function(e, v) {
-                    if (jQuery.find.matchesSelector(e, cssSelector)) {
+                    if ($.find.matchesSelector(e, cssSelector)) {
                         v.push(e);
                     } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
                         v.push(e);

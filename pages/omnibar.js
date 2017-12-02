@@ -99,7 +99,7 @@ var Omnibar = (function(mode, ui) {
     self.mappings = new Trie();
     self.map_node = self.mappings;
 
-    self.mappings.add(encodeKeystroke("<Ctrl-d>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-d>"), {
         annotation: "Delete focused item from bookmark or history",
         feature_group: 8,
         code: function () {
@@ -118,7 +118,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-i>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-i>"), {
         annotation: "Edit selected URL with vim editor, then open",
         feature_group: 8,
         code: function () {
@@ -137,7 +137,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-j>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-j>"), {
         annotation: "Toggle Omnibar's position",
         feature_group: 8,
         code: function () {
@@ -154,7 +154,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-.>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-.>"), {
         annotation: "Show results of next page",
         feature_group: 8,
         code: function () {
@@ -169,7 +169,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-,>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-,>"), {
         annotation: "Show results of previous page",
         feature_group: 8,
         code: function () {
@@ -184,7 +184,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-c>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-c>"), {
         annotation: "Copy all listed items",
         feature_group: 8,
         code: function () {
@@ -195,7 +195,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-D>"), {
         annotation: "Delete all listed items from bookmark or history",
         feature_group: 8,
         code: function () {
@@ -220,7 +220,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-r>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-r>"), {
         annotation: "Re-sort history by visitCount or lastVisitTime",
         feature_group: 8,
         code: function () {
@@ -338,14 +338,14 @@ var Omnibar = (function(mode, ui) {
         _onIput();
     });
 
-    self.mappings.add(encodeKeystroke("<Tab>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Tab>"), {
         annotation: "Forward cycle through the candidates.",
         feature_group: 8,
         code: function () {
             rotateResult(runtime.conf.omnibarPosition === "bottom");
         }
     });
-    self.mappings.add(encodeKeystroke("<Shift-Tab>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Shift-Tab>"), {
         annotation: "Backward cycle through the candidates.",
         feature_group: 8,
         code: function () {
@@ -384,7 +384,7 @@ var Omnibar = (function(mode, ui) {
         }
         var li = $('<li/>').html('<div class="title">{0} {1} {2}</div>'.format(
             type,
-            self.highlight(rxp, htmlEncode(b.title)),
+            self.highlight(rxp, $.htmlEncode(b.title)),
             additional
         ));
         $('<div class="url">').html(self.highlight(rxp, b.url)).appendTo(li);
@@ -1125,7 +1125,7 @@ var Commands = (function() {
         });
         if (candidates.length) {
             Omnibar.listResults(candidates, function(c) {
-                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
+                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, $.htmlEncode(self.items[c].annotation)));
             });
         }
     };
@@ -1164,7 +1164,7 @@ var Commands = (function() {
                 }
                 if (out !== undefined) {
                     out = JSON.stringify(out);
-                    out = htmlEncode(out);
+                    out = $.htmlEncode(out);
                     Omnibar.listResults([out], function(c) {
                         return $('<li/>').html(c);
                     });

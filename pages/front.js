@@ -146,7 +146,7 @@ var Front = (function(mode) {
         var items = tabs.forEach(function(t, i) {
             var tab = $(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.url, htmlEncode(t.title)));
+            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.url, $.htmlEncode(t.title)));
             tab.data('url', t.url);
             tabs_fg.append(tab);
         });
@@ -202,9 +202,9 @@ var Front = (function(mode) {
                 for (var i = 0; i < words.length; i++) {
                     var w = words[i];
                     var meta = mappings.find(w).meta;
-                    w = decodeKeystroke(w);
+                    w = KeyboardUtils.decodeKeystroke(w);
                     if (meta.annotation && meta.annotation.length) {
-                        var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), locale(meta.annotation));
+                        var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format($.htmlEncode(w), locale(meta.annotation));
                         help_groups[meta.feature_group].push(item);
                     }
                 }
@@ -301,7 +301,7 @@ var Front = (function(mode) {
     self.openFinder = _actions['openFinder'];
     self.showBanner = function(content, linger_time) {
         banner.removeClass("slideInBanner");
-        banner.html(htmlEncode(content));
+        banner.html($.htmlEncode(content));
         self.flush();
 
         banner.addClass("slideInBanner").one('animationend', function() {
@@ -410,7 +410,7 @@ var Front = (function(mode) {
 
         keystroke.show();
         self.flush();
-        var keys = keystroke.html() + htmlEncode(decodeKeystroke(key));
+        var keys = keystroke.html() + $.htmlEncode(KeyboardUtils.decodeKeystroke(key));
         keystroke.html(keys);
 
         keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight simpleHint");
@@ -425,7 +425,7 @@ var Front = (function(mode) {
                     words = Object.keys(cc).sort().map(function(w) {
                         var meta = cc[w];
                         if (meta.annotation) {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(htmlEncode(decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format($.htmlEncode(KeyboardUtils.decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
                         } else {
                             return "";
                         }

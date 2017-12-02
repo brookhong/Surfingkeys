@@ -101,7 +101,7 @@ var _defaultMapping = true;
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
     if (!options.domain || options.domain.test(document.location.href)) {
-        keys = encodeKeystroke(keys);
+        keys = KeyboardUtils.encodeKeystroke(keys);
         mode.mappings.remove(keys);
         if (typeof(jscode) === 'string') {
             jscode = new Function(jscode);
@@ -142,10 +142,10 @@ function cmapkey(keys, annotation, jscode, options) {
 }
 
 function _map(mode, nks, oks) {
-    oks = encodeKeystroke(oks);
+    oks = KeyboardUtils.encodeKeystroke(oks);
     var old_map = mode.mappings.find(oks);
     if (old_map) {
-        nks = encodeKeystroke(nks);
+        nks = KeyboardUtils.encodeKeystroke(nks);
         mode.mappings.remove(nks);
         // meta.word need to be new
         var meta = $.extend({}, old_map.meta);
@@ -166,7 +166,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
                 var keybound = createKeyTarget(function() {
                     meta.code.call(meta.code, args);
                 }, ag, meta.repeatIgnore);
-                Normal.mappings.add(encodeKeystroke(new_keystroke), keybound);
+                Normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
             }
         } else {
             if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
@@ -178,9 +178,9 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
 
 function unmap(keystroke, domain) {
     if (!domain || domain.test(document.location.href)) {
-        var old_map = Normal.mappings.find(encodeKeystroke(keystroke));
+        var old_map = Normal.mappings.find(KeyboardUtils.encodeKeystroke(keystroke));
         if (old_map) {
-            Normal.mappings.remove(encodeKeystroke(keystroke));
+            Normal.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
         } else {
             for (var k in Mode.specialKeys) {
                 var idx = Mode.specialKeys[k].indexOf(keystroke);
@@ -199,7 +199,7 @@ function unmapAllExcept(keystrokes, domain) {
             var _mappings = new Trie();
             keystrokes = keystrokes || [];
             for (var i = 0, il = keystrokes.length; i < il; i++) {
-                var ks = encodeKeystroke(keystrokes[i]);
+                var ks = KeyboardUtils.encodeKeystroke(keystrokes[i]);
                 var node = mode.mappings.find(ks);
                 if (node) {
                     _mappings.add(ks, node.meta);
@@ -220,7 +220,7 @@ function imap(new_keystroke, old_keystroke, domain, new_annotation) {
 
 function iunmap(keystroke, domain) {
     if (!domain || domain.test(document.location.href)) {
-        Insert.mappings.remove(encodeKeystroke(keystroke));
+        Insert.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
     }
 }
 
@@ -240,7 +240,7 @@ function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
 
 function vunmap(keystroke, domain) {
     if (!domain || domain.test(document.location.href)) {
-        Visual.mappings.remove(encodeKeystroke(keystroke));
+        Visual.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
     }
 }
 
@@ -352,7 +352,7 @@ function tabOpenLink(str, simultaneousness) {
     var urls;
     if (str.constructor.name === "Array") {
         urls = str;
-    } else if (str instanceof jQuery) {
+    } else if (str instanceof $) {
         urls = str.map(function() {
             return this.href;
         }).toArray();
@@ -544,7 +544,7 @@ function applySettings(rs) {
                 console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
             }
         }
-        if (!jQuery.isEmptyObject(delta.settings)) {
+        if (!$.isEmptyObject(delta.settings)) {
             if ('theme' in delta.settings) {
                 document.dispatchEvent(new CustomEvent('surfingkeys:themeChanged', { 'detail': delta.settings.theme}));
                 delete delta.settings.theme;

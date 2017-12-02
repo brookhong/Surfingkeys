@@ -64,6 +64,8 @@ gulp.task('build_common_content_min', ['clean'], function() {
     var common_content = [
         "libs/trie.js",
         "libs/jquery.js",
+        "content_scripts/jQueryUtils.js",
+        "content_scripts/keyboardUtils.js",
         "content_scripts/utils.js",
         "content_scripts/runtime.js",
         "content_scripts/normal.js",
@@ -91,7 +93,6 @@ gulp.task('build_manifest', ['copy-non-js-files', 'clean'], function() {
         json.options_ui = {
             page: "pages/options.html"
         };
-        json.content_scripts[0].run_at = "document_end";
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");

@@ -271,7 +271,7 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     basicMappings = basicMappings.map(function(w, i) {
         return {
             origin: w,
-            annotation: Normal.mappings.find(encodeKeystroke(w)).meta.annotation
+            annotation: Normal.mappings.find(KeyboardUtils.encodeKeystroke(w)).meta.annotation
         };
     });
 });
@@ -308,7 +308,7 @@ ${rs.snippets}`);
             }
             return `<div>
     <span class=annotation>${locale(w.annotation)}</span>
-    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
+    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? $.htmlEncode(newKey) : "🚫"}</kbd></span>
     </div>`;
         });
 
@@ -331,7 +331,7 @@ var KeyPicker = (function(mode) {
     }, mode);
 
     function showKey() {
-        var s = htmlEncode(_key);
+        var s = $.htmlEncode(_key);
         if (!s) {
             s = "&nbsp;";
         }
@@ -344,14 +344,14 @@ var KeyPicker = (function(mode) {
             $('#keyPicker').hide();
             self.exit();
         } else if (event.keyCode === 8) {
-            var ek = encodeKeystroke(_key);
+            var ek = KeyboardUtils.encodeKeystroke(_key);
             ek = ek.substr(0, ek.length - 1);
-            _key = decodeKeystroke(ek);
+            _key = KeyboardUtils.decodeKeystroke(ek);
             showKey();
         } else if (event.keyCode === 13) {
             $('#keyPicker').hide();
             self.exit();
-            _elm.innerHTML = (_key !== "") ? htmlEncode(_key) : "🚫";
+            _elm.innerHTML = (_key !== "") ? $.htmlEncode(_key) : "🚫";
             $(_elm).attr('new', _key);
             var kbds = $('#basicMappings').find("kbd").toArray();
             var originalKeys = kbds.map(function(m) {
@@ -401,7 +401,7 @@ var KeyPicker = (function(mode) {
                 }, null, 4);
                 reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
             } else {
-                _key += decodeKeystroke(event.sk_keyName);
+                _key += KeyboardUtils.decodeKeystroke(event.sk_keyName);
                 showKey();
             }
         }
