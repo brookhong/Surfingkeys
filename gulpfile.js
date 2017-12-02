@@ -5,10 +5,17 @@ const gulp = require('gulp'),
     ghPages = require('gulp-gh-pages'),
     gp_concat = require('gulp-concat'),
     gp_uglify = require('gulp-uglify'),
+    gulpif = require('gulp-if'),
+    minimist = require('minimist'),
     gulpDocumentation = require('gulp-documentation'),
     gulpUtil = require('gulp-util'),
     fs = require('fs'),
     zip = require('gulp-zip');
+
+var options = minimist(process.argv.slice(2), {
+    string: 'env',
+    default: { env: process.env.NODE_ENV || 'production' }
+});
 
 gulp.task('lint', () => {
     return gulp.src([
@@ -49,7 +56,7 @@ gulp.task('build_background', ['clean'], function() {
     return gulp.src(background)
         .pipe(gp_concat('background.js'))
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -74,7 +81,7 @@ gulp.task('build_common_content_min', ['clean'], function() {
     return gulp.src(common_content)
         .pipe(gp_concat('common_content.min.js'))
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
 
@@ -106,7 +113,7 @@ gulp.task('copy-js-files', ['copy-es-files'], function() {
         libs.push('libs/shadydom.min.js');
     }
     return gulp.src(libs, {base: "."})
-        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -118,7 +125,7 @@ gulp.task('copy-es-files', ['clean'], function() {
         'pages/*.js'
     ], {base: "."})
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
