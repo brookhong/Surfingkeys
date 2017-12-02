@@ -130,21 +130,39 @@ function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
         var be = e.getBoundingClientRect();
-        var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
-        if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
+        if (e.disabled || e.readOnly || be.width <= 4) {
+            return false;
+        } else if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
             return true;
         } else {
-            return (!el || (el.shadowRoot && el.childElementCount === 0) || (el.contains(e) || e.contains(el)) || el.href !== e.href) && !e.disabled && !e.readOnly && be.width > 4;
+            var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
+            return (!el || (el.shadowRoot && el.childElementCount === 0) || el === e);
         }
     });
-    // filter out element which has his children covered
-    return elements.filter(function(e) {
-        return !$(e.children).toArray().some(function(element, index, array) {
-            return elements.indexOf(element) !== -1;
-        });
-    });
-}
 
+    // if an element has href, all its children will be filtered out.
+    var elementWithHref = null;
+    elements = elements.filter(function(e) {
+        var flag = true;
+        if (e.href) {
+            elementWithHref = e;
+        }
+        if (elementWithHref && elementWithHref !== e && elementWithHref.contains(e)) {
+            flag = false;
+        }
+        return flag;
+    });
+
+    // filter out element which has its children covered
+    var tmp = [elements[elements.length - 1]];
+    for (var i = elements.length - 2; i >= 0; i--) {
+        if (!elements[i].contains(tmp[0])) {
+            tmp.unshift(elements[i]);
+        }
+    }
+
+    return tmp;
+}
 
 function getTextNodes(root, pattern, flag) {
     var skip_tags = ['script', 'style', 'noscript', 'surfingkeys_mark'];
