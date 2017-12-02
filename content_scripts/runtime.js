@@ -39,6 +39,7 @@ var runtime = window.runtime || (function() {
             startToShowEmoji: 2,
             stealFocusOnLoad: true,
             tabsThreshold: 9,
+            scrollFriction: 0,
             useLocalMarkdownAPI: true,
         },
         runtime_handlers: {}

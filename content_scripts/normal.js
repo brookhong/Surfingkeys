@@ -307,7 +307,7 @@ var Normal = (function(mode) {
         self.passFocus(runtime.conf.enableAutoFocus);
     });
     self.addEventListener('blur', function(event) {
-        keyHeld = false;
+        keyHeld = 0;
     });
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
@@ -328,7 +328,7 @@ var Normal = (function(mode) {
     });
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
-            keyHeld = false;
+            keyHeld = 0;
         }, 0);
     });
     self.addEventListener('mousedown', function(event) {
@@ -372,7 +372,7 @@ var Normal = (function(mode) {
     self.map_node = self.mappings;
 
     self.repeats = "";
-    var keyHeld = false;
+    var keyHeld = 0;
 
     var scrollNodes, scrollIndex = 0,
         lastKeys;
@@ -406,7 +406,10 @@ var Normal = (function(mode) {
                     if (document.scrollingElement.scrollTop === 0 && y <= 0) {
                         previousPage() && Front.showBanner("Top margin hit, jump to previous page");
                     } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight + 1 && y > 0) {
-                        nextPage() && Front.showBanner("Bottom margin hit, jump to next page");
+                        if (nextPage()) {
+                            document.scrollingElement.scrollTop = 0;
+                            Front.showBanner("Bottom margin hit, jump to next page");
+                        }
                     }
                 }
                 f.call(elm, x, y);
@@ -419,7 +422,7 @@ var Normal = (function(mode) {
                     previousTimestamp = 0,
                     originValue = elm[prop],
                     stepCompleted = false;
-                keyHeld = true;
+                keyHeld = 1;
                 function step(t) {
                     if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
@@ -430,9 +433,11 @@ var Normal = (function(mode) {
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
                     if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
                         stepCompleted = true;
-                        if (keyHeld) {
+                        if (keyHeld > runtime.conf.scrollFriction) {
                             elm[prop] += delta;
                             originValue = elm[prop];
+                        } else if (keyHeld > 0) {
+                            keyHeld ++;
                         } else {
                             elm[prop] = originValue + distance;
                         }
@@ -441,10 +446,10 @@ var Normal = (function(mode) {
                     }
                     previousTimestamp = t;
 
-                    if (elm[prop] === old // boundary hit
-                        || (!keyHeld && stepCompleted) // distance completed
+                    if (!keyHeld && (elm[prop] === old // boundary hit
+                        || stepCompleted )// distance completed
                     ) {
-                        keyHeld = false;
+                        keyHeld = 0;
                         document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
                     } else {
                         return window.requestAnimationFrame(step);

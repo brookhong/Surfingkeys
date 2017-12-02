@@ -624,6 +624,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
 | settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |
+| settings.scrollFriction | 0 | 在滚动一步之后，开始连续滚动所需要的力。数字大，表示需要更大的力来启动连续滚动，这样在开始连续滚动时会有一个抖动，但也能保证第一步的滚动幅度是精确的。 |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | 匹配下一页链接的正则表达式。 |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| 匹配上一页链接的正则表达式。 |
 | settings.hintAlign | "center" | 拨号键与它对应的目标如何对齐。["left", "center", "right"] |

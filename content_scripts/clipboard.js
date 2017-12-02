@@ -27,7 +27,11 @@ var Clipboard = (function(mode) {
             holder.focus();
             document.execCommand("Paste");
         });
-        onReady({data: holder.value});
+        var data = holder.value;
+        if (data === "") {
+            data = holder.innerHTML.replace(/<br>/gi,"\n");
+        }
+        onReady({data: data});
     };
 
     self.write = function(text) {
