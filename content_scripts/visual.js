@@ -176,7 +176,7 @@ var Visual = (function(mode) {
     }
 
     self.mappings.add("o", {
-        annotation: "forward documentboundary",
+        annotation: "Go to Other end of highlighted text",
         feature_group: 9,
         code: function() {
             self.hideCursor();

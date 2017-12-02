@@ -60,6 +60,7 @@
         "Go one tab history forward": "往后一个标签页",
         "Go one tab left": "跳到左侧标签页",
         "Go one tab right": "跳到右侧标签页",
+        "Go to Other end of highlighted text": "把光标定位到高亮区域到另一端",
         "Go to edit box": "选择输入框",
         "Go to edit box with vim editor": "选择输入框，并打开VIM编辑器",
         "Go to first activated tab": "跳到最早的那个标签页",
