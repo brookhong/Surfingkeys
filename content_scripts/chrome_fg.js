@@ -1,6 +1,6 @@
 document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
     var elm = evt.srcElement;
-    if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
+    if (elm.tagName === "EMBED" && elm.type === "application/pdf" && $(elm).is(":visible")) {
         chrome.storage.local.get("noPdfViewer", function(resp) {
             if (!resp.noPdfViewer) {
                 setTimeout(function() {
