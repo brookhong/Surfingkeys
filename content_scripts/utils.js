@@ -111,7 +111,7 @@ function filterOverlapElements(elements) {
             return true;
         } else {
             var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);
-            return (!el || (el.shadowRoot && el.childElementCount === 0) || el === e);
+            return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e);
         }
     });
 
