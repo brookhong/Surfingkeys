@@ -401,42 +401,49 @@ var Front = (function(mode) {
             });
         }
     }
-    _actions['showKeystroke'] = function(message) {
+    function showRichHints(mode) {
+        initL10n(function (locale) {
+            var words = _key;
+            var cc = {};
+            getMetas(window[mode].mappings, _key, cc);
+            getMetas(_userMappings, _key, cc);
+            words = Object.keys(cc).sort().map(function (w) {
+                var meta = cc[w];
+                if (meta.annotation) {
+                    return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format($.htmlEncode(KeyboardUtils.decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                } else {
+                    return "";
+                }
+            }).join("");
+            if (words.length > 0 && _pendingHint) {
+                keystroke.html(words);
+                keystroke.removeClass("expandRichHints simpleHint").addClass("expandRichHints");
+                self.flush();
+            }
+        });
+    }
+    _actions['showKeystroke'] = function (message) {
         var key = message.key,
             mode = message.mode;
 
         _key += key;
-        clearPendingHint();
 
-        keystroke.show();
-        self.flush();
-        var keys = keystroke.html() + $.htmlEncode(KeyboardUtils.decodeKeystroke(key));
-        keystroke.html(keys);
+        if (keystroke.is(":visible") && keystroke.hasClass("expandRichHints")) {
+            showRichHints(mode);
+        } else {
+            clearPendingHint();
+            keystroke.show();
+            self.flush();
+            var keys = keystroke.html() + $.htmlEncode(KeyboardUtils.decodeKeystroke(key));
+            keystroke.html(keys);
 
-        keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight simpleHint");
+            keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight simpleHint");
 
-        if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
-            _pendingHint = setTimeout(function() {
-                initL10n(function(locale) {
-                    var words = _key;
-                    var cc = {};
-                    getMetas(window[mode].mappings, _key, cc);
-                    getMetas(_userMappings, _key, cc);
-                    words = Object.keys(cc).sort().map(function(w) {
-                        var meta = cc[w];
-                        if (meta.annotation) {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format($.htmlEncode(KeyboardUtils.decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
-                        } else {
-                            return "";
-                        }
-                    }).join("");
-                    if (words.length > 0 && _pendingHint) {
-                        keystroke.html(words);
-                        keystroke.removeClass("expandRichHints simpleHint").addClass("expandRichHints");
-                        self.flush();
-                    }
-                });
-            }, runtime.conf.richHintsForKeystroke);
+            if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
+                _pendingHint = setTimeout(function() {
+                    showRichHints(mode);
+                }, runtime.conf.richHintsForKeystroke);
+            }
         }
     };
     self.showKeystroke = function() {
