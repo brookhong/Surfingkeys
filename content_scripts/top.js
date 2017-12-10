@@ -129,4 +129,12 @@ if (window === top) {
             document.scrollingElement.scrollTop = y;
         });
     }
+
+    document.addEventListener("surfingkeys:frontendReady", function (evt) {
+        runtime.command({
+            action: 'executeScript',
+            file: "/pages/default.js"
+        }, function (response) {
+        });
+    });
 }

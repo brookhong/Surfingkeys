@@ -1155,20 +1155,10 @@ var Commands = (function() {
                 var code = self.items[cmd].code;
                 ret = code.call(code, args);
             } else {
-                var out;
-                try {
-                    var F = new Function("return " + cmdline);
-                    out = F();
-                } catch (e) {
-                    out = e.toString();
-                }
-                if (out !== undefined) {
-                    out = JSON.stringify(out);
-                    out = $.htmlEncode(out);
-                    Omnibar.listResults([out], function(c) {
-                        return $('<li/>').html(c);
-                    });
-                }
+                Front.contentCommand({
+                    action: 'executeScript',
+                    cmdline: cmdline
+                });
             }
             Omnibar.input.val('');
         }

@@ -239,7 +239,25 @@ var Front = (function(mode) {
     _actions['showUsage'] = function(message) {
         showPopup(_usage, message);
     };
-    _actions['getUsage'] = function(message) {
+    _actions['applyUserSettings'] = function (message) {
+        for (var k in message.userSettings) {
+            if (runtime.conf.hasOwnProperty(k)) {
+                runtime.conf[k] = message.userSettings[k];
+            }
+        }
+    };
+    _actions['executeCommand'] = function (message) {
+        var args = parseCommand(message.cmdline);
+        var cmd = args.shift();
+        if (Commands.items.hasOwnProperty(cmd)) {
+            Front.openOmnibar({type: "Commands"});
+            var meta = Commands.items[cmd];
+            meta.code.call(meta.code, args);
+        } else {
+            self.showPopup("No such command!");
+        }
+    };
+    _actions['getUsage'] = function (message) {
         // send response in callback from buildUsage
         delete message.ack;
         buildUsage(function(usage) {

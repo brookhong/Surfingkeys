@@ -103,9 +103,6 @@ function _mapkey(mode, keys, annotation, jscode, options) {
     if (!options.domain || options.domain.test(document.location.href)) {
         keys = KeyboardUtils.encodeKeystroke(keys);
         mode.mappings.remove(keys);
-        if (typeof(jscode) === 'string') {
-            jscode = new Function(jscode);
-        }
         var keybound;
         if (_defaultMapping) {
             // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
@@ -158,16 +155,10 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
     if (!domain || domain.test(document.location.href)) {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
-            var args = parseCommand(cmdline);
-            var cmd = args.shift();
-            if (Commands.items.hasOwnProperty(cmd)) {
-                var meta = Commands.items[cmd];
-                var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
-                var keybound = createKeyTarget(function() {
-                    meta.code.call(meta.code, args);
-                }, ag, meta.repeatIgnore);
-                Normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
-            }
+            var keybound = createKeyTarget(function () {
+                Front.executeCommand(cmdline);
+            }, null, false);
+            Normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
         } else {
             if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
@@ -269,25 +260,29 @@ function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
-    mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    vmapkey((search_leader_key || 's') + alias, '', 'searchSelectedWith("{0}")'.format(search_url));
-    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', 'searchSelectedWith("{0}", true)'.format(search_url));
-    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', 'searchSelectedWith("{0}", true)'.format(search_url));
+    function ssw() {
+        searchSelectedWith(search_url);
+    }
+    mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
+    vmapkey((search_leader_key || 's') + alias, '', ssw);
+    function ssw2() {
+        searchSelectedWith(search_url, true);
+    }
+    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
+    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
 
     var capitalAlias = alias.toUpperCase();
     if (capitalAlias !== alias) {
-        mapkey((search_leader_key || 's') + capitalAlias, '', function() {
+        function ssw4() {
             searchSelectedWith(search_url, false, true, alias);
-        });
-        vmapkey((search_leader_key || 's') + capitalAlias, '', function() {
-            searchSelectedWith(search_url, false, true, alias);
-        });
-        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', function() {
+        }
+        mapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
+        vmapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
+        function ssw5() {
             searchSelectedWith(search_url, true, true, alias);
-        });
-        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', function() {
-            searchSelectedWith(search_url, true, true, alias);
-        });
+        }
+        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
+        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
     }
 }
 
@@ -535,7 +530,7 @@ function applySettings(rs) {
     if ('findHistory' in rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
-    if (('snippets' in rs) && rs.snippets) {
+    if ('snippets' in rs && rs.snippets && !Front.isProvider()) {
         var delta = runScript(rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
@@ -545,6 +540,7 @@ function applySettings(rs) {
             }
         }
         if (!$.isEmptyObject(delta.settings)) {
+            Front.applyUserSettings(JSON.parse(JSON.stringify(delta.settings)));
             if ('theme' in delta.settings) {
                 document.dispatchEvent(new CustomEvent('surfingkeys:themeChanged', { 'detail': delta.settings.theme}));
                 delete delta.settings.theme;
@@ -556,7 +552,7 @@ function applySettings(rs) {
                     delete delta.settings[k];
                 }
             }
-            if (Object.keys(delta.settings).length > 0) {
+            if (Object.keys(delta.settings).length > 0 && window === top) {
                 // left settings are for background, need not broadcast the update, neither persist into storage
                 runtime.command({
                     action: 'updateSettings',
@@ -601,50 +597,44 @@ runtime.on('settingsUpdated', function(response) {
     }
 });
 
-function _init(onInit) {
-    httpRequest({
-        url: chrome.extension.getURL('/pages/default.js'),
-    }, function(res) {
+function _init() {
+    _defaultMapping = false;
+    runtime.command({
+        action: 'getSettings'
+    }, function(response) {
+        var rs = response.settings;
 
-        runScript(res.text);
+        applySettings(rs);
 
-        _defaultMapping = false;
-        document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
+        Normal.enter();
 
-        runtime.command({
-            action: 'getSettings'
-        }, function(response) {
-            var rs = response.settings;
+        if (window === top) {
+            runtime.command({
+                action: 'getDisabled',
+                blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+            }, function(resp) {
+                if (resp.disabled) {
+                    Disabled.enter(0, true);
+                }
 
-            applySettings(rs);
-
-            Normal.enter();
-
-            if (window === top) {
                 runtime.command({
-                    action: 'getDisabled',
-                    blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-                }, function(resp) {
-                    if (resp.disabled) {
-                        Disabled.enter(0, true);
-                    }
-
-                    runtime.command({
-                        action: 'setSurfingkeysIcon',
-                        status: resp.disabled
-                    });
-                    document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs}));
+                    action: 'setSurfingkeysIcon',
+                    status: resp.disabled
                 });
-            }
-        });
-
+                document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs}));
+            });
+        }
     });
 }
 
-if (window === top) {
-    document.addEventListener("surfingkeys:frontendReady", function(evt) {
-        _init();
+if (window !== top && !Front.isProvider()) {
+    runtime.command({
+        action: 'executeScript',
+        file: "/pages/default.js"
+    }, function (response) {
     });
-} else {
+}
+
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function (evt) {
     _init();
-}
+});

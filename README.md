@@ -241,7 +241,9 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 If you prefer to use omnibar always, use below mapping:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', 'Front.openOmnibar({type: "Tabs"})');
+    mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        Front.openOmnibar({type: "Tabs"});
+    });
 
 which works same as:
 
@@ -438,7 +440,9 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 All keystrokes in normal mode are repeatable by dot, except those keystrokes mapped with `repeatIgnore` as `true`, for example,
 
-    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+    mapkey('e', '#2Scroll a page up', function() {
+        Normal.scroll("pageUp");
+    }, {repeatIgnore: true});
 
 Then `.` will not repeat action to page up, even `e` is just pressed.
 
@@ -486,15 +490,19 @@ Some functionalities are also available when you're using original pdf viewer, b
 |:---------------| :-----|
 |**keystroke**                   | string, any keystroke to trigger the action|
 |**help_string**                 | string, a help message to describe the action, which will displayed in help opened by `u`.|
-|**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function. If the function needs an argument, next pressed key will be fed to the function.|
+|**action_code**                 | function, a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.|
 |**options**                     | object, properties listed below|
 |**domain**                      | regex[optional], a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com.|
 |**repeatIgnore**                | boolean[optional], whether this keystroke will be repeat by dot command.|
 
 Just an example to map one keystroke to different functions on different sites,
 
-    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
+    mapkey('zz', 'Choose a tab', function() {
+        Front.chooseTab();
+    }, {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', function() {
+        Front.showUsage();
+    }, {domain: /google\.com/i});
 
 mapkey in visual mode and omnibar bar.
 
@@ -577,8 +585,12 @@ This version will create a mapping to search selected text with `search_url` on 
 works like
 
     addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-    mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
-    vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+    mapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
+    vmapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
 
 ### remove search alias and its bindings
 

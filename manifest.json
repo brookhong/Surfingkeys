@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Map your keys for web surfing",
-    "version": "0.9.17",
+    "version": "0.9.19",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
         "16": "icons/16.png",
@@ -82,5 +82,5 @@
         "pages/shadow.css",
         "pages/default.css"
     ],
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://www.google-analytics.com; object-src 'self'"
+    "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'"
 }

@@ -1,5 +1,6 @@
 const gulp = require('gulp'),
     babel = require('gulp-babel'),
+    replace = require('gulp-replace'),
     clean = require('gulp-clean'),
     eslint = require('gulp-eslint'),
     ghPages = require('gulp-gh-pages'),
@@ -34,8 +35,19 @@ gulp.task('clean', function () {
         .pipe(clean());
 });
 
+gulp.task('copy-html-files', ['clean'], function() {
+    if (buildTarget === "Firefox") {
+        return gulp.src(['pages/*.html'], {base: "."})
+            .pipe(replace(/\s*<script src="ga.js"><\/script>\n\s*<script async src='https:\/\/www.google-analytics.com\/analytics.js'><\/script>/, ''))
+            .pipe(gulp.dest(`dist/${buildTarget}-extension`));
+    } else {
+        return gulp.src(['pages/*.html'], {base: "."})
+            .pipe(gulp.dest(`dist/${buildTarget}-extension`));
+    }
+});
+
 gulp.task('copy-non-js-files', ['clean'], function() {
-    return gulp.src(['icons/**', 'content_scripts/**', '!content_scripts/**/*.js', 'pages/**', '!pages/**/*.js'], {base: "."})
+    return gulp.src(['icons/**', 'content_scripts/**', '!content_scripts/**/*.js', 'pages/**', '!pages/**/*.html', '!pages/**/*.js'], {base: "."})
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -87,17 +99,23 @@ gulp.task('build_common_content_min', ['clean'], function() {
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
 
-gulp.task('build_manifest', ['copy-non-js-files', 'clean'], function() {
+gulp.task('build_manifest', ['copy-non-js-files', 'copy-html-files', 'clean'], function() {
     var json = JSON.parse(fs.readFileSync('manifest.json'));
     if (buildTarget === "Firefox") {
         json.options_ui = {
             page: "pages/options.html"
         };
+        json.content_security_policy = "script-src 'self'; object-src 'self'";
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");
         json.background.persistant = false;
         json.options_page = "pages/options.html";
+        json.sandbox = {
+            "pages": [
+                "pages/sandbox.html"
+            ]
+        };
     }
     return fs.writeFile(`dist/${buildTarget}-extension/manifest.json`, JSON.stringify(json, null, 4), function() {
     });

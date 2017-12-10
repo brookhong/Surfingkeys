@@ -1070,6 +1070,7 @@ var ChromeService = (function() {
         chrome.tabs.executeScript(sender.tab.id, {
             frameId: sender.frameId,
             code: message.code,
+            matchAboutBlank: true,
             file: message.file
         }, function(result) {
             _response(message, sendResponse, {

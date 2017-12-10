@@ -21,7 +21,21 @@ var Front = (function() {
         runtime.postTopMessage(args);
     }
 
-    self.highlightElement = function(sn) {
+    self.applyUserSettings = function (us) {
+        frontendCommand({
+            action: 'applyUserSettings',
+            userSettings: us
+        });
+    };
+
+    self.executeCommand = function (cmd) {
+        frontendCommand({
+            action: 'executeCommand',
+            cmdline: cmd
+        });
+    };
+
+    self.highlightElement = function (sn) {
         sn.action = 'highlightElement';
         frontendCommand(sn);
     };
@@ -209,6 +223,18 @@ var Front = (function() {
         readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
         onOmniQuery(response.query);
+    };
+
+    _actions["executeScript"] = function(message) {
+        runtime.command({
+            action: 'executeScript',
+            code: message.cmdline
+        }, function (response) {
+            frontendCommand({
+                action: 'updateOmnibarResult',
+                words: response.response
+            });
+        });
     };
 
     _actions["getBackFocus"] = function(response) {

@@ -248,7 +248,9 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 如果你希望一直用搜索栏来选择标签页，可使用如下设置:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', 'Front.openOmnibar({type: "Tabs"})');
+    mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        Front.openOmnibar({type: "Tabs"});
+    });
 
 效果相当于：
 
@@ -445,7 +447,9 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 所有normal模式下的按键都可以由点来重复，除了那些在创建时指定`repeatIgnore`为`true`的按键，如
 
-    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+    mapkey('e', '#2Scroll a page up', function() {
+        Normal.scroll("pageUp");
+    }, {repeatIgnore: true});
 
 这样，`.`就不会往上翻页，即使你刚刚按了`e`。
 
@@ -492,15 +496,19 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 |:---------------| :-----|
 |**keystroke**                   | 字符串，触发某个操作的按键|
 |**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
-|**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
+|**action_code**                 | 函数，一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
 |**options**                     | object, 字段属性如下 |
 |**domain**                      | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
 |**repeatIgnore**                | 布尔值[可选]，是否可通过点命令重复该按键。|
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
-    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
+    mapkey('zz', 'Choose a tab', function() {
+        Front.chooseTab();
+    }, {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', function() {
+        Front.showUsage();
+    }, {domain: /google\.com/i});
 
 可视化模式下的mapkey
 
@@ -579,8 +587,12 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 就相当于
 
     addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-    mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
-    vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+    mapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
+    vmapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
 
 ### 删除搜索别名及相关绑定
 

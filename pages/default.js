@@ -210,29 +210,49 @@ mapkey('ZR', '#5Restore last session', function() {
         name: 'LAST'
     });
 });
-mapkey('T', '#3Choose a tab', 'Front.chooseTab()');
-mapkey('?', '#0Show usage', 'Front.showUsage()');
-mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+mapkey('T', '#3Choose a tab', function() {
+    Front.chooseTab();
+});
+mapkey('?', '#0Show usage', function() {
+    Front.showUsage();
+});
+mapkey('e', '#2Scroll a page up', Normal.scroll.bind(Normal, "pageUp"), {repeatIgnore: true});
 map('u', 'e');
-mapkey('d', '#2Scroll a page down', 'Normal.scroll("pageDown")', {repeatIgnore: true});
-mapkey('j', '#2Scroll down', 'Normal.scroll("down")', {repeatIgnore: true});
-mapkey('k', '#2Scroll up', 'Normal.scroll("up")', {repeatIgnore: true});
-mapkey('h', '#2Scroll left', 'Normal.scroll("left")', {repeatIgnore: true});
-mapkey('l', '#2Scroll right', 'Normal.scroll("right")', {repeatIgnore: true});
-mapkey('gg', '#2Scroll to the top of the page', 'Normal.scroll("top")', {repeatIgnore: true});
-mapkey('G', '#2Scroll to the bottom of the page', 'Normal.scroll("bottom")', {repeatIgnore: true});
-mapkey('0', '#2Scroll all the way to the left', 'Normal.scroll("leftmost")', {repeatIgnore: true});
-mapkey('$', '#2Scroll all the way to the right', 'Normal.scroll("rightmost")', {repeatIgnore: true});
-mapkey('%', '#2Scroll to percentage of current page', 'Normal.scroll("byRatio")', {repeatIgnore: true});
-mapkey('cs', '#2Change scroll target', 'Normal.changeScrollTarget()');
-mapkey('cS', '#2Reset scroll target', 'Normal.resetScrollTarget()');
-mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', 'Hints.create("", Hints.dispatchMouseClick)');
-mapkey('af', '#1Open a link in new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true})');
-mapkey('gf', '#1Open a link in non-active new tab', 'Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false})');
-mapkey('cf', '#1Open multiple links in a new tab', 'Hints.create("", Hints.dispatchMouseClick, {multipleHits: true})');
+mapkey('d', '#2Scroll a page down', Normal.scroll.bind(Normal, "pageDown"), {repeatIgnore: true});
+mapkey('j', '#2Scroll down', Normal.scroll.bind(Normal, "down"), {repeatIgnore: true});
+mapkey('k', '#2Scroll up', Normal.scroll.bind(Normal, "up"), {repeatIgnore: true});
+mapkey('h', '#2Scroll left', Normal.scroll.bind(Normal, "left"), {repeatIgnore: true});
+mapkey('l', '#2Scroll right', Normal.scroll.bind(Normal, "right"), {repeatIgnore: true});
+mapkey('gg', '#2Scroll to the top of the page', Normal.scroll.bind(Normal, "top"), {repeatIgnore: true});
+mapkey('G', '#2Scroll to the bottom of the page', Normal.scroll.bind(Normal, "bottom"), {repeatIgnore: true});
+mapkey('0', '#2Scroll all the way to the left', Normal.scroll.bind(Normal, "leftmost"), {repeatIgnore: true});
+mapkey('$', '#2Scroll all the way to the right', Normal.scroll.bind(Normal, "rightmost"), {repeatIgnore: true});
+mapkey('%', '#2Scroll to percentage of current page', Normal.scroll.bind(Normal, "byRatio"), {repeatIgnore: true});
+mapkey('cs', '#2Change scroll target', function() {
+    Normal.changeScrollTarget();
+});
+mapkey('cS', '#2Reset scroll target', function() {
+    Normal.resetScrollTarget();
+});
+mapkey('f', '#1Open a link, press SHIFT to flip hints if they are overlapped.', function() {
+    Hints.create("", Hints.dispatchMouseClick);
+});
+mapkey('af', '#1Open a link in new tab', function() {
+    Hints.create("", Hints.dispatchMouseClick, {tabbed: true});
+});
+mapkey('gf', '#1Open a link in non-active new tab', function() {
+    Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false});
+});
+mapkey('cf', '#1Open multiple links in a new tab', function() {
+    Hints.create("", Hints.dispatchMouseClick, {multipleHits: true});
+});
 map('C', 'gf');
-mapkey('<Ctrl-h>', '#1Mouse over elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseover"]})');
-mapkey('<Ctrl-j>', '#1Mouse out elements.', 'Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]})');
+mapkey('<Ctrl-h>', '#1Mouse over elements.', function() {
+    Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseover"]});
+});
+mapkey('<Ctrl-j>', '#1Mouse out elements.', function() {
+    Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]});
+});
 mapkey('ya', '#7Copy a link URL to the clipboard', function() {
     Hints.create('*[href]', function(element) {
         Clipboard.write(element.href);
@@ -260,7 +280,9 @@ mapkey('yq', '#7Copy pre text.', function() {
         Clipboard.write(element.innerText);
     });
 });
-mapkey('i', '#1Go to edit box', 'Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick)');
+mapkey('i', '#1Go to edit box', function() {
+    Hints.create("input:visible, textarea:visible, *[contenteditable=true], select:visible", Hints.dispatchMouseClick);
+});
 mapkey('gi', '#1Go to the first edit box', function() {
     Hints.createInputLayer();
 });
@@ -306,23 +328,57 @@ cmap('<ArrowDown>', '<Tab>');
 cmap('<ArrowUp>', '<Shift-Tab>');
 cmap('<Ctrl-n>', '<Tab>');
 cmap('<Ctrl-p>', '<Shift-Tab>');
-mapkey('q', '#1Click on an Image or a button', 'Hints.create("img, button", Hints.dispatchMouseClick)');
-mapkey('E', '#3Go one tab left', 'RUNTIME("previousTab")');
-mapkey('R', '#3Go one tab right', 'RUNTIME("nextTab")');
-mapkey('<Alt-p>', '#3pin/unpin current tab', 'RUNTIME("togglePinTab")');
-mapkey('<Alt-m>', '#3mute/unmute current tab', 'RUNTIME("muteTab")');
-mapkey('B', '#4Go one tab history back', 'RUNTIME("historyTab", {backward: true})', {repeatIgnore: true});
-mapkey('F', '#4Go one tab history forward', 'RUNTIME("historyTab", {backward: false})', {repeatIgnore: true});
-mapkey('<Ctrl-6>', '#4Go to last used tab', 'RUNTIME("goToLastTab")');
-mapkey('gT', '#4Go to first activated tab', 'RUNTIME("historyTab", {index: 0})', {repeatIgnore: true});
-mapkey('gt', '#4Go to last activated tab', 'RUNTIME("historyTab", {index: -1})', {repeatIgnore: true});
-mapkey('S', '#4Go back in history', 'history.go(-1)', {repeatIgnore: true});
-mapkey('D', '#4Go forward in history', 'history.go(1)', {repeatIgnore: true});
-mapkey('r', '#4Reload the page', 'RUNTIME("reloadTab", { nocache: false })');
-mapkey('t', '#8Open a URL', 'Front.openOmnibar({type: "URLs", extra: "getAllSites"})');
-mapkey('go', '#8Open a URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false})');
-mapkey('ox', '#8Open recently closed URL', 'Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"})');
-mapkey('H', '#8Open opened URL in current tab', 'Front.openOmnibar({type: "URLs", extra: "getTabURLs"})');
+mapkey('q', '#1Click on an Image or a button', function() {
+    Hints.create("img, button", Hints.dispatchMouseClick);
+});
+mapkey('E', '#3Go one tab left', function() {
+    RUNTIME("previousTab");
+});
+mapkey('R', '#3Go one tab right', function() {
+    RUNTIME("nextTab");
+});
+mapkey('<Alt-p>', '#3pin/unpin current tab', function() {
+    RUNTIME("togglePinTab");
+});
+mapkey('<Alt-m>', '#3mute/unmute current tab', function() {
+    RUNTIME("muteTab");
+});
+mapkey('B', '#4Go one tab history back', function() {
+    RUNTIME("historyTab", {backward: true});
+}, {repeatIgnore: true});
+mapkey('F', '#4Go one tab history forward', function() {
+    RUNTIME("historyTab", {backward: false});
+}, {repeatIgnore: true});
+mapkey('<Ctrl-6>', '#4Go to last used tab', function() {
+    RUNTIME("goToLastTab");
+});
+mapkey('gT', '#4Go to first activated tab', function() {
+    RUNTIME("historyTab", {index: 0});
+}, {repeatIgnore: true});
+mapkey('gt', '#4Go to last activated tab', function() {
+    RUNTIME("historyTab", {index: -1});
+}, {repeatIgnore: true});
+mapkey('S', '#4Go back in history', function() {
+    history.go(-1);
+}, {repeatIgnore: true});
+mapkey('D', '#4Go forward in history', function() {
+    history.go(1);
+}, {repeatIgnore: true});
+mapkey('r', '#4Reload the page', function() {
+    RUNTIME("reloadTab", { nocache: false });
+});
+mapkey('t', '#8Open a URL', function() {
+    Front.openOmnibar({type: "URLs", extra: "getAllSites"});
+});
+mapkey('go', '#8Open a URL in current tab', function() {
+    Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false});
+});
+mapkey('ox', '#8Open recently closed URL', function() {
+    Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"});
+});
+mapkey('H', '#8Open opened URL in current tab', function() {
+    Front.openOmnibar({type: "URLs", extra: "getTabURLs"});
+});
 function renderShanbay(res) {
     var exp = res.msg;
     if (res.data.definition) {
@@ -357,7 +413,9 @@ Visual.setTranslationService("https://api.shanbay.com/bdc/search/?word=", functi
     var res = JSON.parse(res.text);
     return renderShanbay(res);
 });
-mapkey('b', '#8Open a bookmark', 'Front.openOmnibar(({type: "Bookmarks"}))');
+mapkey('b', '#8Open a bookmark', function() {
+    Front.openOmnibar(({type: "Bookmarks"}));
+});
 mapkey('ab', '#8Bookmark current page to selected folder', function() {
     var page = {
         url: window.location.href,
@@ -365,9 +423,15 @@ mapkey('ab', '#8Bookmark current page to selected folder', function() {
     };
     Front.openOmnibar(({type: "AddBookmark", extra: page}));
 });
-mapkey('oh', '#8Open URL from history', 'Front.openOmnibar({type: "History"})');
-mapkey('om', '#8Open URL from vim-like marks', 'Front.openOmnibar({type: "VIMarks"})');
-mapkey(':', '#8Open commands', 'Front.openOmnibar({type: "Commands"})');
+mapkey('oh', '#8Open URL from history', function() {
+    Front.openOmnibar({type: "History"});
+});
+mapkey('om', '#8Open URL from vim-like marks', function() {
+    Front.openOmnibar({type: "VIMarks"});
+});
+mapkey(':', '#8Open commands', function() {
+    Front.openOmnibar({type: "Commands"});
+});
 command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
     runtime.updateHistory(args[0], []);
 });
@@ -410,12 +474,24 @@ command('timeStamp', 'print time stamp in human readable format', function(args)
     var dt = new Date(parseInt(args[0]));
     Omnibar.listWords([dt.toString()]);
 });
-mapkey('v', '#9Toggle visual mode', 'Visual.toggle()');
-mapkey('zv', '#9Enter visual mode, and select whole element', 'Visual.toggle("z")');
-mapkey('yv', '#9Yank text of an element', 'Visual.toggle("y")');
-mapkey('ymv', '#9Yank text of multiple elements', 'Visual.toggle("ym")');
-mapkey('V', '#9Restore visual mode', 'Visual.restore()');
-mapkey('/', '#9Find in current page', 'Front.openFinder()');
+mapkey('v', '#9Toggle visual mode', function() {
+    Visual.toggle();
+});
+mapkey('zv', '#9Enter visual mode, and select whole element', function() {
+    Visual.toggle("z");
+});
+mapkey('yv', '#9Yank text of an element', function() {
+    Visual.toggle("y");
+});
+mapkey('ymv', '#9Yank text of multiple elements', function() {
+    Visual.toggle("ym");
+});
+mapkey('V', '#9Restore visual mode', function() {
+    Visual.restore();
+});
+mapkey('/', '#9Find in current page', function() {
+    Front.openFinder();
+});
 mapkey('*', '#9Find selected text in current page', function() {
     Visual.star();
     Visual.toggle();
@@ -426,9 +502,15 @@ vmapkey('<Ctrl-u>', '#9Backward 20 lines', function() {
 vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
     Visual.feedkeys('20j');
 });
-mapkey('x', '#3Close current tab', 'RUNTIME("closeTab")');
-mapkey('X', '#3Restore closed tab', 'RUNTIME("openLast")');
-mapkey('W', '#3New window with current tab',  'RUNTIME("newWindow")');
+mapkey('x', '#3Close current tab', function() {
+    RUNTIME("closeTab");
+});
+mapkey('X', '#3Restore closed tab', function() {
+    RUNTIME("openLast");
+});
+mapkey('W', '#3New window with current tab',  function() {
+    RUNTIME("newWindow");
+});
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
 mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
@@ -444,9 +526,15 @@ mapkey('>>', '#3Move current tab to right', function() {
         step: 1
     });
 });
-mapkey('n', '#9Next found text', 'Visual.next(false)');
-mapkey('N', '#9Previous found text', 'Visual.next(true)');
-mapkey('w', '#2Switch frames', 'Normal.rotateFrame()');
+mapkey('n', '#9Next found text', function() {
+    Visual.next(false);
+});
+mapkey('N', '#9Previous found text', function() {
+    Visual.next(true);
+});
+mapkey('w', '#2Switch frames', function() {
+    Normal.rotateFrame();
+});
 mapkey('cc', '#7Open selected link or link from clipboard', function() {
     if (window.getSelection().toString()) {
         tabOpenLink(window.getSelection().toString());
@@ -481,9 +569,15 @@ mapkey('yd', "#7Copy current downloading URL", function() {
         Clipboard.write(items.join(','));
     });
 });
-mapkey('yt', '#3Duplicate current tab', 'RUNTIME("duplicateTab")');
-mapkey('yy', "#7Copy current page's URL", 'Clipboard.write(window.location.href)');
-mapkey('yl', "#7Copy current page's title", 'Clipboard.write(document.title)');
+mapkey('yt', '#3Duplicate current tab', function() {
+    RUNTIME("duplicateTab");
+});
+mapkey('yy', "#7Copy current page's URL", function() {
+    Clipboard.write(window.location.href);
+});
+mapkey('yl', "#7Copy current page's title", function() {
+    Clipboard.write(document.title);
+});
 mapkey('yf', '#7Copy form data in JSON on current page', function() {
     var aa = [];
     $('form').each(function() {
@@ -519,24 +613,54 @@ mapkey('yp', '#7Copy form data for POST on current page', function() {
     });
     Clipboard.write(JSON.stringify(aa, null, 4));
 });
-mapkey('ob', '#8Open Search with alias b', 'Front.openOmnibar({type: "SearchEngine", extra: "b"})');
-mapkey('og', '#8Open Search with alias g', 'Front.openOmnibar({type: "SearchEngine", extra: "g"})');
-mapkey('ow', '#8Open Search with alias w', 'Front.openOmnibar({type: "SearchEngine", extra: "w"})');
+mapkey('ob', '#8Open Search with alias b', function() {
+    Front.openOmnibar({type: "SearchEngine", extra: "b"});
+});
+mapkey('og', '#8Open Search with alias g', function() {
+    Front.openOmnibar({type: "SearchEngine", extra: "g"});
+});
+mapkey('ow', '#8Open Search with alias w', function() {
+    Front.openOmnibar({type: "SearchEngine", extra: "w"});
+});
 if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-    mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("/pages/start.html")');
+    mapkey('on', '#3Open Chrome newtab', function() {
+        tabOpenLink("/pages/start.html");
+    });
 } else {
-    mapkey('on', '#3Open Chrome newtab', 'tabOpenLink("chrome://newtab/")');
-    mapkey('ga', '#12Open Chrome About', 'tabOpenLink("chrome://help/")');
-    mapkey('gb', '#12Open Chrome Bookmarks', 'tabOpenLink("chrome://bookmarks/")');
-    mapkey('gc', '#12Open Chrome Cache', 'tabOpenLink("chrome://cache/")');
-    mapkey('gd', '#12Open Chrome Downloads', 'tabOpenLink("chrome://downloads/")');
-    mapkey('gh', '#12Open Chrome History', 'tabOpenLink("chrome://history/")');
-    mapkey('gk', '#12Open Chrome Cookies', 'tabOpenLink("chrome://settings/content/cookies")');
-    mapkey('ge', '#12Open Chrome Extensions', 'tabOpenLink("chrome://extensions/")');
-    mapkey('gn', '#12Open Chrome net-internals', 'tabOpenLink("chrome://net-internals/#proxy")');
-    mapkey('si', '#12Open Chrome Inspect', 'tabOpenLink("chrome://inspect/#devices")');
+    mapkey('on', '#3Open Chrome newtab', function() {
+        tabOpenLink("chrome://newtab/");
+    });
+    mapkey('ga', '#12Open Chrome About', function() {
+        tabOpenLink("chrome://help/");
+    });
+    mapkey('gb', '#12Open Chrome Bookmarks', function() {
+        tabOpenLink("chrome://bookmarks/");
+    });
+    mapkey('gc', '#12Open Chrome Cache', function() {
+        tabOpenLink("chrome://cache/");
+    });
+    mapkey('gd', '#12Open Chrome Downloads', function() {
+        tabOpenLink("chrome://downloads/");
+    });
+    mapkey('gh', '#12Open Chrome History', function() {
+        tabOpenLink("chrome://history/");
+    });
+    mapkey('gk', '#12Open Chrome Cookies', function() {
+        tabOpenLink("chrome://settings/content/cookies");
+    });
+    mapkey('ge', '#12Open Chrome Extensions', function() {
+        tabOpenLink("chrome://extensions/");
+    });
+    mapkey('gn', '#12Open Chrome net-internals', function() {
+        tabOpenLink("chrome://net-internals/#proxy");
+    });
+    mapkey('si', '#12Open Chrome Inspect', function() {
+        tabOpenLink("chrome://inspect/#devices");
+    });
 }
-mapkey('gs', '#12View page source', 'RUNTIME("viewSource", { tab: { tabbed: true }})');
+mapkey('gs', '#12View page source', function() {
+    RUNTIME("viewSource", { tab: { tabbed: true }});
+});
 mapkey('gu', '#4Go up one path in the URL', function() {
     var pathname = location.pathname;
     if (pathname.length > 1) {
@@ -558,27 +682,49 @@ mapkey('gu', '#4Go up one path in the URL', function() {
 mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
-mapkey('gU', '#4Go to root of current URL hierarchy', 'window.location.href = window.location.origin');
-mapkey('gxt', '#3Close tab on left', 'RUNTIME("closeTabLeft")');
-mapkey('gxT', '#3Close tab on right', 'RUNTIME("closeTabRight")');
-mapkey('gx0', '#3Close all tabs on left', 'RUNTIME("closeTabsToLeft")');
-mapkey('gx$', '#3Close all tabs on right', 'RUNTIME("closeTabsToRight")');
-mapkey('se', '#11Edit Settings', 'tabOpenLink("/pages/options.html")');
-mapkey('sm', '#11Preview markdown', 'tabOpenLink("/pages/markdown.html")');
-mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', 'tabOpenLink("/pages/mermaid.html")');
+mapkey('gU', '#4Go to root of current URL hierarchy', function() {
+    window.location.href = window.location.origin;
+});
+mapkey('gxt', '#3Close tab on left', function() {
+    RUNTIME("closeTabLeft");
+});
+mapkey('gxT', '#3Close tab on right', function() {
+    RUNTIME("closeTabRight");
+});
+mapkey('gx0', '#3Close all tabs on left', function() {
+    RUNTIME("closeTabsToLeft");
+});
+mapkey('gx$', '#3Close all tabs on right', function() {
+    RUNTIME("closeTabsToRight");
+});
+mapkey('se', '#11Edit Settings', function() {
+    tabOpenLink("/pages/options.html");
+});
+mapkey('sm', '#11Preview markdown', function() {
+    tabOpenLink("/pages/markdown.html");
+});
+mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', function() {
+    tabOpenLink("/pages/mermaid.html");
+});
 mapkey('su', '#4Edit current URL with vim editor', function() {
     Front.showEditor(window.location.href, function(data) {
         tabOpenLink(data);
     }, 'url');
 });
-mapkey(';m', '#1mouse out last element', 'Hints.mouseoutLastElement()');
-mapkey(';j', '#12Close Downloads Shelf', 'RUNTIME("closeDownloadsShelf", {clearHistory: true})');
+mapkey(';m', '#1mouse out last element', function() {
+    Hints.mouseoutLastElement();
+});
+mapkey(';j', '#12Close Downloads Shelf', function() {
+    RUNTIME("closeDownloadsShelf", {clearHistory: true});
+});
 mapkey(';pp', '#7Paste html on current page', function() {
     Clipboard.read(function(response) {
         document.body.innerHTML = response.data;
     });
 });
-mapkey(';q', '#14Insert jquery library on current page', 'Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")');
+mapkey(';q', '#14Insert jquery library on current page', function() {
+    Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js");
+});
 mapkey(';t', 'Translate selected text with google', function() {
     searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
 });
@@ -592,22 +738,24 @@ mapkey(';db', '#14Remove bookmark for current page', function() {
 });
 
 addSearchAliasX('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
-    var res = eval(response.text);
+    var res = JSON.parse(response.text);
     return res[1];
 });
 addSearchAliasX('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
-    var res = eval(response.text);
+    var res = JSON.parse(response.text);
     return res.map(function(r){
         return r.phrase;
     });
 });
-addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=eval&wd=', function(response) {
-    var res = eval(response.text);
-    return res.s;
+addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=&wd=', function(response) {
+    var res = response.text.match(/,s:\[("[^\]]+")]}/);
+    return res ? res[1].replace(/"/g, '').split(",") : [];
 });
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
-    var res = eval(response.text);
+    var res = JSON.parse(response.text);
     return res[1];
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
+
+document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));

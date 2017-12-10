@@ -264,57 +264,60 @@ function saveSettings() {
 }
 $('#save_button').click(saveSettings);
 
-
 var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
-document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
-    basicMappings = basicMappings.map(function(w, i) {
-        return {
-            origin: w,
-            annotation: Normal.mappings.find(KeyboardUtils.encodeKeystroke(w)).meta.annotation
-        };
-    });
+basicMappings = basicMappings.map(function(w, i) {
+    return {
+        origin: w,
+        annotation: Normal.mappings.find(KeyboardUtils.encodeKeystroke(w)).meta.annotation
+    };
+});
+
+var _sanboxCallback = {};
+function evalInSandbox(code, cb) {
+    var id = generateQuickGuid();
+    document.getElementById("sandbox").contentWindow.postMessage({
+        id: id,
+        action: "evalInSandbox",
+        code: code
+    }, '*');
+    if (cb) {
+        _sanboxCallback[id] = cb;
+    }
+}
+window.addEventListener('message', function(event) {
+    var command = event.data.action;
+    switch(command) {
+        case 'resultInSandbox':
+            if (_sanboxCallback.hasOwnProperty(event.data.id)) {
+                _sanboxCallback[event.data.id](event.data.result);
+                delete _sanboxCallback[event.data.id];
+            }
+            break;
+        default:
+            break;
+    }
 });
 
 function renderKeyMappings(rs) {
-    var delta = runScript(`
-settings.map = {};
-settings.unmapAllExcept = {};
-function map(a, b) {
-    var f = false;
-    for (var k in settings.map) {
-        if (settings.map[k] === b) {
-            settings.map[k] = a;
-            f = true;
-        }
-    }
-    if (!f) {
-        settings.map[b] = a;
-    }
-}
-function unmap(a) {
-    settings.map[a] = "";
-}
-function unmapAllExcept(a, b) {
-    settings.unmapAllExcept[b] = a;
-}
-${rs.snippets}`);
+    evalInSandbox(rs.snippets, function(delta) {
 
-    initL10n(function(locale) {
-        var customization = basicMappings.map(function(w, i) {
-            var newKey = w.origin;
-            if (delta.settings.map.hasOwnProperty(w.origin)) {
-                newKey = delta.settings.map[w.origin];
-            }
+        initL10n(function (locale) {
+            var customization = basicMappings.map(function (w, i) {
+                var newKey = w.origin;
+                if (delta.settings.map.hasOwnProperty(w.origin)) {
+                    newKey = delta.settings.map[w.origin];
+                }
             return `<div>
     <span class=annotation>${locale(w.annotation)}</span>
     <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? $.htmlEncode(newKey) : "🚫"}</kbd></span>
     </div>`;
-        });
+            });
 
-        $('#basicMappings').html(customization);
-        $('#basicMappings').find("kbd").click(function() {
-            KeyPicker.enter(this);
+            $('#basicMappings').html(customization);
+            $('#basicMappings').find("kbd").click(function () {
+                KeyPicker.enter(this);
+            });
         });
     });
 }
