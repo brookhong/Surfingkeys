@@ -246,20 +246,14 @@ function saveSettings() {
         });
         Front.showBanner('Loading settings from ' + localPath, 300);
     } else {
-        var delta = runScript(settingsCode);
-        if (delta.error === "") {
+        RUNTIME('updateSettings', {
+            settings: {
+                snippets: settingsCode,
+                localPath: getURIPath($('#localPath').val())
+            }
+        });
 
-            RUNTIME('updateSettings', {
-                settings: {
-                    snippets: settingsCode,
-                    localPath: getURIPath($('#localPath').val())
-                }
-            });
-
-            Front.showBanner('Settings saved', 300);
-        } else {
-            Front.showBanner(delta.error, 9000);
-        }
+        Front.showBanner('Settings saved', 300);
     }
 }
 $('#save_button').click(saveSettings);

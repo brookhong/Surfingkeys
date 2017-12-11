@@ -436,6 +436,9 @@ command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
     runtime.updateHistory(args[0], []);
 });
 command('listSession', 'list session', function() {
+    if (!Front.omnibar.is(":visible")) {
+        Front.openOmnibar({ type: "Commands" });
+    }
     runtime.command({
         action: 'getSettings',
         key: 'sessions'

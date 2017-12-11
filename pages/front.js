@@ -250,7 +250,6 @@ var Front = (function(mode) {
         var args = parseCommand(message.cmdline);
         var cmd = args.shift();
         if (Commands.items.hasOwnProperty(cmd)) {
-            Front.openOmnibar({type: "Commands"});
             var meta = Commands.items[cmd];
             meta.code.call(meta.code, args);
         } else {
