@@ -28,6 +28,36 @@ var Front = (function() {
         });
     };
 
+    var _listSuggestions = {};
+    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion) {
+        if (suggestionURL && listSuggestion) {
+            _listSuggestions[suggestionURL] = listSuggestion;
+        }
+        frontendCommand({
+            action: 'addSearchAlias',
+            alias: alias,
+            prompt: prompt,
+            url: url,
+            suggestionURL: suggestionURL
+        });
+    };
+    self.removeSearchAlias = function (alias) {
+        frontendCommand({
+            action: 'removeSearchAlias',
+            alias: alias
+        });
+    };
+    var _actions = {};
+
+    _actions["getSearchSuggestions"] = function (message) {
+        var ret = null;
+        if (_listSuggestions.hasOwnProperty(message.url)) {
+            ret = _listSuggestions[message.url](message.response);
+        }
+        return ret;
+    };
+
+
     self.executeCommand = function (cmd) {
         frontendCommand({
             action: 'executeCommand',
@@ -193,8 +223,6 @@ var Front = (function() {
             visible: visible
         });
     };
-
-    var _actions = {};
 
     _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {

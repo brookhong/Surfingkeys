@@ -1,7 +1,4 @@
 function command(cmd, annotation, jscode) {
-    if (typeof(jscode) === 'string') {
-        jscode = new Function(jscode);
-    }
     var cmd_code = {
         code: jscode
     };
@@ -61,9 +58,6 @@ function autocmd(domain, jscode) {
     } else {
         dp = domain;
         po = new RegExp(domain);
-    }
-    if (typeof(jscode) === 'string') {
-        jscode = new Function(jscode);
     }
     AutoCommands[dp] = {
         code: jscode,
@@ -248,13 +242,14 @@ function onAceVimKeymapInit(fn) {
 }
 
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
-    if (typeof(SearchEngine) !== 'undefined') {
-        SearchEngine.aliases[alias] = {
-            prompt: `${prompt}${separatorHtml}`,
-            url: url,
-            suggestionURL: suggestionURL || "",
-            listSuggestion: listSuggestion
-        };
+    if (!Front.isProvider()) {
+        Front.addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion);
+    }
+}
+
+function removeSearchAlias(alias) {
+    if (!Front.isProvider()) {
+        Front.removeSearchAlias(alias);
     }
 }
 
@@ -283,12 +278,6 @@ function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestio
         }
         mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
         vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
-    }
-}
-
-function removeSearchAlias(alias) {
-    if (typeof(SearchEngine) !== 'undefined') {
-        delete SearchEngine.aliases[alias];
     }
 }
 
@@ -541,10 +530,6 @@ function applySettings(rs) {
         }
         if (!$.isEmptyObject(delta.settings)) {
             Front.applyUserSettings(JSON.parse(JSON.stringify(delta.settings)));
-            if ('theme' in delta.settings) {
-                document.dispatchEvent(new CustomEvent('surfingkeys:themeChanged', { 'detail': delta.settings.theme}));
-                delete delta.settings.theme;
-            }
             // overrides local settings from snippets
             for (var k in delta.settings) {
                 if (runtime.conf.hasOwnProperty(k)) {

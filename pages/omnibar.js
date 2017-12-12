@@ -1031,7 +1031,6 @@ var SearchEngine = (function() {
         self.prompt = undefined;
         self.url = undefined;
         self.suggestionURL = undefined;
-        self.listSuggestion = undefined;
     };
     self.onTabKey = function() {
         Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('query'));
@@ -1049,9 +1048,9 @@ var SearchEngine = (function() {
         });
         return this.activeTab;
     };
-    self.onInput = function() {
-        const canSuggest = self.suggestionURL && typeof(self.listSuggestion) === "function";
-        const showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
+    self.onInput = function () {
+        var canSuggest = self.suggestionURL;
+        var showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
 
         if (!showSuggestions) return false;
 
@@ -1065,19 +1064,25 @@ var SearchEngine = (function() {
                 action: 'request',
                 method: 'get',
                 url: formatURL(self.suggestionURL, val)
-            }, function(resp) {
-                var resp = self.listSuggestion(resp);
-                if (Array.isArray(resp)) {
-                    Omnibar.detectAndInsertURLItem(Omnibar.input.val(), resp);
-                    var rxp = _regexFromString(val, true);
-                    Omnibar.listResults(resp, function(w) {
-                        if (w.hasOwnProperty('url')) {
-                            return Omnibar.createURLItem(w, rxp);
-                        } else {
-                            return $('<li/>').html("⌕ " + w).data('query', w);
-                        }
-                    });
-                }
+            }, function (resp) {
+                Front.contentCommand({
+                    action: 'getSearchSuggestions',
+                    url: self.suggestionURL,
+                    response: resp
+                }, function(resp) {
+                    resp = resp.data;
+                    if (Array.isArray(resp)) {
+                        Omnibar.detectAndInsertURLItem(Omnibar.input.val(), resp);
+                        var rxp = _regexFromString(val, true);
+                        Omnibar.listResults(resp, function (w) {
+                            if (w.hasOwnProperty('url')) {
+                                return Omnibar.createURLItem(w, rxp);
+                            } else {
+                                return $('<li/>').html("⌕ " + w).data('query', w);
+                            }
+                        });
+                    }
+                });
             });
         }, runtime.conf.omnibarSuggestionTimeout);
     };

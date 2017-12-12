@@ -245,6 +245,9 @@ var Front = (function(mode) {
                 runtime.conf[k] = message.userSettings[k];
             }
         }
+        if ('theme' in message.userSettings) {
+            $('#sk_theme').html(message.userSettings.theme);
+        }
     };
     _actions['executeCommand'] = function (message) {
         var args = parseCommand(message.cmdline);
@@ -255,6 +258,16 @@ var Front = (function(mode) {
         } else {
             self.showPopup("No such command!");
         }
+    };
+    _actions['addSearchAlias'] = function (message) {
+        SearchEngine.aliases[message.alias] = {
+            prompt: '' + message.prompt + separatorHtml,
+            url: message.url,
+            suggestionURL: message.suggestionURL
+        };
+    };
+    _actions['removeSearchAlias'] = function (message) {
+        delete SearchEngine.aliases[message.alias];
     };
     _actions['getUsage'] = function (message) {
         // send response in callback from buildUsage
@@ -495,7 +508,3 @@ var Front = (function(mode) {
 
     return self;
 })(Mode);
-
-document.addEventListener("surfingkeys:themeChanged", function(evt) {
-    $('#sk_theme').html(evt.detail);
-});
