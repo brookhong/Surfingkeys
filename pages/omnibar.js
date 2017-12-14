@@ -799,7 +799,10 @@ var AddBookmark = (function() {
     self.onInput = function() {
         var query = Omnibar.input.val();
         var matches = folders.filter(function(b) {
-            return b.title.indexOf(query) !== -1;
+            if (runtime.conf.caseSensitive)
+              return b.title.indexOf(query) !== -1;
+            else
+              return b.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
         Omnibar.listResults(matches, function(f) {
             return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
