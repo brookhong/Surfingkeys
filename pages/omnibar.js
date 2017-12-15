@@ -740,6 +740,19 @@ var AddBookmark = (function() {
                     Omnibar.resultsDiv.find('li.focused').removeClass('focused');
                     Omnibar.focusItem(`li[folder=${b.parentId}]`);
                 }
+
+                //restore the last used bookmark folder input
+                var lastBookmarkFolder = localStorage.getItem("surfingkeys.lastAddedBookmark");
+                if (lastBookmarkFolder) {
+                  Omnibar.input.val(lastBookmarkFolder);
+
+                  //make the input selected, so if user don't want to use it,
+                  //just input to overwrite the previous value
+                  Omnibar.input.select();
+
+                  // trigger omnibar input matching 
+                  self.onInput();
+                }
             });
         });
     };
@@ -793,13 +806,17 @@ var AddBookmark = (function() {
         }, function(response) {
             Front.showBanner("Bookmark created at {0}.".format(folderName), 3000);
         });
+        localStorage.setItem("surfingkeys.lastAddedBookmark", Omnibar.input.val()); 
         return true;
     };
 
     self.onInput = function() {
         var query = Omnibar.input.val();
         var matches = folders.filter(function(b) {
-            return b.title.indexOf(query) !== -1;
+            if (runtime.conf.caseSensitive)
+              return b.title.indexOf(query) !== -1;
+            else
+              return b.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
         Omnibar.listResults(matches, function(f) {
             return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
