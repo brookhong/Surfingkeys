@@ -63,7 +63,6 @@ function _filterByTitleOrUrl(urls, query) {
  *  * In omnibar opened with `b:`
  *
  * `Ctrl - Shift - <any letter>` to create vim-like global mark
- * To create new map keys for Omnibar using cmapkey.
  *
  * cmap could be used for Omnibar to change mappings, for example:
  *
@@ -351,6 +350,11 @@ var Omnibar = (function(mode, ui) {
         code: function () {
             rotateResult(runtime.conf.omnibarPosition !== "bottom");
         }
+    });
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-'>"), {
+        annotation: "Toggle quotes in an input element",
+        feature_group: 8,
+        code: toggleQuote
     });
 
     self.highlight = function(rxp, str) {
@@ -1171,20 +1175,45 @@ var Commands = (function() {
         var cmdline = Omnibar.input.val();
         if (cmdline.length) {
             runtime.updateHistory('cmd', cmdline);
-            var args = parseCommand(cmdline);
-            var cmd = args.shift();
-            if (self.items.hasOwnProperty(cmd)) {
-                var code = self.items[cmd].code;
-                ret = code.call(code, args);
-            } else {
-                Front.contentCommand({
-                    action: 'executeScript',
-                    cmdline: cmdline
-                });
-            }
+            self.execute(cmdline);
             Omnibar.input.val('');
         }
         return ret;
+    };
+
+    function parseCommand(cmdline) {
+        var cmdline = cmdline.trim();
+        var tokens = [];
+        var pendingToken = false;
+        var part = '';
+        for (var i = 0; i < cmdline.length; i++) {
+            if (cmdline.charAt(i) === ' ' && !pendingToken) {
+                tokens.push(part);
+                part = '';
+            } else {
+                if (cmdline.charAt(i) === '\"') {
+                    pendingToken = !pendingToken;
+                } else {
+                    part += cmdline.charAt(i);
+                }
+            }
+        }
+        tokens.push(part);
+        return tokens;
+    }
+
+    self.execute = function(cmdline) {
+        var args = parseCommand(cmdline);
+        var cmd = args.shift();
+        if (self.items.hasOwnProperty(cmd)) {
+            var meta = self.items[cmd];
+            meta.code.call(meta.code, args);
+        } else {
+            Front.contentCommand({
+                action: 'executeScript',
+                cmdline: cmdline
+            });
+        }
     };
 
     return self;

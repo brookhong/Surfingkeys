@@ -27,7 +27,8 @@ if (window === top) {
     _actions['initFrontendAck'] = function(response) {
         if (!_initialized) {
             _initialized = true;
-            document.dispatchEvent(new CustomEvent('surfingkeys:frontendReady'));
+            Front.resolve(window.location.href);
+            Front.resolve = null;
         }
     };
     _actions['setFrontFrame'] = function(response) {
@@ -129,12 +130,4 @@ if (window === top) {
             document.scrollingElement.scrollTop = y;
         });
     }
-
-    document.addEventListener("surfingkeys:frontendReady", function (evt) {
-        runtime.command({
-            action: 'executeScript',
-            file: "/pages/default.js"
-        }, function (response) {
-        });
-    });
 }

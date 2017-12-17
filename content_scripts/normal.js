@@ -123,6 +123,7 @@ var Mode = (function() {
     self.exit = function(peek) {
         var pos = mode_stack.indexOf(this);
         if (pos !== -1) {
+            this.priority = 0;
             if (peek) {
                 // for peek exit, we need push modes above this back to the stack.
                 popModes(mode_stack);
@@ -183,7 +184,7 @@ var Mode = (function() {
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
-            this.isTrustedEvent && Front.showKeystroke(key, this.name);
+            this.isTrustedEvent && Front.showKeystroke(key, this);
             event.sk_stopPropagation = true;
         } else {
             var last = this.map_node;
@@ -198,7 +199,7 @@ var Mode = (function() {
                     if (code.length) {
                         // bound function needs arguments
                         this.pendingMap = code;
-                        this.isTrustedEvent && Front.showKeystroke(key, this.name);
+                        this.isTrustedEvent && Front.showKeystroke(key, this);
                         event.sk_stopPropagation = true;
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
@@ -214,7 +215,7 @@ var Mode = (function() {
                         }, 0);
                     }
                 } else {
-                    this.isTrustedEvent && Front.showKeystroke(key, this.name);
+                    this.isTrustedEvent && Front.showKeystroke(key, this);
                     event.sk_stopPropagation = true;
                 }
             }
@@ -521,7 +522,7 @@ var Normal = (function(mode) {
             }
         });
     }
-    self.changeScrollTarget = function(silent) {
+    function changeScrollTarget(silent) {
         scrollNodes = getScrollableElements(100, 1.1);
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
@@ -538,15 +539,7 @@ var Normal = (function(mode) {
                 _highlightElement(sn);
             }
         }
-    };
-    self.resetScrollTarget = function() {
-        scrollNodes = null;
-        initScrollIndex();
-        if (scrollNodes.length > 0) {
-            scrollNode = scrollNodes[scrollIndex];
-            _highlightElement(scrollNode);
-        }
-    };
+    }
 
     self.scroll = function(type) {
         initScrollIndex();
@@ -554,7 +547,7 @@ var Normal = (function(mode) {
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
             if (!$(scrollNode).is(':visible')) {
-                self.changeScrollTarget(true);
+                changeScrollTarget(true);
                 scrollNode = scrollNodes[scrollIndex];
             }
         }
@@ -853,18 +846,148 @@ var Normal = (function(mode) {
         });
     };
 
-    self.captureFullPage = function() {
-        self.captureElement(document.scrollingElement);
-    };
-
-    self.captureScrollingElement = function() {
-        var scrollNode = document.scrollingElement;
-        initScrollIndex();
-        if (scrollNodes.length > 0) {
-            scrollNode = scrollNodes[scrollIndex];
+    self.mappings.add("yG", {
+        annotation: "Capture current full page",
+        feature_group: 7,
+        code: function() {
+            self.captureElement(document.scrollingElement);
         }
-        self.captureElement(scrollNode);
-    };
+    });
+    self.mappings.add("yS", {
+        annotation: "Capture scrolling element",
+        feature_group: 7,
+        code: function() {
+            var scrollNode = document.scrollingElement;
+            initScrollIndex();
+            if (scrollNodes.length > 0) {
+                scrollNode = scrollNodes[scrollIndex];
+            }
+            self.captureElement(scrollNode);
+        }
+    });
+
+    self.mappings.add("cS", {
+        annotation: "Reset scroll target",
+        feature_group: 2,
+        code: function() {
+            scrollNodes = null;
+            initScrollIndex();
+            if (scrollNodes.length > 0) {
+                var scrollNode = scrollNodes[scrollIndex];
+                _highlightElement(scrollNode);
+            }
+        }
+    });
+    self.mappings.add("e", {
+        annotation: "Scroll a page up",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "pageUp")
+    });
+    self.mappings.add("d", {
+        annotation: "Scroll a page down",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "pageDown")
+    });
+    self.mappings.add("gg", {
+        annotation: "Scroll to the top of the page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "top")
+    });
+    self.mappings.add("G", {
+        annotation: "Scroll to the bottom of the page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "bottom")
+    });
+    self.mappings.add("j", {
+        annotation: "Scroll down",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "down")
+    });
+    self.mappings.add("k", {
+        annotation: "Scroll up",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "up")
+    });
+    self.mappings.add("h", {
+        annotation: "Scroll left",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "left")
+    });
+    self.mappings.add("l", {
+        annotation: "Scroll right",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "right")
+    });
+    self.mappings.add("0", {
+        annotation: "Scroll all the way to the left",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "leftmost")
+    });
+    self.mappings.add("$", {
+        annotation: "Scroll all the way to the right",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "rightmost")
+    });
+    self.mappings.add("%", {
+        annotation: "Scroll to percentage of current page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "byRatio")
+    });
+    self.mappings.add("cs", {
+        annotation: "Change scroll target",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: function() {
+            changeScrollTarget();
+        }
+    });
+
+    self.mappings.add("f", {
+        annotation: "Open a link, press SHIFT to flip hints if they are overlapped.",
+        feature_group: 1,
+        repeatIgnore: true,
+        code: function() {
+            Hints.create("", Hints.dispatchMouseClick);
+        }
+    });
+
+    self.mappings.add("v", {
+        annotation: "Toggle visual mode",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            Visual.toggle();
+        }
+    });
+
+    self.mappings.add("E", {
+        annotation: "Go one tab left",
+        feature_group: 3,
+        repeatIgnore: true,
+        code: function() {
+            RUNTIME("previousTab");
+        }
+    });
+    self.mappings.add("R", {
+        annotation: "Go one tab right",
+        feature_group: 3,
+        repeatIgnore: true,
+        code: function() {
+            RUNTIME("nextTab");
+        }
+    });
+
 
     return self;
 })(Mode);

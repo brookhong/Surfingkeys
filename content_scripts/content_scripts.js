@@ -1,53 +1,3 @@
-function command(cmd, annotation, jscode) {
-    var cmd_code = {
-        code: jscode
-    };
-    if (Front.isProvider()) {
-        // annotations for commands ared used in frontend.html
-        var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
-        cmd_code.feature_group = ag.feature_group;
-        cmd_code.annotation = ag.annotation;
-    }
-    Commands.items[cmd] = cmd_code;
-}
-
-function parseCommand(cmdline) {
-    var cmdline = cmdline.trim();
-    var tokens = [];
-    var pendingToken = false;
-    var part = '';
-    for (var i = 0; i < cmdline.length; i++) {
-        if (cmdline.charAt(i) === ' ' && !pendingToken) {
-            tokens.push(part);
-            part = '';
-        } else {
-            if (cmdline.charAt(i) === '\"') {
-                pendingToken = !pendingToken;
-            } else {
-                part += cmdline.charAt(i);
-            }
-        }
-    }
-    tokens.push(part);
-    return tokens;
-}
-
-function RUNTIME(action, args) {
-    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight', 'focusTabByIndex'];
-    (args = args || {}).action = action;
-    if (actionsRepeatBackground.indexOf(action) !== -1) {
-        // if the action can only be repeated in background, pass repeats to background with args,
-        // and set RUNTIME.repeats 1, so that it won't be repeated in foreground's _handleMapKey
-        args.repeats = RUNTIME.repeats;
-        RUNTIME.repeats = 1;
-    }
-    try {
-        chrome.runtime.sendMessage(args);
-    } catch (e) {
-        Front.showPopup('[runtime exception] ' + e);
-    }
-}
-
 var AutoCommands = {};
 function autocmd(domain, jscode) {
     var dp = "",
@@ -65,15 +15,6 @@ function autocmd(domain, jscode) {
     };
 }
 
-function _parseAnnotation(ag) {
-    var annotations = ag.annotation.match(/#(\d+)(.*)/);
-    if (annotations !== null) {
-        ag.feature_group = parseInt(annotations[1]);
-        ag.annotation = annotations[2];
-    }
-    return ag;
-}
-
 function createKeyTarget(code, ag, repeatIgnore) {
     var keybound = {
         code: code
@@ -87,30 +28,16 @@ function createKeyTarget(code, ag, repeatIgnore) {
         keybound.annotation = ag.annotation;
     }
 
-    keybound.isDefault = _defaultMapping;
     return keybound;
 }
 
-var _defaultMapping = true;
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
     if (!options.domain || options.domain.test(document.location.href)) {
         keys = KeyboardUtils.encodeKeystroke(keys);
         mode.mappings.remove(keys);
-        var keybound;
-        if (_defaultMapping) {
-            // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
-            if (Front.isProvider()) {
-                keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
-            } else {
-                keybound = createKeyTarget(jscode, null, options.repeatIgnore);
-            }
-            mode.mappings.add(keys, keybound);
-        } else {
-            // for user defined mappings, annotations are kept in content.
-            keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
-            mode.mappings.add(keys, keybound);
-        }
+        var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
+        mode.mappings.add(keys, keybound);
     }
 }
 
@@ -124,25 +51,6 @@ function vmapkey(keys, annotation, jscode, options) {
 
 function imapkey(keys, annotation, jscode, options) {
     _mapkey(Insert, keys, annotation, jscode, options);
-}
-
-function cmapkey(keys, annotation, jscode, options) {
-    if (typeof(Omnibar) !== 'undefined') {
-        _mapkey(Omnibar, keys, annotation, jscode, options);
-    }
-}
-
-function _map(mode, nks, oks) {
-    oks = KeyboardUtils.encodeKeystroke(oks);
-    var old_map = mode.mappings.find(oks);
-    if (old_map) {
-        nks = KeyboardUtils.encodeKeystroke(nks);
-        mode.mappings.remove(nks);
-        // meta.word need to be new
-        var meta = $.extend({}, old_map.meta);
-        mode.mappings.add(nks, meta);
-    }
-    return old_map;
 }
 
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
@@ -210,10 +118,8 @@ function iunmap(keystroke, domain) {
 }
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (typeof(Omnibar) !== 'undefined') {
-        if (!domain || domain.test(document.location.href)) {
-            _map(Omnibar, new_keystroke, old_keystroke);
-        }
+    if (!domain || domain.test(document.location.href)) {
+        Front.addCMap(new_keystroke, old_keystroke);
     }
 }
 
@@ -230,27 +136,19 @@ function vunmap(keystroke, domain) {
 }
 
 function aceVimMap(lhs, rhs, ctx) {
-    if (typeof(Front.vimMappings) !== 'undefined') {
-        Front.vimMappings.push(arguments);
-    }
+    Front.addVimMap(lhs, rhs, ctx);
 }
 
-function onAceVimKeymapInit(fn) {
-    if (typeof(Front.vimMappings) !== 'undefined') {
-        Front.keymapModifier = fn;
-    }
+function addVimMapKey() {
+    Front.addVimKeyMap(Array.from(arguments));
 }
 
 function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
-    if (!Front.isProvider()) {
-        Front.addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion);
-    }
+    Front.addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion);
 }
 
 function removeSearchAlias(alias) {
-    if (!Front.isProvider()) {
-        Front.removeSearchAlias(alias);
-    }
+    Front.removeSearchAlias(alias);
 }
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
@@ -363,14 +261,6 @@ function tabOpenLink(str, simultaneousness) {
         RUNTIME("queueURLs", {
             urls: urls.slice(simultaneousness)
         });
-    }
-}
-
-function constructSearchURL(se, word) {
-    if (se.indexOf("{0}") > 0) {
-        return se.format(word);
-    } else {
-        return se + word;
     }
 }
 
@@ -583,7 +473,6 @@ runtime.on('settingsUpdated', function(response) {
 });
 
 function _init() {
-    _defaultMapping = false;
     runtime.command({
         action: 'getSettings'
     }, function(response) {
@@ -609,14 +498,6 @@ function _init() {
                 document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs}));
             });
         }
-    });
-}
-
-if (window !== top && !Front.isProvider()) {
-    runtime.command({
-        action: 'executeScript',
-        file: "/pages/default.js"
-    }, function (response) {
     });
 }
 

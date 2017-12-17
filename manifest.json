@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Map your keys for web surfing",
-    "version": "0.9.21",
+    "version": "0.9.22",
     "description": "Expand your browser with javascript and keyboard.",
     "icons": {
         "16": "icons/16.png",
@@ -64,7 +64,8 @@
                 "content_scripts/common_content.min.js",
                 "content_scripts/front.js",
                 "content_scripts/content_scripts.js",
-                "content_scripts/top.js"
+                "content_scripts/top.js",
+                "pages/default.js"
             ],
             "css": [
                 "content_scripts/content_scripts.css"

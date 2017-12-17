@@ -31,6 +31,15 @@ function getRealEdit(event) {
     return rt;
 }
 
+function toggleQuote() {
+    var elm = getRealEdit(), val = elm.value;
+    if (val[0] === '"') {
+        elm.value = val.substr(1, val.length - 2);
+    } else {
+        elm.value = '"' + val + '"';
+    }
+}
+
 function isEditable(element) {
     return !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
@@ -128,11 +137,14 @@ function filterOverlapElements(elements) {
         return flag;
     });
 
-    // filter out element which has its children covered
-    var tmp = [elements[elements.length - 1]];
-    for (var i = elements.length - 2; i >= 0; i--) {
-        if (!elements[i].contains(tmp[0])) {
-            tmp.unshift(elements[i]);
+    var tmp = [];
+    if (elements.length > 0) {
+        // filter out element which has its children covered
+        tmp = [elements[elements.length - 1]];
+        for (var i = elements.length - 2; i >= 0; i--) {
+            if (!elements[i].contains(tmp[0])) {
+                tmp.unshift(elements[i]);
+            }
         }
     }
 
@@ -206,3 +218,62 @@ String.prototype.format = function() {
 RegExp.prototype.toJSON = function() {
     return {source: this.source, flags: this.flags};
 };
+
+function _parseAnnotation(ag) {
+    var annotations = ag.annotation.match(/#(\d+)(.*)/);
+    if (annotations !== null) {
+        ag.feature_group = parseInt(annotations[1]);
+        ag.annotation = annotations[2];
+    }
+    return ag;
+}
+
+function _map(mode, nks, oks) {
+    oks = KeyboardUtils.encodeKeystroke(oks);
+    var old_map = mode.mappings.find(oks);
+    if (old_map) {
+        nks = KeyboardUtils.encodeKeystroke(nks);
+        mode.mappings.remove(nks);
+        // meta.word need to be new
+        var meta = $.extend({}, old_map.meta);
+        mode.mappings.add(nks, meta);
+    }
+    return old_map;
+}
+
+function RUNTIME(action, args) {
+    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight', 'focusTabByIndex'];
+    (args = args || {}).action = action;
+    if (actionsRepeatBackground.indexOf(action) !== -1) {
+        // if the action can only be repeated in background, pass repeats to background with args,
+        // and set RUNTIME.repeats 1, so that it won't be repeated in foreground's _handleMapKey
+        args.repeats = RUNTIME.repeats;
+        RUNTIME.repeats = 1;
+    }
+    try {
+        chrome.runtime.sendMessage(args);
+    } catch (e) {
+        Front.showPopup('[runtime exception] ' + e);
+    }
+}
+
+function getAnnotations(mappings) {
+    return mappings.getWords().map(function(w) {
+        var meta = mappings.find(w).meta;
+        return {
+            word: w,
+            feature_group: meta.feature_group,
+            annotation: meta.annotation
+        };
+    }).filter(function(m) {
+        return m.annotation && m.annotation.length > 0;
+    });
+}
+
+function constructSearchURL(se, word) {
+    if (se.indexOf("{0}") > 0) {
+        return se.format(word);
+    } else {
+        return se + word;
+    }
+}

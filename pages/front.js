@@ -84,7 +84,7 @@ var Front = (function(mode) {
             Visual[args.action](args.query);
         } else {
             // visual mode for all content windows
-            Front.contentCommand(args);
+            self.contentCommand(args);
         }
     };
 
@@ -168,7 +168,7 @@ var Front = (function(mode) {
         });
     };
 
-    function buildUsage(cb) {
+    function buildUsage(metas, cb) {
         var feature_groups = [
             'Help',                  // 0
             'Mouse Click',           // 1
@@ -193,21 +193,11 @@ var Front = (function(mode) {
         initL10n(function(locale) {
             help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
 
-            [ Normal.mappings,
-                Visual.mappings,
-                Insert.mappings,
-                Omnibar.mappings
-            ].map(function(mappings) {
-                var words = mappings.getWords();
-                for (var i = 0; i < words.length; i++) {
-                    var w = words[i];
-                    var meta = mappings.find(w).meta;
-                    w = KeyboardUtils.decodeKeystroke(w);
-                    if (meta.annotation && meta.annotation.length) {
-                        var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format($.htmlEncode(w), locale(meta.annotation));
-                        help_groups[meta.feature_group].push(item);
-                    }
-                }
+            metas = metas.concat(getAnnotations(Omnibar.mappings));
+            metas.forEach(function(meta) {
+                var w = KeyboardUtils.decodeKeystroke(meta.word);
+                var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format($.htmlEncode(w), locale(meta.annotation));
+                help_groups[meta.feature_group].push(item);
             });
             help_groups = help_groups.map(function(g, i) {
                 if (g.length) {
@@ -223,16 +213,8 @@ var Front = (function(mode) {
     }
 
     _usage.onShow = function(message) {
-        buildUsage(function(usage) {
+        buildUsage(message.metas, function(usage) {
             _usage.html(usage);
-        });
-    };
-
-    var _userMappings;
-    _actions['addMappingForUsage'] = function(message) {
-        _userMappings = new Trie();
-        message.userMappings.forEach(function(m) {
-            _userMappings.add(m.word, m);
         });
     };
 
@@ -250,14 +232,16 @@ var Front = (function(mode) {
         }
     };
     _actions['executeCommand'] = function (message) {
-        var args = parseCommand(message.cmdline);
-        var cmd = args.shift();
-        if (Commands.items.hasOwnProperty(cmd)) {
-            var meta = Commands.items[cmd];
-            meta.code.call(meta.code, args);
-        } else {
-            self.showPopup("No such command!");
-        }
+        Commands.execute(message.cmdline);
+    };
+    _actions['addCMap'] = function (message) {
+        _map(Omnibar, message.new_keystroke, message.old_keystroke);
+    };
+    _actions['addVimMap'] = function (message) {
+        self.vimMappings.push([message.lhs, message.rhs, message.ctx]);
+    };
+    _actions['addVimKeyMap'] = function (message) {
+        self.vimKeyMap = message.vimKeyMap;
     };
     _actions['addSearchAlias'] = function (message) {
         SearchEngine.aliases[message.alias] = {
@@ -272,7 +256,7 @@ var Front = (function(mode) {
     _actions['getUsage'] = function (message) {
         // send response in callback from buildUsage
         delete message.ack;
-        buildUsage(function(usage) {
+        buildUsage(message.metas, function(usage) {
             top.postMessage({
                 data: usage,
                 action: message.action + "Ack",
@@ -395,7 +379,7 @@ var Front = (function(mode) {
         self.toggleStatus(message.visible);
     };
 
-    var _key = "", _pendingHint;
+    var _pendingHint;
     function clearPendingHint() {
         if (_pendingHint) {
             clearTimeout(_pendingHint);
@@ -403,7 +387,6 @@ var Front = (function(mode) {
         }
     }
     _actions['hideKeystroke'] = function() {
-        _key = "";
         if (keystroke.is(":visible")) {
             var outClass = keystroke.hasClass("expandRichHints") ? "collapseRichHints" : "slideOutRight";
             keystroke.removeClass("expandRichHints").addClass(outClass).one('animationend', function() {
@@ -421,26 +404,14 @@ var Front = (function(mode) {
         annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
         feature_group: 9
     });
-    function getMetas(mapping, key, out) {
-        var root = mapping.find(key);
-        if (root) {
-            root.getMetas(function(m) {
-                return true;
-            }).forEach(function(m) {
-                out[m.word] = m;
-            });
-        }
-    }
-    function showRichHints(mode) {
+    function showRichHints(keyHints) {
         initL10n(function (locale) {
-            var words = _key;
-            var cc = {};
-            getMetas(window[mode].mappings, _key, cc);
-            getMetas(_userMappings, _key, cc);
+            var words = keyHints.accumulated;
+            var cc = keyHints.candidates;
             words = Object.keys(cc).sort().map(function (w) {
                 var meta = cc[w];
                 if (meta.annotation) {
-                    return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format($.htmlEncode(KeyboardUtils.decodeKeystroke(_key)), w.substr(_key.length), locale(meta.annotation));
+                    return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format($.htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated)), w.substr(keyHints.accumulated.length), locale(meta.annotation));
                 } else {
                     return "";
                 }
@@ -453,25 +424,20 @@ var Front = (function(mode) {
         });
     }
     _actions['showKeystroke'] = function (message) {
-        var key = message.key,
-            mode = message.mode;
-
-        _key += key;
-
         if (keystroke.is(":visible") && keystroke.hasClass("expandRichHints")) {
-            showRichHints(mode);
+            showRichHints(message.keyHints);
         } else {
             clearPendingHint();
             keystroke.show();
             self.flush();
-            var keys = keystroke.html() + $.htmlEncode(KeyboardUtils.decodeKeystroke(key));
+            var keys = keystroke.html() + $.htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
             keystroke.html(keys);
 
             keystroke.removeClass("slideInRight slideOutRight collapseRichHints").addClass("slideInRight simpleHint");
 
             if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
                 _pendingHint = setTimeout(function() {
-                    showRichHints(mode);
+                    showRichHints(message.keyHints);
                 }, runtime.conf.richHintsForKeystroke);
             }
         }
@@ -480,7 +446,6 @@ var Front = (function(mode) {
     };
 
     _actions['initFrontend'] = function(message) {
-        document.dispatchEvent(new CustomEvent('surfingkeys:frontendReady'));
         topOrigin = message.origin;
         return new Date().getTime();
     };

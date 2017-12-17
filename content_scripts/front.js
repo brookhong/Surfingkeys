@@ -9,6 +9,14 @@ var Front = (function() {
         return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
     };
 
+    var frontendPromise = new Promise(function (resolve, reject) {
+        if (window === top) {
+            self.resolve = resolve;
+        } else {
+            resolve(window.location.href);
+        }
+    });
+
     var _callbacks = {};
     function frontendCommand(args, successById) {
         args.commandToFrontend = true;
@@ -18,7 +26,9 @@ var Front = (function() {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        runtime.postTopMessage(args);
+        frontendPromise.then(function() {
+            runtime.postTopMessage(args);
+        });
     }
 
     self.applyUserSettings = function (us) {
@@ -57,11 +67,31 @@ var Front = (function() {
         return ret;
     };
 
-
     self.executeCommand = function (cmd) {
         frontendCommand({
             action: 'executeCommand',
             cmdline: cmd
+        });
+    };
+    self.addCMap = function (new_keystroke, old_keystroke) {
+        frontendCommand({
+            action: 'addCMap',
+            new_keystroke: new_keystroke,
+            old_keystroke: old_keystroke
+        });
+    };
+    self.addVimMap = function (lhs, rhs, ctx) {
+        frontendCommand({
+            action: 'addVimMap',
+            lhs: lhs,
+            rhs: rhs,
+            ctx: ctx
+        });
+    };
+    self.addVimKeyMap = function (vimKeyMap) {
+        frontendCommand({
+            action: 'addVimKeyMap',
+            vimKeyMap: vimKeyMap
         });
     };
 
@@ -70,15 +100,26 @@ var Front = (function() {
         frontendCommand(sn);
     };
 
+    function getAllAnnotations() {
+        return [ Normal.mappings,
+            Visual.mappings,
+            Insert.mappings
+        ].map(getAnnotations).reduce(function(a, b) {
+            return a.concat(b);
+        });
+    }
+
     self.showUsage = function() {
         frontendCommand({
-            action: 'showUsage'
+            action: 'showUsage',
+            metas: getAllAnnotations()
         });
     };
 
     self.getUsage = function(cb) {
         frontendCommand({
-            action: 'getUsage'
+            action: 'getUsage',
+            metas: getAllAnnotations()
         }, function(response) {
             cb(response.data);
         });
@@ -195,17 +236,39 @@ var Front = (function() {
         });
     };
 
+    var _keyHints = {
+        accumulated: "",
+        candidates: {},
+        key: ""
+    };
+
     self.hideKeystroke = function() {
+        _keyHints.accumulated = "";
+        _keyHints.candidates = {};
         frontendCommand({
             action: 'hideKeystroke'
         });
     };
 
     self.showKeystroke = function(key, mode) {
+        _keyHints.accumulated += key;
+        _keyHints.key = key;
+        _keyHints.candidates = {};
+
+        var root = mode.mappings.find(_keyHints.accumulated);
+        if (root) {
+            root.getMetas(function(m) {
+                return true;
+            }).forEach(function(m) {
+                _keyHints.candidates[m.word] = {
+                    annotation: m.annotation
+                };
+            });
+        }
+
         frontendCommand({
             action: 'showKeystroke',
-            mode: mode,
-            key: key
+            keyHints: _keyHints
         });
     };
 
@@ -305,18 +368,6 @@ var Front = (function() {
 
     _actions['activated'] = function(message) {
         _active = true;
-        var userMappings = Normal.mappings.getMetas(function(m) { return !m.isDefault;}).map(function(m) {
-            return {
-                word: m.word,
-                annotation: m.annotation,
-                feature_group: m.feature_group
-            };
-        });
-        frontendCommand({
-            action: "addMappingForUsage",
-            automatic: true,
-            userMappings: userMappings
-        });
     };
 
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
@@ -366,5 +417,3 @@ var Front = (function() {
 
     return self;
 })();
-
-var Commands = { items: {} };

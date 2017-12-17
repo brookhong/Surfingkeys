@@ -205,8 +205,6 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
-`cmapkey`用于搜索栏里创建按键。
-
 `cmap`用于搜索栏修改按键，如：
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -262,22 +260,7 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 ## 命令
 
-用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。可以添加你自己的命令如下：
-
-    command('<command_name>', '<help message for this command>', function() {
-        // to do
-    });
-
-例如，
-
-    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-        // args is an array of arguments
-        RUNTIME('updateProxy', {
-            mode: args[0]
-        });
-        // return true to close Omnibar for Commands, false to keep Omnibar on
-        return true;
-    });
+用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。
 
     // 映射不同的按键到该命令，但采用不同的参数。
     map('spa', ':setProxyMode always');
@@ -513,10 +496,6 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 可视化模式下的mapkey
 
     vmapkey(keystroke, help_string, action_code, [options])
-
-搜索栏里用
-
-    cmapkey(keystroke, help_string, action_code, [options])
 
 ### 映射按键到其他按键
 

@@ -198,8 +198,6 @@ In omnibar opened with `b`:
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
-To create new map keys for Omnibar using `cmapkey`.
-
 `cmap` could be used for Omnibar to change mappings, for example:
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -255,22 +253,7 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
 
 ## Commands
 
-`:` to open omnibar for commands, then you can execute any pre-defined or customized command there. The result will be displayed below the omnibar. To create your own command as below:
-
-    command('<command_name>', '<help message for this command>', function() {
-        // to do
-    });
-
-For example,
-
-    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-        // args is an array of arguments
-        RUNTIME('updateProxy', {
-            mode: args[0]
-        });
-        // return true to close Omnibar for Commands, false to keep Omnibar on
-        return true;
-    });
+`:` to open omnibar for commands, then you can execute any pre-defined there. The result will be displayed below the omnibar.
 
     // create shortcuts for the command with different parameters
     map('spa', ':setProxyMode always');
@@ -507,8 +490,6 @@ Just an example to map one keystroke to different functions on different sites,
 mapkey in visual mode and omnibar bar.
 
     vmapkey(keystroke, help_string, action_code, [options])
-
-    cmapkey(keystroke, help_string, action_code, [options])
 
 ### map a keystroke to another
 
