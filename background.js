@@ -612,7 +612,8 @@ var ChromeService = (function() {
         });
     };
     self.togglePinTab = function(message, sender, sendResponse) {
-        chrome.tabs.getSelected(null, function(tab) {
+        chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
+            var tab = tabs[0];
             return chrome.tabs.update(tab.id, {
                 pinned: !tab.pinned
             });
