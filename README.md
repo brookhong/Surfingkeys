@@ -40,7 +40,6 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * [Mermaid diagram generator](#mermaid-diagram-generator)
 * [PDF viewer](#pdf-viewer)
 * [Edit your own settings](#edit-your-own-settings)
-* [Build](#build)
 * [License](#license)
 
 ## Feature list
@@ -656,13 +655,6 @@ For example,
             font-size: 20pt;
         }
     }`;
-
-## Build
-
-    npm install
-    npm run build
-
-    npm run build firefox # build webextension for firefox
 
 ## API Documentation
 
