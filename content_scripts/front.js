@@ -57,6 +57,7 @@ var Front = (function() {
             alias: alias
         });
     };
+
     var _actions = {};
 
     _actions["getSearchSuggestions"] = function (message) {

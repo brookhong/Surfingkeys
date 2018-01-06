@@ -142,8 +142,8 @@ var Front = (function(mode) {
         tabs_fg.html("");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
-        var tabstr = "<div class=sk_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
-        var items = tabs.forEach(function(t, i) {
+        var tabstr = "<div class=sk_tab style='width: 200px'>";
+        tabs.forEach(function(t, i) {
             var tab = $(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
             tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.url, $.htmlEncode(t.title)));
@@ -151,7 +151,6 @@ var Front = (function(mode) {
             tabs_fg.append(tab);
         });
         tabs_fg.find('div.sk_tab').each(function() {
-            $(this).css('width', $(this).width() + 10);
             $(this).append($("<div class=sk_tab_url>{0}</div>".format($(this).data('url'))));
         });
         _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);

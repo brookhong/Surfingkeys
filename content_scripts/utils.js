@@ -277,3 +277,39 @@ function constructSearchURL(se, word) {
         return se + word;
     }
 }
+
+function tabOpenLink(str, simultaneousness) {
+    simultaneousness = simultaneousness || 5;
+
+    var urls;
+    if (str.constructor.name === "Array") {
+        urls = str;
+    } else if (str instanceof $) {
+        urls = str.map(function() {
+            return this.href;
+        }).toArray();
+    } else {
+        urls = str.trim().split('\n');
+    }
+
+    urls = urls.map(function(u) {
+        return u.trim();
+    }).filter(function(u) {
+        return u.length > 0;
+    });
+    // open the first batch links immediately
+    urls.slice(0, simultaneousness).forEach(function(url) {
+        RUNTIME("openLink", {
+            tab: {
+                tabbed: true
+            },
+            url: url
+        });
+    });
+    // queue the left for later opening when there is one tab closed.
+    if (urls.length > simultaneousness) {
+        RUNTIME("queueURLs", {
+            urls: urls.slice(simultaneousness)
+        });
+    }
+}

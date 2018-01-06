@@ -320,15 +320,15 @@ var Hints = (function(mode) {
                         v.push(e);
                     }
                 });
+                elements = $(filterOverlapElements(elements));
             } else {
                 elements = $(document.documentElement).find(cssSelector).filterInvisible().toArray();
+                elements = $(elements);
             }
             if (textFilter.length > 0) {
                 elements = $(elements).filter(function(e) {
                     return this.innerText && this.innerText.indexOf(textFilter) !== -1;
                 });
-            } else {
-                elements = $(filterOverlapElements(elements));
             }
         }
 
@@ -369,12 +369,11 @@ var Hints = (function(mode) {
                 }
             }
         });
+        elements = filterOverlapElements(elements);
         if (textFilter.length > 0) {
             elements = elements.filter(function(e) {
                 return e.innerText && e.innerText.indexOf(textFilter) !== -1;
             });
-        } else {
-            elements = filterOverlapElements(elements);
         }
         elements = elements.map(function(e) {
             var aa = e.childNodes;

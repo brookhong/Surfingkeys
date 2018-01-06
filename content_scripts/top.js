@@ -66,7 +66,7 @@ if (window === top) {
         if (_message.commandToFrontend || _message.responseToFrontend) {
             // forward message to frontend
             ifr[0].contentWindow.postMessage(_message, frontEndURL);
-            if (_message.commandToFrontend) {
+            if (_message.commandToFrontend && event.source) {
                 if (_message.origin && !_message.automatic) {
                     // if the message is auto triggered rather than by user
                     // we won't change activeContent here.
@@ -105,15 +105,44 @@ if (window === top) {
         }
     }, true);
 
-    document.addEventListener('DOMContentLoaded', function(e) {
+    document.addEventListener('DOMContentLoaded', function (e) {
 
         runtime.command({
             action: 'tabURLAccessed',
             title: document.title,
             url: window.location.href
+        }, function (resp) {
+            if (resp.index > 0) {
+                var showTabIndexInTitle = function () {
+                    skipObserver = true;
+                    document.title = myTabIndex + " " + originalTitle;
+                };
+
+                var myTabIndex = resp.index,
+                    skipObserver = false,
+                    originalTitle = document.title;
+
+                new MutationObserver(function (mutationsList) {
+                    if (skipObserver) {
+                        skipObserver = false;
+                    } else {
+                        originalTitle = document.title;
+                        showTabIndexInTitle();
+                    }
+                }).observe(document.querySelector("title"), { childList: true });;
+
+                showTabIndexInTitle();
+
+                runtime.runtime_handlers['tabIndexChange'] = function(msg, sender, response) {
+                    if (msg.index !== myTabIndex) {
+                        myTabIndex = msg.index;
+                        showTabIndexInTitle();
+                    }
+                };
+            }
         });
 
-        setTimeout(function() {
+        setTimeout(function () {
             // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
             for (var p in AutoCommands) {
                 var c = AutoCommands[p];

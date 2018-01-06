@@ -59,7 +59,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
             var cmdline = old_keystroke.substr(1);
             var keybound = createKeyTarget(function () {
                 Front.executeCommand(cmdline);
-            }, null, false);
+            }, new_annotation ? _parseAnnotation({ annotation: new_annotation }) : null, false);
             Normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
         } else {
             if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
@@ -225,42 +225,6 @@ function nextPage() {
         return true;
     } else {
         return walkPageUrl(1);
-    }
-}
-
-function tabOpenLink(str, simultaneousness) {
-    simultaneousness = simultaneousness || 5;
-
-    var urls;
-    if (str.constructor.name === "Array") {
-        urls = str;
-    } else if (str instanceof $) {
-        urls = str.map(function() {
-            return this.href;
-        }).toArray();
-    } else {
-        urls = str.trim().split('\n');
-    }
-
-    urls = urls.map(function(u) {
-        return u.trim();
-    }).filter(function(u) {
-        return u.length > 0;
-    });
-    // open the first batch links immediately
-    urls.slice(0, simultaneousness).forEach(function(url) {
-        RUNTIME("openLink", {
-            tab: {
-                tabbed: true
-            },
-            url: url
-        });
-    });
-    // queue the left for later opening when there is one tab closed.
-    if (urls.length > simultaneousness) {
-        RUNTIME("queueURLs", {
-            urls: urls.slice(simultaneousness)
-        });
     }
 }
 

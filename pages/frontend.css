@@ -286,6 +286,7 @@ div.sk_tab_icon>img {
     width: 18px;
 }
 div.sk_tab_title {
+    width: 150px;
     display: inline-block;
     vertical-align: middle;
     font-size: 10pt;

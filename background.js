@@ -159,6 +159,7 @@ var ChromeService = (function() {
         repeatThreshold: 99,
         tabsMRUOrder: true,
         newTabPosition: 'default',
+        showTabIndices: false,
         interceptedErrors: []
     };
 
@@ -318,6 +319,8 @@ var ChromeService = (function() {
                 url: _queueURLs.shift()
             });
         }
+
+        _updateTabIndices();
     }
     chrome.tabs.onRemoved.addListener(removeTab);
     function _setScrollPos_bg(tabId) {
@@ -337,6 +340,11 @@ var ChromeService = (function() {
     });
     chrome.tabs.onCreated.addListener(function(tab) {
         _setScrollPos_bg(tab.id);
+
+        _updateTabIndices();
+    });
+    chrome.tabs.onMoved.addListener(function() {
+        _updateTabIndices();
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
         if (tabURLs.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
@@ -352,6 +360,14 @@ var ChromeService = (function() {
         tabActivated[activeInfo.tabId] = new Date().getTime();
         historyTabAction = false;
         chromelikeNewTabPosition = 0;
+
+        _updateTabIndices();
+    });
+    chrome.tabs.onDetached.addListener(function() {
+        _updateTabIndices();
+    });
+    chrome.tabs.onAttached.addListener(function() {
+        _updateTabIndices();
     });
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
@@ -442,6 +458,7 @@ var ChromeService = (function() {
             }
         });
     }
+
     function _updateAndPostSettings(diffSettings, afterSet) {
         activePorts.forEach(function(port) {
             port.postMessage({
@@ -450,6 +467,20 @@ var ChromeService = (function() {
             });
         });
         _updateSettings(diffSettings, afterSet);
+    }
+
+    function _updateTabIndices() {
+        if (conf.showTabIndices) {
+            chrome.tabs.query({currentWindow: true}, function(tabs) {
+                tabs.forEach(function(tab) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        subject: "tabIndexChange",
+                        target: 'content_runtime',
+                        index: tab.index + 1
+                    });
+                });
+            });
+        }
     }
 
     function _getDisabled(set, url, regex) {
@@ -1086,6 +1117,9 @@ var ChromeService = (function() {
                 tabURLs[tabId] = {};
             }
             tabURLs[tabId][message.url] = message.title;
+            _response(message, sendResponse, {
+                index: conf.showTabIndices ? sender.tab.index + 1 : 0
+            });
         }
     };
     self.getTabURLs = function(message, sender, sendResponse) {
