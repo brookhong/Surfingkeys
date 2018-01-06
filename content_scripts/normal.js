@@ -296,7 +296,6 @@ var Normal = (function(mode) {
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event);
         }
-        self.passFocus(runtime.conf.enableAutoFocus);
     });
     self.addEventListener('blur', function(event) {
         keyHeld = 0;
