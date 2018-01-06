@@ -19,53 +19,48 @@ var Mode = (function() {
     };
 
     self.addEventListener = function(evt, handler) {
-        var thisMode = this;
+        this.eventListeners[evt] = handler;
 
-        this.eventListeners[evt] = function(event) {
-            if (event.type === "keydown" && !event.hasOwnProperty('sk_keyName')) {
-                event.sk_keyName = KeyboardUtils.getKeyChar(event);
-            }
-
-            if (event.type === "keyup" && thisMode.stopKeyupPropagation === event.keyCode) {
-                event.stopImmediatePropagation();
-                thisMode.stopKeyupPropagation = 0;
-            }
-
-            if (!event.sk_suppressed) {
-                handler(event);
-                thisMode.postHandler(event);
-            }
-        };
-        if (this.name !== "Disabled" && !Disabled.eventListeners.hasOwnProperty(evt)) {
-            // Disabled mode listenes all events that are listened by any other mode,
-            // so that it could suppress any event.
-            Disabled.eventListeners[evt] = function(event) {
-                event.sk_suppressed = true;
-            };
+        if (_listenedEvents.indexOf(evt) === -1) {
+            _listenedEvents.push(evt);
+            window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
         }
+
         return this;
     };
 
-    function popModes(modes) {
-        modes.forEach(function(m) {
-            for (var evt in m.eventListeners) {
-                window.removeEventListener(evt, m.eventListeners[evt], true);
+    var _listenedEvents = ["keydown", "keyup"];
+
+    function handleStack(eventName, event, cb) {
+        for (var i = 0; i < mode_stack.length && !event.sk_stopPropagation; i++) {
+            var m = mode_stack[i];
+            if (!event.sk_suppressed && m.eventListeners.hasOwnProperty(eventName)) {
+                var handler = m.eventListeners[eventName];
+                handler(event);
+                m.postHandler(event);
             }
-        });
+            if (m.name === "Disabled") {
+                break;
+            }
+            cb && cb(m);
+        }
     }
 
-    function pushModes(modes) {
-        modes.forEach(function(m) {
-            for (var evt in m.eventListeners) {
-                window.addEventListener(evt, m.eventListeners[evt], true);
+    window.addEventListener("keydown", function(event) {
+        event.sk_keyName = KeyboardUtils.getKeyChar(event);
+        handleStack("keydown", event);
+    }, true);
+
+    window.addEventListener("keyup", function(event) {
+        handleStack("keyup", event, function(m) {
+            if (m.stopKeyupPropagation === event.keyCode) {
+                event.stopImmediatePropagation();
+                m.stopKeyupPropagation = 0;
             }
         });
-    }
+    }, true);
 
     self.enter = function(priority, reentrant) {
-        // we need clear the modes stack first to make sure eventListeners of this mode added at first.
-        popModes(mode_stack);
-
         var pos = mode_stack.indexOf(this);
         if (!this.priority) {
             this.priority = priority || mode_stack.length;
@@ -88,7 +83,6 @@ var Mode = (function() {
         mode_stack.sort(function(a,b) {
             return (a.priority < b.priority) ? 1 : ((b.priority < a.priority) ? -1 : 0);
         } );
-        pushModes(mode_stack);
         // var modes = mode_stack.map(function(m) {
             // return m.name;
         // }).join('->');
@@ -126,14 +120,11 @@ var Mode = (function() {
             this.priority = 0;
             if (peek) {
                 // for peek exit, we need push modes above this back to the stack.
-                popModes(mode_stack);
                 mode_stack.splice(pos, 1);
-                pushModes(mode_stack);
             } else {
                 // otherwise, we just pop all modes above this inclusively.
                 pos++;
                 var popup = mode_stack.slice(0, pos);
-                popModes(popup);
                 mode_stack = mode_stack.slice(pos);
             }
 

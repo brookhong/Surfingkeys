@@ -490,7 +490,7 @@ var Hints = (function(mode) {
         // save last used attributes, which will be reused if the user scrolls while the hints are still open
         _cssSelector = cssSelector;
         _onHintKey = onHintKey;
-        _lastCreateAttrs = attrs;
+        _lastCreateAttrs = attrs || {};
 
         var start = new Date().getTime();
         var found = createHints(cssSelector, attrs);
