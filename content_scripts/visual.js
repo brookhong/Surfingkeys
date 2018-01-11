@@ -450,7 +450,7 @@ var Visual = (function(mode) {
 
             // set content of cursor to enable scrollIntoViewIfNeeded
             $(cursor).html(ch);
-            scrollIntoViewIfNeeded(cursor);
+            scrollIntoViewIfNeeded(cursor, true);
         }
     };
     self.getCursorPixelPos = function () {
