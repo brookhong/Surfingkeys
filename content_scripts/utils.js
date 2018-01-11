@@ -69,20 +69,20 @@ function reportIssue(title, description) {
     Front.showPopup(error);
 }
 
-function scrollIntoViewIfNeeded(elm) {
+function scrollIntoViewIfNeeded(elm, ignoreSize) {
     if (elm.scrollIntoViewIfNeeded) {
         elm.scrollIntoViewIfNeeded();
-    } else if (!isElementPartiallyInViewport(elm)) {
+    } else if (!isElementPartiallyInViewport(elm, ignoreSize)) {
         elm.scrollIntoView();
     }
 }
 
-function isElementPartiallyInViewport(el) {
+function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return rect.width > 4 && rect.height > 4
+    return (ignoreSize || (rect.width > 4 && rect.height > 4))
         && (rect.top <= windowHeight) && (rect.bottom >= 0)
         && (rect.left <= windowWidth) && (rect.right >= 0);
 }
