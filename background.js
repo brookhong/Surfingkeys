@@ -912,7 +912,8 @@ var ChromeService = (function() {
                 url: url,
                 active: message.tab.active,
                 index: newTabPosition,
-                pinned: message.tab.pinned
+                pinned: message.tab.pinned,
+                openerTabId: sender.tab.id
             }, function(tab) {
                 if (message.scrollLeft || message.scrollTop) {
                     tabMessages[tab.id] = {
