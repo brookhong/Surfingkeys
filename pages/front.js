@@ -95,7 +95,7 @@ var Front = (function(mode) {
     var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
     var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
-    var banner = $('<div id=sk_banner>').appendTo('body');
+    var banner = $('<div id=sk_banner>').appendTo('body').hide();
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
     var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
@@ -312,13 +312,14 @@ var Front = (function(mode) {
         Find.open();
     };
     self.openFinder = _actions['openFinder'];
-    self.showBanner = function(content, linger_time) {
-        banner.removeClass("slideInBanner");
+    self.showBanner = function (content, linger_time) {
+        banner.removeClass("slideInBanner").show();
         banner.html($.htmlEncode(content));
         self.flush();
 
-        banner.addClass("slideInBanner").one('animationend', function() {
-            banner.removeClass("slideInBanner");
+        banner.addClass("slideInBanner").one('animationend', function () {
+            banner.removeClass("slideInBanner").hide();
+            self.flush();
         });
     };
     _actions['showBanner'] = function(message) {
