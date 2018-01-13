@@ -8,7 +8,7 @@ var Insert = (function(mode) {
                 // The input element's type ('email') does not support selection.
                 element.setSelectionRange(element.value.length, element.value.length);
             }
-        } else {
+        } else if (isEditable(element)) {
             // for contenteditable div
             var selection = document.getSelection();
             selection.setPosition(selection.focusNode, selection.focusNode.data.length - 1);
@@ -128,6 +128,7 @@ var Insert = (function(mode) {
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
         annotation: "Exit insert mode",
         feature_group: 15,
+        keepPropagation: true,
         code: function() {
             getRealEdit().blur();
             self.exit();
