@@ -270,11 +270,11 @@ function renderShanbay(res) {
     if (res.data.definition) {
         var tmp = [];
         for (var reg in res.data.pronunciations) {
-            tmp.push('[{0}] {1}'.format(reg, res.data.pronunciations[reg]));
-            tmp.push('<audio src="{0}" controls></audio>'.format(res.data[reg+'_audio']));
+            tmp.push('<div>[{0}] {1}</div>'.format(reg, res.data.pronunciations[reg]));
+            tmp.push('<div><audio src="{0}" controls></audio></div>'.format(res.data[reg+'_audio']));
         }
-        tmp.push(res.data.definition);
-        exp = '<pre>{0}</pre>'.format(tmp.join('\n'));
+        tmp.push('<div>{0}</div>'.format(res.data.definition));
+        exp = '<div>{0}</div>'.format(tmp.join('\n'));
     }
     return exp;
 }
