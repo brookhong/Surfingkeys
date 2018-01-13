@@ -247,22 +247,18 @@ var Hints = (function(mode) {
         var bof = self.coordinate();
         $("<style></style>").html("#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
         elements.each(function(i) {
-            var pos = $(this).offset(),
+            var pos = this.getClientRects()[0],
                 z = getZIndex(this);
-            if (pos.top === 0 && pos.left === 0) {
-                // work around for svg elements, https://github.com/jquery/jquery/issues/3182
-                pos = this.getBoundingClientRect();
-            }
-            var left, width = Math.min($(this).width(), window.innerWidth);
+            var left, width = Math.min(pos.width, window.innerWidth);
             if (runtime.conf.hintAlign === "right") {
-                left = pos.left - bof.left + width / 2;
+                left = pos.left - bof.left + width;
             } else if (runtime.conf.hintAlign === "left") {
                 left = pos.left - bof.left;
             } else {
                 left = pos.left - bof.left + width / 2;
             }
-            left = Math.max(left, 0);
-            var link = $('<div/>').css('top', Math.max(pos.top - bof.top, 0)).css('left', left)
+            left = Math.max(left + window.pageXOffset, 0);
+            var link = $('<div/>').css('top', Math.max(pos.top + window.pageYOffset - bof.top, 0)).css('left', left)
                 .css('z-index', z + 9999)
                 .data('z-index', z + 9999)
                 .data('label', hintLabels[i])
