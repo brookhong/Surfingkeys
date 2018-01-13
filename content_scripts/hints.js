@@ -514,6 +514,8 @@ var Hints = (function(mode) {
         self.flashPressedLink(element);
         if (isEditable(element)) {
             self.exit();
+            Normal.passFocus(true);
+            element.focus();
             Insert.enter(element);
         } else {
             if (!behaviours.multipleHits) {

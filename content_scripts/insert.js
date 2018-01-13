@@ -382,13 +382,10 @@ var Insert = (function(mode) {
     self.enter = function(elm) {
         if (Mode.stack().indexOf(self) === -1) {
             mode.enter.apply(self, arguments);
-            Normal.passFocus(true);
         }
         if (_element !== elm) {
             _element = elm;
-            Normal.passFocus(true);
         }
-        elm.focus();
         if (runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
             moveCusorEOL();
         }
