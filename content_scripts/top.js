@@ -66,33 +66,30 @@ if (window === top) {
         if (_message.commandToFrontend || _message.responseToFrontend) {
             // forward message to frontend
             ifr[0].contentWindow.postMessage(_message, frontEndURL);
-            if (_message.commandToFrontend && event.source) {
-                if (_message.origin && !_message.automatic) {
-                    // if the message is auto triggered rather than by user
-                    // we won't change activeContent here.
-                    if (!activeContent || activeContent.window !== event.source) {
+            if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
+                if (!activeContent || activeContent.window !== event.source) {
+                    // reset active Content
 
-                        if (activeContent) {
-                            activeContent.window.postMessage({
-                                action: 'deactivated',
-                                direct: true,
-                                reason: `${_message.action}@${event.timeStamp}`,
-                                commandToContent: true
-                            }, activeContent.origin);
-                        }
-
-                        activeContent = {
-                            window: event.source,
-                            origin: _message.origin
-                        };
-                        // update usage for user defined mappings.
+                    if (activeContent) {
                         activeContent.window.postMessage({
-                            action: 'activated',
+                            action: 'deactivated',
                             direct: true,
                             reason: `${_message.action}@${event.timeStamp}`,
                             commandToContent: true
                         }, activeContent.origin);
                     }
+
+                    activeContent = {
+                        window: event.source,
+                        origin: _message.origin
+                    };
+
+                    activeContent.window.postMessage({
+                        action: 'activated',
+                        direct: true,
+                        reason: `${_message.action}@${event.timeStamp}`,
+                        commandToContent: true
+                    }, activeContent.origin);
                 }
             }
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
