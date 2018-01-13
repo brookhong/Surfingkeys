@@ -116,7 +116,7 @@ function filterOverlapElements(elements) {
         var be = e.getBoundingClientRect();
         if (e.disabled || e.readOnly || be.width <= 4) {
             return false;
-        } else if (["input", "textarea", "select"].indexOf(e.localName) !== -1) {
+        } else if (["input", "textarea", "select"].indexOf(e.localName) !== -1 || e.href) {
             return true;
         } else {
             var el = document.elementFromPoint(be.left + be.width / 2, be.top + be.height / 2);

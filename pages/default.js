@@ -330,9 +330,6 @@ mapkey('ymv', '#9Yank text of multiple elements', function() {
 mapkey('V', '#9Restore visual mode', function() {
     Visual.restore();
 });
-mapkey('/', '#9Find in current page', function() {
-    Front.openFinder();
-});
 mapkey('*', '#9Find selected text in current page', function() {
     Visual.star();
     Visual.toggle();
@@ -366,12 +363,6 @@ mapkey('>>', '#3Move current tab to right', function() {
     RUNTIME('moveTab', {
         step: 1
     });
-});
-mapkey('n', '#9Next found text', function() {
-    Visual.next(false);
-});
-mapkey('N', '#9Previous found text', function() {
-    Visual.next(true);
 });
 mapkey('w', '#2Switch frames', function() {
     Normal.rotateFrame();

@@ -349,7 +349,11 @@ var Normal = (function(mode) {
                 blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
             }, function(resp) {
                 if (resp.disabled) {
-                    Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
+                    if (resp.blacklist.hasOwnProperty(".*")) {
+                        Front.showBanner('Surfingkeys is globally disabled, please enable it globally from popup menu.', 3000);
+                    } else {
+                        Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
+                    }
                 } else {
                     Front.showBanner('Surfingkeys turned ON for ' + resp.url, 3000);
                 }
@@ -959,6 +963,30 @@ var Normal = (function(mode) {
             Visual.toggle();
         }
     });
+    self.mappings.add("/", {
+        annotation: "Find in current page",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            Front.openFinder();
+        }
+    });
+    self.mappings.add("n", {
+        annotation: "Next found text",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            Visual.next(false);
+        }
+    });
+    self.mappings.add("N", {
+        annotation: "Previous found text",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            Visual.next(true);
+        }
+    });
 
     self.mappings.add("E", {
         annotation: "Go one tab left",
@@ -976,7 +1004,6 @@ var Normal = (function(mode) {
             RUNTIME("nextTab");
         }
     });
-
 
     return self;
 })(Mode);

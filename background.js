@@ -21,6 +21,13 @@ function getSubSettings(set, keys) {
     return subset;
 }
 
+function _save(storage, data, cb) {
+    if (data.localPath) {
+        delete data.snippets;
+    }
+    storage.set(data, cb);
+}
+
 var Gist = (function() {
     var self = {};
 
@@ -437,13 +444,6 @@ var ChromeService = (function() {
         });
     };
 
-
-    function _save(storage, data, cb) {
-        if (data.localPath) {
-            delete data.snippets;
-        }
-        storage.set(data, cb);
-    }
 
     function _updateSettings(diffSettings, afterSet) {
         diffSettings.savedAt = new Date().getTime();
