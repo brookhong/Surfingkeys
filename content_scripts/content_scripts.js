@@ -446,22 +446,25 @@ function _init() {
 
         Normal.enter();
 
-        if (window === top) {
-            runtime.command({
-                action: 'getDisabled',
-                blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-            }, function(resp) {
-                if (resp.disabled) {
-                    Disabled.enter(0, true);
-                }
+        runtime.command({
+            action: 'getDisabled',
+            blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
+        }, function (resp) {
+            if (resp.disabled) {
+                Disabled.enter(0, true);
+            } else {
+                usePdfViewer();
+            }
 
+            if (window === top) {
                 runtime.command({
                     action: 'setSurfingkeysIcon',
                     status: resp.disabled
                 });
-                document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs}));
-            });
-        }
+            }
+        });
+
+        document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
     });
 }
 

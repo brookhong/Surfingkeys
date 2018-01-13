@@ -1,15 +1,19 @@
-document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
-    var elm = evt.srcElement;
-    if (elm.tagName === "EMBED" && elm.type === "application/pdf" && $(elm).is(":visible")) {
-        chrome.storage.local.get("noPdfViewer", function(resp) {
-            if (!resp.noPdfViewer) {
-                setTimeout(function() {
-                    // stop before redirect to prevent chrome crash
-                    window.stop();
-                    window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?r=" + elm.src);
-                }, 0);
-            }
+function usePdfViewer() {
+    function _usePdfViewer() {
+        var nodes = document.body.querySelectorAll('*');
+        if (nodes.length === 1 && nodes[0].tagName === "EMBED" && nodes[0].type === "application/pdf") {
+            chrome.storage.local.get("noPdfViewer", function (respo) {
+                if (!respo.noPdfViewer) {
+                    window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?r=" + nodes[0].src);
+                }
+            });
+        }
+    }
+    if (document.body) {
+        _usePdfViewer();
+    } else {
+        document.addEventListener('DOMContentLoaded', function (e) {
+            _usePdfViewer();
         });
     }
-}, true);
-
+}
