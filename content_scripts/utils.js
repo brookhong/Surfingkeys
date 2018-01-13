@@ -8,7 +8,8 @@ function getDocumentOrigin() {
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
     // file:// cannot be used as a security restriction; this restriction may be modified in the future.
-    return (!document.origin ? "*" : document.origin);
+    // Firefox provides window.origin instead of document.origin.
+    return document.origin ? document.origin : (window.origin ? window.origin : "*");
 }
 
 function generateQuickGuid() {
