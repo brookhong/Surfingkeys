@@ -210,6 +210,7 @@ function walkPageUrl(step) {
 
 function previousPage() {
     var prevLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
+    prevLinks = $(filterOverlapElements(prevLinks.toArray()));
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -220,6 +221,7 @@ function previousPage() {
 
 function nextPage() {
     var nextLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
+    nextLinks = $(filterOverlapElements(nextLinks.toArray()));
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
