@@ -469,6 +469,7 @@ var Hints = (function(mode) {
             $('#sk_hints[mode=input]>div:nth(0)').addClass("activeInput");
             $('#sk_hints[mode=input]>div:nth(0)').data('link').focus();
         } else if (elements.length === 1) {
+            Normal.passFocus(true);
             elements[0].focus();
             Insert.enter(elements[0]);
         }
