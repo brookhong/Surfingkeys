@@ -109,3 +109,6 @@ div.pressedKey kbd {
     color: blue;
     cursor: pointer;
 }
+span.highlight {
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFF785), color-stop(100%,#FFC542));
+}

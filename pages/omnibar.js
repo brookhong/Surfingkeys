@@ -623,13 +623,12 @@ var OpenBookmarks = (function() {
         } else {
             currentFolderId = undefined;
             runtime.command({
-                action: 'getBookmarks',
+                action: 'getBookmarks'
             }, self.onResponse);
         }
         self.prompt = fl.prompt;
         Omnibar.promptSpan.html(self.prompt);
         lastFocused = fl.focused;
-        eaten = true;
     }
 
     self.onEnter = function() {
@@ -1238,6 +1237,11 @@ var OmniQuery = (function() {
     var self = {
         prompt: 'ǭ'
     };
+
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+    var _words;
     self.onOpen = function(arg) {
         if (arg) {
             Omnibar.input.val(arg);
@@ -1246,7 +1250,30 @@ var OmniQuery = (function() {
                 query: arg
             });
         }
+        Front.contentCommand({
+            action: 'getPageText'
+        }, function(message) {
+            var splitRegex = /[^a-zA-Z]+/;
+            _words = message.data.toLowerCase().split(splitRegex).filter(onlyUnique);
+        });
     };
+
+    self.onInput = function() {
+        var iw = Omnibar.input.val();
+        var candidates = _words.filter(function(w) {
+            return w.indexOf(iw) !== -1;
+        });
+        if (candidates.length) {
+            Omnibar.listResults(candidates, function(w) {
+                return $('<li/>').text(w);
+            });
+        }
+    };
+
+    self.onTabKey = function() {
+        Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').text());
+    };
+
     self.onEnter = function() {
         Front.contentCommand({
             action: 'omnibar_query_entered',

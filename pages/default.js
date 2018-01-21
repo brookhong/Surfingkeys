@@ -167,6 +167,24 @@ mapkey('yc', '#7Copy a column of a table', function() {
         Clipboard.write(column);
     });
 });
+mapkey('ymc', '#7Copy multiple columns of a table', function() {
+    var rows = null;
+    Hints.create($("table").find('tr:first').find('>*'), function(element) {
+        var column = $(element).closest('table')
+            .find('tr').find(`>*:nth(${$(element).index()})`)
+            .toArray().map(function(t) {
+                return t.innerText;
+            });
+        if (!rows) {
+            rows = column;
+        } else {
+            column.forEach(function(c, i) {
+                rows[i] += "\t" + c;
+            });
+        }
+        Clipboard.write(rows.join("\n"));
+    }, {multipleHits: true});
+});
 mapkey('yq', '#7Copy pre text.', function() {
     Hints.create("pre", function(element) {
         Clipboard.write(element.innerText);
@@ -411,13 +429,29 @@ mapkey('yl', "#7Copy current page's title", function() {
     Clipboard.write(document.title);
 });
 mapkey('yf', '#7Copy form data in JSON on current page', function() {
-    var aa = [];
+    var fd = {};
     $('form').each(function() {
-        var fd = {};
         fd[(this.method || "get") + "::" + this.action] = getFormData(this, "json");
-        aa.push(fd);
     });
-    Clipboard.write(JSON.stringify(aa, null, 4));
+    Clipboard.write(JSON.stringify(fd, null, 4));
+});
+mapkey(';pf', '#7Paste form data from clipboard', function() {
+    Hints.create('form', function(element, event) {
+        var formKey = (element.method || "get") + "::" + element.action;
+        Clipboard.read(function(response) {
+            var forms = JSON.parse(response.data.trim());
+            if (forms.hasOwnProperty(formKey)) {
+                var fd = forms[formKey];
+                $(element).find('input[type=text]:visible').toArray().forEach(function(ip) {
+                    if (fd.hasOwnProperty(ip.name)) {
+                        ip.value = fd[ip.name];
+                    }
+                });
+            } else {
+                Front.showBanner("No form data found for your selection from clipboard.");
+            }
+        });
+    });
 });
 mapkey('yg', '#7Capture current page', function() {
     Front.toggleStatus(false);

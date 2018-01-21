@@ -87,8 +87,9 @@ function renderProxySettings(rs) {
         $("#proxy").show();
         renderProxy(rs.proxy);
 
+        var ih = $('#autoproxy_hosts>input').val();
         var autoproxy_hosts = rs.autoproxy_hosts.sort().map(function(h) {
-            return `<aphost><i role='remove'>␡</i><span>${h}</span></aphost>`;
+            return `<aphost><i role='remove'>␡</i><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
         }).join("");
         $('#autoproxy_hosts').show();
         $('#autoproxy_hosts>div').html(autoproxy_hosts);
@@ -198,13 +199,17 @@ $('#advancedToggler').click(function() {
     });
 });
 $('#resetSettings').click(function() {
-    runtime.command({
-        action: "resetSettings"
-    }, function(response) {
-        renderSettings(response.settings);
-        renderKeyMappings(response.settings);
-        Front.showBanner('Settings reset', 300);
-    });
+    if ($(this).text() === "Reset") {
+        $(this).text("WARNING! This will clear all your settings. Click this again to continue.");
+    } else {
+        runtime.command({
+            action: "resetSettings"
+        }, function(response) {
+            renderSettings(response.settings);
+            renderKeyMappings(response.settings);
+            Front.showBanner('Settings reset', 300);
+        });
+    }
 });
 
 $('.infoPointer').click(function() {
