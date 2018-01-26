@@ -483,8 +483,8 @@ mapkey('ow', '#8Open Search with alias w', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "w"});
 });
 if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-    mapkey('on', '#3Open Chrome newtab', function() {
-        tabOpenLink("/pages/start.html");
+    mapkey('on', '#3Open Firefox newtab', function() {
+        tabOpenLink("about:blank");
     });
 } else {
     mapkey('on', '#3Open Chrome newtab', function() {
