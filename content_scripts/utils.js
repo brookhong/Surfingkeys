@@ -115,6 +115,41 @@ function getVisibleElements(filter) {
     return visibleElements;
 }
 
+function actionWithSelectionPreserved(cb) {
+    var selection = document.getSelection();
+    var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
+
+    var dt = document.scrollingElement.scrollTop;
+
+    cb(selection);
+
+    document.scrollingElement.scrollTop = dt;
+
+    if (pos[0] === "None") {
+        selection.empty();
+    } else if (pos[0] === "Caret") {
+        selection.setPosition(pos[3], pos[4]);
+    } else if (pos[0] === "Range") {
+        selection.setPosition(pos[1], pos[2]);
+        selection.extend(pos[3], pos[4]);
+    }
+}
+
+function filterAncestors(elements) {
+    var tmp = [];
+    if (elements.length > 0) {
+        // filter out element which has its children covered
+        tmp = [elements[elements.length - 1]];
+        for (var i = elements.length - 2; i >= 0; i--) {
+            if (!elements[i].contains(tmp[0])) {
+                tmp.unshift(elements[i]);
+            }
+        }
+    }
+
+    return tmp;
+}
+
 function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
@@ -142,18 +177,7 @@ function filterOverlapElements(elements) {
         return flag;
     });
 
-    var tmp = [];
-    if (elements.length > 0) {
-        // filter out element which has its children covered
-        tmp = [elements[elements.length - 1]];
-        for (var i = elements.length - 2; i >= 0; i--) {
-            if (!elements[i].contains(tmp[0])) {
-                tmp.unshift(elements[i]);
-            }
-        }
-    }
-
-    return tmp;
+    return filterAncestors(elements);
 }
 
 function getTextNodes(root, pattern, flag) {

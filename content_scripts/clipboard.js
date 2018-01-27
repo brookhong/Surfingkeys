@@ -7,19 +7,13 @@ var Clipboard = (function(mode) {
     holder.id = 'sk_clipboard';
 
     function clipboardActionWithSelectionPreserved(cb) {
-        var selection = document.getSelection();
-        var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
-        document.body.appendChild(holder);
+        actionWithSelectionPreserved(function(selection) {
+            document.body.appendChild(holder);
 
-        cb();
+            cb(selection);
 
-        holder.remove();
-        if (pos[0] === "Caret") {
-            selection.setPosition(pos[3], pos[4]);
-        } else if (pos[0] === "Range") {
-            selection.setPosition(pos[1], pos[2]);
-            selection.extend(pos[3], pos[4]);
-        }
+            holder.remove();
+        });
     }
 
     self.read = function(onReady) {

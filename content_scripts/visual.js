@@ -199,15 +199,7 @@ var Visual = (function(mode) {
     };
     function _selectUnit(w) {
         var unit = _units[w];
-        var pos = [selection.focusNode, selection.focusOffset];
-        selection.modify("move", "forward", unit);
-        if (selection.focusNode !== pos[0]) {
-            selection.setPosition(pos[0], pos[1]);
-        }
         selection.modify("move", "backward", unit);
-        if (selection.focusNode !== pos[0]) {
-            selection.setPosition(pos[0], pos[1]);
-        }
         selection.modify("extend", "forward", unit);
     }
     var _yankFunctions = [{}, {
@@ -746,6 +738,26 @@ var Visual = (function(mode) {
         } else {
             Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }
+    };
+
+    self.findSentenceOf = function (query) {
+        var wr = new RegExp("\\b" + query + "\\b");
+        var elements = getVisibleElements(function(e, v) {
+            if (wr.test(e.innerText)) {
+                v.push(e);
+            }
+        });
+        elements = filterAncestors(elements);
+
+        var sentence = "";
+        actionWithSelectionPreserved(function(selection) {
+            selection.setPosition(elements[0], 0);
+            if (window.find(query, false, false, true, true)) {
+                _selectUnit("s");
+                sentence = selection.toString();
+            }
+        });
+        return sentence;
     };
 
     var _style = {};
