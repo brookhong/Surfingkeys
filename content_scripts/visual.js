@@ -227,7 +227,7 @@ var Visual = (function(mode) {
         feature_group: 9,
         code: function() {
             var pos = [selection.focusNode, selection.focusOffset];
-            Clipboard.write(selection.toString());
+            Clipboard.write(selection.toString() + cursor.textContent);
             if (runtime.conf.modeAfterYank === "Caret") {
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
