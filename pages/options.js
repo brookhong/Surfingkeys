@@ -83,9 +83,15 @@ function renderProxySettings(rs) {
     $('#autoproxy_hosts').hide();
     $('#proxyMode span[mode]').hide();
     $(`#proxyMode span[mode=${rs.proxyMode}]`).show();
-    if (rs.proxyMode === "byhost") {
+    if (rs.proxyMode === "byhost" || rs.proxyMode === "always") {
         $("#proxy").show();
         renderProxy(rs.proxy);
+
+        var desc = "For below hosts, above proxy will be used, click ␡ to remove one.";
+        if (rs.proxyMode === "always") {
+            desc = "For below hosts, <b>NO</b> proxy will be used, click ␡ to remove one.";
+        }
+        $('#autoproxy_hosts>h3').html(desc);
 
         var ih = $('#autoproxy_hosts>input').val();
         var autoproxy_hosts = rs.autoproxy_hosts.sort().map(function(h) {
@@ -104,9 +110,6 @@ function renderProxySettings(rs) {
                 elm.remove();
             });
         });
-    } else if (rs.proxyMode === "always") {
-        $("#proxy").show();
-        renderProxy(rs.proxy);
     }
 }
 
