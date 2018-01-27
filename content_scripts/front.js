@@ -200,7 +200,9 @@ var Front = (function() {
             }, function(res) {
                 var words = args.parseResult(res);
 
-                words.push(Visual.findSentenceOf(query));
+                if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+                    words.push(Visual.findSentenceOf(query));
+                }
 
                 frontendCommand({
                     action: 'updateOmnibarResult',

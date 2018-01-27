@@ -720,12 +720,17 @@ var Normal = (function(mode) {
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
             s.innerHTML = "(" + code.toString() + ")(window);";
+            setTimeout(function() {
+                s.remove();
+            }, 1);
         } else {
             s.src = code;
-            s.onload = onload;
+            s.onload = function() {
+                onload();
+                s.remove();
+            };
         }
         document.lastElementChild.appendChild(s);
-        s.remove();
     };
 
     self.moveTab = function(pos) {

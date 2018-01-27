@@ -198,9 +198,14 @@ var Visual = (function(mode) {
         p: "paragraphboundary"
     };
     function _selectUnit(w) {
-        var unit = _units[w];
-        selection.modify("move", "backward", unit);
-        selection.modify("extend", "forward", unit);
+        if (window.navigator.userAgent.indexOf("Firefox") === -1 || (w !== "p" && w !== "s")) {
+            var unit = _units[w];
+            // sentence and paragraphboundary not support in firefox
+            // document.getSelection().modify("move", "backward", "paragraphboundary")
+            // gets 0x80004001 (NS_ERROR_NOT_IMPLEMENTED)
+            selection.modify("move", "backward", unit);
+            selection.modify("extend", "forward", unit);
+        }
     }
     var _yankFunctions = [{}, {
         annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
