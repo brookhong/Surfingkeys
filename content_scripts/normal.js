@@ -238,13 +238,17 @@ var Disabled = (function(mode) {
 var PassThrough = (function(mode) {
     var self = $.extend({
         name: "PassThrough",
-        statusLine: "",
+        statusLine: "pass through",
         eventListeners: {}
     }, mode);
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+            self.exit();
+            event.sk_stopPropagation = true;
+        }
     }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
@@ -361,6 +365,10 @@ var Normal = (function(mode) {
         } else {
             Front.showBanner('You could not toggle Surfingkeys on its own pages.', 3000);
         }
+    };
+
+    self.passThrough = function() {
+        PassThrough.enter();
     };
 
     self.mappings = new Trie();

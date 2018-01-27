@@ -185,7 +185,7 @@ mapkey('ymc', '#7Copy multiple columns of a table', function() {
         Clipboard.write(rows.join("\n"));
     }, {multipleHits: true});
 });
-mapkey('yq', '#7Copy pre text.', function() {
+mapkey('yq', '#7Copy pre text', function() {
     Hints.create("pre", function(element) {
         Clipboard.write(element.innerText);
     });
@@ -240,6 +240,9 @@ cmap('<Ctrl-n>', '<Tab>');
 cmap('<Ctrl-p>', '<Shift-Tab>');
 mapkey('q', '#1Click on an Image or a button', function() {
     Hints.create("img, button", Hints.dispatchMouseClick);
+});
+mapkey('<Alt-i>', '#0enter PassThrough mode to temporarily suppress SurfingKeys', function() {
+    Normal.passThrough();
 });
 mapkey('<Alt-p>', '#3pin/unpin current tab', function() {
     RUNTIME("togglePinTab");
@@ -435,7 +438,7 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
     });
     Clipboard.write(JSON.stringify(fd, null, 4));
 });
-mapkey(';pf', '#7Paste form data from clipboard', function() {
+mapkey(';pf', '#7Fill form with data from yf', function() {
     Hints.create('form', function(element, event) {
         var formKey = (element.method || "get") + "::" + element.action;
         Clipboard.read(function(response) {
