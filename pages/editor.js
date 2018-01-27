@@ -188,7 +188,7 @@ var AceEditor = (function(mode, elmId) {
         cm.on('vim-mode-change', function(data) {
             self.mode = data.mode;
         });
-        cm.on('unnamed-register-set', function(data) {
+        cm.on('0-register-set', function(data) {
             var lf = document.activeElement;
             Clipboard.write(data.text);
             lf.focus();

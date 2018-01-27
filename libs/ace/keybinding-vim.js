@@ -2759,6 +2759,9 @@ define("ace/keyboard/vim", ["require", "exports", "module", "ace/range", "ace/li
             } else {
                 register.setText(text, linewise, blockwise);
             }
+            CodeMirror.signal(vimGlobalState.cm, registerName + "-register-set", {
+                text: text
+            });
             this.unnamedRegister.setText(register.toString(), linewise);
         },
         getRegister: function(name) {
