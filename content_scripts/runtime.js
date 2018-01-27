@@ -166,7 +166,7 @@ var runtime = window.runtime || (function() {
                 // Firefox use "resource://pdf.js" as window.origin for pdf viewer
                 topUrl = window.origin;
             }
-            if (new URL(topUrl).origin === "file://") {
+            if (topUrl === "null" || new URL(topUrl).origin === "file://") {
                 topUrl = "*";
             }
             top.postMessage(msg, topUrl);
