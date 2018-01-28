@@ -74,10 +74,6 @@ function renderProxy(proxy) {
 }
 
 function renderProxySettings(rs) {
-    if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-        $('#proxyMode').closest('div.section').hide();
-        return;
-    }
     $('#proxyMode>select').val(rs.proxyMode);
     $("#proxy").hide();
     $('#autoproxy_hosts').hide();

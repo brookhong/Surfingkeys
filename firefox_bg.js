@@ -12,6 +12,21 @@ function loadRawSettings(keys, cb, defaultSet) {
 }
 
 function _applyProxySettings(proxyConf) {
+    if (!proxyConf.proxyMode || proxyConf.proxyMode === 'clear') {
+        browser.proxy.unregister();
+    } else {
+        var autoproxy_pattern = proxyConf.autoproxy_hosts.filter(function(a) {
+            return a.indexOf('*') !== -1;
+        }).join('|');
+        browser.proxy.register("firefox_pac.js");
+        var pacv = {
+            hosts: dictFromArray(proxyConf.autoproxy_hosts, 1),
+            autoproxy_pattern: autoproxy_pattern,
+            proxyMode: proxyConf.proxyMode,
+            proxy: proxyConf.proxy
+        };
+        browser.runtime.sendMessage(pacv, {toProxyScript: true});
+    }
 }
 
 function readLocalFile(path, cb) {
@@ -51,3 +66,7 @@ function request(url, onReady, headers, data, onException) {
         onException && onException(exp);
     });
 }
+
+browser.proxy.onProxyError.addListener(error => {
+    console.error(`Proxy error: ${error.message}`);
+});

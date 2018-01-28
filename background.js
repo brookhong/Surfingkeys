@@ -1,3 +1,11 @@
+function dictFromArray(arry, val) {
+    var dict = {};
+    arry.forEach(function(h) {
+        dict[h] = val;
+    });
+    return dict;
+}
+
 function extendObject(target, ss) {
     for (var k in ss) {
         target[k] = ss[k];

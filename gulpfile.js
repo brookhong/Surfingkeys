@@ -62,6 +62,7 @@ gulp.task('build_background', ['clean'], function() {
     ];
     if (buildTarget === "Firefox") {
         background.unshift("firefox_bg.js");
+        gulp.src("firefox_pac.js").pipe(gulp.dest(`dist/${buildTarget}-extension`));
     } else {
         background.unshift("chrome_bg.js");
     }

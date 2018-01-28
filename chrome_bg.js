@@ -1,11 +1,3 @@
-function dictFromArray(arry, val) {
-    var dict = {};
-    arry.forEach(function(h) {
-        dict[h] = val;
-    });
-    return dict;
-}
-
 function loadRawSettings(keys, cb, defaultSet) {
     var rawSet = defaultSet || {};
     chrome.storage.local.get(null, function(localSet) {
