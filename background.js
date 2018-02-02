@@ -877,7 +877,7 @@ var ChromeService = (function() {
     };
     function normalizeURL(url) {
         if (!/^view-source:|^javascript:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-            if (/^[\w-]+?:\/\//i.test(url)) {
+            if (/^[\w-]+?:/i.test(url)) {
                 url = url;
             } else {
                 url = "http://" + url;
