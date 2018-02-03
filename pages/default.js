@@ -280,6 +280,9 @@ mapkey('t', '#8Open a URL', function() {
 mapkey('go', '#8Open a URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false});
 });
+mapkey('oi', '#8Open incognito window', function() {
+    RUNTIME('openIncognito');
+});
 mapkey('ox', '#8Open recently closed URL', function() {
     Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"});
 });
@@ -342,11 +345,16 @@ mapkey(':', '#8Open commands', function() {
 mapkey('zv', '#9Enter visual mode, and select whole element', function() {
     Visual.toggle("z");
 });
-mapkey('yv', '#9Yank text of an element', function() {
+mapkey('yv', '#7Yank text of an element', function() {
     Visual.toggle("y");
 });
-mapkey('ymv', '#9Yank text of multiple elements', function() {
+mapkey('ymv', '#7Yank text of multiple elements', function() {
     Visual.toggle("ym");
+});
+mapkey('yi', '#7Yank text of an input', function() {
+    Hints.create("input:visible, textarea:visible, select:visible", function(element) {
+        Clipboard.write(element.value);
+    });
 });
 mapkey('V', '#9Restore visual mode', function() {
     Visual.restore();

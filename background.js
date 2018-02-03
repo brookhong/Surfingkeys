@@ -1360,5 +1360,10 @@ var ChromeService = (function() {
         chrome.tts.stop();
     };
 
+    self.openIncognito = function(message, sender, sendResponse) {
+        chrome.windows.create({"url": message.url, "incognito": true});
+    };
+
+    chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
     return self;
 })();
