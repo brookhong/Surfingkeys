@@ -255,17 +255,8 @@ kbd {
     width: 100%;
     height: 100%;
     background: transparent;
+    overflow: auto;
     z-index: 2147483000;
-}
-div.sk_tabs_fg {
-    position: fixed;
-    z-index: 2147483001;
-}
-div.sk_tabs_bg {
-    position: fixed;
-    z-index: 2147483299;
-    background: #eee;
-    opacity: 0.2;
 }
 div.sk_tab {
     display: inline-block;

@@ -92,6 +92,9 @@ if (window === top) {
                     }, activeContent.origin);
                 }
             }
+            if (_message.action === "visualUpdatedForFirefox") {
+                document.activeElement.blur();
+            }
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
             _actions[_message.action](_message);
         } else if (_message.commandToContent || _message.responseToContent) {

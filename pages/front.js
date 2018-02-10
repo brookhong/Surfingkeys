@@ -68,10 +68,8 @@ var Front = (function(mode) {
             return a || b;
         });
         if (pointerEvents) {
-            setTimeout(function () {
-                window.focus();
-                visibleDivs[0].focus();
-            }, 1);
+            window.focus();
+            visibleDivs[0].focus();
         }
         top.postMessage({
             action: 'setFrontFrame',
@@ -95,7 +93,7 @@ var Front = (function(mode) {
     var _usage = $('<div id=sk_usage class=sk_theme>').appendTo('body').hide();
     var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
     var _editor = $('<div id=sk_editor>').appendTo('body').hide();
-    var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
+    var _tabs = $("<div id=sk_tabs></div>").appendTo('body').hide();
     var banner = $('<div id=sk_banner>').appendTo('body').hide();
     var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
     $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
@@ -120,8 +118,8 @@ var Front = (function(mode) {
         }
         _display = td;
         _display.show();
-        self.flush();
         _display.onShow && _display.onShow(args);
+        self.flush();
     }
 
     _actions['highlightElement'] = function(message) {
@@ -135,8 +133,7 @@ var Front = (function(mode) {
     };
 
     _tabs.onShow = function(tabs) {
-        var tabs_fg = _tabs.find('div.sk_tabs_fg');
-        tabs_fg.html("");
+        _tabs.html("");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
         var tabstr = "<div class=sk_tab style='width: 200px'>";
@@ -145,12 +142,11 @@ var Front = (function(mode) {
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
             tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.url, $.htmlEncode(t.title)));
             tab.data('url', t.url);
-            tabs_fg.append(tab);
+            _tabs.append(tab);
         });
-        tabs_fg.find('div.sk_tab').each(function() {
+        _tabs.find('div.sk_tab').each(function() {
             $(this).append($("<div class=sk_tab_url>{0}</div>".format($(this).data('url'))));
         });
-        _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
     };
     _actions['chooseTab'] = function() {
         runtime.command({
@@ -358,8 +354,14 @@ var Front = (function(mode) {
     };
     self.hideBubble = _actions['hideBubble'];
 
+    _actions['visualUpdatedForFirefox'] = function(message) {
+        Front.statusBar.find('input').focus();
+    };
+
     _actions['showStatus'] = function(message) {
-        self.showStatus(message.position, message.content, message.duration);
+        if (Mode.stack()[0] !== Find) {
+            self.showStatus(message.position, message.content, message.duration);
+        }
     };
     self.showStatus = function(position, content, duration) {
         StatusBar.show(position, content, duration);

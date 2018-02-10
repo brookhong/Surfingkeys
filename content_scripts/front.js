@@ -358,6 +358,11 @@ var Front = (function() {
         clearPendingQuery();
         _pendingQuery = setTimeout(function() {
             Visual.visualUpdateForContentWindow(message.query);
+            if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+                frontendCommand({
+                    action: "visualUpdatedForFirefox"
+                });
+            }
         }, 500);
     };
 
