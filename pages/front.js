@@ -68,9 +68,10 @@ var Front = (function(mode) {
             return a || b;
         });
         if (pointerEvents) {
-            window.focus();
-            var input = $('#sk_status').find('input').length ? $('#sk_status').find('input') : Omnibar.input;
-            input.focus();
+            setTimeout(function () {
+                window.focus();
+                visibleDivs[0].focus();
+            }, 1);
         }
         top.postMessage({
             action: 'setFrontFrame',
@@ -121,10 +122,6 @@ var Front = (function(mode) {
         _display.show();
         self.flush();
         _display.onShow && _display.onShow(args);
-        if (_editor !== td) {
-            // don't set focus for editor, as it may lead frontend.html hold focus.
-            window.focus();
-        }
     }
 
     _actions['highlightElement'] = function(message) {

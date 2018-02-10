@@ -23,6 +23,8 @@
 imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = getRealEdit();
+    element.blur();
+    Insert.exit();
     Front.showEditor(element);
 });
 function toggleProxySite(host) {

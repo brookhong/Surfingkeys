@@ -336,6 +336,10 @@ var Front = (function() {
 
     _actions["getBackFocus"] = function(response) {
         window.focus();
+        if (window === top && document.activeElement === ifr[0]) {
+            // fix for Firefox, blur from iframe for frontend after Omnibar closed.
+            document.activeElement.blur();
+        }
     };
 
     _actions["getPageText"] = function(response) {
