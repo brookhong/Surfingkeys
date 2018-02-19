@@ -209,6 +209,10 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
+    var linkPrev = $('link[rel=prev]');
+    if (linkPrev.length >= 1) {
+        window.location.href = linkPrev.attr('href');
+    }
     var prevLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
     prevLinks = $(filterOverlapElements(prevLinks.toArray()));
     if (prevLinks.length) {
@@ -220,6 +224,10 @@ function previousPage() {
 }
 
 function nextPage() {
+    var linkNext = $('link[rel=next]');
+    if (linkNext.length >= 1) {
+        window.location.href = linkNext.attr('href');
+    }
     var nextLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
     nextLinks = $(filterOverlapElements(nextLinks.toArray()));
     if (nextLinks.length) {
