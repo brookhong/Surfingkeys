@@ -131,12 +131,20 @@ $('#proxyMode>select').change(function() {
 $('#proxy>select').change(__updateProxy);
 $('#proxy>input').blur(__updateProxy);
 
-$('#autoproxy_hosts>button').click(function() {
+function addAutoProxyHost() {
     _updateProxy({
         host: $('#autoproxy_hosts>input').val(),
         operation: 'add'
     });
+}
+
+$('#autoproxy_hosts>input').keyup(function(e) {
+    if (e.keyCode === 13) {
+        addAutoProxyHost();
+    }
 });
+
+$('#autoproxy_hosts>button').click(addAutoProxyHost);
 
 function showAdvanced(flag) {
     if (flag) {

@@ -4,7 +4,7 @@ var Insert = (function(mode) {
     function moveCusorEOL() {
         var element = getRealEdit();
         if (element.setSelectionRange !== undefined) {
-            if (element.type !== "email") {
+            if (element.type !== "email" && element.type !== "number") {
                 // The input element's type ('email') does not support selection.
                 element.setSelectionRange(element.value.length, element.value.length);
             }

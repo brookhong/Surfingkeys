@@ -185,6 +185,7 @@
         "Visual Mode": "可视模式",
         "Yank a word(w) or line(l) or sentence(s) or paragraph(p)": "复制一个单词(w)／行(l)／句子(s)／段落(p)",
         "Yank text of an element": "选择复制指定文本",
+        "Yank text of an input": "复制输入框中内容",
         "Yank text of multiple elements": "选择复制多个指定文本",
         "backward character": "后退一个字符",
         "backward documentboundary": "跳到页面开头",
