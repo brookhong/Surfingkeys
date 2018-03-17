@@ -381,13 +381,16 @@ var Insert = (function(mode) {
 
     var _element;
     self.enter = function(elm) {
+        var changed = false;
         if (Mode.stack().indexOf(self) === -1) {
             mode.enter.apply(self, arguments);
+            changed = true;
         }
         if (_element !== elm) {
             _element = elm;
+            changed = true;
         }
-        if (runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
+        if (changed && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
             moveCusorEOL();
         }
     };

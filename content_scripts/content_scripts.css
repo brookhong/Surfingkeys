@@ -1,6 +1,7 @@
 surfingkeys_mark {
     background-color: #ff0;
     color: #000;
+    opacity: 0.7;
 }
 div.surfingkeys_cursor {
     background-color: #0642CE;

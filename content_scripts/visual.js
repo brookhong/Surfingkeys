@@ -167,14 +167,6 @@ var Visual = (function(mode) {
         }
     });
 
-    function reconstructSelectionAfterCursorPlaced() {
-        var pos = [selection.anchorOffset, selection.focusOffset];
-        self.showCursor();
-        selection.collapseToStart();
-        selection.setPosition(cursor.nextSibling, pos[0] - pos[1] - 1);
-        selection.extend(cursor.previousSibling, cursor.previousSibling.data.length);
-    }
-
     self.mappings.add("o", {
         annotation: "Go to Other end of highlighted text",
         feature_group: 9,
@@ -183,12 +175,7 @@ var Visual = (function(mode) {
             var pos = [selection.anchorNode, selection.anchorOffset];
             selection.collapse(selection.focusNode, selection.focusOffset);
             selection.extend(pos[0], pos[1]);
-            if (selection.anchorNode === selection.focusNode && selection.anchorOffset > selection.focusOffset) {
-                // need to re-construct selection after curosr placed, as cursor breaks selection in this case.
-                reconstructSelectionAfterCursorPlaced();
-            } else {
-                self.showCursor();
-            }
+            self.showCursor();
         }
     });
     var _units = {
@@ -224,7 +211,7 @@ var Visual = (function(mode) {
         feature_group: 9,
         code: function() {
             var pos = [selection.focusNode, selection.focusOffset];
-            Clipboard.write(selection.toString() + cursor.textContent);
+            Clipboard.write(selection.toString());
             if (runtime.conf.modeAfterYank === "Caret") {
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
@@ -254,7 +241,9 @@ var Visual = (function(mode) {
         annotation: "make cursor at center of window.",
         feature_group: 9,
         code: function() {
+            self.hideCursor();
             document.scrollingElement.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2;
+            self.showCursor();
         }
     });
     self.mappings.add("f", {
@@ -331,8 +320,9 @@ var Visual = (function(mode) {
         currentOccurrence,
         state = 0,
         status = ['', 'Caret', 'Range'],
-        mark_template = $('<surfingkeys_mark>')[0],
-        cursor = $('<div class="surfingkeys_cursor"></div>')[0];
+        mark_template = document.createElement("surfingkeys_mark"),
+        cursor = document.createElement("div");
+    cursor.className = "surfingkeys_cursor";
 
     // f in visual mode
     var visualf = 0, lastF = null;
@@ -409,45 +399,31 @@ var Visual = (function(mode) {
     }
 
     self.hideCursor = function () {
-        var lastPos = cursor.parentNode;
-        if (lastPos) {
-            lastPos.insertBefore(document.createTextNode(cursor.textContent), cursor);
-            cursor.textContent = "";
+        if (document.body.contains(cursor)) {
             cursor.remove();
-            lastPos.normalize();
             document.dispatchEvent(new CustomEvent('surfingkeys:cursorHidden'));
         }
-        return lastPos;
     };
 
+    var _focusedRange = document.createRange();
     self.showCursor = function () {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-            var ch = "";
-            if (selection.focusNode.nodeType === Node.TEXT_NODE) {
-                var node = selection.focusNode;
-                ch = node.textContent[selection.focusOffset];
-                if (/^[\s\n]+$/.test(ch)) {
-                    ch = "";
-                }
-                var pos = node.splitText(selection.focusOffset);
-                node.parentNode.insertBefore(cursor, pos);
-                if (ch !== "") {
-                    pos.data = pos.data.substr(1);
-                }
-            } else {
-                selection.focusNode.insertBefore(cursor, selection.focusNode.childNodes[selection.focusOffset]);
-            }
-            cursor.style.display = 'initial';
-            var cr = cursor.getBoundingClientRect();
-            if (cr.width === 0 || cr.height === 0) {
-                cursor.style.display = 'inline-block';
-            }
+            _focusedRange.setStart(selection.focusNode, selection.focusOffset);
+            _focusedRange.setEnd(selection.focusNode, selection.focusOffset);
+            scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
-            // set content of cursor to enable scrollIntoViewIfNeeded
-            $(cursor).html(ch);
-            scrollIntoViewIfNeeded(cursor, true);
+            var r = _focusedRange.getBoundingClientRect();
+            cursor.style.position = "fixed";
+            cursor.style.left = r.left + 'px';
+            if (r.top > 0) {
+                cursor.style.top = r.top + 'px';
+            }
+            cursor.style.height = r.height + 'px';
+            cursor.style.width = r.width + 'px';
+
+            document.body.appendChild(cursor);
         }
     };
     self.getCursorPixelPos = function () {
@@ -458,9 +434,9 @@ var Visual = (function(mode) {
     function select(found) {
         self.hideCursor();
         if (selection.anchorNode && state === 2) {
-            selection.extend(found.firstChild, 0);
+            selection.extend(found[0], found[1]);
         } else {
-            selection.setPosition(found.firstChild, 0);
+            selection.setPosition(found[0], found[1]);
         }
         self.showCursor();
     }
@@ -475,21 +451,28 @@ var Visual = (function(mode) {
         if (prevPos[0] === selection.focusNode && prevPos[1] === selection.focusOffset) {
             selection.modify(alter, sel[0], "word");
         }
-        if (selection.anchorNode === selection.focusNode && selection.anchorOffset > selection.focusOffset) {
-            // need to re-construct selection after curosr placed, as cursor breaks selection in this case.
-            reconstructSelectionAfterCursorPlaced();
-        } else {
-            self.showCursor();
-        }
+        self.showCursor();
     }
 
+    var holder = document.createElement("div");
     function createMatchMark(node, pos, len) {
-        var mark = mark_template.cloneNode(false);
-        var found = node.splitText(pos);
-        found.splitText(len);
-        mark.appendChild(found.cloneNode(true));
-        found.parentNode.replaceChild(mark, found);
-        return mark;
+        _focusedRange.setStart(node, pos);
+        _focusedRange.setEnd(node, pos + len);
+        var r = _focusedRange.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) {
+            matches.push([node, pos]);
+
+            var mark = mark_template.cloneNode(false);
+            mark.style.position = "absolute";
+            mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+            mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+            mark.style.width = r.width + 'px';
+            mark.style.height = r.height + 'px';
+            holder.appendChild(mark);
+            if (!document.body.contains(holder)) {
+                document.body.appendChild(holder);
+            }
+        }
     }
 
     function highlight(pattern) {
@@ -498,41 +481,24 @@ var Visual = (function(mode) {
             while ((mtches = pattern.exec(node.data)) !== null) {
                 var match = mtches[0];
                 if (match.length) {
-                    var mark = createMatchMark(node, pattern.lastIndex - match.length, match.length);
-                    matches.push(mark);
-
-                    node = mark.nextSibling;
-                    // node changed, reset pattern.lastIndex
-                    pattern.lastIndex = 0;
+                    createMatchMark(node, pattern.lastIndex - match.length, match.length);
                 } else {
                     // matches like \b
                     break;
                 }
             }
         });
-        document.body.normalize();
         if (matches.length) {
             currentOccurrence = 0;
-            for (var i = 0; i < matches.length; i++) {
-                var br = matches[i].getBoundingClientRect();
-                if (br.top > 0 && br.left > 0) {
-                    currentOccurrence = i;
-                    Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
-                    break;
-                }
-            }
+            Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         }
     }
 
     self.visualClear = function() {
         self.hideCursor();
-        var nodes = matches;
-        for (var i = 0; i < nodes.length; i++) {
-            if (nodes[i].parentNode) {
-                nodes[i].parentNode.innerHTML = nodes[i].parentNode.innerHTML.replace(/<surfingkeys_mark[^>]*>([^<]+)<\/surfingkeys_mark>/gi, '$1');
-            }
-        }
         matches = [];
+        holder.innerHTML = "";
+        holder.remove();
         Front.showStatus(2, '');
     };
 
@@ -626,16 +592,12 @@ var Visual = (function(mode) {
 
     self.getWordUnderCursor = function() {
         var word = selection.toString();
-        if (word.length === 0 && cursor.parentElement) {
-            var pe = cursor.parentElement;
+        if (word.length === 0 && selection.focusNode && selection.focusNode.parentElement) {
+            var pe = selection.focusNode.parentElement;
             if (pe.tagName === "SURFINGKEYS_MARK") {
                 pe = pe.parentElement;
             }
-            var ch = cursor.innerText;
-            cursor.innerText = "🇿";
-            var pos = pe.innerText.indexOf(cursor.innerText);
-            cursor.innerText = ch;
-            word = getNearestWord(pe.innerText, pos);
+            word = getNearestWord(pe.innerText, selection.focusOffset);
         }
         return word;
     };
@@ -713,14 +675,10 @@ var Visual = (function(mode) {
                 scrollTop = document.scrollingElement.scrollTop;
                 posToStartFind = [selection.anchorNode, selection.anchorOffset];
             }
-            var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
-            matches.push(mark);
-            selection.setPosition(mark.nextSibling, 0);
+            createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
 
             while (document.scrollingElement.scrollTop === scrollTop && findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
-                var mark = createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
-                matches.push(mark);
-                selection.setPosition(mark.nextSibling, 0);
+                createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
             }
             document.scrollingElement.scrollTop = scrollTop;
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
