@@ -323,6 +323,7 @@ var Visual = (function(mode) {
         mark_template = document.createElement("surfingkeys_mark"),
         cursor = document.createElement("div");
     cursor.className = "surfingkeys_cursor";
+    cursor.style.zIndex = 2147483001;
 
     // f in visual mode
     var visualf = 0, lastF = null;
@@ -455,15 +456,16 @@ var Visual = (function(mode) {
     }
 
     var holder = document.createElement("div");
-    function createMatchMark(node, pos, len) {
-        _focusedRange.setStart(node, pos);
-        _focusedRange.setEnd(node, pos + len);
+    function createMatchMark(node1, offset1, node2, offset2) {
+        _focusedRange.setStart(node1, offset1);
+        _focusedRange.setEnd(node2, offset2);
         var r = _focusedRange.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) {
-            matches.push([node, pos]);
+            matches.push([node1, offset1]);
 
             var mark = mark_template.cloneNode(false);
             mark.style.position = "absolute";
+            mark.style.zIndex = 2147483000;
             mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
             mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
             mark.style.width = r.width + 'px';
@@ -481,13 +483,23 @@ var Visual = (function(mode) {
             while ((mtches = pattern.exec(node.data)) !== null) {
                 var match = mtches[0];
                 if (match.length) {
-                    createMatchMark(node, pattern.lastIndex - match.length, match.length);
+                    var pos = pattern.lastIndex - match.length;
+                    createMatchMark(node, pos, node, pos + match.length);
                 } else {
                     // matches like \b
                     break;
                 }
             }
         });
+        if (matches.length === 0) {
+            // find across nodes with window.find if no found within each node.
+            selection.setPosition(null, 0);
+            while (findNextTextNodeBy(pattern.source, runtime.conf.caseSensitive, false)) {
+                if (selection.anchorNode !== selection.focusNode) {
+                    createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
+                }
+            }
+        }
         if (matches.length) {
             currentOccurrence = 0;
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
@@ -675,10 +687,10 @@ var Visual = (function(mode) {
                 scrollTop = document.scrollingElement.scrollTop;
                 posToStartFind = [selection.anchorNode, selection.anchorOffset];
             }
-            createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
+            createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
 
             while (document.scrollingElement.scrollTop === scrollTop && findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
-                createMatchMark(selection.anchorNode, selection.anchorOffset, query.length);
+                createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
             }
             document.scrollingElement.scrollTop = scrollTop;
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
