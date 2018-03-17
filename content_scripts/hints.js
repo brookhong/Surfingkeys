@@ -121,10 +121,13 @@ var Hints = (function(mode) {
 
     function dispatchMouseEvent(element, events) {
         events.forEach(function(eventName) {
-            var event = document.createEvent('MouseEvents');
             var mouseButton = shiftKey ? 1 : 0;
-            event.initMouseEvent(eventName, true, true, window, 1, 0, 0, 0, 0, false,
-                false, false, false, mouseButton, null);
+            var event = new MouseEvent(eventName, {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: mouseButton
+            });
             element.dispatchEvent(event);
         });
         lastMouseTarget = element;
@@ -527,6 +530,13 @@ var Hints = (function(mode) {
                 tabbed = true;
                 active = false;
             }
+
+            if (shiftKey && window.navigator.userAgent.indexOf("Firefox") !== -1) {
+                // mouseButton does not work for firefox in mouse event.
+                tabbed = true;
+                active = true;
+            }
+
             if (tabbed) {
                 RUNTIME("openLink", {
                     tab: {
