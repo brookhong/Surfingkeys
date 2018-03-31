@@ -291,8 +291,13 @@ var Visual = (function(mode) {
             httpRequest({
                 url: _translationUrl + w
             }, function(res) {
-                var pos = Visual.getCursorPos();
-                Front.showBubble(pos, _parseTranslation(res));
+                var br = cursor.getBoundingClientRect();
+                Front.showBubble({
+                    left: br.left,
+                    top: br.top,
+                    height: br.height,
+                    width: br.width
+                }, _parseTranslation(res));
             });
         }
     });
@@ -323,7 +328,7 @@ var Visual = (function(mode) {
         mark_template = document.createElement("surfingkeys_mark"),
         cursor = document.createElement("div");
     cursor.className = "surfingkeys_cursor";
-    cursor.style.zIndex = 2147483001;
+    cursor.style.zIndex = 2147483298;
 
     // f in visual mode
     var visualf = 0, lastF = null;
@@ -407,15 +412,23 @@ var Visual = (function(mode) {
     };
 
     var _focusedRange = document.createRange();
+    function getTextRect() {
+        _focusedRange.setStart(arguments[0], arguments[1]);
+        if (arguments.length > 3) {
+            _focusedRange.setEnd(arguments[2], arguments[3]);
+        } else {
+            _focusedRange.setEnd(arguments[0], arguments[1]);
+        }
+        return _focusedRange.getBoundingClientRect();
+    }
+
     self.showCursor = function () {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-            _focusedRange.setStart(selection.focusNode, selection.focusOffset);
-            _focusedRange.setEnd(selection.focusNode, selection.focusOffset);
             scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
-            var r = _focusedRange.getBoundingClientRect();
+            var r = getTextRect(selection.focusNode, selection.focusOffset);
             cursor.style.position = "fixed";
             cursor.style.left = r.left + 'px';
             if (r.top > 0) {
@@ -430,7 +443,6 @@ var Visual = (function(mode) {
     self.getCursorPixelPos = function () {
         return cursor.getBoundingClientRect();
     };
-
 
     function select(found) {
         self.hideCursor();
@@ -457,15 +469,11 @@ var Visual = (function(mode) {
 
     var holder = document.createElement("div");
     function createMatchMark(node1, offset1, node2, offset2) {
-        _focusedRange.setStart(node1, offset1);
-        _focusedRange.setEnd(node2, offset2);
-        var r = _focusedRange.getBoundingClientRect();
+        var r = getTextRect(node1, offset1, node2, offset2);
         if (r.width > 0 && r.height > 0) {
-            matches.push([node1, offset1]);
-
             var mark = mark_template.cloneNode(false);
             mark.style.position = "absolute";
-            mark.style.zIndex = 2147483000;
+            mark.style.zIndex = 2147483298;
             mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
             mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
             mark.style.width = r.width + 'px';
@@ -474,6 +482,8 @@ var Visual = (function(mode) {
             if (!document.body.contains(holder)) {
                 document.body.appendChild(holder);
             }
+
+            matches.push([node1, offset1, mark]);
         }
     }
 
@@ -509,6 +519,10 @@ var Visual = (function(mode) {
     self.visualClear = function() {
         self.hideCursor();
         matches = [];
+        registeredScrollNodes.forEach(function(n) {
+            n.onscroll = null;
+        });
+        registeredScrollNodes = [];
         holder.innerHTML = "";
         holder.remove();
         Front.showStatus(2, '');
@@ -606,22 +620,9 @@ var Visual = (function(mode) {
         var word = selection.toString();
         if (word.length === 0 && selection.focusNode && selection.focusNode.parentElement) {
             var pe = selection.focusNode.parentElement;
-            if (pe.tagName === "SURFINGKEYS_MARK") {
-                pe = pe.parentElement;
-            }
-            word = getNearestWord(pe.innerText, selection.focusOffset);
+            word = getNearestWord(pe.textContent, selection.focusOffset);
         }
         return word;
-    };
-
-    self.getCursorPos = function() {
-        var br = cursor.getBoundingClientRect();
-        return {
-            left: br.left,
-            top: br.top,
-            height: br.height,
-            width: br.width
-        };
     };
 
     self.next = function(backward) {
@@ -704,6 +705,7 @@ var Visual = (function(mode) {
         highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
     };
 
+    var registeredScrollNodes = [];
     self.visualEnter = function (query) {
         self.visualClear();
         highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
@@ -713,6 +715,18 @@ var Visual = (function(mode) {
         } else {
             Front.showStatus(2, "Pattern not found: {0}".format(query), 1000);
         }
+        Normal.getScrollableElements().forEach(function(n) {
+            if (n !== document.scrollingElement) {
+                n.onscroll = function() {
+                    matches.forEach(function(m) {
+                        var r = getTextRect(m[0], m[1]);
+                        m[2].style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                        m[2].style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                    });
+                };
+                registeredScrollNodes.push(n);
+            }
+        });
     };
 
     self.findSentenceOf = function (query) {

@@ -186,8 +186,11 @@ function getTextNodes(root, pattern, flag) {
         root,
         NodeFilter.SHOW_TEXT, {
             acceptNode: function(node) {
-                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
+                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data)) {
+                    // node changed, reset pattern.lastIndex
+                    pattern.lastIndex = 0;
                     return NodeFilter.FILTER_REJECT;
+                }
                 var br = node.parentNode.getBoundingClientRect();
                 if (br.width < 4 || br.height < 4) {
                     return NodeFilter.FILTER_REJECT;

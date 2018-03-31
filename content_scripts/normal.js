@@ -603,6 +603,11 @@ var Normal = (function(mode) {
         }
     };
 
+    self.getScrollableElements = function() {
+        initScrollIndex();
+        return scrollNodes;
+    };
+
     self.rotateFrame = function() {
         RUNTIME('nextFrame');
     };
