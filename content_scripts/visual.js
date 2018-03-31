@@ -237,8 +237,9 @@ var Visual = (function() {
         annotation: "make cursor at center of window.",
         feature_group: 9,
         code: function() {
+            var offset = cursor.getBoundingClientRect().top - window.innerHeight/2;
             self.hideCursor();
-            document.scrollingElement.scrollTop += cursor.getBoundingClientRect().top - window.innerHeight/2;
+            document.scrollingElement.scrollTop += offset;
             self.showCursor();
         }
     });

@@ -224,6 +224,23 @@ var Omnibar = (function(ui) {
         }
     });
 
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
+        annotation: "Close Omnibar",
+        feature_group: 8,
+        code: function () {
+            Front.hidePopup();
+        }
+    });
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-m>"), {
+        annotation: "Create vim-like mark for selected item",
+        feature_group: 8,
+        code: function (mark) {
+            var fi = Omnibar.resultsDiv.find('li.focused');
+            Normal.addVIMark(mark, fi.data('url'));
+        }
+    });
+
     var handlers = {},
         bookmarkFolders;
 
