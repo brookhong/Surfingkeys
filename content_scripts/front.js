@@ -140,7 +140,11 @@ var Front = (function() {
     };
 
     function updateElementBehindEditor(data) {
-        $(elementBehindEditor).val(data);
+        if (elementBehindEditor.nodeName === "DIV") {
+            elementBehindEditor.innerText = data;
+        } else {
+            elementBehindEditor.value = data;
+        }
         var evt = document.createEvent("HTMLEvents");
         evt.initEvent("change", false, true);
         elementBehindEditor.dispatchEvent(evt);
@@ -165,8 +169,12 @@ var Front = (function() {
             content = options.join('\n');
             elementBehindEditor = element;
         } else {
-            content = $(element).val();
             elementBehindEditor = element;
+            if (elementBehindEditor.nodeName === "DIV") {
+                content = elementBehindEditor.innerText;
+            } else {
+                content = elementBehindEditor.value;
+            }
         }
         onEditorSaved = onWrite || updateElementBehindEditor;
         frontendCommand({

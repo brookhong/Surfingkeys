@@ -10,11 +10,17 @@ var Insert = (function(mode) {
             }
         } else if (isEditable(element)) {
             // for contenteditable div
-            var selection = document.getSelection();
-            selection.setPosition(selection.focusNode, selection.focusNode.data.length - 1);
-            // blink cursor to bring cursor into view
-            Visual.showCursor();
-            Visual.hideCursor();
+            if (element.childNodes.length > 0) {
+                var node = element.childNodes[element.childNodes.length -1];
+                if (node.nodeType === Node.TEXT_NODE) {
+                    document.getSelection().setPosition(node, node.data.length);
+                } else {
+                    document.getSelection().setPosition(node, 0);
+                }
+                // blink cursor to bring cursor into view
+                Visual.showCursor();
+                Visual.hideCursor();
+            }
         }
     }
 
