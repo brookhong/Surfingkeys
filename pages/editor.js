@@ -213,13 +213,14 @@ var AceEditor = (function(mode, elmId) {
                 backward: false
             });
         });
-        vim.map('<C-b>', ':bn', 'normal');
+        vim.map('J', ':bn', 'normal');
         vim.defineEx("bprevious", "bp", function(cm, input) {
             Front.contentCommand({
                 action: 'nextEdit',
                 backward: true
             });
         });
+        vim.map('K', ':bp', 'normal');
         vim.defineEx("quit", "q", function(cm, input) {
             self.exit();
             self.state.cm.signal('vim-command-done', '');
