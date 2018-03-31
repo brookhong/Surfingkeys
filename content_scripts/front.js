@@ -159,14 +159,13 @@ var Front = (function() {
             content = element;
             elementBehindEditor = document.body;
         } else if (type === 'select') {
-            var selected = $(element).val();
-            var options = $(element).find('option').map(function(i) {
-                if ($(this).val() === selected) {
+            var selected = element.value;
+            content = Array.from(element.querySelectorAll('option')).map(function(n, i) {
+                if (n.value === selected) {
                     initial_line = i;
                 }
-                return "{0} >< {1}".format($(this).text(), $(this).val());
-            }).toArray();
-            content = options.join('\n');
+                return n.innerText + " >< " + n.value;
+            }).join('\n');
             elementBehindEditor = element;
         } else {
             elementBehindEditor = element;

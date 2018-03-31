@@ -426,12 +426,20 @@ var Visual = (function(mode) {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-            scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
             var r = getTextRect(selection.focusNode, selection.focusOffset);
             cursor.style.position = "fixed";
             cursor.style.left = r.left + 'px';
-            if (r.top > 0) {
+            if (r.left < 0 || r.left >= window.innerWidth) {
+                document.scrollingElement.scrollLeft += r.left - window.innerWidth / 2;
+                cursor.style.left = window.innerWidth / 2 + 'px';
+            } else {
+                cursor.style.left = r.left + 'px';
+            }
+            if (r.top < 0 || r.top >= window.innerHeight) {
+                document.scrollingElement.scrollTop += r.top - window.innerHeight / 2;
+                cursor.style.top = window.innerHeight / 2 + 'px';
+            } else {
                 cursor.style.top = r.top + 'px';
             }
             cursor.style.height = r.height + 'px';
