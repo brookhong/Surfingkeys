@@ -1,5 +1,76 @@
 var Mode = (function() {
-    var self = {}, mode_stack = [];
+    var self = function(name, statusLine) {
+        this.name = name;
+        this.statusLine = statusLine;
+        this.eventListeners = {};
+        this.addEventListener = function(evt, handler) {
+            this.eventListeners[evt] = handler;
+
+            if (_listenedEvents.indexOf(evt) === -1) {
+                _listenedEvents.push(evt);
+                window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
+            }
+
+            return this;
+        };
+
+        this.enter = function(priority, reentrant) {
+            var pos = mode_stack.indexOf(this);
+            if (!this.priority) {
+                this.priority = priority || mode_stack.length;
+            }
+
+            if (pos === -1) {
+                // push this mode into stack
+                mode_stack.unshift(this);
+            } else if (pos > 0) {
+                if (reentrant) {
+                    // pop up all the modes over this
+                    mode_stack = mode_stack.slice(pos);
+                } else {
+                    var modeList = mode_stack.map(function(u) { return u.name; }).join(',');
+                    reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
+                }
+                // stackTrace();
+            }
+
+            mode_stack.sort(function(a,b) {
+                return (a.priority < b.priority) ? 1 : ((b.priority < a.priority) ? -1 : 0);
+            } );
+            // var modes = mode_stack.map(function(m) {
+            // return m.name;
+            // }).join('->');
+            // console.log('enter {0}, {1}'.format(this.name, modes));
+
+            self.showStatus();
+
+            this.onEnter && this.onEnter();
+            return pos;
+        };
+
+        this.exit = function(peek) {
+            var pos = mode_stack.indexOf(this);
+            if (pos !== -1) {
+                this.priority = 0;
+                if (peek) {
+                    // for peek exit, we need push modes above this back to the stack.
+                    mode_stack.splice(pos, 1);
+                } else {
+                    // otherwise, we just pop all modes above this inclusively.
+                    pos++;
+                    var popup = mode_stack.slice(0, pos);
+                    mode_stack = mode_stack.slice(pos);
+                }
+
+                // var modes = mode_stack.map(function(m) {
+                // return m.name;
+                // }).join('->');
+                // console.log('exit {0}, {1}'.format(this.name, modes));
+            }
+            self.showStatus();
+            this.onExit && this.onExit(pos);
+        };
+    }, mode_stack = [];
     self.specialKeys = {
         "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlacklist
         "<Esc>": ["<Esc>"]
@@ -9,25 +80,14 @@ var Mode = (function() {
         return (-1 !== self.specialKeys[specialKey].indexOf(KeyboardUtils.decodeKeystroke(keyToCheck)));
     };
 
-    self.postHandler = function(event) {
+    function onAfterHandler(mode, event) {
         if (event.sk_stopPropagation) {
             event.stopImmediatePropagation();
             event.preventDefault();
             // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
-            this.stopKeyupPropagation = (event.type === "keydown" && this.enableKeyupMerging) ? event.keyCode : 0;
+            mode.stopKeyupPropagation = (event.type === "keydown" && mode.enableKeyupMerging) ? event.keyCode : 0;
         }
-    };
-
-    self.addEventListener = function(evt, handler) {
-        this.eventListeners[evt] = handler;
-
-        if (_listenedEvents.indexOf(evt) === -1) {
-            _listenedEvents.push(evt);
-            window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
-        }
-
-        return this;
-    };
+    }
 
     var _listenedEvents = ["keydown", "keyup"];
 
@@ -37,7 +97,7 @@ var Mode = (function() {
             if (!event.sk_suppressed && m.eventListeners.hasOwnProperty(eventName)) {
                 var handler = m.eventListeners[eventName];
                 handler(event);
-                m.postHandler(event);
+                onAfterHandler(m, event);
             }
             if (m.name === "Disabled") {
                 break;
@@ -60,37 +120,6 @@ var Mode = (function() {
         });
     }, true);
 
-    self.enter = function(priority, reentrant) {
-        var pos = mode_stack.indexOf(this);
-        if (!this.priority) {
-            this.priority = priority || mode_stack.length;
-        }
-
-        if (pos === -1) {
-            // push this mode into stack
-            mode_stack.unshift(this);
-        } else if (pos > 0) {
-            if (reentrant) {
-                // pop up all the modes over this
-                mode_stack = mode_stack.slice(pos);
-            } else {
-                var modeList = Mode.stack().map(function(u) { return u.name; }).join(',');
-                reportIssue("Mode {0} pushed into mode stack again.".format(this.name), "Modes in stack: {0}".format(modeList));
-            }
-            // stackTrace();
-        }
-
-        mode_stack.sort(function(a,b) {
-            return (a.priority < b.priority) ? 1 : ((b.priority < a.priority) ? -1 : 0);
-        } );
-        // var modes = mode_stack.map(function(m) {
-            // return m.name;
-        // }).join('->');
-        // console.log('enter {0}, {1}'.format(this.name, modes));
-
-        self.showStatus();
-    };
-
     self.showStatus = function() {
         if (document.hasFocus() && mode_stack.length) {
             var cm = mode_stack[0];
@@ -100,7 +129,7 @@ var Mode = (function() {
             }
             if (sl !== "" && window !== top) {
                 if (chrome.extension.getURL('').indexOf(window.location.origin) === 0) {
-                    if (!cm.frontendOnly) {
+                    if (cm !== Find) {
                         sl += "✩";
                     }
                 } else {
@@ -112,28 +141,6 @@ var Mode = (function() {
             }
             Front.showStatus(0, sl);
         }
-    };
-
-    self.exit = function(peek) {
-        var pos = mode_stack.indexOf(this);
-        if (pos !== -1) {
-            this.priority = 0;
-            if (peek) {
-                // for peek exit, we need push modes above this back to the stack.
-                mode_stack.splice(pos, 1);
-            } else {
-                // otherwise, we just pop all modes above this inclusively.
-                pos++;
-                var popup = mode_stack.slice(0, pos);
-                mode_stack = mode_stack.slice(pos);
-            }
-
-            // var modes = mode_stack.map(function(m) {
-                // return m.name;
-            // }).join('->');
-            // console.log('exit {0}, {1}'.format(this.name, modes));
-        }
-        self.showStatus();
     };
 
     self.stack = function() {
@@ -169,7 +176,7 @@ var Mode = (function() {
             setTimeout(function() {
                 pf(key);
                 _finish(thisMode);
-                thisMode.postHandler(event);
+                onAfterHandler(thisMode, event);
             }, 0);
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
@@ -202,7 +209,7 @@ var Mode = (function() {
                                 RUNTIME.repeats--;
                             }
                             _finish(thisMode);
-                            thisMode.postHandler(event);
+                            onAfterHandler(thisMode, event);
                         }, 0);
                     }
                 } else {
@@ -216,8 +223,8 @@ var Mode = (function() {
     return self;
 })();
 
-var Disabled = (function(mode) {
-    var self = $.extend({name: "Disabled", eventListeners: {}}, mode);
+var Disabled = (function() {
+    var self = new Mode("Disabled");
 
     // Disabled has higher priority than others.
     self.priority = 99;
@@ -233,14 +240,10 @@ var Disabled = (function(mode) {
     });
 
     return self;
-})(Mode);
+})();
 
-var PassThrough = (function(mode) {
-    var self = $.extend({
-        name: "PassThrough",
-        statusLine: "pass through",
-        eventListeners: {}
-    }, mode);
+var PassThrough = (function() {
+    var self = new Mode("PassThrough", "pass through");
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -254,10 +257,10 @@ var PassThrough = (function(mode) {
     });
 
     return self;
-})(Mode);
+})();
 
-var Normal = (function(mode) {
-    var self = $.extend({name: "Normal", eventListeners: {}}, mode);
+var Normal = (function() {
+    var self = new Mode("Normal");
 
     // Enable to stop propagation of the event whose keydown handler has been triggered
     // Why we need this?
@@ -275,8 +278,7 @@ var Normal = (function(mode) {
         _passFocus = pf;
     };
 
-    self.enter = function() {
-        mode.enter.apply(self, arguments);
+    self.onEnter = function() {
         if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
             var elm = getRealEdit();
             elm && elm.blur();
@@ -1024,4 +1026,4 @@ var Normal = (function(mode) {
     });
 
     return self;
-})(Mode);
+})();

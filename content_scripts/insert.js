@@ -1,5 +1,5 @@
-var Insert = (function(mode) {
-    var self = $.extend({name: "Insert", eventListeners: {}}, mode);
+var Insert = (function() {
+    var self = new Mode("Insert");
 
     function moveCusorEOL() {
         var element = getRealEdit();
@@ -386,12 +386,9 @@ var Insert = (function(mode) {
     }
 
     var _element;
+    var _enter = self.enter;
     self.enter = function(elm) {
-        var changed = false;
-        if (Mode.stack().indexOf(self) === -1) {
-            mode.enter.apply(self, arguments);
-            changed = true;
-        }
+        var changed = (_enter.call(self) === -1);
         if (_element !== elm) {
             _element = elm;
             changed = true;
@@ -402,4 +399,4 @@ var Insert = (function(mode) {
     };
 
     return self;
-})(Mode);
+})();

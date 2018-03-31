@@ -78,13 +78,8 @@ function _filterByTitleOrUrl(urls, query) {
  * @param {Object} ui
  * @return {Omnibar} Omnibar instance
  */
-var Omnibar = (function(mode, ui) {
-    var self = $.extend({
-        name: "Omnibar",
-        frontendOnly: true,
-        eventListeners: {}
-    }, mode);
-
+var Omnibar = (function(ui) {
+    var self = new Mode("Omnibar");
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
@@ -600,7 +595,7 @@ var Omnibar = (function(mode, ui) {
     };
 
     return self;
-})(Mode, Front.omnibar);
+})(Front.omnibar);
 
 var OpenBookmarks = (function() {
     var self = {

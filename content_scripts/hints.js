@@ -1,5 +1,5 @@
-var Hints = (function(mode) {
-    var self = $.extend({name: "Hints", eventListeners: {}}, mode);
+var Hints = (function() {
+    var self = new Mode("Hints");
 
     self.addEventListener('keydown', function(event) {
         var hints = holder.find('>div');
@@ -194,17 +194,15 @@ var Hints = (function(mode) {
     }
 
     var _origOverflow;
-    self.enter = function() {
+    self.onEnter = function() {
         _origOverflow = document.body.style.overflowX;
         document.body.style.overflowX = "hidden";
-        mode.enter.call(self);
         document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.addEventListener("surfingkeys:scrollDone", resetHints);
     };
 
-    self.exit = function() {
+    self.onExit = function() {
         document.body.style.overflowX = _origOverflow;
-        mode.exit.call(self);
         document.removeEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.removeEventListener("surfingkeys:scrollDone", resetHints);
     };
@@ -582,4 +580,4 @@ var Hints = (function(mode) {
     };
 
     return self;
-})(Mode);
+})();

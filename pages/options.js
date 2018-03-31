@@ -332,12 +332,8 @@ document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
     renderKeyMappings(evt.detail);
 });
 
-var KeyPicker = (function(mode) {
-    var self = $.extend({
-        name: "KeyPicker",
-        frontendOnly: true,
-        eventListeners: {}
-    }, mode);
+var KeyPicker = (function() {
+    var self = new Mode("KeyPicker");
 
     function showKey() {
         var s = $.htmlEncode(_key);
@@ -418,8 +414,9 @@ var KeyPicker = (function(mode) {
     });
 
     var _elm;
+    var _enter = self.enter;
     self.enter = function(elm) {
-        mode.enter.apply(self, arguments);
+        _enter.call(self);
         _key = $(elm).attr('new');
         showKey();
         $('#keyPicker').show();
@@ -427,4 +424,4 @@ var KeyPicker = (function(mode) {
     };
 
     return self;
-})(Mode);
+})();

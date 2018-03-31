@@ -49,13 +49,8 @@ var StatusBar = (function(ui) {
     return self;
 })(Front.statusBar);
 
-var Find = (function(mode) {
-    var self = $.extend({
-        name: "Find",
-        statusLine: "/",
-        frontendOnly: true,
-        eventListeners: {}
-    }, mode);
+var Find = (function() {
+    var self = new Mode("Find", "/");
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -132,4 +127,4 @@ var Find = (function(mode) {
         self.enter();
     };
     return self;
-})(Mode);
+})();

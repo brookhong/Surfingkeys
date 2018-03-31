@@ -1,9 +1,5 @@
-var Visual = (function(mode) {
-    var self = $.extend({
-        name: "Visual",
-        eventListeners: {},
-        statusLine: "Visual"
-    }, mode);
+var Visual = (function() {
+    var self = new Mode("Visual");
 
     self.addEventListener('keydown', function(event) {
         if (visualf) {
@@ -426,6 +422,7 @@ var Visual = (function(mode) {
         if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
+            scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
             var r = getTextRect(selection.focusNode, selection.focusOffset);
             cursor.style.position = "fixed";
@@ -540,17 +537,15 @@ var Visual = (function(mode) {
         Front.hideBubble();
     }
 
-    self.enter = function() {
-        mode.enter.apply(self, arguments);
+    self.onEnter = function() {
         document.addEventListener('surfingkeys:cursorHidden', onCursorHiden);
         _incState();
     };
 
     var _lastPos = null;
-    self.exit = function() {
+    self.onExit = function() {
         document.removeEventListener('surfingkeys:cursorHidden', onCursorHiden);
         _lastPos = [selection.anchorNode, selection.anchorOffset];
-        mode.exit.apply(self, arguments);
     };
 
     function _onStateChange() {
@@ -765,4 +760,4 @@ var Visual = (function(mode) {
         mark_template.setAttribute('style', _style.marks || '');
     };
     return self;
-})(Mode);
+})();

@@ -1,9 +1,5 @@
-var Front = (function(mode) {
-    var self = $.extend({
-        name: "Front",
-        frontendOnly: true,
-        eventListeners: {}
-    }, mode);
+var Front = (function() {
+    var self = new Mode("Front");
 
     // this object is implementation of UI, it's UI provider
     self.isProvider = function() {
@@ -471,4 +467,4 @@ var Front = (function(mode) {
     }, true);
 
     return self;
-})(Mode);
+})();
