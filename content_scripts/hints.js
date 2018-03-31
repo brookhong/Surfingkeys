@@ -254,13 +254,17 @@ var Hints = (function(mode) {
                 z = getZIndex(this);
             var left, width = Math.min(pos.width, window.innerWidth);
             if (runtime.conf.hintAlign === "right") {
-                left = pos.left - bof.left + width;
+                left = window.pageXOffset + pos.left - bof.left + width;
             } else if (runtime.conf.hintAlign === "left") {
-                left = pos.left - bof.left;
+                left = window.pageXOffset + pos.left - bof.left;
             } else {
-                left = pos.left - bof.left + width / 2;
+                left = window.pageXOffset + pos.left - bof.left + width / 2;
             }
-            left = Math.max(left + window.pageXOffset, 0);
+            if (left < window.pageXOffset) {
+                left = window.pageXOffset;
+            } else if (left + 32 > window.pageXOffset + window.innerWidth) {
+                left = window.pageXOffset + window.innerWidth - 32;
+            }
             var link = $('<div/>').css('top', Math.max(pos.top + window.pageYOffset - bof.top, 0)).css('left', left)
                 .css('z-index', z + 9999)
                 .data('z-index', z + 9999)
