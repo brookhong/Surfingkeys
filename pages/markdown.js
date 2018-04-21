@@ -1,14 +1,15 @@
+var markdownBody = document.querySelector(".markdown-body");
 function previewMarkdown(mk) {
     Front.source = mk;
     if (runtime.conf.useLocalMarkdownAPI) {
-        $('.markdown-body').html(marked(mk));
+        markdownBody.innerHTML = marked(mk);
     } else {
-        $('.markdown-body').html("Loading preview…");
+        markdownBody.innerHTML = "Loading preview…";
         httpRequest({
             url: "https://api.github.com/markdown/raw",
             data: mk
         }, function(res) {
-            $('.markdown-body').html(res.text);
+            markdownBody.innerHTML = res.text;
         });
     }
 }
@@ -23,7 +24,7 @@ mapkey(';s', '#99Switch markdown parser', function() {
 });
 
 mapkey('cc', '#99Copy generated html code', function() {
-    Clipboard.write($('.markdown-body').html());
+    Clipboard.write(markdownBody.innerHTML);
 });
 
 var mdUrl = window.location.search.substr(3);
@@ -45,7 +46,8 @@ reader.onload = function(){
 function previewMarkdownFile() {
     reader.readAsText(inputFile);
 }
-$('input[type=file]').on('change', function(evt) {
+var inputFileDiv = document.querySelector("input[type=file]");
+inputFileDiv.onchange = function(evt) {
     if (!inputFile) {
         mapkey('or', '#99Reload from selected local file.', function() {
             previewMarkdownFile();
@@ -55,8 +57,8 @@ $('input[type=file]').on('change', function(evt) {
     }
     inputFile = evt.target.files[0];
     previewMarkdownFile();
-});
+};
 
 mapkey('of', '#99Open local file.', function() {
-    $('input[type=file]').click();
+    inputFileDiv.click();
 });

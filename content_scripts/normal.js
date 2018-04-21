@@ -467,7 +467,8 @@ var Normal = (function() {
     // set scrollIndex to the highest node
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
-            $('html, body').css('overflow', 'visible');
+            document.documentElement.style.overflow = "visible";
+            document.body.style.overflow = "visible";
             scrollNodes = getScrollableElements(100, 1.1);
             scrollIndex = 0;
 
@@ -488,7 +489,7 @@ var Normal = (function() {
 
     function getScrollableElements() {
         var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
-            return $.hasScroll(n, 'y', 16) || $.hasScroll(n, 'x', 16);
+            return hasScroll(n, 'y', 16) || hasScroll(n, 'x', 16);
         });
         if (document.scrollingElement.scrollHeight > window.innerHeight
             || document.scrollingElement.scrollWidth > window.innerWidth) {

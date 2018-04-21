@@ -2,36 +2,45 @@ var defaultMappingsEditor = ace.edit("defaultMappings");
 defaultMappingsEditor.setTheme("ace/theme/chrome");
 defaultMappingsEditor.setKeyboardHandler('ace/keyboard/vim');
 defaultMappingsEditor.getSession().setMode("ace/mode/javascript");
-$(defaultMappingsEditor.container).hide();
+defaultMappingsEditor.container.hide();
 defaultMappingsEditor.setReadOnly(true);
 defaultMappingsEditor.container.style.background="#f1f1f1";
 defaultMappingsEditor.$blockScrolling = Infinity;
 
 var mappingsEditor = null;
-function createMappingEditor(mode, elmId) {
-    var self = ace.edit(elmId);
-    self = $.extend(self, mode);
-    self = $.extend(self, {name: "mappingsEditor", eventListeners: {}, mode: 'normal'});
+function createMappingEditor(elmId) {
+    var _ace = ace.edit(elmId);
+    _ace.mode = "normal";
+
+    var self = new Mode("mappingsEditor");
+
+    self.container = _ace.container;
+    self.setValue = function(v, cursorPos) {
+        _ace.setValue(v, cursorPos);
+    };
+    self.getValue = function() {
+        return _ace.getValue();
+    };
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)
-            && self.mode === 'normal' // vim in normal mode
-            && (self.state.cm.state.vim.status === null || self.state.cm.state.vim.status === "") // and no pending normal operation
+            && _ace.mode === 'normal' // vim in normal mode
+            && (_ace.state.cm.state.vim.status === null || _ace.state.cm.state.vim.status === "") // and no pending normal operation
         ) {
             document.activeElement.blur();
             self.exit();
         }
     });
-    $('#mappings textarea').on('focus', function() {
+    document.querySelector('#mappings textarea').onfocus = function() {
         setTimeout(function() {
             Hints.exit();
             Insert.exit();
             self.enter(0, true);
         }, 10);
-    });
+    };
 
-    self.setTheme("ace/theme/chrome");
+    _ace.setTheme("ace/theme/chrome");
     ace.config.loadModule('ace/ext/language_tools', function (mod) {
         ace.config.loadModule('ace/autocomplete', function (mod) {
             mod.Autocomplete.startCommand.bindKey = "Tab";
@@ -39,16 +48,16 @@ function createMappingEditor(mode, elmId) {
             mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
             mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
         });
-        self.setOptions({
+        _ace.setOptions({
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: false,
             enableSnippets: false
         });
     });
-    self.setKeyboardHandler('ace/keyboard/vim', function() {
-        var cm = self.state.cm;
+    _ace.setKeyboardHandler('ace/keyboard/vim', function() {
+        var cm = _ace.state.cm;
         cm.on('vim-mode-change', function(data) {
-            self.mode = data.mode;
+            _ace.mode = data.mode;
         });
         cm.constructor.Vim.defineEx("write", "w", function(cm, input) {
             saveSettings();
@@ -57,54 +66,62 @@ function createMappingEditor(mode, elmId) {
             window.close();
         });
     });
-    self.getSession().setMode("ace/mode/javascript");
-    self.$blockScrolling = Infinity;
+    _ace.getSession().setMode("ace/mode/javascript");
+    _ace.$blockScrolling = Infinity;
 
     return self;
 }
 
+var proxySelect = document.querySelector("#proxy>select");
+var proxyInput = document.querySelector("#proxy>input");
 function renderProxy(proxy) {
     var p = proxy.split(/\s+/);
     if (p.length > 0) {
-        $("#proxy>select").val(p[0]);
-        $("#proxy>input").val(p[1]);
+        proxySelect.value = p[0];
+        proxyInput.value = p[1];
     } else {
-        $("#proxy>select").val("PROXY");
+        proxySelect.value = "PROXY";
     }
 }
 
+var proxyModeSelect = document.querySelector("#proxyMode>select");
+var autoproxyHostsInput = document.querySelector("#autoproxy_hosts>input");
 function renderProxySettings(rs) {
-    $('#proxyMode>select').val(rs.proxyMode);
-    $("#proxy").hide();
-    $('#autoproxy_hosts').hide();
-    $('#proxyMode span[mode]').hide();
-    $(`#proxyMode span[mode=${rs.proxyMode}]`).show();
+    proxyModeSelect.value = rs.proxyMode;
+    var proxyDiv = document.getElementById("proxy");
+    var autoproxyHostsDiv = document.getElementById("autoproxy_hosts");
+    proxyDiv.hide();
+    autoproxyHostsDiv.hide();
+    document.querySelector('#proxyMode span[mode]').hide();
+    document.querySelector(`#proxyMode span[mode=${rs.proxyMode}]`).show();
     if (rs.proxyMode === "byhost" || rs.proxyMode === "always") {
-        $("#proxy").show();
+        proxyDiv.show();
         renderProxy(rs.proxy);
 
         var desc = "For below hosts, above proxy will be used, click ␡ to remove one.";
         if (rs.proxyMode === "always") {
             desc = "For below hosts, <b>NO</b> proxy will be used, click ␡ to remove one.";
         }
-        $('#autoproxy_hosts>h3').html(desc);
+        document.querySelector('#autoproxy_hosts>h3').innerHTML = desc;
 
-        var ih = $('#autoproxy_hosts>input').val();
+        var ih = autoproxyHostsInput.value;
         var autoproxy_hosts = rs.autoproxy_hosts.sort().map(function(h) {
             return `<aphost><i role='remove'>␡</i><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
         }).join("");
-        $('#autoproxy_hosts').show();
-        $('#autoproxy_hosts>div').html(autoproxy_hosts);
+        autoproxyHostsDiv.show();
+        document.querySelector('#autoproxy_hosts>div').innerHTML = autoproxy_hosts;
 
-        $('#autoproxy_hosts').find('aphost>i').click(function() {
-            var elm = $(this).closest('aphost');
-            runtime.command({
-                action: 'updateProxy',
-                host: elm.find("span").text(),
-                operation: 'remove'
-            }, function() {
-                elm.remove();
-            });
+        autoproxyHostsDiv.querySelectorAll('aphost>i').forEach(function(ph) {
+            ph.onclick = function() {
+                var elm = this.closest('aphost');
+                runtime.command({
+                    action: 'updateProxy',
+                    host: elm.querySelector("span").innerText,
+                    operation: 'remove'
+                }, function() {
+                    elm.remove();
+                });
+            };
         });
     }
 }
@@ -118,58 +135,63 @@ function _updateProxy(data) {
 
 function __updateProxy(data) {
     _updateProxy({
-        proxy: $('#proxy>select').val() + " " + $('#proxy>input').val()
+        proxy: proxySelect.value + " " + proxyInput.value
     });
 }
 
-$('#proxyMode>select').change(function() {
+proxyModeSelect.onchange = function() {
     _updateProxy({
-        mode: $(this).val()
+        mode: this.value
     });
-});
+};
 
-$('#proxy>select').change(__updateProxy);
-$('#proxy>input').blur(__updateProxy);
+proxySelect.onchange = __updateProxy;
+proxyInput.onblur = __updateProxy;
 
 function addAutoProxyHost() {
     _updateProxy({
-        host: $('#autoproxy_hosts>input').val(),
+        host: autoproxyHostsInput.value,
         operation: 'add'
     });
 }
 
-$('#autoproxy_hosts>input').keyup(function(e) {
+autoproxyHostsInput.onkeyup = function(e) {
     if (e.keyCode === 13) {
         addAutoProxyHost();
     }
-});
+};
 
-$('#autoproxy_hosts>button').click(addAutoProxyHost);
+document.querySelector('#autoproxy_hosts>button').onclick = addAutoProxyHost;
 
+var basicMappingsDiv = document.getElementById("basicMappings");
+var advancedSettingDiv = document.getElementById("advancedSetting");
+var advancedTogglerDiv = document.getElementById("advancedToggler");
 function showAdvanced(flag) {
     if (flag) {
-        $('#basicMappings').hide();
-        $('#advancedSetting').show();
-        $('#advancedToggler').attr('checked', 'checked');
+        basicMappingsDiv.hide();
+        advancedSettingDiv.show();
+        advancedTogglerDiv.setAttribute('checked', 'checked');
     } else {
-        $('#basicMappings').show();
-        $('#advancedSetting').hide();
-        $('#advancedToggler').removeAttr('checked');
+        basicMappingsDiv.show();
+        advancedSettingDiv.hide();
+        advancedTogglerDiv.removeAttribute('checked');
     }
 }
 
 var localPathSaved = "";
+var localPathInput = document.getElementById("localPath");
+var sample = document.getElementById("sample").innerHTML;
 function renderSettings(rs) {
     showAdvanced(rs.showAdvanced);
-    $('#localPath').val(rs.localPath);
+    localPathInput.value = rs.localPath;
     localPathSaved = rs.localPath;
-    var h = $(window).height() / 2;
-    $(mappingsEditor.container).css('height', h);
-    $(defaultMappingsEditor.container).css('height', h);
+    var h = window.innerHeight / 2;
+    mappingsEditor.container.style.height = h + "px";
+    defaultMappingsEditor.container.style.height = h + "px";
     if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
-        mappingsEditor.setValue($('#sample').html(), -1);
+        mappingsEditor.setValue(sample, -1);
     }
 
     renderProxySettings(rs);
@@ -181,7 +203,7 @@ runtime.on('settingsUpdated', function(resp) {
         if (resp.settings.snippets.length) {
             mappingsEditor.setValue(resp.settings.snippets, -1);
         } else {
-            mappingsEditor.setValue($('#sample').html(), -1);
+            mappingsEditor.setValue(sample, -1);
         }
     }
 });
@@ -189,25 +211,25 @@ runtime.on('settingsUpdated', function(resp) {
 runtime.command({
     action: 'getSettings'
 }, function(response) {
-    mappingsEditor = createMappingEditor(Mode, 'mappings');
+    mappingsEditor = createMappingEditor('mappings');
     renderSettings(response.settings);
     if ('error' in response.settings) {
         Front.showBanner(response.settings.error, 5000);
     }
 });
 
-$('#advancedToggler').click(function() {
-    var newFlag = ($(this).attr('checked') === undefined);
+advancedTogglerDiv.onclick = function() {
+    var newFlag = this.checked;
     showAdvanced(newFlag);
     RUNTIME('updateSettings', {
         settings: {
             showAdvanced: newFlag
         }
     });
-});
-$('#resetSettings').click(function() {
-    if ($(this).text() === "Reset") {
-        $(this).text("WARNING! This will clear all your settings. Click this again to continue.");
+};
+document.getElementById('resetSettings').onclick = function() {
+    if (this.innerText === "Reset") {
+        this.innerText = "WARNING! This will clear all your settings. Click this again to continue.";
     } else {
         runtime.command({
             action: "resetSettings"
@@ -217,27 +239,32 @@ $('#resetSettings').click(function() {
             Front.showBanner('Settings reset', 300);
         });
     }
-});
+};
 
-$('.infoPointer').click(function() {
-    $('#' + $(this).attr('for')).toggle();
-});
+document.querySelector('.infoPointer').onclick = function() {
+    var f = document.getElementById(this.getAttribute("for"));
+    if (f.style.display === "none") {
+        f.style.display = "";
+    } else {
+        f.style.display = "none";
+    }
+};
 
-$('#showDefaultSettings').click(function() {
-    if ($(defaultMappingsEditor.container).is(':visible')) {
-        $(defaultMappingsEditor.container).hide();
-        $(mappingsEditor.container).css('width', '100%');
+document.getElementById('showDefaultSettings').onclick = function() {
+    if (defaultMappingsEditor.container.style.display !== "none") {
+        defaultMappingsEditor.container.hide();
+        mappingsEditor.container.style.width = "100%";
     } else {
         httpRequest({
             url: chrome.extension.getURL('/pages/default.js'),
         }, function(res) {
-            $(defaultMappingsEditor.container).css('display', 'inline-block');
+            defaultMappingsEditor.container.style.display = "inline-block";
             defaultMappingsEditor.setValue(res.text, -1);
-            $(defaultMappingsEditor.container).css('width', '50%');
+            defaultMappingsEditor.container.style.width = "50%";
         });
-        $(mappingsEditor.container).css('width', '50%');
+        mappingsEditor.container.style.width = "50%";
     }
-});
+};
 
 function getURIPath(fn) {
     if (fn.length && !/^\w+:\/\/\w+/i.test(fn) && fn.indexOf('file:///') === -1) {
@@ -251,7 +278,7 @@ function getURIPath(fn) {
 }
 function saveSettings() {
     var settingsCode = mappingsEditor.getValue();
-    var localPath = getURIPath($('#localPath').val().trim());
+    var localPath = getURIPath(localPathInput.value.trim());
     if (localPath.length && localPath !== localPathSaved) {
         RUNTIME("loadSettingsFromUrl", {
             url: localPath
@@ -261,14 +288,14 @@ function saveSettings() {
         RUNTIME('updateSettings', {
             settings: {
                 snippets: settingsCode,
-                localPath: getURIPath($('#localPath').val())
+                localPath: getURIPath(localPathInput.value)
             }
         });
 
         Front.showBanner('Settings saved', 300);
     }
 }
-$('#save_button').click(saveSettings);
+document.getElementById('save_button').onclick = saveSettings;
 
 var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
@@ -314,15 +341,17 @@ function renderKeyMappings(rs) {
                 if (delta.settings.map.hasOwnProperty(w.origin)) {
                     newKey = delta.settings.map[w.origin];
                 }
-            return `<div>
+                return `<div>
     <span class=annotation>${locale(w.annotation)}</span>
-    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? $.htmlEncode(newKey) : "🚫"}</kbd></span>
+    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
     </div>`;
             });
 
-            $('#basicMappings').html(customization);
-            $('#basicMappings').find("kbd").click(function () {
-                KeyPicker.enter(this);
+            basicMappingsDiv.innerHTML = customization.join("");
+            basicMappingsDiv.querySelectorAll("kbd").forEach(function(d) {
+                d.onclick = function () {
+                    KeyPicker.enter(this);
+                };
             });
         });
     });
@@ -336,17 +365,18 @@ var KeyPicker = (function() {
     var self = new Mode("KeyPicker");
 
     function showKey() {
-        var s = $.htmlEncode(_key);
+        var s = htmlEncode(_key);
         if (!s) {
             s = "&nbsp;";
         }
-        $('#keyPicker').find("#inputKey").html(s);
+        document.getElementById("inputKey").innerHTML = s;
     }
 
     var _key = "";
+    var keyPickerDiv = document.getElementById("keyPicker");
     self.addEventListener('keydown', function(event) {
         if (event.keyCode === 27) {
-            $('#keyPicker').hide();
+            keyPickerDiv.hide();
             self.exit();
         } else if (event.keyCode === 8) {
             var ek = KeyboardUtils.encodeKeystroke(_key);
@@ -354,17 +384,17 @@ var KeyPicker = (function() {
             _key = KeyboardUtils.decodeKeystroke(ek);
             showKey();
         } else if (event.keyCode === 13) {
-            $('#keyPicker').hide();
+            keyPickerDiv.hide();
             self.exit();
-            _elm.innerHTML = (_key !== "") ? $.htmlEncode(_key) : "🚫";
-            $(_elm).attr('new', _key);
-            var kbds = $('#basicMappings').find("kbd").toArray();
+            _elm.innerHTML = (_key !== "") ? htmlEncode(_key) : "🚫";
+            _elm.setAttribute('new', _key);
+            var kbds = Array.from(basicMappingsDiv.querySelectorAll("kbd"));
             var originalKeys = kbds.map(function(m) {
-                return $(m).attr('origin');
+                return m.getAttribute('origin');
             }, {} );
             var realDefMap = [];
             var kbdMap = kbds.map(function(m, i) {
-                var n = $(m).attr('new'), o = $(m).attr('origin');
+                var n = m.getAttribute('new'), o = m.getAttribute('origin');
                 var c = [];
                 if (n === "") {
                     c.push(`unmap("${o}");`);
@@ -404,7 +434,7 @@ var KeyPicker = (function() {
                     composed: event.composed,
                     key: event.key
                 }, null, 4);
-                reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
+                reportIssue(`Unrecognized key event: {event.sk_keyName}`, keyStr);
             } else {
                 _key += KeyboardUtils.decodeKeystroke(event.sk_keyName);
                 showKey();
@@ -417,9 +447,9 @@ var KeyPicker = (function() {
     var _enter = self.enter;
     self.enter = function(elm) {
         _enter.call(self);
-        _key = $(elm).attr('new');
+        _key = elm.getAttribute("new");
         showKey();
-        $('#keyPicker').show();
+        keyPickerDiv.show();
         _elm = elm;
     };
 

@@ -40,7 +40,6 @@ cmap('<Ctrl-p>', '<Shift-Tab>');
 **Parameters**
 
 -   `mode` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
--   `ui` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
 
 Returns **[Omnibar](#omnibar)** Omnibar instance
 

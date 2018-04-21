@@ -82,10 +82,6 @@ kbd {
     animation: 0.2s ease-in-out 1 forwards fadeIn;
 }
 
-#content>div {
-    display: none;
-}
-
 #randomTip {
     padding: 40px;
     font-size: 24pt;

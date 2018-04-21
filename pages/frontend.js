@@ -95,7 +95,7 @@ command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
     runtime.updateHistory(args[0], []);
 });
 command('listSession', 'list session', function() {
-    if (!Front.omnibar.is(":visible")) {
+    if (Front.omnibar.style.display === "none") {
         Front.openOmnibar({ type: "Commands" });
     }
     runtime.command({
@@ -103,7 +103,7 @@ command('listSession', 'list session', function() {
         key: 'sessions'
     }, function(response) {
         Omnibar.listResults(Object.keys(response.settings.sessions), function(s) {
-            return $('<li/>').html(s);
+            return createElement(`<li>${s}</li>`);
         });
     });
 });
@@ -128,7 +128,7 @@ command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
         action: 'getQueueURLs'
     }, function(response) {
         Omnibar.listResults(response.queueURLs, function(s) {
-            return $('<li/>').html(s);
+            return createElement(`<li>${s}</li>`);
         });
     });
 });

@@ -361,7 +361,8 @@ var Visual = (function() {
         var node = null;
         var treeWalker = getTextNodes(document.body, /./, 0);
         while (treeWalker.nextNode()) {
-            if ($(treeWalker.currentNode.parentNode).offset().top > (document.scrollingElement.scrollTop + window.innerHeight * y)) {
+            var br = treeWalker.currentNode.parentNode.getBoundingClientRect();
+            if (br.top > window.innerHeight * y) {
                 node = treeWalker.currentNode;
                 break;
             }
@@ -420,7 +421,7 @@ var Visual = (function() {
     }
 
     self.showCursor = function () {
-        if (selection.focusNode && ($(selection.focusNode).is(':visible') || $(selection.focusNode.parentNode).is(':visible'))) {
+        if (selection.focusNode && (selection.focusNode.offsetHeight > 0 || selection.focusNode.parentNode.offsetHeight > 0)) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
             scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);

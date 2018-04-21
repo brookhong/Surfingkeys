@@ -43,7 +43,6 @@ body {
     font-size: 12px;
 }
 #sk_omnibar {
-    display: none;
     overflow: hidden;
     position: fixed;
     width: 80%;
@@ -131,7 +130,6 @@ body {
     float: right;
 }
 #sk_status {
-    display: none;
     position: fixed;
     bottom: 0;
     right: 20%;

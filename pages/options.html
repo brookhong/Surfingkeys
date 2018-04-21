@@ -47,7 +47,7 @@ settings.theme = `
     background: #4ec10d;
 }`;
 // click `Save` button to make above settings to take effect.</script>
-        <div id="keyPicker">
+        <div id="keyPicker" style="display: none;">
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
         </div>
@@ -57,11 +57,11 @@ settings.theme = `
         <div class="section" id="basicMappings">
         </div>
 
-        <div id="advancedSetting" class="section">
+        <div id="advancedSetting" class="section" style="display: none;">
             <label for="localPath">Load settings from:</label>
             <input type="text" value="" id="localPath" name="localPath" size=72>
             <span class=infoPointer for=localPathHelp>?</span>
-            <div class=info id='localPathHelp'>You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt">https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt</a>. If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</div>
+            <div class=info id='localPathHelp' style="display: none;">You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt">https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt</a>. If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</div>
             <div id="save_container">
                 <a href="#" id='showDefaultSettings'>Default mappings</a>
                 <a href="https://github.com/brookhong/Surfingkeys/issues" target="_blank">Report issues</a>
@@ -87,14 +87,14 @@ settings.theme = `
                     <option>system</option>
                 </select>
                 <span class="tip">
-                    <span mode="always">Connect to all sites through proxy, with specified hosts excluded.</span>
-                    <span mode="byhost">Connect to only specified sites through proxy.</span>
-                    <span mode="clear">Surfingkeys will not take control of proxy settings, this is the default mode.</span>
-                    <span mode="direct">Connect to all sites directly.</span>
-                    <span mode="system">Use proxy configuration taken from the operating system.</span>
+                    <span mode="always" style="display: none;">Connect to all sites through proxy, with specified hosts excluded.</span>
+                    <span mode="byhost" style="display: none;">Connect to only specified sites through proxy.</span>
+                    <span mode="clear" style="display: none;">Surfingkeys will not take control of proxy settings, this is the default mode.</span>
+                    <span mode="direct" style="display: none;">Connect to all sites directly.</span>
+                    <span mode="system" style="display: none;">Use proxy configuration taken from the operating system.</span>
                 </span>
             </div>
-            <div id="proxy">
+            <div id="proxy" style="display: none;">
                 Proxy:
                 <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
                 Proxy Type:
@@ -107,7 +107,7 @@ settings.theme = `
                     <option value="SOCKS">SOCKS</option>
                 </select>
             </div>
-            <div id="autoproxy_hosts">
+            <div id="autoproxy_hosts" style="display: none;">
                 <h3>For below hosts, above proxy will be used, click ␡ to remove one.</h3>
                 <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
                 <div></div>

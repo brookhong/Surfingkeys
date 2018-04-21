@@ -47,9 +47,11 @@ C -->|Two| E[Result two]`;
 mermaid.parseError = function(err) {
     Front.showPopup(err);
 };
+var mermaidDiv = document.querySelector("div.mermaid");
 function drawDiagram(code) {
     Front.source = code;
-    $('div.mermaid').removeAttr('data-processed').html(code);
+    mermaidDiv.removeAttribute("data-processed");
+    mermaidDiv.innerHTML = code;
     mermaid.init({noteMargin: 10}, ".mermaid");
 }
 
@@ -68,21 +70,21 @@ mapkey(';s', '#99Load flowchart example', function() {
 map('i', '<Ctrl-Alt-d>');
 
 mapkey('yy', '#99Generate image', function() {
-    var content = $('div.content')[0];
-    if ($.hasScroll(content, 'y', 16) || $.hasScroll(content, 'x', 16)) {
+    var content = document.querySelector('div.content');
+    if (hasScroll(content, 'y', 16) || hasScroll(content, 'x', 16)) {
         Normal.captureElement(content);
     } else {
-        Normal.captureElement($('div.content>div.mermaid')[0]);
+        Normal.captureElement(mermaidDiv);
     }
 });
 
 unmap('f');
 mapkey('fh', '#99Set handwriting font', function() {
-    $('div.mermaid').css('font-family', 'danielbd');
+    mermaidDiv.style.fontFamily = "danielbd";
 });
 
 mapkey('fn', '#99Set normal font', function() {
-    $('div.mermaid').css('font-family', $('body').css('font-family'));
+    mermaidDiv.style.fontFamily = "";
 });
 
 Front.renderDataFromClipboard = drawDiagram;

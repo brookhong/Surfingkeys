@@ -1,12 +1,12 @@
 var desc, content;
 
 mapkey(';h', '#99Toggle this section', function() {
-    if (desc.is(":visible")) {
-        content.css('height', "100vh");
-        desc.hide();
+    if (desc.style.display !== "none") {
+        content.style.height = "100vh";
+        desc.style.display = "none";
     } else {
-        desc.show();
-        content.css('height', window.innerHeight - desc.outerHeight());
+        desc.style.display = "";
+        content.style.height = (window.innerHeight - desc.offsetHeight) + "px";
     }
 });
 
@@ -21,16 +21,20 @@ Front.renderHeaderDescription = function() {
         var meta = Normal.mappings.find(w).meta;
         w = KeyboardUtils.decodeKeystroke(w);
         if (meta.annotation && meta.annotation.length && meta.feature_group === 99) {
-            return "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format($.htmlEncode(w), meta.annotation);
+            return `<div><span class=kbd-span><kbd>${htmlEncode(w)}</kbd></span><span class=annotation>${meta.annotation}</span></div>`;
         }
         return null;
     }).filter(function(w) {
         return w !== null;
     });
 
-    $('div.description').remove();
-    content = $('div.content');
-    desc = $('<div class="description">').html(words.join("")).insertBefore('div.content');
-    content.css('height', window.innerHeight - desc.outerHeight());
+    desc = document.querySelector('div.description');
+    if (desc) {
+        desc.remove();
+    }
+    content = document.querySelector('div.content');
+    desc = createElement(`<div class="description">${words.join("")}</div>`);
+    document.body.insertBefore(desc, content);
+    content.style.height = (window.innerHeight - desc.offsetHeight) + "px";
 };
 Front.renderHeaderDescription();

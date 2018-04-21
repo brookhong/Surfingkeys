@@ -30,7 +30,6 @@ textarea {
     border-radius: 2px;
 }
 .info {
-    display: none;
     padding: 8px;
     margin: 8px;
     border: solid 2px #c8c8c8;
@@ -38,9 +37,6 @@ textarea {
     background: #e7e7e7;
 }
 
-#proxy, #autoproxy_hosts, #proxyMode span[mode] {
-    display: none;
-}
 span.tip {
     padding-left: 60px;
     color: #04ad23;
@@ -100,10 +96,6 @@ div.pressedKey kbd {
     z-index: 2147483298;
     padding: 1rem;
     background: white;
-    display: none;
-}
-#advancedSetting {
-    display: none;
 }
 #resetSettings {
     color: blue;

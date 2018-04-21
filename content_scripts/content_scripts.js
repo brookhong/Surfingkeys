@@ -209,8 +209,8 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
-    prevLinks = $(filterOverlapElements(prevLinks.toArray()));
+    var prevLinks = getClickableElements("a, button", runtime.conf.prevLinkRegex);
+    prevLinks = filterOverlapElements(prevLinks);
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -220,8 +220,8 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
-    nextLinks = $(filterOverlapElements(nextLinks.toArray()));
+    var nextLinks = getClickableElements("a, button", runtime.conf.nextLinkRegex);
+    nextLinks = filterOverlapElements(nextLinks);
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
@@ -245,58 +245,45 @@ function searchSelectedWith(se, onlyThisSite, interactive, alias) {
 }
 
 function clickOn(links, force) {
-    var ret = false;
     if (typeof(links) === 'string') {
-        links = $(links);
+        links = getClickableElements(links);
     }
-    var clean = [], pushed = {};
-    links.each(function() {
-        if (this.href) {
-            if (!pushed.hasOwnProperty(this.href)) {
-                clean.push(this);
-                pushed[this.href] = 1;
-            }
-        } else {
-            clean.push(this);
-        }
-    });
-    if (clean.length > 1) {
+    if (links.length > 1) {
         if (force) {
-            clean.forEach(function(u) {
+            links.forEach(function(u) {
                 Hints.dispatchMouseClick(u);
             });
         } else {
-            Hints.create(clean, Hints.dispatchMouseClick);
+            Hints.create(links, Hints.dispatchMouseClick);
         }
-    } else if (clean.length === 1) {
-        Hints.dispatchMouseClick(clean[0]);
+    } else if (links.length === 1) {
+        Hints.dispatchMouseClick(links[0]);
     }
 }
 
 function getFormData(form, format) {
+    var formData = new FormData(form);
     if (format === "json") {
-        var unindexed_array = $(form).serializeArray();
-        var indexed_array = {};
+        var obj = {};
 
-        $.map(unindexed_array, function(n, i){
-            var nn = n['name'];
-            var vv = n['value'];
-            if (indexed_array.hasOwnProperty(nn)) {
-                var p = indexed_array[nn];
+        formData.forEach(function(value, key) {
+            if (obj.hasOwnProperty(key)) {
+                var p = obj[key];
                 if (p.constructor.name === "Array") {
-                    p.push(vv);
+                    p.push(value);
                 } else {
-                    indexed_array[nn] = [];
-                    indexed_array[nn].push(p);
-                    indexed_array[nn].push(vv);
+                    obj[key] = [];
+                    obj[key].push(p);
+                    obj[key].push(value);
                 }
             } else {
-                indexed_array[nn] = vv;
+                obj[key] = value;
             }
         });
-        return indexed_array;
+
+        return obj;
     } else {
-        return $(form).serialize();
+        return new URLSearchParams(formData).toString();
     }
 }
 
@@ -338,7 +325,7 @@ function applySettings(rs) {
                 console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
             }
         }
-        if (!$.isEmptyObject(delta.settings)) {
+        if (!isEmptyObject(delta.settings)) {
             Front.applyUserSettings(JSON.parse(JSON.stringify(delta.settings)));
             // overrides local settings from snippets
             for (var k in delta.settings) {

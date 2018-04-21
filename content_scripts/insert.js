@@ -141,7 +141,7 @@ var Insert = (function() {
         }
     });
 
-    var _emojiDiv = $('<div id="sk_emoji" style="display: block; opacity: 1;"/>'),
+    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;"/>'),
         _emojiList,
         _emojiPending = -1;
 
@@ -189,8 +189,10 @@ var Insert = (function() {
             if (emojiMatched === "") {
                 _emojiDiv.remove();
             } else {
-                _emojiDiv.html(emojiMatched).appendTo('body').show();
-                _emojiDiv.find('>div:nth(0)').addClass("selected");
+                _emojiDiv.innerHTML = emojiMatched;
+                document.body.append(_emojiDiv);
+                _emojiDiv.style.display = "";
+                _emojiDiv.querySelector('#sk_emoji>div').classList.add("selected");
                 var br;
                 if (isInput) {
                     br = getCursorPixelPos(input);
@@ -200,13 +202,13 @@ var Insert = (function() {
                     Visual.hideCursor();
                 }
                 var top = br.top + br.height + 4;
-                if (window.innerHeight - top < _emojiDiv.height()) {
-                    top = br.top - _emojiDiv.height();
+                if (window.innerHeight - top < _emojiDiv.offsetHeight) {
+                    top = br.top - _emojiDiv.offsetHeight;
                 }
 
-                _emojiDiv.css('position', "fixed");
-                _emojiDiv.css('left', br.left);
-                _emojiDiv.css('top', top);
+                _emojiDiv.style.position = "fixed";
+                _emojiDiv.style.top = top + "px";
+                _emojiDiv.style.left = br.left + "px";
             }
         }
     }
@@ -247,10 +249,11 @@ var Insert = (function() {
     }
 
     function rotateResult(backward) {
-        var si = _emojiDiv.find(">div.selected");
-        var ci = (si.index() + (backward ? -1 : 1)) % _emojiDiv.find(">div").length;
-        si.removeClass("selected");
-        _emojiDiv.find(">div:nth({0})".format(ci)).addClass("selected");
+        var si = _emojiDiv.querySelector('#sk_emoji>div.selected');
+        var _items = _emojiDiv.querySelectorAll('#sk_emoji>div');
+        var ci = (_items.indexOf(si) + (backward ? -1 : 1)) % _items.length;
+        si.classList.remove('selected');
+        _items[ci].classList.add('selected');
     }
 
     var _suppressKeyup = false;
@@ -258,7 +261,7 @@ var Insert = (function() {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
         var realTarget = getRealEdit(event);
-        if (_emojiDiv.is(":visible")) {
+        if (_emojiDiv.offsetHeight > 0) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 _emojiDiv.remove();
                 _emojiPending = -1;
@@ -269,7 +272,7 @@ var Insert = (function() {
                 _suppressKeyup = true;
                 event.sk_stopPropagation = true;
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-                var emoji = _emojiDiv.find(">div.selected>span").html();
+                var emoji = _emojiDiv.querySelector('#sk_emoji>div.selected>span').innerHTML;
                 if (realTarget.setSelectionRange !== undefined) {
                     var val = realTarget.value;
                     realTarget.value = val.substr(0, _emojiPending - 1) + emoji + val.substr(realTarget.selectionStart);

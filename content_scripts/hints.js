@@ -2,22 +2,22 @@ var Hints = (function() {
     var self = new Mode("Hints");
 
     self.addEventListener('keydown', function(event) {
-        var hints = holder.find('>div');
+        var hints = holder.querySelectorAll('#sk_hints>div');
         event.sk_stopPropagation = true;
 
-        var ai = $('#sk_hints[mode=input]>div.activeInput');
-        if (ai.length) {
-            var elm = ai.data('link');
+        var ai = document.querySelector('#sk_hints[mode=input]>div.activeInput');
+        if (ai !== null) {
+            var elm = ai.link;
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 elm.blur();
                 hide();
             } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
-                ai.removeClass('activeInput');
+                ai.classList.remove('activeInput');
                 _lastCreateAttrs.activeInput = (_lastCreateAttrs.activeInput + (event.shiftKey ? -1 : 1 )) % hints.length;
-                ai = $("#sk_hints[mode=input]>div:nth(" + _lastCreateAttrs.activeInput + ")");
-                ai.addClass("activeInput");
+                ai = hints[_lastCreateAttrs.activeInput];
+                ai.classList.add('activeInput');
 
-                elm = ai.data('link');
+                elm = ai.link;
                 elm.focus();
             } else if (event.keyCode !== KeyboardUtils.keyCodes.shiftKey) {
                 event.sk_stopPropagation = false;
@@ -30,7 +30,7 @@ var Hints = (function() {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
-            holder.hide();
+            holder.style.display = "none";
         } else if (event.keyCode === KeyboardUtils.keyCodes.shiftKey) {
             flip();
         } else if (hints.length > 0) {
@@ -69,7 +69,7 @@ var Hints = (function() {
     });
     self.addEventListener('keyup', function(event) {
         if (event.keyCode === KeyboardUtils.keyCodes.space) {
-            holder.show();
+            holder.style.display = "";
         }
     });
 
@@ -79,7 +79,7 @@ var Hints = (function() {
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
-        holder = $('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
+        holder = createElement('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
         shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
     self.scrollKeys = '0jkhlG$';
@@ -106,7 +106,7 @@ var Hints = (function() {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
-            var link = $(matches[0]).data('link');
+            var link = matches[0].link;
             _onHintKey(link);
             if (behaviours.multipleHits) {
                 prefix = "";
@@ -135,15 +135,15 @@ var Hints = (function() {
 
     function refresh() {
         var matches = [];
-        var hints = holder.find('>div');
-        hints.each(function(i) {
-            var label = $(this).data('label');
+        var hints = holder.querySelectorAll('#sk_hints>div');
+        hints.forEach(function(hint) {
+            var label = hint.label;
             if (label.indexOf(prefix) === 0) {
-                $(this).html(label.substr(prefix.length)).css('opacity', 1);
-                $('<span/>').css('opacity', 0.2).html(prefix).prependTo(this);
-                matches.push(this);
+                hint.style.opacity = 1;
+                hint.innerHTML = `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length);
+                matches.push(hint);
             } else {
-                $(this).css('opacity', 0);
+                hint.style.opacity = 0;
             }
         });
         return matches;
@@ -157,7 +157,8 @@ var Hints = (function() {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         };
-        holder.html("").remove();
+        holder.innerHTML = "";
+        holder.remove();
         prefix = "";
         textFilter = "";
         shiftKey = false;
@@ -165,22 +166,22 @@ var Hints = (function() {
     }
 
     function flip() {
-        var hints = holder.find('>div');
-        if (hints.css('z-index') == hints.data('z-index')) {
-            hints.each(function(i) {
-                var z = parseInt($(this).css('z-index'));
-                $(this).css('z-index',  hints.length - i + 2147483000 - z);
+        var hints = holder.querySelectorAll('#sk_hints>div');
+        if (hints[0].style.zIndex == hints[0].zIndex) {
+            hints.forEach(function(hint, i) {
+                var z = parseInt(hint.style.zIndex);
+                hint.style.zIndex = hints.length - i + 2147483000 - z;
             });
         } else {
-            hints.each(function(i) {
-                var z = $(this).data('z-index');
-                $(this).css('z-index', z);
+            hints.forEach(function(hint, i) {
+                hint.style.zIndex = hint.zIndex;
             });
         }
     }
 
     function onScrollStarted(evt) {
-        holder.html("").remove();
+        holder.innerHTML = "";
+        holder.remove();
         prefix = "";
     }
 
@@ -235,21 +236,32 @@ var Hints = (function() {
 
     self.coordinate = function() {
         // a hack to get co-ordinate
-        var link = $('<div/>').css('top', 0).css('left', 0).html('A').appendTo(holder);
-        holder.prependTo(document.documentElement);
-        var ordinate = link.offset();
-        holder.html('');
-        return ordinate;
+        var link = createElement('<div style="top: 0; left: 0;">A</div>');
+        holder.prepend(link);
+        document.documentElement.prepend(holder);
+        var br = link.getBoundingClientRect();
+        holder.innerHTML = "";
+        return {
+            top: br.top + window.pageYOffset - document.documentElement.clientTop,
+            left: br.left + window.pageXOffset - document.documentElement.clientLeft
+        };
     };
 
+    function _initHolder(mode) {
+        holder.innerHTML = "";
+        holder.setAttribute('mode', mode);
+        holder.style.display = "";
+    }
+
     function placeHints(elements) {
-        holder.attr('mode', 'click').show().html('');
+        _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        $("<style></style>").html("#sk_hints>div{" + _styleForClick + "}").appendTo(holder);
-        elements.each(function(i) {
-            var pos = this.getClientRects()[0],
-                z = getZIndex(this);
+        var style = createElement(`<style>#sk_hints>div${_styleForClick}</style>`);
+        holder.prepend(style);
+        elements.forEach(function(elm, i) {
+            var pos = elm.getClientRects()[0],
+                z = getZIndex(elm);
             var left, width = Math.min(pos.width, window.innerWidth);
             if (runtime.conf.hintAlign === "right") {
                 left = window.pageXOffset + pos.left - bof.left + width;
@@ -263,32 +275,32 @@ var Hints = (function() {
             } else if (left + 32 > window.pageXOffset + window.innerWidth) {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
-            var link = $('<div/>').css('top', Math.max(pos.top + window.pageYOffset - bof.top, 0)).css('left', left)
-                .css('z-index', z + 9999)
-                .data('z-index', z + 9999)
-                .data('label', hintLabels[i])
-                .data('link', this)
-                .html(hintLabels[i]);
+            var link = createElement(`<div>${hintLabels[i]}</div>`);
+            link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
+            link.style.left = left + "px";
+            link.style.zIndex = z + 9999;
+            link.zIndex = link.style.zIndex;
+            link.label = hintLabels[i];
+            link.link = elm;
             holder.append(link);
         });
-        var hints = holder.find('>div');
+        var hints = holder.querySelectorAll('#sk_hints>div');
         var bcr = hints[0].getBoundingClientRect();
         for (var i = 1; i < hints.length; i++) {
             var h = hints[i];
             var tcr = h.getBoundingClientRect();
             if (tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
-                var top = $(h).offset().top + $(h).height();
-                $(h).css('top', top);
+                h.style.top = h.offsetTop + h.offsetHeight + "px";
             }
             bcr = h.getBoundingClientRect();
         }
-        holder.prependTo(document.documentElement);
+        document.documentElement.prepend(holder);
     }
 
     function createHintsForClick(cssSelector, attrs) {
         self.statusLine = "Hints to click";
 
-        attrs = $.extend({
+        attrs = Object.assign({
             active: true,
             tabbed: false,
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
@@ -299,12 +311,8 @@ var Hints = (function() {
         }
         var elements;
         if (behaviours.tabbed) {
-            elements = $('a').regex(/^(?:(?!javascript:\/\/).)+.*$/, $.fn.attr, ['href']).filterInvisible();
-            if (textFilter.length > 0) {
-                elements = $(elements).filter(function(e) {
-                    return this.innerText && this.innerText.indexOf(textFilter) !== -1;
-                });
-            }
+            elements = Array.from(getElements('a[href]:not([href^=javascript])'));
+            elements = filterInvisibleElements(elements);
         } else {
             if (cssSelector === "") {
                 cssSelector = "a, button, select, input, textarea, *[onclick], *.jfk-button, *.goog-flat-menu-button, *[role]";
@@ -313,7 +321,7 @@ var Hints = (function() {
                 }
 
                 elements = getVisibleElements(function(e, v) {
-                    if ($.find.matchesSelector(e, cssSelector)) {
+                    if (e.matches(cssSelector)) {
                         v.push(e);
                     } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
                         v.push(e);
@@ -321,16 +329,19 @@ var Hints = (function() {
                         v.push(e);
                     }
                 });
-                elements = $(filterOverlapElements(elements));
+                elements = filterOverlapElements(elements);
+            } else if (Array.isArray(cssSelector)) {
+                elements = filterInvisibleElements(cssSelector);
             } else {
-                elements = $(document.documentElement).find(cssSelector).filterInvisible().toArray();
-                elements = $(elements);
+                elements = Array.from(document.documentElement.querySelectorAll(cssSelector));
+                elements = filterInvisibleElements(elements);
+                elements = filterOverlapElements(elements);
             }
-            if (textFilter.length > 0) {
-                elements = $(elements).filter(function(e) {
-                    return this.innerText && this.innerText.indexOf(textFilter) !== -1;
-                });
-            }
+        }
+        if (textFilter.length > 0) {
+            elements = elements.filter(function(e) {
+                return e.innerText && e.innerText.indexOf(textFilter) !== -1;
+            });
         }
 
         if (elements.length > 0) {
@@ -407,10 +418,14 @@ var Hints = (function() {
                 return null;
             } else {
                 var z = getZIndex(e[0].parentNode);
-                return $('<div/>').css('position', 'fixed').css('top', pos.top).css('left', pos.left)
-                    .css('z-index', z + 9999)
-                    .data('z-index', z + 9999)
-                    .data('link', e);
+                var link = createElement('<div/>');
+                link.style.position = "fixed";
+                link.style.top = pos.top + "px";
+                link.style.left = pos.left + "px";
+                link.style.zIndex = z + 9999;
+                link.zIndex = link.style.zIndex;
+                link.link = e;
+                return link;
             }
         }).filter(function(e) {
             return e !== null;
@@ -420,14 +435,17 @@ var Hints = (function() {
         }
 
         if (elements.length > 0) {
-            holder.attr('mode', 'text').show().html('');
+            _initHolder('text');
             var hintLabels = self.genLabels(elements.length);
             elements.forEach(function(e, i) {
-                e.data('label', hintLabels[i]).html(hintLabels[i]);
+                e.label = hintLabels[i];
+                e.innerHTML = hintLabels[i];
                 holder.append(e);
             });
-            $("<style></style>").html("#sk_hints[mode='text']>div{" + _styleForText + "}").appendTo(holder);
-            holder.prependTo(document.documentElement);
+
+            var style = createElement(`<style>#sk_hints[mode='text']>div${_styleForText}</style>`);
+            holder.prepend(style);
+            document.documentElement.prepend(holder);
         }
 
         return elements.length;
@@ -441,16 +459,16 @@ var Hints = (function() {
         var cssSelector = "input";
 
         var elements = getVisibleElements(function(e, v) {
-            if ($.find.matchesSelector(e, cssSelector) && !e.disabled && !e.readOnly
+            if (e.matches(cssSelector) && !e.disabled && !e.readOnly
                 && (e.type === "text" || e.type === "password")) {
                 v.push(e);
             }
         });
 
-        if (elements.length === 0 && $(cssSelector).length > 0) {
-            $(cssSelector)[0].scrollIntoView();
+        if (elements.length === 0 && document.querySelector(cssSelector) !== null) {
+            document.querySelector(cssSelector).scrollIntoView();
             elements = getVisibleElements(function(e, v) {
-                if ($.find.matchesSelector(e, cssSelector) && !e.disabled && !e.readOnly) {
+                if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
                     v.push(e);
                 }
             });
@@ -458,21 +476,26 @@ var Hints = (function() {
 
         if (elements.length > 1) {
             self.enter();
-            holder.attr('mode', 'input').show().html('');
+            _initHolder('input');
             elements.forEach(function(e, i) {
                 var be = e.getBoundingClientRect();
                 var z = getZIndex(e);
-                var mask = $('<div/>').css('position', 'fixed').css('top', be.top).css('left', be.left)
-                    .css('z-index', z + 9999)
-                    .css('width', be.width)
-                    .css('height', be.height)
-                    .data('link', e);
+
+                var mask = createElement('<div/>');
+                mask.style.position = "fixed";
+                mask.style.top = be.top + "px";
+                mask.style.left = be.left + "px";
+                mask.style.width = be.width + "px";
+                mask.style.height = be.height + "px";
+                mask.style.zIndex = z + 9999;
+                mask.link = e;
                 holder.append(mask);
             });
-            holder.prependTo(document.documentElement);
+            document.documentElement.prepend(holder);
             _lastCreateAttrs.activeInput = 0;
-            $('#sk_hints[mode=input]>div:nth(0)').addClass("activeInput");
-            $('#sk_hints[mode=input]>div:nth(0)').data('link').focus();
+            var ai = document.querySelector('#sk_hints[mode=input]>div');
+            ai.classList.add("activeInput");
+            ai.link.focus();
         } else if (elements.length === 1) {
             Normal.passFocus(true);
             elements[0].focus();
@@ -506,7 +529,7 @@ var Hints = (function() {
 
     self.flashPressedLink = function(link) {
         var rect = link.getBoundingClientRect();
-        var flashElem = $('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>')[0];
+        var flashElem = createElement('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>');
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';
         flashElem.style.width = rect.width + 'px';
@@ -548,9 +571,6 @@ var Hints = (function() {
                     url: element.href
                 });
             } else {
-                var realTargets = $(element).find('a:visible');
-                realTargets = (realTargets.length) ? realTargets : $(element).find('select:visible, input:visible, textarea:visible');
-                element = realTargets.length ? realTargets[0] : element;
                 self.mouseoutLastElement();
                 dispatchMouseEvent(element, behaviours.mouseEvents);
             }

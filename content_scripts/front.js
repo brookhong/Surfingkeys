@@ -310,8 +310,8 @@ var Front = (function() {
         }
     };
     _actions["nextEdit"] = function(response) {
-        var sel = Hints.getSelector() || "input:visible, textarea:visible, *[contenteditable=true], select:visible";
-        sel = $(sel).toArray();
+        var sel = Hints.getSelector() || "input, textarea, *[contenteditable=true], select";
+        sel = getElements(sel);
         if (sel.length) {
             var i = sel.indexOf(elementBehindEditor);
             i = (i + (response.backward ? -1 : 1)) % sel.length;

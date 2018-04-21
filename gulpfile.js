@@ -76,8 +76,6 @@ gulp.task('build_background', ['clean'], function() {
 gulp.task('build_common_content_min', ['clean'], function() {
     var common_content = [
         "libs/trie.js",
-        "libs/jquery.js",
-        "content_scripts/jQueryUtils.js",
         "content_scripts/keyboardUtils.js",
         "content_scripts/utils.js",
         "content_scripts/runtime.js",
