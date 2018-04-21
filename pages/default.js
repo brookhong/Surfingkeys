@@ -421,6 +421,13 @@ mapkey('yj', "#7Copy current settings", function() {
         Clipboard.write(JSON.stringify(response.settings, null, 4));
     });
 });
+mapkey(';pj', "#7Restore settings data from clipboard", function() {
+    Clipboard.read(function(response) {
+        RUNTIME('updateSettings', {
+            settings: JSON.parse(response.data.trim())
+        });
+    });
+});
 mapkey('yd', "#7Copy current downloading URL", function() {
     runtime.command({
         action: 'getDownloads',

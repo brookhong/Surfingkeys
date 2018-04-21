@@ -19,10 +19,7 @@ var $ = (function($) {
             result = el[offset[0]];
             el[offset[0]] = originOffset;
         }
-        return result >= barSize && (
-            el === document.body
-            || $(el).css('overflow-' + direction) === 'auto'
-            || $(el).css('overflow-' + direction) === 'scroll');
+        return result >= barSize;
     };
 
     $.fn.regex = function(pattern, fn, fn_a) {

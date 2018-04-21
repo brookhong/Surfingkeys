@@ -469,52 +469,46 @@ var Normal = (function() {
         if (!scrollNodes || scrollNodes.length === 0) {
             $('html, body').css('overflow', 'visible');
             scrollNodes = getScrollableElements(100, 1.1);
-            while (scrollNodes.length) {
+            scrollIndex = 0;
+
+            if (scrollNodes.length > 1 && scrollNodes[0] !== document.scrollingElement) {
+                // if the first scrolling element is not the document itself
+                // find the highest one
                 var maxHeight = 0;
-                scrollIndex = 0;
                 scrollNodes.forEach(function(n, i) {
-                    var h = n.scrollHeight;
+                    var h = n.offsetHeight;
                     if (h > maxHeight) {
                         scrollIndex = i;
                         maxHeight = h;
                     }
                 });
-                var sn = scrollNodes[scrollIndex];
-                if (sn === document.scrollingElement) {
-                    break;
-                } else {
-                    scrollIntoViewIfNeeded(sn);
-                    if (isElementPartiallyInViewport(sn)) {
-                        break;
-                    } else {
-                        // remove the node that could not be scrolled into view.
-                        scrollNodes.splice(scrollIndex, 1);
-                    }
-                }
             }
         }
     }
 
     function getScrollableElements() {
-        var nodes = [];
+        var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
+            return $.hasScroll(n, 'y', 16) || $.hasScroll(n, 'x', 16);
+        });
         if (document.scrollingElement.scrollHeight > window.innerHeight
             || document.scrollingElement.scrollWidth > window.innerWidth) {
-            nodes.push(document.scrollingElement);
+            nodes.unshift(document.scrollingElement);
         }
-        var nodeIterator = document.createNodeIterator(
-            document.body,
-            NodeFilter.SHOW_ELEMENT, {
-                acceptNode: function(node) {
-                    return (($.hasScroll(node, 'y', 16) || $.hasScroll(node, 'x', 16)) && $(node).is(":visible")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                }
-            });
-        for (var node; node = nodeIterator.nextNode(); nodes.push(node));
-
         return nodes;
     }
 
     function _highlightElement(elm) {
-        var rc = elm.getBoundingClientRect();
+        var rc;
+        if (document.scrollingElement === elm) {
+            rc = {
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+        } else {
+            rc = elm.getBoundingClientRect();
+        }
         Front.highlightElement({
             duration: 200,
             rect: {
@@ -531,13 +525,6 @@ var Normal = (function() {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
             scrollIntoViewIfNeeded(sn);
-            while (!isElementPartiallyInViewport(sn) && scrollNodes.length) {
-                // remove the node that could not be scrolled into view.
-                scrollNodes.splice(scrollIndex, 1);
-                scrollIndex = scrollIndex % scrollNodes.length;
-                sn = scrollNodes[scrollIndex];
-                scrollIntoViewIfNeeded(sn);
-            }
             if (!silent) {
                 _highlightElement(sn);
             }
@@ -549,10 +536,6 @@ var Normal = (function() {
         var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
-            if (!$(scrollNode).is(':visible')) {
-                changeScrollTarget(true);
-                scrollNode = scrollNodes[scrollIndex];
-            }
         }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);

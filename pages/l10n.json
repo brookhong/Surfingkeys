@@ -144,6 +144,7 @@
         "Reset scroll target": "重置滚动目标",
         "Restore closed tab": "恢复刚关闭的标签页",
         "Restore last session": "恢复最近一次会话",
+        "Restore settings data from clipboard": "从剪贴板恢复数据",
         "Restore visual mode": "恢复可视模式",
         "Save session and quit": "保存会话并退出",
         "Scroll Page / Element": "滚动页面／元素",

@@ -20,6 +20,30 @@ function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+function listElements(root, whatToShow, filter) {
+    const elms = [];
+    let currentNode;
+    const nodeIterator = document.createNodeIterator(
+        root,
+        whatToShow,
+        null
+    );
+
+    while (currentNode = nodeIterator.nextNode()) {
+        filter(currentNode) && elms.push(currentNode);
+
+        if (currentNode.shadowRoot) {
+            elms.push(...listElements(currentNode.shadowRoot, whatToShow, filter));
+        }
+    }
+
+    return elms;
+}
+
+function isElementVisible(elm) {
+    return elm.offsetHeight > 0 && elm.offsetWidth > 0;
+}
+
 function getRealEdit(event) {
     var rt = event ? event.target : document.activeElement;
     // on some pages like chrome://history/, input is in shadowRoot of several other recursive shadowRoots.
