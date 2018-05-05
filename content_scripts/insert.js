@@ -4,9 +4,14 @@ var Insert = (function() {
     function moveCusorEOL() {
         var element = getRealEdit();
         if (element.setSelectionRange !== undefined) {
-            if (element.type !== "email" && element.type !== "number") {
-                // The input element's type ('email') does not support selection.
+            try {
                 element.setSelectionRange(element.value.length, element.value.length);
+            } catch(err) {
+                if (err instanceof DOMException && err.name === "InvalidStateError") {
+                    // setSelectionRange does not apply
+                } else {
+                    throw err;
+                }
             }
         } else if (isEditable(element)) {
             // for contenteditable div
