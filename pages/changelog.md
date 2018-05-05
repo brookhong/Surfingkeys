@@ -1,5 +1,8 @@
 # Changelog of Surfingkeys
 
+## 0.9.30
+Remove jQuery for performance improvement, so that you could not use jQuery($) in your .surfingkeys.js now, please use plain javascript.
+
 ## 0.9.22
 
 Due to the removal of `unsafe-eval`, user scripts could not be executed in context of the extension itself, which means Omnibar is not accessible in user space now.
