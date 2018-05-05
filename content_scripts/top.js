@@ -83,6 +83,7 @@ if (window === top) {
         }
         if (response.pointerEvents === "none") {
             uiHost.blur();
+            ifr.blur();
             // test with https://docs.google.com/ and https://web.whatsapp.com/
             if (lastStateOfPointerEvents !== response.pointerEvents) {
                 activeContent.window.postMessage({

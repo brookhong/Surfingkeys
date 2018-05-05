@@ -16,8 +16,11 @@ browser.runtime.onMessage.addListener((message) => {
 
 function FindProxyForURL(url, host) {
     var lastPos;
-    var gates = [pacGlobal.proxy, "DIRECT"];
     if (pacGlobal.proxyMode === "always") {
+        return pacGlobal.proxy;
+    }
+    var gates = [pacGlobal.proxy, "DIRECT"];
+    if (pacGlobal.proxyMode === "bypass") {
         gates = ["DIRECT", pacGlobal.proxy];
     }
     var pp = new RegExp(pacGlobal.autoproxy_pattern);

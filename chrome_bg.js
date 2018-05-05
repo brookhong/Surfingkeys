@@ -33,7 +33,7 @@ function _applyProxySettings(proxyConf) {
             return a.indexOf('*') !== -1;
         }).join('|');
         var config = {
-            mode: (proxyConf.proxyMode === "always" || proxyConf.proxyMode === "byhost") ? "pac_script" : proxyConf.proxyMode,
+            mode: (["always", "byhost", "bypass"].indexOf(proxyConf.proxyMode) !== -1) ? "pac_script" : proxyConf.proxyMode,
             pacScript: {
                 data: `var pacGlobal = {
                         hosts: ${JSON.stringify(dictFromArray(proxyConf.autoproxy_hosts, 1))},
@@ -43,8 +43,11 @@ function _applyProxySettings(proxyConf) {
                     };
                     function FindProxyForURL(url, host) {
                         var lastPos;
-                        var gates = [pacGlobal.proxy, "DIRECT"];
                         if (pacGlobal.proxyMode === "always") {
+                            return pacGlobal.proxy;
+                        }
+                        var gates = [pacGlobal.proxy, "DIRECT"];
+                        if (pacGlobal.proxyMode === "bypass") {
                             gates = ["DIRECT", pacGlobal.proxy];
                         }
                         var pp = new RegExp(pacGlobal.autoproxy_pattern);

@@ -352,10 +352,11 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, 设置代理模式，有五种模式：direct, byhost, always, system 和 clear。
+* setProxyMode, 设置代理模式，有五种模式：direct, byhost, bypass, always, system 和 clear。
 
         direct      Chrome不使用代理访问任何网站。
         byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。
+        bypass      Chrome使用代理访问所有网站，除了通过`addProxySite`命令添加过的网站。
         always      Chrome使用代理访问所有网站。
         system      Chrome使用操作系统设置的代理。
         clear       Surfingkeys不管代理，有其他插件管理，也就是禁用Surfingkeys的代理管理功能, 这是默认模式。

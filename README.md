@@ -344,10 +344,11 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, to set proxy mode, there are five modes: direct, byhost, always, system and clear.
+* setProxyMode, to set proxy mode, there are five modes: direct, byhost, bypass, always, system and clear.
 
         direct      Chrome will connect to all sites directly.
         byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
+        bypass      Chrome will connect to all sites through proxy, with specified hosts excluded.
         always      Chrome will connect to all sites through proxy.
         system      Use proxy configuration taken from the operating system.
         clear       Surfingkeys will not take control of proxy settings, this is the default mode.

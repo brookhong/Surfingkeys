@@ -92,14 +92,16 @@ function renderProxySettings(rs) {
     var autoproxyHostsDiv = document.getElementById("autoproxy_hosts");
     proxyDiv.hide();
     autoproxyHostsDiv.hide();
-    document.querySelector('#proxyMode span[mode]').hide();
+    document.querySelectorAll('#proxyMode span[mode]').forEach(function(span) {
+        span.hide();
+    });
     document.querySelector(`#proxyMode span[mode=${rs.proxyMode}]`).show();
-    if (rs.proxyMode === "byhost" || rs.proxyMode === "always") {
+    if (rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
         proxyDiv.show();
         renderProxy(rs.proxy);
 
         var desc = "For below hosts, above proxy will be used, click ␡ to remove one.";
-        if (rs.proxyMode === "always") {
+        if (rs.proxyMode === "bypass") {
             desc = "For below hosts, <b>NO</b> proxy will be used, click ␡ to remove one.";
         }
         document.querySelector('#autoproxy_hosts>h3').innerHTML = desc;
