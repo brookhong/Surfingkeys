@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <title>Test Page</title>
+    </head>
+    <body>
+        <iframe id="testF"></iframe>
+        <script type="text/javascript">
+            var fr = document.getElementById("testF");
+            fr.contentWindow.addEventListener("click", function(evt) {
+                console.log(evt + 1);
+            });
+            fr.addEventListener("load", function(evt) {
+                console.log(evt + window.location.href);
+            });
+            fr.contentWindow.addEventListener("load", function(evt) {
+                console.log(evt + window.location.href);
+            });
+            fr.contentWindow.document.write("yes");
+            fr.contentWindow.addEventListener("click", function(evt) {
+                console.log(evt + 2);
+            });
+            fr.contentWindow.addEventListener("load", function(evt) {
+                console.log(evt + window.location.href);
+            });
+            fr.contentWindow.document.write("yes2");
+            fr.contentWindow.document.close();
+            fr.contentWindow.addEventListener("click", function(evt) {
+                console.log(evt + 3);
+            });
+        </script>
+    </body>
+</html>

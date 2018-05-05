@@ -16,6 +16,51 @@ if (window === top) {
             ack: true,
             origin: getDocumentOrigin()
         }, frontEndURL);
+
+        window.addEventListener('message', function(event) {
+            var _message = event.data;
+            if (_message.commandToFrontend || _message.responseToFrontend) {
+                // forward message to frontend
+                ifr.contentWindow.postMessage(_message, frontEndURL);
+                if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
+                    if (!activeContent || activeContent.window !== event.source) {
+                        // reset active Content
+
+                        if (activeContent) {
+                            activeContent.window.postMessage({
+                                action: 'deactivated',
+                                direct: true,
+                                reason: `${_message.action}@${event.timeStamp}`,
+                                commandToContent: true
+                            }, activeContent.origin);
+                        }
+
+                        activeContent = {
+                            window: event.source,
+                            origin: _message.origin
+                        };
+
+                        activeContent.window.postMessage({
+                            action: 'activated',
+                            direct: true,
+                            reason: `${_message.action}@${event.timeStamp}`,
+                            commandToContent: true
+                        }, activeContent.origin);
+                    }
+                }
+                if (_message.action === "visualUpdatedForFirefox") {
+                    document.activeElement.blur();
+                }
+            } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+                _actions[_message.action](_message);
+            } else if (_message.commandToContent || _message.responseToContent) {
+                // forward message to content
+                if (activeContent && !_message.direct && activeContent.window !== top) {
+                    activeContent.window.postMessage(_message, activeContent.origin);
+                }
+            }
+        }, true);
+
     }, false);
 
     setTimeout(function() {
@@ -60,50 +105,6 @@ if (window === top) {
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };
-
-    window.addEventListener('message', function(event) {
-        var _message = event.data;
-        if (_message.commandToFrontend || _message.responseToFrontend) {
-            // forward message to frontend
-            ifr.contentWindow.postMessage(_message, frontEndURL);
-            if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
-                if (!activeContent || activeContent.window !== event.source) {
-                    // reset active Content
-
-                    if (activeContent) {
-                        activeContent.window.postMessage({
-                            action: 'deactivated',
-                            direct: true,
-                            reason: `${_message.action}@${event.timeStamp}`,
-                            commandToContent: true
-                        }, activeContent.origin);
-                    }
-
-                    activeContent = {
-                        window: event.source,
-                        origin: _message.origin
-                    };
-
-                    activeContent.window.postMessage({
-                        action: 'activated',
-                        direct: true,
-                        reason: `${_message.action}@${event.timeStamp}`,
-                        commandToContent: true
-                    }, activeContent.origin);
-                }
-            }
-            if (_message.action === "visualUpdatedForFirefox") {
-                document.activeElement.blur();
-            }
-        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
-            _actions[_message.action](_message);
-        } else if (_message.commandToContent || _message.responseToContent) {
-            // forward message to content
-            if (activeContent && !_message.direct && activeContent.window !== top) {
-                activeContent.window.postMessage(_message, activeContent.origin);
-            }
-        }
-    }, true);
 
     document.addEventListener('DOMContentLoaded', function (e) {
 

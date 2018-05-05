@@ -89,8 +89,6 @@ var Mode = (function() {
         }
     }
 
-    var _listenedEvents = ["keydown", "keyup"];
-
     function handleStack(eventName, event, cb) {
         for (var i = 0; i < mode_stack.length && !event.sk_stopPropagation; i++) {
             var m = mode_stack[i];
@@ -106,19 +104,39 @@ var Mode = (function() {
         }
     }
 
-    window.addEventListener("keydown", function(event) {
-        event.sk_keyName = KeyboardUtils.getKeyChar(event);
-        handleStack("keydown", event);
-    }, true);
+    var _listenedEvents = ["keydown", "keyup"];
 
-    window.addEventListener("keyup", function(event) {
-        handleStack("keyup", event, function(m) {
-            if (m.stopKeyupPropagation === event.keyCode) {
-                event.stopImmediatePropagation();
-                m.stopKeyupPropagation = 0;
-            }
+    self.init = function() {
+        window.addEventListener("keydown", function (event) {
+            event.sk_keyName = KeyboardUtils.getKeyChar(event);
+            handleStack("keydown", event);
+        }, true);
+
+        window.addEventListener("keyup", function (event) {
+            handleStack("keyup", event, function (m) {
+                if (m.stopKeyupPropagation === event.keyCode) {
+                    event.stopImmediatePropagation();
+                    m.stopKeyupPropagation = 0;
+                }
+            });
+        }, true);
+    };
+
+    // For blank page in frames, we defer Mode.init to page loaded
+    // as document.write will clear added eventListeners.
+    if (window.location.href === "about:blank" && window.frameElement) {
+        window.frameElement.addEventListener("load", function(evt) {
+            self.init();
+            _listenedEvents.forEach(function(evt) {
+                if (["keydown", "keyup"].indexOf(evt) === -1) {
+                    window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
+                }
+            });
         });
-    }, true);
+    } else {
+        self.init();
+    }
+
 
     self.showStatus = function() {
         if (document.hasFocus() && mode_stack.length) {
