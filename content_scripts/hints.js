@@ -257,7 +257,7 @@ var Hints = (function() {
         _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        var style = createElement(`<style>#sk_hints>div${_styleForClick}</style>`);
+        var style = createElement(`<style>#sk_hints>div{${_styleForClick}}</style>`);
         holder.prepend(style);
         elements.forEach(function(elm, i) {
             var pos = elm.getClientRects()[0],
@@ -443,7 +443,7 @@ var Hints = (function() {
                 holder.append(e);
             });
 
-            var style = createElement(`<style>#sk_hints[mode='text']>div${_styleForText}</style>`);
+            var style = createElement(`<style>#sk_hints[mode='text']>div{${_styleForText}}</style>`);
             holder.prepend(style);
             document.documentElement.prepend(holder);
         }
