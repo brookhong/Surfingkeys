@@ -140,7 +140,7 @@ var Hints = (function() {
             var label = hint.label;
             if (label.indexOf(prefix) === 0) {
                 hint.style.opacity = 1;
-                hint.innerHTML = `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length);
+                setInnerHTML(hint, `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length));
                 matches.push(hint);
             } else {
                 hint.style.opacity = 0;
@@ -157,7 +157,7 @@ var Hints = (function() {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         };
-        holder.innerHTML = "";
+        setInnerHTML(holder, "");
         holder.remove();
         prefix = "";
         textFilter = "";
@@ -180,7 +180,7 @@ var Hints = (function() {
     }
 
     function onScrollStarted(evt) {
-        holder.innerHTML = "";
+        setInnerHTML(holder, "");
         holder.remove();
         prefix = "";
     }
@@ -240,7 +240,7 @@ var Hints = (function() {
         holder.prepend(link);
         document.documentElement.prepend(holder);
         var br = link.getBoundingClientRect();
-        holder.innerHTML = "";
+        setInnerHTML(holder, "");
         return {
             top: br.top + window.pageYOffset - document.documentElement.clientTop,
             left: br.left + window.pageXOffset - document.documentElement.clientLeft
@@ -248,7 +248,7 @@ var Hints = (function() {
     };
 
     function _initHolder(mode) {
-        holder.innerHTML = "";
+        setInnerHTML(holder, "");
         holder.setAttribute('mode', mode);
         holder.style.display = "";
     }
@@ -439,7 +439,7 @@ var Hints = (function() {
             var hintLabels = self.genLabels(elements.length);
             elements.forEach(function(e, i) {
                 e.label = hintLabels[i];
-                e.innerHTML = hintLabels[i];
+                setInnerHTML(e, hintLabels[i]);
                 holder.append(e);
             });
 

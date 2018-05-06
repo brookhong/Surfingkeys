@@ -104,14 +104,14 @@ function renderProxySettings(rs) {
         if (rs.proxyMode === "bypass") {
             desc = "For below hosts, <b>NO</b> proxy will be used, click ␡ to remove one.";
         }
-        document.querySelector('#autoproxy_hosts>h3').innerHTML = desc;
+        setInnerHTML(document.querySelector('#autoproxy_hosts>h3'), desc);
 
         var ih = autoproxyHostsInput.value;
         var autoproxy_hosts = rs.autoproxy_hosts.sort().map(function(h) {
             return `<aphost><i role='remove'>␡</i><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
         }).join("");
         autoproxyHostsDiv.show();
-        document.querySelector('#autoproxy_hosts>div').innerHTML = autoproxy_hosts;
+        setInnerHTML(document.querySelector('#autoproxy_hosts>div'), autoproxy_hosts);
 
         autoproxyHostsDiv.querySelectorAll('aphost>i').forEach(function(ph) {
             ph.onclick = function() {
@@ -349,7 +349,7 @@ function renderKeyMappings(rs) {
     </div>`;
             });
 
-            basicMappingsDiv.innerHTML = customization.join("");
+            setInnerHTML(basicMappingsDiv, customization.join(""));
             basicMappingsDiv.querySelectorAll("kbd").forEach(function(d) {
                 d.onclick = function () {
                     KeyPicker.enter(this);
@@ -371,7 +371,7 @@ var KeyPicker = (function() {
         if (!s) {
             s = "&nbsp;";
         }
-        document.getElementById("inputKey").innerHTML = s;
+        setInnerHTML(document.getElementById("inputKey"), s);
     }
 
     var _key = "";
@@ -388,7 +388,7 @@ var KeyPicker = (function() {
         } else if (event.keyCode === 13) {
             keyPickerDiv.hide();
             self.exit();
-            _elm.innerHTML = (_key !== "") ? htmlEncode(_key) : "🚫";
+            setInnerHTML(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
             _elm.setAttribute('new', _key);
             var kbds = Array.from(basicMappingsDiv.querySelectorAll("kbd"));
             var originalKeys = kbds.map(function(m) {

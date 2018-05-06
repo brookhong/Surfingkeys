@@ -605,7 +605,7 @@ mapkey(';j', '#12Close Downloads Shelf', function() {
 });
 mapkey(';pp', '#7Paste html on current page', function() {
     Clipboard.read(function(response) {
-        document.body.innerHTML = response.data;
+        setInnerHTML(document.body, response.data);
     });
 });
 mapkey(';q', '#14Insert jquery library on current page', function() {

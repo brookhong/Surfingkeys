@@ -194,7 +194,7 @@ var Insert = (function() {
             if (emojiMatched === "") {
                 _emojiDiv.remove();
             } else {
-                _emojiDiv.innerHTML = emojiMatched;
+                setInnerHTML(_emojiDiv, emojiMatched);
                 document.body.append(_emojiDiv);
                 _emojiDiv.style.display = "";
                 _emojiDiv.querySelector('#sk_emoji>div').classList.add("selected");
@@ -225,7 +225,7 @@ var Insert = (function() {
             span = document.createElement("span");
         mask.style.font = css.font;
         mask.style.position = "fixed";
-        mask.innerHTML = input.value;
+        setInnerHTML(mask, input.value);
         mask.style.left = (input.clientLeft + br.left) + "px";
         mask.style.top = (input.clientTop + br.top) + "px";
         mask.style.color = "red";

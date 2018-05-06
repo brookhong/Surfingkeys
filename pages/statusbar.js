@@ -23,10 +23,10 @@ var StatusBar = (function() {
         var span = ui.querySelectorAll('span');
         if (n < 0) {
             span.forEach(function(s) {
-                s.innerHTML = "";
+                setInnerHTML(s, "");
             });
         } else {
-            span[n].innerHTML = content;
+            setInnerHTML(span[n], content);
         }
         var lastSpan = -1;
         for (var i = 0; i < span.length; i++) {

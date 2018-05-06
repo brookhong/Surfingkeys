@@ -728,7 +728,7 @@ var Normal = (function() {
         var s = document.createElement('script');
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
-            s.innerHTML = "(" + code.toString() + ")(window);";
+            setInnerHTML(s, "(" + code.toString() + ")(window);");
             setTimeout(function() {
                 s.remove();
             }, 1);

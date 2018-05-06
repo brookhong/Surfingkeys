@@ -51,7 +51,7 @@ var mermaidDiv = document.querySelector("div.mermaid");
 function drawDiagram(code) {
     Front.source = code;
     mermaidDiv.removeAttribute("data-processed");
-    mermaidDiv.innerHTML = code;
+    setInnerHTML(mermaidDiv, code);
     mermaid.init({noteMargin: 10}, ".mermaid");
 }
 

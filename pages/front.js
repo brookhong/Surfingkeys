@@ -134,14 +134,14 @@ var Front = (function() {
     };
 
     _tabs.onShow = function(tabs) {
-        _tabs.innerHTML = "";
+        setInnerHTML(_tabs, "");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
         var tabstr = "<div class=sk_tab style='width: 200px'>";
         tabs.forEach(function(t, i) {
             var tab = createElement(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            tab.innerHTML = `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`;
+            setInnerHTML(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
             tab.url = t.url;
             _tabs.append(tab);
         });
@@ -206,7 +206,7 @@ var Front = (function() {
 
     _usage.onShow = function(message) {
         buildUsage(message.metas, function(usage) {
-            _usage.innerHTML = usage;
+            setInnerHTML(_usage, usage);
         });
     };
 
@@ -220,7 +220,7 @@ var Front = (function() {
             }
         }
         if ('theme' in message.userSettings) {
-            document.getElementById("sk_theme").innerHTML = message.userSettings.theme;
+            setInnerHTML(document.getElementById("sk_theme"), message.userSettings.theme);
         }
     };
     _actions['executeCommand'] = function (message) {
@@ -265,7 +265,7 @@ var Front = (function() {
     };
 
     self.showPopup = function(content) {
-        _popup.innerHTML = content;
+        setInnerHTML(_popup, content);
         showPopup(_popup);
     };
 
@@ -309,7 +309,7 @@ var Front = (function() {
     self.showBanner = function (content, linger_time) {
         banner.classList.remove("slideInBanner");
         banner.style.display = "";
-        banner.innerHTML = htmlEncode(content);
+        setInnerHTML(banner, htmlEncode(content));
         self.flush();
 
         banner.classList.add("slideInBanner");
@@ -324,7 +324,7 @@ var Front = (function() {
     };
     _actions['showBubble'] = function(message) {
         var pos = message.position;
-        _bubble.querySelector('div.sk_bubble_content').innerHTML = message.content;
+        setInnerHTML(_bubble.querySelector('div.sk_bubble_content'), message.content);
         _bubble.style.display = "";
         self.flush();
         var w = _bubble.offsetWidth,
@@ -398,7 +398,7 @@ var Front = (function() {
             keystroke.classList.remove("expandRichHints");
             keystroke.classList.add(outClass);
             keystroke.one('animationend', function() {
-                keystroke.innerHTML = "";
+                setInnerHTML(keystroke, "");
                 keystroke.style.display = "none";
                 self.flush();
             });
@@ -425,7 +425,7 @@ var Front = (function() {
                 }
             }).join("");
             if (words.length > 0 && _pendingHint) {
-                keystroke.innerHTML = words;
+                setInnerHTML(keystroke, words);
                 var cl = keystroke.classList;
                 cl.remove("expandRichHints");
                 cl.remove("simpleHint");
@@ -442,7 +442,7 @@ var Front = (function() {
             keystroke.style.display = "";
             self.flush();
             var keys = keystroke.innerHTML + htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
-            keystroke.innerHTML = keys;
+            setInnerHTML(keystroke, keys);
 
             var cl = keystroke.classList;
             cl.remove("slideInRight");

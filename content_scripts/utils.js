@@ -393,9 +393,13 @@ function filterInvisibleElements(nodes) {
     });
 }
 
+function setInnerHTML(elm, str) {
+    elm.innerHTML = str;
+}
+
 function createElement(str) {
     var div = document.createElement('div');
-    div.innerHTML = str;
+    setInnerHTML(div, str);
 
     return div.firstChild;
 }

@@ -6,7 +6,7 @@ if (window === top) {
     var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" />`);
     uiHost.attachShadow({mode:'open'});
     var sk_style = document.createElement("style");
-    sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
+    setInnerHTML(sk_style, `@import url("${chrome.runtime.getURL("pages/shadow.css")}");`);
     uiHost.shadowRoot.appendChild(sk_style);
     uiHost.shadowRoot.appendChild(ifr);
 

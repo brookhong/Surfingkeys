@@ -19,7 +19,7 @@ var Clipboard = (function(mode) {
     self.read = function(onReady) {
         clipboardActionWithSelectionPreserved(function() {
             holder.value = '';
-            holder.innerHTML = '';
+            setInnerHTML(holder, '');
             holder.focus();
             document.execCommand("Paste");
         });

@@ -530,7 +530,7 @@ var Visual = (function() {
             n.onscroll = null;
         });
         registeredScrollNodes = [];
-        holder.innerHTML = "";
+        setInnerHTML(holder, "");
         holder.remove();
         Front.showStatus(2, '');
     };

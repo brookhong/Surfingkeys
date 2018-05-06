@@ -2,14 +2,14 @@ var markdownBody = document.querySelector(".markdown-body");
 function previewMarkdown(mk) {
     Front.source = mk;
     if (runtime.conf.useLocalMarkdownAPI) {
-        markdownBody.innerHTML = marked(mk);
+        setInnerHTML(markdownBody, marked(mk));
     } else {
-        markdownBody.innerHTML = "Loading preview…";
+        setInnerHTML(markdownBody, "Loading preview…");
         httpRequest({
             url: "https://api.github.com/markdown/raw",
             data: mk
         }, function(res) {
-            markdownBody.innerHTML = res.text;
+            setInnerHTML(markdownBody, res.text);
         });
     }
 }

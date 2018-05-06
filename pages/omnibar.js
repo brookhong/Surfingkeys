@@ -263,9 +263,9 @@ var Omnibar = (function() {
             lastHandler = handler;
             handler = SearchEngine;
             Object.assign(SearchEngine, SearchEngine.aliases[alias]);
-            self.resultsDiv.innerHTML = "";
-            self.promptSpan.innerHTML = handler.prompt;
-            resultPageSpan.innerHTML = "";
+            setInnerHTML(self.resultsDiv, "");
+            setInnerHTML(self.promptSpan, handler.prompt);
+            setInnerHTML(resultPageSpan, "");
             _items = null;
             self.collapsingPoint = val;
             self.input.value = val;
@@ -282,7 +282,7 @@ var Omnibar = (function() {
         if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
-            self.promptSpan.innerHTML = handler.prompt;
+            setInnerHTML(self.promptSpan, handler.prompt);
             if (val.length) {
                 self.input.value = val.substr(0, val.length - 1);
             }
@@ -464,7 +464,7 @@ var Omnibar = (function() {
         var si = (_start - 1) * _pageSize,
             ei = si + _pageSize;
             ei = ei > _items.length ? _items.length : ei;
-        resultPageSpan.innerHTML = `${si + 1} - ${ei} / ${_items.length}`;
+        setInnerHTML(resultPageSpan, `${si + 1} - ${ei} / ${_items.length}`);
         _page = _items.slice(si, ei);
         var query = self.input.value.trim();
         var rxp = null;
@@ -508,8 +508,8 @@ var Omnibar = (function() {
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
-        self.promptSpan.innerHTML = handler.prompt;
-        resultPageSpan.innerHTML = "";
+        setInnerHTML(self.promptSpan, handler.prompt);
+        setInnerHTML(resultPageSpan, "");
         ui.scrollTop = 0;
     };
 
@@ -523,7 +523,7 @@ var Omnibar = (function() {
 
         lastInput = "";
         self.input.value = "";
-        self.resultsDiv.innerHTML = "";
+        setInnerHTML(self.resultsDiv, "");
         lastHandler = null;
         handler.onClose && handler.onClose();
         self.exit();
@@ -579,7 +579,7 @@ var Omnibar = (function() {
         if (runtime.conf.omnibarPosition === "bottom") {
             items.reverse();
         }
-        self.resultsDiv.innerHTML = "";
+        setInnerHTML(self.resultsDiv, "");
         var ul = createElement("<ul/>");
         items.forEach(function(b) {
             ul.append(renderItem(b));
@@ -604,7 +604,7 @@ var Omnibar = (function() {
     };
 
     self.html = function(content) {
-        self.resultsDiv.innerHTML = content;
+        setInnerHTML(self.resultsDiv, content);
     };
 
     self.addHandler = function(name, hdl) {
@@ -651,7 +651,7 @@ var OpenBookmarks = (function() {
             }, self.onResponse);
         }
         self.prompt = fl.prompt;
-        Omnibar.promptSpan.innerHTML = self.prompt;
+        setInnerHTML(Omnibar.promptSpan, self.prompt);
         lastFocused = fl.focused;
     }
 
@@ -667,7 +667,7 @@ var OpenBookmarks = (function() {
                 focused: items.indexOf(fi)
             });
             self.prompt = fi.folder_name + separator;
-            Omnibar.promptSpan.innerHTML = self.prompt;
+            setInnerHTML(Omnibar.promptSpan, self.prompt);
             Omnibar.input.value = "";
             currentFolderId = folderId;
             lastFocused = 0;
@@ -714,7 +714,7 @@ var OpenBookmarks = (function() {
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
             self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
-            Omnibar.promptSpan.innerHTML = self.prompt;
+            setInnerHTML(Omnibar.promptSpan, self.prompt);
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId,
@@ -779,7 +779,7 @@ var AddBookmark = (function() {
             }, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
-                    Omnibar.promptSpan.innerHTML = `edit bookmark${separatorHtml}`;
+                    setInnerHTML(Omnibar.promptSpan, `edit bookmark${separatorHtml}`);
                     Omnibar.resultsDiv.querySelector('li.focused').classList.remove('focused');
                     Omnibar.focusItem(`li[folder="${b.parentId}"]`);
                 }
