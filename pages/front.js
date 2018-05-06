@@ -298,7 +298,7 @@ var Front = (function() {
     _actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
         var style = message.style || "";
-        self.omnibar.querySelector('style').innerHTML = `#sk_omnibar {${style}}`;
+        setInnerHTML(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
     };
     self.openOmnibar = _actions['openOmnibar'];
     _actions['openFinder'] = function() {
