@@ -648,6 +648,7 @@ For example,
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 | settings.caseSensitive | false | Whether finding in page is case sensitive. |
 | settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
+| settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

@@ -197,7 +197,9 @@ var Mode = (function() {
                 onAfterHandler(thisMode, event);
             }, 0);
         } else if (this.repeats !== undefined &&
-            this.map_node === this.mappings && (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            this.map_node === this.mappings &&
+            runtime.conf.digitForRepeat &&
+            (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
             // reset only after target action executed or cancelled
             this.repeats += key;
             this.isTrustedEvent && Front.showKeystroke(key, this);

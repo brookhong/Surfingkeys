@@ -23,6 +23,7 @@ var runtime = window.runtime || (function() {
             lastQuery: "",
             modeAfterYank: "",
             nextLinkRegex: /(\b(next)\b)|下页|下一页|>>|»/i,
+            digitForRepeat: true,
             omnibarMaxResults: 10,
             omnibarPosition: "middle",
             omnibarSuggestion: true,

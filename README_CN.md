@@ -633,6 +633,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
 | settings.caseSensitive | false | 网页内搜索是否大小写敏感。 |
 | settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
+| settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
 
 ### settings.theme示例，修改状态栏字体
 
