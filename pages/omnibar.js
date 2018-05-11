@@ -97,11 +97,10 @@ var Omnibar = (function() {
         feature_group: 8,
         code: function () {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
-            var uid = fi.uid;
-            if (uid) {
+            if (fi && fi.uid) {
                 runtime.command({
                     action: "removeURL",
-                    uid: uid
+                    uid: fi.uid
                 }, function(ret) {
                     if (ret.response === "Done") {
                         fi.remove();
@@ -116,12 +115,11 @@ var Omnibar = (function() {
         feature_group: 8,
         code: function () {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
-            var url = fi.url;
-            if (url) {
+            if (fi && fi.url) {
                 Front.showEditor({
                     initial_line: 1,
                     type: "url",
-                    content: url,
+                    content: fi.url,
                     onEditorSaved: function(data) {
                         data && tabOpenLink(data);
                     }
@@ -236,7 +234,9 @@ var Omnibar = (function() {
         feature_group: 8,
         code: function (mark) {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
-            Normal.addVIMark(mark, fi.url);
+            if (fi) {
+                Normal.addVIMark(mark, fi.url);
+            }
         }
     });
 
@@ -532,8 +532,10 @@ var Omnibar = (function() {
 
     self.openFocused = function() {
         var ret = false, fi = self.resultsDiv.querySelector('li.focused');
-        var url = fi.url;
-        if (url === undefined) {
+        var url;
+        if (fi) {
+            url = fi.url;
+        } else {
             url = self.input.value;
             if (url.indexOf(':') === -1) {
                 url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
@@ -547,8 +549,9 @@ var Omnibar = (function() {
             }, function(ret) {
             });
         } else {
-            var type = "", uid = fi.uid;
-            if (uid) {
+            var type = "", uid;
+            if (fi && fi.uid) {
+                uid = fi.uid;
                 type = uid[0], uid = uid.substr(1);
             }
             if (type === 'T') {
