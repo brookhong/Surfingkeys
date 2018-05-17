@@ -73,6 +73,12 @@ mapkey('gr', '#14Read selected text or text from clipboard', function() {
 vmapkey('gr', '#9Read selected text', function() {
     readText(window.getSelection().toString(), {verbose: true});
 });
+vmapkey("<Shift-Enter>", "Open link in the new tab", function() {
+  RUNTIME("openLink", {
+      tab: { tabbed: true, active: false },
+      url:  document.getSelection().focusNode.parentNode.href
+  });
+});
 mapkey('sfr', '#13show failed web requests of current page', function() {
     runtime.command({
         action: 'getTabErrors'
