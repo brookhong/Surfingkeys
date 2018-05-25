@@ -6,6 +6,7 @@ const gulp = require('gulp'),
     ghPages = require('gulp-gh-pages'),
     gp_concat = require('gulp-concat'),
     gp_uglify = require('gulp-uglify'),
+    sourcemaps = require('gulp-sourcemaps'),
     gulpif = require('gulp-if'),
     minimist = require('minimist'),
     gulpDocumentation = require('gulp-documentation'),
@@ -47,7 +48,14 @@ gulp.task('copy-html-files', function() {
 });
 
 gulp.task('copy-non-js-files', function() {
-    return gulp.src(['icons/**', 'content_scripts/**', '!content_scripts/**/*.js', 'pages/**', '!pages/**/*.html', '!pages/**/*.js'], {base: "."})
+    return gulp.src(['icons/**',
+        'content_scripts/**',
+        '!content_scripts/**/*.js',
+        'pages/**',
+        'libs/marked.min.js',
+        'libs/mermaid.min.js',
+        '!pages/**/*.html',
+        '!pages/**/*.js'], {base: "."})
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -58,8 +66,10 @@ gulp.task('copy-es-files', function() {
         'content_scripts/top.js',
         'pages/*.js'
     ], {base: "."})
+        .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -67,12 +77,12 @@ gulp.task('copy-js-files', gulp.series('copy-es-files', function() {
     var libs = [
         'libs/ace/*.js',
         'pages/pdf/*.js',
-        'libs/marked.min.js',
-        'libs/mermaid.min.js',
         'libs/webfontloader.js'
     ];
     return gulp.src(libs, {base: "."})
-        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
+        .pipe(gulpif(options.env === 'development', sourcemaps.init()))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 }));
 
@@ -92,9 +102,11 @@ gulp.task('build_background', function() {
         background.unshift("chrome_bg.js");
     }
     return gulp.src(background)
+        .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('background.js'))
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -117,9 +129,11 @@ gulp.task('build_common_content_min', function() {
         common_content.push("content_scripts/chrome_fg.js");
     }
     return gulp.src(common_content)
+        .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('common_content.min.js'))
         .pipe(babel({presets: ['es2015']}))
-        .pipe(gulpif(options.env === 'production', gp_uglify().on('error', gulpUtil.log)))
+        .pipe(gp_uglify().on('error', gulpUtil.log))
+        .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
 

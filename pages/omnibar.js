@@ -1096,7 +1096,10 @@ var SearchEngine = (function() {
         self.suggestionURL = undefined;
     };
     self.onTabKey = function() {
-        Omnibar.input.value = Omnibar.resultsDiv.querySelector('li.focused').query;
+        var fi = Omnibar.resultsDiv.querySelector('li.focused');
+        if (fi && fi.query) {
+            Omnibar.input.value = fi.query;
+        }
     };
     self.onEnter = function() {
         var fi = Omnibar.resultsDiv.querySelector('li.focused'), url;

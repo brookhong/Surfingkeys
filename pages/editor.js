@@ -217,14 +217,12 @@ var AceEditor = (function() {
                     backward: false
                 });
             });
-            vim.map('J', ':bn', 'normal');
             vim.defineEx("bprevious", "bp", function(cm, input) {
                 Front.contentCommand({
                     action: 'nextEdit',
                     backward: true
                 });
             });
-            vim.map('K', ':bp', 'normal');
             vim.defineEx("quit", "q", function(cm, input) {
                 self.onExit = _close;
                 self.exit();
