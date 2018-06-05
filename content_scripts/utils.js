@@ -9,8 +9,8 @@ function getDocumentOrigin() {
     // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
     // file:// cannot be used as a security restriction; this restriction may be modified in the future.
     // Firefox provides window.origin instead of document.origin.
-    var origin = document.origin ? document.origin : (window.origin ? window.origin : "*");
-    if (origin === "null") {
+    var origin = window.location.origin ? window.location.origin : "*";
+    if (origin === "file://" || origin === "null") {
         origin = "*";
     }
     return origin;

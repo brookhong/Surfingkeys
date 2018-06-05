@@ -667,8 +667,8 @@ For example,
 
 ## Credits
 
-* [jQuery](https://github.com/jquery/jquery), for clean coding.
-* [TRIE](https://github.com/mikedeboer/trie), finally replaced by my own simple implementation for less memory usage and better performance.
+* ~~[jQuery](https://github.com/jquery/jquery)~~, removed for less memory usage and better performance.
+* ~~[TRIE](https://github.com/mikedeboer/trie)~~, finally replaced by my own simple implementation for less memory usage and better performance.
 * [ACE vim editor](https://github.com/ajaxorg/ace), for vim editor.
 * [markdown parser](https://github.com/chjj/marked), for markdown parser.
 * [pdf.js](https://github.com/mozilla/pdf.js), for pdf viewer.
