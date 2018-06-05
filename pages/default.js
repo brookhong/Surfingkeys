@@ -508,6 +508,9 @@ mapkey('og', '#8Open Search with alias g', function() {
 mapkey('ow', '#8Open Search with alias w', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "w"});
 });
+mapkey('oy', '#8Open Search with alias y', function() {
+    Front.openOmnibar({type: "SearchEngine", extra: "y"});
+});
 if (window.navigator.userAgent.indexOf("Firefox") > 0) {
     mapkey('on', '#3Open Firefox newtab', function() {
         tabOpenLink("about:blank");
@@ -643,5 +646,10 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
+addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=', 's',
+'http://suggestqueries.google.com/complete/search?client=youtube&ds=yt&client=chrome-ext&q=', function(response) {
+    var res = JSON.parse(response.text);
+    return res[1];
+});
 
 document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
