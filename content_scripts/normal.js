@@ -674,12 +674,21 @@ var Normal = (function() {
 
     var localMarks = {};
     self.addVIMark = function(mark, url) {
+
+        // local mark
         if (/^[a-z]$/.test(mark)) {
-            // local mark
-            localMarks[mark] = {
-                scrollLeft: document.scrollingElement.scrollLeft,
-                scrollTop: document.scrollingElement.scrollTop
-            };
+            if (/^pdf_viewer$/.test(url)){
+                
+                localMarks[mark] = {
+                    pageNumber: parseInt(document.getElementById("pageNumber"))
+                };
+            }
+            else{
+                localMarks[mark] = {
+                    scrollLeft: document.scrollingElement.scrollLeft,
+                    scrollTop: document.scrollingElement.scrollTop
+                };
+            }
         } else {
             // global mark
             url = url || window.location.href;
@@ -696,9 +705,15 @@ var Normal = (function() {
 
     self.jumpVIMark = function(mark, newTab) {
         if (localMarks.hasOwnProperty(mark)) {
-            var markInfo = localMarks[mark];
-            document.scrollingElement.scrollLeft = markInfo.scrollLeft;
-            document.scrollingElement.scrollTop = markInfo.scrollTop;
+            if (/^pdf_viewer$/.test(url)){
+                var markInfo = localMarks[mark];
+                document.getElementById('pageNumber').value = localMarks[mark].pageNumber;
+            }
+            else{
+                var markInfo = localMarks[mark];
+                document.scrollingElement.scrollLeft = markInfo.scrollLeft;
+                document.scrollingElement.scrollTop = markInfo.scrollTop;
+            }
         } else {
             runtime.command({
                 action: 'getSettings',
