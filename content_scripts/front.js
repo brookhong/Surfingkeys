@@ -60,6 +60,10 @@ var Front = (function() {
 
     var _actions = {};
 
+    self.registerAction = function(action, cb) {
+        _actions[action] = cb;
+    };
+
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
         if (_listSuggestions.hasOwnProperty(message.url)) {
@@ -199,24 +203,26 @@ var Front = (function() {
         frontendCommand(args);
     };
 
-    var onOmniQuery;
-    self.openOmniquery = function(args) {
-        onOmniQuery = function(query) {
+    var _inlineQuery;
+    self.performInlineQuery = function(query, showQueryResult) {
+        if (_inlineQuery) {
+            query = query.toLocaleLowerCase();
             httpRequest({
-                'url': (typeof(args.url) === "function") ? args.url(query) : args.url + query
+                url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
+                headers: _inlineQuery.headers
             }, function(res) {
-                var words = args.parseResult(res);
-
-                if (window.navigator.userAgent.indexOf("Firefox") === -1) {
-                    words.push(Visual.findSentenceOf(query));
-                }
-
-                frontendCommand({
-                    action: 'updateOmnibarResult',
-                    words: words
-                });
+                showQueryResult(_inlineQuery.parseResult(res));
             });
-        };
+        } else {
+            tabOpenLink("https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query");
+            self.hidePopup();
+        }
+    };
+
+    self.registerInlineQuery = function(args) {
+        _inlineQuery = args;
+    };
+    self.openOmniquery = function(args) {
         self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}));
     };
 
@@ -234,12 +240,17 @@ var Front = (function() {
         });
     };
 
-    self.showBubble = function(pos, msg) {
-        frontendCommand({
-            action: "showBubble",
-            content: msg,
-            position: pos
-        });
+    self.showBubble = function(pos, msg, noPointerEvents) {
+        if (msg.length > 0) {
+            pos.winWidth = window.innerWidth;
+            pos.winHeight = window.innerHeight;
+            frontendCommand({
+                action: "showBubble",
+                content: msg,
+                position: pos,
+                noPointerEvents: noPointerEvents
+            });
+        }
     };
 
     self.hideBubble = function() {
@@ -326,7 +337,22 @@ var Front = (function() {
     _actions["omnibar_query_entered"] = function(response) {
         readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
-        onOmniQuery(response.query);
+        self.performInlineQuery(response.query, function(queryResult) {
+            if (queryResult.constructor.name !== "Array") {
+                queryResult = [queryResult];
+            }
+            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+                var sentence = Visual.findSentenceOf(response.query);
+                if (sentence.length > 0) {
+                    queryResult.push(sentence);
+                }
+            }
+
+            frontendCommand({
+                action: 'updateOmnibarResult',
+                words: queryResult
+            });
+        });
     };
 
     _actions["executeScript"] = function(message) {

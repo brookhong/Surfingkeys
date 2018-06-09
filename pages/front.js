@@ -48,7 +48,7 @@ var Front = (function() {
         });
         var pointerEvents = visibleDivs.map(function(d) {
             var id = d.id;
-            var divNoPointerEvents = ["sk_keystroke", "sk_bubble", "sk_banner", "sk_frame"];
+            var divNoPointerEvents = ["sk_keystroke", "sk_banner", "sk_frame"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
@@ -56,8 +56,8 @@ var Front = (function() {
                 // only pointerEvents when input in statusBar
                 return self.statusBar.querySelector('input') !== null;
             } else {
-                // with pointerEvents for all other DIVs
-                return true;
+                // with pointerEvents for all other DIVs except that noPointerEvents is set.
+                return !d.noPointerEvents;
             }
         });
         // to make pointerEvents not empty
@@ -94,6 +94,24 @@ var Front = (function() {
     var _tabs = document.getElementById('sk_tabs');
     var banner = document.getElementById('sk_banner');
     var _bubble = document.getElementById('sk_bubble');
+    var sk_bubble_content = _bubble.querySelector("div.sk_bubble_content");
+    var sk_bubble_arrow = _bubble.querySelector('div.sk_arrow');
+    var sk_bubbleClassList = sk_bubble_content.classList;
+    function clearScrollerIndicator() {
+        sk_bubbleClassList.remove("sk_scroller_indicator_top");
+        sk_bubbleClassList.remove("sk_scroller_indicator_middle");
+        sk_bubbleClassList.remove("sk_scroller_indicator_bottom");
+    }
+    sk_bubble_content.onscroll = function(evt) {
+        clearScrollerIndicator();
+        if (this.scrollTop === 0) {
+            sk_bubbleClassList.add("sk_scroller_indicator_top");
+        } else if (this.scrollTop + this.offsetHeight >= this.scrollHeight) {
+            sk_bubbleClassList.add("sk_scroller_indicator_bottom");
+        } else {
+            sk_bubbleClassList.add("sk_scroller_indicator_middle");
+        }
+    };
     var keystroke = document.getElementById('sk_keystroke');
 
     var _display;
@@ -324,32 +342,51 @@ var Front = (function() {
     };
     _actions['showBubble'] = function(message) {
         var pos = message.position;
-        setInnerHTML(_bubble.querySelector('div.sk_bubble_content'), message.content);
+        // set position to (0, 0) to leave enough space for content.
+        _bubble.style.top = "0px";
+        _bubble.style.left = "0px";
+        setInnerHTML(sk_bubble_content, message.content);
+        sk_bubble_content.style.maxWidth = (pos.winWidth - 32) + "px";
+        sk_bubble_content.scrollTop = 0;
+        clearScrollerIndicator();
         _bubble.style.display = "";
-        self.flush();
         var w = _bubble.offsetWidth,
             h = _bubble.offsetHeight;
         var left = [pos.left - 11 - w / 2, w / 2];
         if (left[0] < 0) {
             left[1] += left[0];
             left[0] = 0;
-        } else if ((left[0] + w) > window.innerWidth) {
-            left[1] += left[0] - window.innerWidth + w;
-            left[0] = window.innerWidth - w;
+        } else if ((left[0] + w) > pos.winWidth) {
+            left[1] += left[0] - pos.winWidth + w;
+            left[0] = pos.winWidth - w;
         }
-        var arrow = _bubble.querySelector('div.sk_arrow');
-        if (pos.top - h >= 0) {
-            arrow.setAttribute("dir", "down");
-            arrow.style.top = "100%";
-            _bubble.style.top = (pos.top - h - pos.height) + "px";
-            _bubble.style.left = left[0] + "px";
+        sk_bubble_arrow.style.left = (left[1] + pos.width / 2 - 2) + "px";
+        _bubble.style.left = left[0] + "px";
+        _bubble.noPointerEvents = message.noPointerEvents;
+
+        if (pos.top + pos.height / 2 > pos.winHeight / 2) {
+            sk_bubble_arrow.setAttribute("dir", "down");
+            sk_bubble_arrow.style.top = "100%";
+            sk_bubble_content.style.maxHeight = (pos.top - 12 - 32) + "px";
+            h = _bubble.offsetHeight;
+            _bubble.style.top = (pos.top - h - 12) + "px";
         } else {
-            arrow.setAttribute("dir", "up");
-            arrow.style.top = "-12px";
+            sk_bubble_arrow.setAttribute("dir", "up");
+            sk_bubble_arrow.style.top = "-12px";
+            sk_bubble_content.style.maxHeight = (pos.winHeight - (pos.top + pos.height + 12) - 32) + "px";
+            h = _bubble.offsetHeight;
             _bubble.style.top = pos.top + pos.height + 12 + "px";
-            _bubble.style.left = left[0] + "px";
         }
-        arrow.style.left = left[1] + "px";
+        if (sk_bubble_content.scrollHeight > sk_bubble_content.offsetHeight) {
+            _bubble.noPointerEvents = false;
+            sk_bubbleClassList.add("sk_scroller_indicator_top");
+        }
+        self.flush();
+        if (!_bubble.noPointerEvents) {
+            _display = _bubble;
+            self.onShowBubble && self.onShowBubble(_bubble);
+            self.enter(0, true);
+        }
     };
     self.showBubble = function() {
     };

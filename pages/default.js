@@ -297,39 +297,8 @@ mapkey('ox', '#8Open recently closed URL', function() {
 mapkey('H', '#8Open opened URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getTabURLs"});
 });
-function renderShanbay(res) {
-    var exp = res.msg;
-    if (res.data.definition) {
-        var tmp = [];
-        for (var reg in res.data.pronunciations) {
-            tmp.push('<div>[{0}] {1}</div>'.format(reg, res.data.pronunciations[reg]));
-            tmp.push('<div><audio src="{0}" controls></audio></div>'.format(res.data[reg+'_audio']));
-        }
-        tmp.push('<div>{0}</div>'.format(res.data.definition));
-        exp = '<div>{0}</div>'.format(tmp.join('\n'));
-    }
-    return exp;
-}
 mapkey('Q', '#8Open omnibar for word translation', function() {
-    Front.openOmniquery({
-        url: "https://api.shanbay.com/bdc/search/?word=",
-        /*
-         * or
-        url: function(q) {
-            return "https://api.shanbay.com/bdc/search/?word=" + q
-        },
-        */
-        query: Visual.getWordUnderCursor(),
-        style: "opacity: 0.8;",
-        parseResult: function(res) {
-            var res = JSON.parse(res.text);
-            return [ renderShanbay(res) ];
-        }
-    });
-});
-Visual.setTranslationService("https://api.shanbay.com/bdc/search/?word=", function(res) {
-    var res = JSON.parse(res.text);
-    return renderShanbay(res);
+    Front.openOmniquery({query: Visual.getWordUnderCursor(), style: "opacity: 0.8;"});
 });
 mapkey('b', '#8Open a bookmark', function() {
     Front.openOmnibar(({type: "Bookmarks"}));

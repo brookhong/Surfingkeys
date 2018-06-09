@@ -285,16 +285,14 @@ var Visual = (function() {
         code: function() {
             var w = Visual.getWordUnderCursor();
             readText(w);
-            httpRequest({
-                url: _translationUrl + w
-            }, function(res) {
+            Front.performInlineQuery(w, function(queryResult) {
                 var br = cursor.getBoundingClientRect();
                 Front.showBubble({
                     left: br.left,
                     top: br.top,
                     height: br.height,
                     width: br.width
-                }, _parseTranslation(res));
+                }, queryResult, true);
             });
         }
     });
@@ -310,12 +308,6 @@ var Visual = (function() {
             self.showCursor();
         }
     });
-
-    var _translationUrl, _parseTranslation;
-    self.setTranslationService = function(url, cb) {
-        _translationUrl = url;
-        _parseTranslation = cb;
-    };
 
     var selection = document.getSelection(),
         matches = [],
@@ -623,8 +615,8 @@ var Visual = (function() {
 
     self.getWordUnderCursor = function() {
         var word = selection.toString();
-        if (word.length === 0 && selection.focusNode && selection.focusNode.parentElement) {
-            var pe = selection.focusNode.parentElement;
+        if (word.length === 0 && selection.focusNode) {
+            var pe = selection.focusNode;
             word = getNearestWord(pe.textContent, selection.focusOffset);
         }
         return word;

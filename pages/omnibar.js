@@ -245,8 +245,12 @@ var Omnibar = (function() {
 
     var lastInput = "", handler, lastHandler = null;
     var ui = Front.omnibar;
-    ui.onclick = function() {
-        self.input.focus();
+    ui.onclick = function(e) {
+        if (handler.onClick) {
+            handler.onClick(e);
+        } else {
+            self.input.focus();
+        }
     };
 
     self.triggerInput = function() {

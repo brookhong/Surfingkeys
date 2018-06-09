@@ -315,17 +315,8 @@ var Hints = (function() {
             elements = filterInvisibleElements(elements);
         } else {
             if (cssSelector === "") {
-                cssSelector = "a, button, select, input, textarea, *[onclick], *.jfk-button, *.goog-flat-menu-button, *[role]";
-                if (runtime.conf.clickableSelector.length) {
-                    cssSelector += ", " + runtime.conf.clickableSelector;
-                }
-
                 elements = getVisibleElements(function(e, v) {
-                    if (e.matches(cssSelector)) {
-                        v.push(e);
-                    } else if (getComputedStyle(e).cursor === "pointer" || getComputedStyle(e).cursor.substr(0, 4) === "url(") {
-                        v.push(e);
-                    } else if (e.closest('a') !== null) {
+                    if (isElementClickable(e)) {
                         v.push(e);
                     }
                 });
