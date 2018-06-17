@@ -342,6 +342,8 @@ var Front = (function() {
     };
     _actions['showBubble'] = function(message) {
         var pos = message.position;
+        pos.left += pos.winX;
+        pos.top += pos.winY;
         // set position to (0, 0) to leave enough space for content.
         _bubble.style.top = "0px";
         _bubble.style.left = "0px";
@@ -353,12 +355,12 @@ var Front = (function() {
         var w = _bubble.offsetWidth,
             h = _bubble.offsetHeight;
         var left = [pos.left - 11 - w / 2, w / 2];
-        if (left[0] < 0) {
-            left[1] += left[0];
-            left[0] = 0;
+        if (left[0] < pos.winX) {
+            left[1] += left[0] - pos.winX;
+            left[0] = pos.winX;
         } else if ((left[0] + w) > pos.winWidth) {
-            left[1] += left[0] - pos.winWidth + w;
-            left[0] = pos.winWidth - w;
+            left[1] += left[0] - pos.winX - pos.winWidth + w;
+            left[0] = pos.winX + pos.winWidth - w;
         }
         sk_bubble_arrow.style.left = (left[1] + pos.width / 2 - 2) + "px";
         _bubble.style.left = left[0] + "px";

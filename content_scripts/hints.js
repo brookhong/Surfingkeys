@@ -259,7 +259,7 @@ var Hints = (function() {
         var bof = self.coordinate();
         var style = createElement(`<style>#sk_hints>div{${_styleForClick}}</style>`);
         holder.prepend(style);
-        elements.forEach(function(elm, i) {
+        var links = elements.map(function(elm, i) {
             var pos = elm.getClientRects()[0],
                 z = getZIndex(elm);
             var left, width = Math.min(pos.width, window.innerWidth);
@@ -282,7 +282,10 @@ var Hints = (function() {
             link.zIndex = link.style.zIndex;
             link.label = hintLabels[i];
             link.link = elm;
-            holder.append(link);
+            return link;
+        });
+        links.forEach(function(link) {
+            holder.appendChild(link);
         });
         var hints = holder.querySelectorAll('#sk_hints>div');
         var bcr = hints[0].getBoundingClientRect();

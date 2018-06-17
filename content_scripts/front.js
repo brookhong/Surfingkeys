@@ -244,6 +244,12 @@ var Front = (function() {
         if (msg.length > 0) {
             pos.winWidth = window.innerWidth;
             pos.winHeight = window.innerHeight;
+            pos.winX = 0;
+            pos.winY = 0;
+            if (window.frameElement) {
+                pos.winX = window.frameElement.offsetLeft;
+                pos.winY = window.frameElement.offsetTop;
+            }
             frontendCommand({
                 action: "showBubble",
                 content: msg,
