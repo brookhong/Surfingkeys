@@ -22,29 +22,40 @@ unmap('<Ctrl-i>');
 // set theme
 settings.theme = `
 .sk_theme {
-    background: #000;
-    color: #fff;
+    font-family: Input Sans Condensed, Charcoal, sans-serif;
+    font-size: 10pt;
+    background: #24272e;
+    color: #abb2bf;
 }
 .sk_theme tbody {
     color: #fff;
 }
 .sk_theme input {
-    color: #d9dce0;
+    color: #d0d0d0;
 }
 .sk_theme .url {
-    color: #2173c5;
+    color: #61afef;
 }
 .sk_theme .annotation {
-    color: #38f;
+    color: #56b6c2;
 }
 .sk_theme .omnibar_highlight {
-    color: #fbd60a;
+    color: #528bff;
 }
-.sk_theme ul>li:nth-child(odd) {
-    background: #1e211d;
+.sk_theme .omnibar_timestamp {
+    color: #e5c07b;
 }
-.sk_theme ul>li.focused {
-    background: #4ec10d;
+.sk_theme .omnibar_visitcount {
+    color: #98c379;
+}
+.sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
+    background: #303030;
+}
+.sk_theme #sk_omnibarSearchResult>ul>li.focused {
+    background: #3e4452;
+}
+#sk_status, #sk_find {
+    font-size: 20pt;
 }`;
 // click `Save` button to make above settings to take effect.</script>
         <div id="keyPicker" style="display: none;">

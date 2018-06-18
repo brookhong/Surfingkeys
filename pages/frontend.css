@@ -110,6 +110,7 @@ body {
     padding: 0.2rem 0rem;
     display: block;
     max-height: 600px;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 .sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {

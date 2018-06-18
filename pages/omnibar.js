@@ -579,14 +579,14 @@ var Omnibar = (function() {
         return this.activeTab;
     };
 
-    self.listResults = function(items, renderItem) {
+    self.listResults = function (items, renderItem) {
+        setInnerHTML(self.resultsDiv, "");
         if (!items || items.length === 0) {
             return;
         }
         if (runtime.conf.omnibarPosition === "bottom") {
             items.reverse();
         }
-        setInnerHTML(self.resultsDiv, "");
         var ul = createElement("<ul/>");
         items.forEach(function(b) {
             ul.append(renderItem(b));
@@ -794,14 +794,14 @@ var AddBookmark = (function() {
                 //restore the last used bookmark folder input
                 var lastBookmarkFolder = localStorage.getItem("surfingkeys.lastAddedBookmark");
                 if (lastBookmarkFolder) {
-                  Omnibar.input.value = lastBookmarkFolder;
+                    Omnibar.input.value = lastBookmarkFolder;
 
-                  //make the input selected, so if user don't want to use it,
-                  //just input to overwrite the previous value
-                  Omnibar.input.select();
+                    //make the input selected, so if user don't want to use it,
+                    //just input to overwrite the previous value
+                    Omnibar.input.select();
 
-                  // trigger omnibar input matching
-                  self.onInput();
+                    // trigger omnibar input matching
+                    self.onInput();
                 }
             });
         });
