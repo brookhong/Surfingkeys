@@ -48,7 +48,7 @@ var Front = (function() {
         });
         var pointerEvents = visibleDivs.map(function(d) {
             var id = d.id;
-            var divNoPointerEvents = ["sk_keystroke", "sk_banner", "sk_frame"];
+            var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
@@ -87,7 +87,6 @@ var Front = (function() {
 
     self.omnibar = document.getElementById('sk_omnibar');
     self.statusBar = document.getElementById('sk_status');
-    var frameElement = document.getElementById('sk_frame');
     var _usage = document.getElementById('sk_usage');
     var _popup = document.getElementById('sk_popup');
     var _editor = document.getElementById('sk_editor');
@@ -136,20 +135,6 @@ var Front = (function() {
         _display.onShow && _display.onShow(args);
         self.flush();
     }
-
-    _actions['highlightElement'] = function(message) {
-        var rect = message.rect;
-        frameElement.style.top = rect.top + "px";
-        frameElement.style.left = rect.left + "px";
-        frameElement.style.width = rect.width + "px";
-        frameElement.style.height = rect.height + "px";
-        frameElement.style.display = "";
-        self.flush();
-        setTimeout(function() {
-            frameElement.style.display = "none";
-            self.flush();
-        }, message.duration);
-    };
 
     _tabs.onShow = function(tabs) {
         setInnerHTML(_tabs, "");

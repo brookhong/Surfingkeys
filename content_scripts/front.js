@@ -100,9 +100,18 @@ var Front = (function() {
         });
     };
 
+    var frameElement = createElement('<div id=sk_frame>');
     self.highlightElement = function (sn) {
-        sn.action = 'highlightElement';
-        frontendCommand(sn);
+        document.body.append(frameElement);
+        var rect = sn.rect;
+        frameElement.style.top = rect.top + "px";
+        frameElement.style.left = rect.left + "px";
+        frameElement.style.width = rect.width + "px";
+        frameElement.style.height = rect.height + "px";
+        frameElement.style.display = "";
+        setTimeout(function() {
+            frameElement.remove();
+        }, sn.duration);
     };
 
     function getAllAnnotations() {
@@ -317,7 +326,7 @@ var Front = (function() {
     };
 
     self.getFrameId = function () {
-        if (window.innerWidth && window.innerHeight && document.body.innerText
+        if (document.body.offsetWidth && document.body.offsetHeight && document.body.innerText
             && !window.frameId) {
             window.frameId = generateQuickGuid();
         }
@@ -436,7 +445,7 @@ var Front = (function() {
         if (msg.frameId === window.frameId) {
             window.focus();
             scrollIntoViewIfNeeded(document.body);
-            var rc = (window.frameElement || document.body).getBoundingClientRect();
+            var rc = document.body.getBoundingClientRect();
             self.highlightElement({
                 duration: 500,
                 rect: {
