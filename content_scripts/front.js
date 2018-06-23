@@ -168,7 +168,7 @@ var Front = (function() {
                 if (n.value === selected) {
                     initial_line = i;
                 }
-                return n.innerText + " >< " + n.value;
+                return n.innerText.trim() + " >< " + n.value;
             }).join('\n');
             elementBehindEditor = element;
         } else {
