@@ -630,8 +630,24 @@ var ChromeService = (function() {
                 return b.id !== tab.id;
             });
             if (conf.tabsMRUOrder) {
-                tabs.sort(function(a, b) {
-                    return tabActivated[b.id] - tabActivated[a.id];
+                tabs.sort(function(x, y) {
+                    // Shift tabs without "last access" data to the end
+                    var a = tabActivated[x.id];
+                    var b = tabActivated[y.id];
+
+                    if (!isFinite(a) && !isFinite(b)) {
+                        return 0;
+                    }
+
+                    if (!isFinite(a)) {
+                        return 1;
+                    }
+
+                    if (!isFinite(b)) {
+                        return -1;
+                    }
+
+                    return b - a;
                 });
             }
             _response(message, sendResponse, {
