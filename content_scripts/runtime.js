@@ -93,10 +93,6 @@ var runtime = window.runtime || (function() {
 
     self.command = function(args, cb) {
         args.id = generateQuickGuid();
-        if (!window.frameId && window.innerHeight && window.innerWidth) {
-            window.frameId = generateQuickGuid();
-        }
-        args.windowId = window.frameId;
         if (cb) {
             callbacks[args.id] = cb;
             // request background to hold _sendResponse for a while to send back result

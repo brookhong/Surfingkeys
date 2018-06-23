@@ -316,6 +316,14 @@ var Front = (function() {
         });
     };
 
+    self.getFrameId = function () {
+        if (window.innerWidth && window.innerHeight && document.body.innerText
+            && !window.frameId) {
+            window.frameId = generateQuickGuid();
+        }
+        return window.frameId;
+    };
+
     _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {
             onEditorSaved(response.data);

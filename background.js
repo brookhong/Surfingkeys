@@ -163,7 +163,7 @@ var ChromeService = (function() {
     // data by tab id
     var tabActivated = {},
         tabMessages = {},
-        frames = {},
+        frameIndexes = {},
         tabURLs = {},
         tabErrors = {};
 
@@ -213,17 +213,6 @@ var ChromeService = (function() {
     }
 
     function handleMessage(_message, _sender, _sendResponse, _port) {
-        var tid = 0;
-        // no tab set if message is from pages/popup.html
-        if (_sender.tab) {
-            tid = _sender.tab.id;
-            if (!frames.hasOwnProperty(tid)) {
-                frames[tid] = {index: 0, list: []};
-            }
-            if (_message.windowId && frames[tid].list.indexOf(_message.windowId) === -1) {
-                frames[tid].list.push(_message.windowId);
-            }
-        }
         if (_message && _message.target !== 'content_runtime') {
             if (self.hasOwnProperty(_message.action)) {
                 if (_message.repeats > conf.repeatThreshold) {
@@ -324,7 +313,7 @@ var ChromeService = (function() {
         delete tabMessages[tabId];
         delete tabURLs[tabId];
         delete tabErrors[tabId];
-        delete frames[tabId];
+        delete frameIndexes[tabId];
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
         });
@@ -349,7 +338,7 @@ var ChromeService = (function() {
     }
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
-            delete frames[tabId];
+            delete frameIndexes[tabId];
         }
         _setScrollPos_bg(tabId);
     });
@@ -988,17 +977,28 @@ var ChromeService = (function() {
     };
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
-        if (frames.hasOwnProperty(tid)) {
-            var framesInTab = frames[tid];
-            framesInTab.index ++;
-            framesInTab.index = framesInTab.index % framesInTab.list.length;
-
-            chrome.tabs.sendMessage(tid, {
-                subject: "focusFrame",
-                target: 'content_runtime',
-                frameId: framesInTab.list[framesInTab.index]
+        chrome.tabs.executeScript(tid, {
+            allFrames: true,
+            code: "Front && Front.getFrameId()"
+        }, function(framesInTab) {
+            framesInTab = framesInTab.filter(function(frameId) {
+                return frameId;
             });
-        }
+
+            if (framesInTab.length > 1) {
+                if (!frameIndexes.hasOwnProperty(tid)) {
+                    frameIndexes[tid] = 0;
+                }
+                frameIndexes[tid] ++;
+                frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
+
+                chrome.tabs.sendMessage(tid, {
+                    subject: "focusFrame",
+                    target: 'content_runtime',
+                    frameId: framesInTab[frameIndexes[tid]]
+                });
+            }
+        });
     };
     self.moveTab = function(message, sender, sendResponse) {
         chrome.tabs.query({
