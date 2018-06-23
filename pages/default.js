@@ -564,9 +564,14 @@ mapkey('sm', '#11Preview markdown', function() {
 mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', function() {
     tabOpenLink("/pages/mermaid.html");
 });
-mapkey('su', '#4Edit current URL with vim editor', function() {
+mapkey('su', '#4Edit current URL with vim editor, and open in new tab', function() {
     Front.showEditor(window.location.href, function(data) {
         tabOpenLink(data);
+    }, 'url');
+});
+mapkey('sU', '#4Edit current URL with vim editor, and reload', function() {
+    Front.showEditor(window.location.href, function(data) {
+        window.location.href = data;
     }, 'url');
 });
 mapkey(';m', '#1mouse out last element', function() {
