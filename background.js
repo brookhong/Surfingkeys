@@ -249,7 +249,7 @@ var ChromeService = (function() {
                 request(set.localPath, function(resp) {
                     set.snippets = resp;
                     cb(set);
-                }, null, null, function (po) {
+                }, undefined, undefined, function (po) {
                     // failed to read snippets from localPath
                     set.error = "Failed to read snippets from " + set.localPath;
                     cb(set);

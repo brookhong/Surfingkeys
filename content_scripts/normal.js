@@ -497,7 +497,7 @@ var Normal = (function() {
                 // find the highest one
                 var maxHeight = 0;
                 scrollNodes.forEach(function(n, i) {
-                    var h = n.offsetHeight;
+                    var h = n.scrollHeight * n.scrollWidth;
                     if (h > maxHeight) {
                         scrollIndex = i;
                         maxHeight = h;
@@ -509,7 +509,7 @@ var Normal = (function() {
 
     function getScrollableElements() {
         var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
-            return hasScroll(n, 'y', 16) || hasScroll(n, 'x', 16);
+            return (hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (hasScroll(n, 'x', 16) && n.scrollWidth > 200);
         });
         if (document.scrollingElement.scrollHeight > window.innerHeight
             || document.scrollingElement.scrollWidth > window.innerWidth) {
