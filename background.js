@@ -1388,6 +1388,29 @@ var ChromeService = (function() {
         chrome.windows.create({"url": message.url, "incognito": true});
     };
 
+    var userAgent;
+    function onBeforeSendHeaders(details) {
+        for (var i = 0; i < details.requestHeaders.length; ++i) {
+            if (details.requestHeaders[i].name === 'User-Agent') {
+                details.requestHeaders[i].value = userAgent;
+                break;
+            }
+        }
+        return {requestHeaders: details.requestHeaders};
+    }
+
+    self.setUserAgent = function (message, sender, sendResponse) {
+        if (message.userAgent) {
+            userAgent = message.userAgent;
+            chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, {
+                urls: ["<all_urls>"]
+            }, ["blocking", "requestHeaders"]);
+        } else {
+            chrome.webRequest.onBeforeSendHeaders.removeListener(onBeforeSendHeaders);
+        }
+        chrome.tabs.reload(sender.tab.id);
+    };
+
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
     return self;
 })();

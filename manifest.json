@@ -37,6 +37,7 @@
     "author": "brook hong",
     "permissions": [
         "webRequest",
+        "webRequestBlocking",
         "proxy",
         "<all_urls>",
         "tabs",
