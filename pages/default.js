@@ -373,6 +373,9 @@ mapkey('>>', '#3Move current tab to right', function() {
 mapkey('w', '#2Switch frames', function() {
     Normal.rotateFrame();
 });
+mapkey(';w', '#2Focus top window', function() {
+    top.focus();
+});
 mapkey('cc', '#7Open selected link or link from clipboard', function() {
     if (window.getSelection().toString()) {
         tabOpenLink(window.getSelection().toString());
@@ -419,6 +422,10 @@ mapkey('yt', '#3Duplicate current tab', function() {
 });
 mapkey('yy', "#7Copy current page's URL", function() {
     Clipboard.write(window.location.href);
+});
+mapkey('yh', "#7Copy current page's host", function() {
+    var url = new URL(window.location.href);
+    Clipboard.write(url.host);
 });
 mapkey('yl', "#7Copy current page's title", function() {
     Clipboard.write(document.title);
