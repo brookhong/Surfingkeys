@@ -35,8 +35,13 @@ var Hints = (function() {
             flip();
         } else if (hints.length > 0) {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
-                prefix = prefix.substr(0, prefix.length - 1);
-                handleHint();
+                if (prefix.length > 0) {
+                    prefix = prefix.substr(0, prefix.length - 1);
+                    handleHint();
+                } else if (textFilter.length > 0) {
+                    textFilter = textFilter.substr(0, textFilter.length - 1);
+                    refreshByTextFilter();
+                }
             } else {
                 var key = event.sk_keyName;
                 if (isCapital(key)) {
@@ -48,7 +53,7 @@ var Hints = (function() {
                             prefix += key;
                         } else {
                             textFilter += key;
-                            resetHints();
+                            refreshByTextFilter();
                         }
                         handleHint();
                     } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
@@ -133,12 +138,38 @@ var Hints = (function() {
         lastMouseTarget = element;
     }
 
+    function refreshByTextFilter() {
+        var hints = holder.querySelectorAll('#sk_hints>div');
+        hints = Array.from(hints);
+        if (textFilter.length > 0) {
+            hints = hints.filter(function(hint) {
+                hint.label = "";
+                setInnerHTML(hint, "");
+                var e = hint.link;
+                var text = e.innerText;
+                if (text === undefined) {
+                    text = e[0] ? e[0].textContent : "";
+                }
+                return text.indexOf(textFilter) !== -1;
+            });
+        }
+        var hintLabels = self.genLabels(hints.length);
+        hints.forEach(function(e, i) {
+            e.label = hintLabels[i];
+            setInnerHTML(e, hintLabels[i]);
+        });
+    }
+
     function refresh() {
         var matches = [];
-        var hints = holder.querySelectorAll('#sk_hints>div');
+        var hints = holder.querySelectorAll('#sk_hints>div:not(:empty)');
         hints.forEach(function(hint) {
             var label = hint.label;
-            if (label.indexOf(prefix) === 0) {
+            if (prefix.length === 0) {
+                hint.style.opacity = 1;
+                setInnerHTML(hint, label);
+                matches.push(hint);
+            } else if (label.indexOf(prefix) === 0) {
                 hint.style.opacity = 1;
                 setInnerHTML(hint, `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length));
                 matches.push(hint);
@@ -332,11 +363,6 @@ var Hints = (function() {
                 elements = filterOverlapElements(elements);
             }
         }
-        if (textFilter.length > 0) {
-            elements = elements.filter(function(e) {
-                return e.innerText && e.innerText.indexOf(textFilter) !== -1;
-            });
-        }
 
         if (elements.length > 0) {
             placeHints(elements);
@@ -376,11 +402,6 @@ var Hints = (function() {
             }
         });
         elements = filterOverlapElements(elements);
-        if (textFilter.length > 0) {
-            elements = elements.filter(function(e) {
-                return e.innerText && e.innerText.indexOf(textFilter) !== -1;
-            });
-        }
         elements = elements.map(function(e) {
             var aa = e.childNodes;
             for (var i = 0, len = aa.length; i < len; i++) {

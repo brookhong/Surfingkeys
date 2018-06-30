@@ -24,6 +24,9 @@ div.surfingkeys_cursor:empty {
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
     width: auto;
 }
+#sk_hints>div:empty {
+    display: none;
+}
 #sk_hints[mode=text]>div {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
