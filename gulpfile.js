@@ -76,7 +76,8 @@ gulp.task('copy-es-files', function() {
 gulp.task('copy-js-files', gulp.series('copy-es-files', function() {
     var libs = [
         'libs/ace/*.js',
-        'pages/pdf/*.js'
+        'pages/pdf/*.js',
+        'libs/webfontloader.js'
     ];
     return gulp.src(libs, {base: "."})
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))

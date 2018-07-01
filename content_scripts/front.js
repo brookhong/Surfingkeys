@@ -213,7 +213,8 @@ var Front = (function() {
     };
 
     var _inlineQuery;
-    self.performInlineQuery = function(query, showQueryResult) {
+    var _showQueryResult;
+    self.performInlineQuery = function (query, showQueryResult) {
         if (_inlineQuery) {
             query = query.toLocaleLowerCase();
             httpRequest({
@@ -222,6 +223,12 @@ var Front = (function() {
             }, function(res) {
                 showQueryResult(_inlineQuery.parseResult(res));
             });
+        } else if (Front.isProvider()) {
+            _showQueryResult = showQueryResult;
+            document.getElementById("proxyFrame").contentWindow.postMessage({
+                action: "performInlineQuery",
+                query: query
+            }, "*");
         } else {
             tabOpenLink("https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query");
             self.hidePopup();
@@ -461,9 +468,24 @@ var Front = (function() {
         }
     };
 
-    window.addEventListener('message', function(event) {
+    document.addEventListener('DOMContentLoaded', function (e) {
+        if (window.location.href.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
+            document.getElementById("proxyFrame").src = window.location.search.substr(3);
+        }
+    });
+
+    window.addEventListener('message', function (event) {
         var _message = event.data;
-        if (_active) {
+        if (_message.action === "performInlineQuery") {
+            self.performInlineQuery(_message.query, function (queryResult) {
+                event.source.postMessage({
+                    action: "performInlineQueryResult",
+                    result: queryResult
+                }, event.origin);
+            });
+        } else if (_message.action === "performInlineQueryResult") {
+            _showQueryResult(_message.result);
+        } else if (_active) {
             if (_message.responseToContent && _callbacks[_message.id]) {
                 var f = _callbacks[_message.id];
                 // returns true to make callback stay for coming response.
