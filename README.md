@@ -210,7 +210,7 @@ The `g` in `sg` is a search alias for google, there are some other built-in sear
 
 Besides that, there is a `sog`, to search selected text only in this site with google. For `sog`, `s` is the search_leader_key, `o` is the only_this_site_key, `g` is the search alias.
 
-The search_leader_key `s` plus captial alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAliasX` work in same way.
+The search_leader_key `s` plus capital alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAliasX` work in same way.
 
 ## Vim-like marks
 
@@ -265,7 +265,7 @@ Besides commands, you can also run javascript code.
 
 ## Smooth scroll
 
-Smooth scroll works for any scrollable element. It is on by defualt, to turn it off as below:
+Smooth scroll works for any scrollable element. It is on by default, to turn it off as below:
 
     settings.smoothScroll = false;
 
@@ -616,7 +616,7 @@ For example,
 | settings.showProxyInStatusBar | false | Whether to show proxy info in status bar. |
 | settings.richHintsForKeystroke | 500 | Timeout(ms) to show rich hints for keystroke, 0 will disable rich hints. |
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
-| settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
+| settings.focusOnSaved | true | Whether to focus text input after quitting from vim editor. |
 | settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
 | settings.omnibarPosition | "middle" | Where to position Omnibar. ["middle", "bottom"] |
 | settings.omnibarSuggestion | false | Show suggestion URLs|
@@ -630,8 +630,8 @@ For example,
 | settings.modeAfterYank | "" | Which mode to fall back after yanking text in visual mode. Value could be one of ["", "Caret", "Normal"], default is "", which means no action after yank.|
 | settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
 | settings.scrollFriction | 0 | A force that is needed to start continuous scrolling after initial scroll step. A bigger number will cause a flicker after initial step, but help to keep the first step precise. |
-| settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indiate next page. |
-| settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indiate previous page. |
+| settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indicate next page. |
+| settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indicate previous page. |
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
@@ -640,11 +640,11 @@ For example,
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
 | settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "last", "default"] |
-| settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
+| settings.interceptedErrors | [] | Indicates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
-| settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visibile after user clicks on some other link. If you don't like the input to be focused when it's turned to visibile, you could set this to false. |
+| settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visible after user clicks on some other link. If you don't like the input to be focused when it's turned to visible, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 | settings.caseSensitive | false | Whether finding in page is case sensitive. |
 | settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
