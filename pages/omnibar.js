@@ -927,8 +927,10 @@ var OpenHistory = (function() {
 Omnibar.addHandler('History', OpenHistory);
 
 var OpenURLs = (function() {
+    var ui = Front.omnibar;
     var self = {
-        prompt: `${separatorHtml}`
+        prompt: `${separatorHtml}`,
+        input: ui.querySelector('input')
     };
 
     self.getResults = function() {
@@ -977,7 +979,21 @@ var OpenURLs = (function() {
         self.getResults();
         self.onInput();
     };
-    self.onEnter = Omnibar.openFocused.bind(self);
+    self.onEnter = function() {
+        if (isValidURL(self.input.value)) {
+            runtime.command({
+                action: "openLink",
+                tab: {
+                    tabbed: this.tabbed,
+                    active: this.activeTab
+                },
+                url: self.input.value
+            });
+            Front.hidePopup();
+        } else {
+            Omnibar.openFocused();
+        }
+    };
     self.onInput = function() {
         Omnibar.cachedPromise.then(function(cached) {
             var val = Omnibar.input.value;
@@ -1109,6 +1125,8 @@ var SearchEngine = (function() {
         var fi = Omnibar.resultsDiv.querySelector('li.focused'), url;
         if (fi) {
             url = fi.url || constructSearchURL(self.url, (fi.query || encodeURIComponent(Omnibar.input.value)));
+        } else if (isValidURL(Omnibar.input.value)) {
+            url = Omnibar.input.value;
         } else {
             url = constructSearchURL(self.url, encodeURIComponent(Omnibar.input.value));
         }

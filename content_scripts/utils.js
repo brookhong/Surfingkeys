@@ -458,3 +458,8 @@ HTMLElement.prototype.show = function () {
 HTMLElement.prototype.hide = function () {
     this.style.display = "none";
 };
+
+function isValidURL(urlStr) {
+    var urlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+    return urlRegex.test(urlStr);
+}

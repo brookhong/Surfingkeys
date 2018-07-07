@@ -659,6 +659,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 * [pdf.js](https://github.com/mozilla/pdf.js)
 * [vimium](https://github.com/philc/vimium)
 * [cVim](https://github.com/1995eaton/chromium-vim)
+* [Daveo](https://stackoverflow.com/a/3809435/3884870)
 
 ## License
 
