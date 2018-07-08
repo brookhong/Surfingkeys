@@ -491,25 +491,15 @@ var Normal = (function() {
             document.body.style.overflow = "visible";
             scrollNodes = getScrollableElements(100, 1.1);
             scrollIndex = 0;
-
-            if (scrollNodes.length > 1 && scrollNodes[0] !== document.scrollingElement) {
-                // if the first scrolling element is not the document itself
-                // find the highest one
-                var maxHeight = 0;
-                scrollNodes.forEach(function(n, i) {
-                    var h = n.scrollHeight * n.scrollWidth;
-                    if (h > maxHeight) {
-                        scrollIndex = i;
-                        maxHeight = h;
-                    }
-                });
-            }
         }
     }
 
     function getScrollableElements() {
         var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
             return (hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (hasScroll(n, 'x', 16) && n.scrollWidth > 200);
+        });
+        nodes.sort(function(a, b) {
+            return b.scrollHeight * b.scrollWidth - a.scrollHeight * a.scrollWidth;
         });
         if (document.scrollingElement.scrollHeight > window.innerHeight
             || document.scrollingElement.scrollWidth > window.innerWidth) {
