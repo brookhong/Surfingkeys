@@ -198,9 +198,9 @@ mapkey('yq', '#7Copy pre text', function() {
         Clipboard.write(element.innerText);
     });
 });
-mapkey('yY', '#8Copy all tabs url', function() {
-  runtime.command({action: 'getTabs'}, function(response) {
-    Clipboard.write(response.tabs.map(tab => tab.url).join('\n'));
+mapkey('yY', '#1Copy all tabs url', function() {
+  runtime.command({action: 'getTabs'}, function (response) {
+    Clipboard.write([window.location.href].concat(response.tabs.map(tab => tab.url)).join('\n'));
   });
 });
 mapkey('i', '#1Go to edit box', function() {
