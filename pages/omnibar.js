@@ -396,6 +396,7 @@ var Omnibar = (function() {
     self.createURLItem = function(b, rxp) {
         b.title = (b.title && b.title !== "") ? b.title : b.url;
         var type = b.type, additional = "", uid = b.uid;
+        var tabId = b.index + 1;
         if (!type) {
             if (b.hasOwnProperty('lastVisitTime')) {
                 type = "☼";
@@ -413,7 +414,7 @@ var Omnibar = (function() {
                 type = "▤";
             }
         }
-        var li = createElement(`<li><div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div></li>`);
+        var li = createElement(`<li><div class="title">${type} ${tabId}: ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div></li>`);
         li.uid = uid;
         li.url = b.url;
         return li;
