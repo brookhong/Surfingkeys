@@ -458,3 +458,9 @@ HTMLElement.prototype.show = function () {
 HTMLElement.prototype.hide = function () {
     this.style.display = "none";
 };
+
+HTMLElement.prototype.removeAttributes = function () {
+    while (this.attributes.length > 0) {
+        this.removeAttribute(this.attributes[0].name);
+    }
+};

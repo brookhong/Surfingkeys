@@ -589,6 +589,9 @@ mapkey(';j', '#12Close Downloads Shelf', function() {
 });
 mapkey(';pp', '#7Paste html on current page', function() {
     Clipboard.read(function(response) {
+        document.documentElement.removeAttributes();
+        document.body.removeAttributes();
+        setInnerHTML(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
         setInnerHTML(document.body, response.data);
     });
 });
