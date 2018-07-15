@@ -995,7 +995,7 @@ var ChromeService = (function() {
         var tid = sender.tab.id;
         chrome.tabs.executeScript(tid, {
             allFrames: true,
-            code: "Front && Front.getFrameId()"
+            code: "Front && Front.getFrameId && Front.getFrameId()"
         }, function(framesInTab) {
             framesInTab = framesInTab.filter(function(frameId) {
                 return frameId;
