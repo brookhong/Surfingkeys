@@ -63,10 +63,6 @@ if (window === top) {
 
     }, false);
 
-    setTimeout(function() {
-        document.documentElement.appendChild(uiHost);
-    }, 0);
-
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null, _initialized = false;
     _actions['initFrontendAck'] = function(response) {
@@ -108,6 +104,7 @@ if (window === top) {
     };
 
     document.addEventListener('DOMContentLoaded', function (e) {
+        document.documentElement.appendChild(uiHost);
 
         runtime.command({
             action: 'tabURLAccessed',
