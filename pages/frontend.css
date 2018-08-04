@@ -36,6 +36,9 @@
 .sk_theme .feature_name {
     color: #e09b7e;
 }
+.sk_theme .separator {
+    color: #b5b507;
+}
 
 body {
     margin: 0;

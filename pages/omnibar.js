@@ -1,3 +1,6 @@
+const separator = '➤';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 function _regexFromString(str, highlight) {
     var rxp = null;
     if (/^\/.+\/([gimuy]*)$/.test(str)) {
@@ -398,19 +401,19 @@ var Omnibar = (function() {
         var type = b.type, additional = "", uid = b.uid;
         if (!type) {
             if (b.hasOwnProperty('lastVisitTime')) {
-                type = "☼";
+                type = "🕜";
                 additional = `<span class=omnibar_timestamp># ${timeStampString(b.lastVisitTime)}</span>`;
                 additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
-                type = "☆";
+                type = "⭐";
                 additional = `<span class=omnibar_folder>@ ${bookmarkFolders[b.parentId].title || ""}</span> <span class=omnibar_timestamp># ${timeStampString(b.dateAdded)}</span>`;
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
-                type = "▓";
+                type = "🔖";
                 uid = "T" + b.windowId + ":" + b.id;
             } else {
-                type = "▤";
+                type = "🔥";
             }
         }
         var li = createElement(`<li><div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div></li>`);
