@@ -255,7 +255,7 @@ var Insert = (function() {
 
     function rotateResult(backward) {
         var si = _emojiDiv.querySelector('#sk_emoji>div.selected');
-        var _items = _emojiDiv.querySelectorAll('#sk_emoji>div');
+        var _items = Array.from(_emojiDiv.querySelectorAll('#sk_emoji>div'));
         var ci = (_items.indexOf(si) + (backward ? -1 : 1)) % _items.length;
         si.classList.remove('selected');
         _items[ci].classList.add('selected');
