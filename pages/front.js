@@ -67,7 +67,11 @@ var Front = (function() {
         });
         if (pointerEvents) {
             window.focus();
-            visibleDivs[0].focus();
+            if (visibleDivs[0] === self.omnibar) {
+                self.omnibar.querySelector("input").focus();
+            } else {
+                visibleDivs[0].focus();
+            }
         }
         top.postMessage({
             action: 'setFrontFrame',
