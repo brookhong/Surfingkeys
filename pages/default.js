@@ -289,7 +289,10 @@ mapkey('go', '#8Open a URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false});
 });
 mapkey('oi', '#8Open incognito window', function() {
-    RUNTIME('openIncognito');
+    runtime.command({
+        action: 'openIncognito',
+        url: window.location.href
+    });
 });
 mapkey('ox', '#8Open recently closed URL', function() {
     Front.openOmnibar({type: "URLs", extra: "getRecentlyClosed"});
