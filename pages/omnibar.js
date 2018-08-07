@@ -480,7 +480,13 @@ var Omnibar = (function() {
         }
         self.listResults(_page, function(b) {
             var li;
-            if (b.hasOwnProperty('url')) {
+            if (b.hasOwnProperty('html')) {
+                li = createElement(b.html);
+                if (b.hasOwnProperty('props') && typeof b.props === "object") {
+                    Object.assign(li, b.props);
+                }
+                return li;
+            } else if (b.hasOwnProperty('url')) {
                 li = self.createURLItem(b, rxp);
             } else if (_showFolder) {
                 li = createElement(`<li><div class="title">▷ ${self.highlight(rxp, b.title)}</div></li>`);
@@ -1152,7 +1158,13 @@ var SearchEngine = (function() {
                         Omnibar.detectAndInsertURLItem(Omnibar.input.value, resp);
                         var rxp = _regexFromString(val, true);
                         Omnibar.listResults(resp, function (w) {
-                            if (w.hasOwnProperty('url')) {
+                            if (w.hasOwnProperty('html')) {
+                                li = createElement(w.html);
+                                if (w.hasOwnProperty('props') && typeof w.props === "object") {
+                                    Object.assign(li, w.props);
+                                }
+                                return li;
+                            } else if (w.hasOwnProperty('url')) {
                                 return Omnibar.createURLItem(w, rxp);
                             } else {
                                 var li = createElement(`<li>⌕ ${w}</li>`);
