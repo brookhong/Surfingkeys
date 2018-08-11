@@ -422,6 +422,14 @@ var Omnibar = (function() {
         return li;
     };
 
+    self.createItemFromRawHtml = function({ html, props }) {
+        const li = createElement(html);
+        if (typeof props === "object") {
+            Object.assign(li, props);
+        }
+        return li;
+    };
+
     self.detectAndInsertURLItem = function(str, toList) {
         var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i,
             urlPat1 = /^https?:\/\/(?:[^@\/\n]+@)?([^:\/\n\s]+)/i;
@@ -480,7 +488,9 @@ var Omnibar = (function() {
         }
         self.listResults(_page, function(b) {
             var li;
-            if (b.hasOwnProperty('url')) {
+            if (b.hasOwnProperty('html')) {
+                li = self.createItemFromRawHtml(b);
+            } else if (b.hasOwnProperty('url')) {
                 li = self.createURLItem(b, rxp);
             } else if (_showFolder) {
                 li = createElement(`<li><div class="title">▷ ${self.highlight(rxp, b.title)}</div></li>`);
@@ -1152,7 +1162,9 @@ var SearchEngine = (function() {
                         Omnibar.detectAndInsertURLItem(Omnibar.input.value, resp);
                         var rxp = _regexFromString(val, true);
                         Omnibar.listResults(resp, function (w) {
-                            if (w.hasOwnProperty('url')) {
+                            if (w.hasOwnProperty('html')) {
+                                return Omnibar.createItemFromRawHtml(w);
+                            } else if (w.hasOwnProperty('url')) {
                                 return Omnibar.createURLItem(w, rxp);
                             } else {
                                 var li = createElement(`<li>⌕ ${w}</li>`);
