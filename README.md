@@ -347,7 +347,7 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 * setProxyMode, to set proxy mode, there are five modes: direct, byhost, bypass, always, system and clear.
 
         direct      Chrome will connect to all sites directly.
-        byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
+        byhost      Chrome will only connect to sites added by `addProxySite` through related proxy. You could add multiple pairs of `proxy` and `hosts`, for hosts matched with `hosts` `proxy` will be used.
         bypass      Chrome will connect to all sites through proxy, with specified hosts excluded.
         always      Chrome will connect to all sites through proxy.
         system      Use proxy configuration taken from the operating system.

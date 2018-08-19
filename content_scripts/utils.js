@@ -464,3 +464,18 @@ HTMLElement.prototype.removeAttributes = function () {
         this.removeAttribute(this.attributes[0].name);
     }
 };
+NodeList.prototype.remove = function() {
+    this.forEach(function(node) {
+        node.remove();
+    });
+};
+NodeList.prototype.show = function() {
+    this.forEach(function(node) {
+        node.show();
+    });
+};
+NodeList.prototype.hide = function() {
+    this.forEach(function(node) {
+        node.hide();
+    });
+};

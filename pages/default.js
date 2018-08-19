@@ -51,9 +51,10 @@ mapkey(';cp', '#13Copy proxy info', function() {
 mapkey(';ap', '#13Apply proxy info from clipboard', function() {
     Clipboard.read(function(response) {
         var proxyConf = JSON.parse(response.data);
-        RUNTIME('updateProxy', {
-            host: proxyConf.autoproxy_hosts.join(","),
-            operation: 'add',
+        runtime.command({
+            action: 'updateProxy',
+            operation: 'set',
+            host: proxyConf.autoproxy_hosts,
             proxy: proxyConf.proxy,
             mode: proxyConf.proxyMode
         });
@@ -525,6 +526,9 @@ if (window.navigator.userAgent.indexOf("Firefox") > 0) {
     mapkey('si', '#12Open Chrome Inspect', function() {
         tabOpenLink("chrome://inspect/#devices");
     });
+    mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', function() {
+        tabOpenLink("/pages/mermaid.html");
+    });
 }
 mapkey('gs', '#12View page source', function() {
     RUNTIME("viewSource", { tab: { tabbed: true }});
@@ -570,9 +574,6 @@ mapkey('se', '#11Edit Settings', function() {
 });
 mapkey('sm', '#11Preview markdown', function() {
     tabOpenLink("/pages/markdown.html");
-});
-mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', function() {
-    tabOpenLink("/pages/mermaid.html");
 });
 mapkey('su', '#4Edit current URL with vim editor, and open in new tab', function() {
     Front.showEditor(window.location.href, function(data) {

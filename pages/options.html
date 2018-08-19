@@ -58,6 +58,29 @@ settings.theme = `
     font-size: 20pt;
 }`;
 // click `Save` button to make above settings to take effect.</script>
+        <script id="templateProxyPair" type="text/template">
+            <div class="proxyPair">
+                <div class="deleteProxyPair">🗑️</div>
+                <div class="proxy">
+                    Proxy:
+                    <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
+                    Proxy Type:
+                    <select value="PROXY">
+                        <option value="PROXY" selected="selected">PROXY</option>
+                        <option value="SOCKS5">SOCKS5</option>
+                        <option value="HTTP">HTTP</option>
+                        <option value="HTTPS">HTTPS</option>
+                        <option value="SOCKS4">SOCKS4</option>
+                        <option value="SOCKS">SOCKS</option>
+                    </select>
+                </div>
+                <div class="autoproxy_hosts">
+                    <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
+                    <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
+                    <div></div>
+                </div>
+            </div>
+        </script>
         <div id="keyPicker" style="display: none;">
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
@@ -100,31 +123,14 @@ settings.theme = `
                 </select>
                 <span class="tip">
                     <span mode="always" style="display: none;">Connect to all sites through proxy.</span>
-                    <span mode="byhost" style="display: none;">Connect to only specified sites through proxy.</span>
+                    <span mode="byhost" style="display: none;">Connect to only specified sites through related proxy.</span>
                     <span mode="bypass" style="display: none;">Connect to all sites through proxy, with specified hosts excluded.</span>
                     <span mode="clear" style="display: none;">Surfingkeys will not take control of proxy settings, this is the default mode.</span>
                     <span mode="direct" style="display: none;">Connect to all sites directly.</span>
                     <span mode="system" style="display: none;">Use proxy configuration taken from the operating system.</span>
                 </span>
             </div>
-            <div id="proxy" style="display: none;">
-                Proxy:
-                <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
-                Proxy Type:
-                <select value="PROXY">
-                    <option value="PROXY" selected="selected">PROXY</option>
-                    <option value="SOCKS5">SOCKS5</option>
-                    <option value="HTTP">HTTP</option>
-                    <option value="HTTPS">HTTPS</option>
-                    <option value="SOCKS4">SOCKS4</option>
-                    <option value="SOCKS">SOCKS</option>
-                </select>
-            </div>
-            <div id="autoproxy_hosts" style="display: none;">
-                <h3>For below hosts, above proxy will be used, click ␡ to remove one.</h3>
-                <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
-                <div></div>
-            </div>
+            <button id="addProxyPair">Add proxy pair</button>
         </div>
         <h3 id="resetSettings">Reset</h3>
         <iframe id="sandbox" allowtransparency="true" frameborder="0" scrolling="no" style="height: 0" src="/pages/sandbox.html"></iframe>

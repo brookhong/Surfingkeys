@@ -239,12 +239,16 @@ var ChromeService = (function() {
             findHistory: [],
             cmdHistory: [],
             sessions: {},
-            autoproxy_hosts: [],
             proxyMode: 'clear',
-            proxy: "DIRECT",
+            autoproxy_hosts: [],
+            proxy: []
         };
 
         loadRawSettings(keys, function(set) {
+            if (typeof(set.proxy) === "string") {
+                set.proxy = [set.proxy];
+                set.autoproxy_hosts = [set.autoproxy_hosts];
+            }
             if (set.localPath) {
                 request(set.localPath, function(resp) {
                     set.snippets = resp;
@@ -1167,33 +1171,48 @@ var ChromeService = (function() {
 
     function updateProxy(message, cb) {
         loadSettings(['proxyMode', 'proxy', 'autoproxy_hosts'], function(proxyConf) {
-            if (message.proxy) {
-                proxyConf.proxy = message.proxy;
-            }
-            if (message.mode) {
+            if (message.operation === "deleteProxyPair") {
+                proxyConf.proxy.splice(message.number, 1);
+                proxyConf.autoproxy_hosts.splice(message.number, 1);
+            } else if (message.operation === "set") {
                 proxyConf.proxyMode = message.mode;
-            }
-            if (message.host) {
-                var hostsDict = dictFromArray(proxyConf.autoproxy_hosts, 1);
-                var hosts = message.host.split(/\s*[ ,\n]\s*/);
-                if (message.operation === "toggle") {
-                    hosts.forEach(function(host) {
-                        if (hostsDict.hasOwnProperty(host)) {
-                            delete hostsDict[host];
-                        } else {
-                            hostsDict[host] = 1;
-                        }
-                    });
-                } else if (message.operation === "add") {
-                    hosts.forEach(function(host) {
-                        hostsDict[host] = 1;
-                    });
-                } else {
-                    hosts.forEach(function(host) {
-                        delete hostsDict[host];
-                    });
+                proxyConf.proxy = message.proxy;
+                proxyConf.autoproxy_hosts = message.host;
+            } else {
+                if (message.mode) {
+                    proxyConf.proxyMode = message.mode;
                 }
-                proxyConf.autoproxy_hosts = Object.keys(hostsDict);
+                if (!message.number) {
+                    message.number = 0;
+                }
+                if (message.proxy) {
+                    proxyConf.proxy[message.number] = message.proxy;
+                    if (proxyConf.autoproxy_hosts.length <= message.number) {
+                        proxyConf.autoproxy_hosts[message.number] = [];
+                    }
+                }
+                if (message.host) {
+                    var hostsDict = dictFromArray(proxyConf.autoproxy_hosts[message.number], 1);
+                    var hosts = message.host.split(/\s*[ ,\n]\s*/);
+                    if (message.operation === "toggle") {
+                        hosts.forEach(function(host) {
+                            if (hostsDict.hasOwnProperty(host)) {
+                                delete hostsDict[host];
+                            } else {
+                                hostsDict[host] = 1;
+                            }
+                        });
+                    } else if (message.operation === "add") {
+                        hosts.forEach(function(host) {
+                            hostsDict[host] = 1;
+                        });
+                    } else {
+                        hosts.forEach(function(host) {
+                            delete hostsDict[host];
+                        });
+                    }
+                    proxyConf.autoproxy_hosts[message.number] = Object.keys(hostsDict);
+                }
             }
             var diffSet = {
                 autoproxy_hosts: proxyConf.autoproxy_hosts,

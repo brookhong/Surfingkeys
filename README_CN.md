@@ -355,7 +355,7 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 * setProxyMode, 设置代理模式，有五种模式：direct, byhost, bypass, always, system 和 clear。
 
         direct      Chrome不使用代理访问任何网站。
-        byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。
+        byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。你可以添加多条映射，让不同的网站使用不同的代理。
         bypass      Chrome使用代理访问所有网站，除了通过`addProxySite`命令添加过的网站。
         always      Chrome使用代理访问所有网站。
         system      Chrome使用操作系统设置的代理。

@@ -16,6 +16,12 @@ a:hover {
     background-color: #333;
     color: #eee;
 }
+
+@-moz-document url-prefix() {
+  .disabledOnFirefox {
+      display: none;
+  }
+}
         </style>
     </head>
     <body>
@@ -25,9 +31,9 @@ a:hover {
         <a href="/pages/markdown.html?r=/pages/changelog.md" target="_blank">Changelog</a>
         <a id="reportIssue" href="#">Report issue</a>
         <hr/>
-        <a href="/pages/pdf_viewer.html" target="_blank">PDF Viewer</a>
+        <a href="/pages/pdf_viewer.html" target="_blank" class="disabledOnFirefox">PDF Viewer</a>
         <a href="/pages/markdown.html" target="_blank">Markdown preview</a>
-        <a href="/pages/mermaid.html" target="_blank">Mermaid diagram generator</a>
+        <a href="/pages/mermaid.html" target="_blank" class="disabledOnFirefox">Mermaid diagram generator</a>
         <script src="../content_scripts/common_content.min.js"></script>
         <script src="popup.js"></script>
     </body>

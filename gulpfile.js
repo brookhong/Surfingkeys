@@ -38,7 +38,7 @@ gulp.task('clean', function () {
 
 gulp.task('copy-html-files', function() {
     if (buildTarget === "Firefox") {
-        return gulp.src(['pages/*.html'], {base: "."})
+        return gulp.src(['pages/*.html', '!pages/pdf_viewer.html'], {base: "."})
             .pipe(replace(/\s*<script src="ga.js"><\/script>\n\s*<script async src='https:\/\/www.google-analytics.com\/analytics.js'><\/script>/, ''))
             .pipe(gulp.dest(`dist/${buildTarget}-extension`));
     } else {
@@ -48,14 +48,19 @@ gulp.task('copy-html-files', function() {
 });
 
 gulp.task('copy-non-js-files', function() {
-    return gulp.src(['icons/**',
+    var nonJsFiles = ['icons/**',
         'content_scripts/**',
         '!content_scripts/**/*.js',
         'pages/**',
         'libs/marked.min.js',
-        'libs/mermaid.min.js',
         '!pages/**/*.html',
-        '!pages/**/*.js'], {base: "."})
+        '!pages/**/*.js'];
+    if (buildTarget === "Firefox") {
+        nonJsFiles.push('!pages/pdf/**');
+    } else {
+        nonJsFiles.push('libs/mermaid.min.js');
+    }
+    return gulp.src(nonJsFiles, {base: "."})
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
@@ -75,10 +80,12 @@ gulp.task('copy-es-files', function() {
 
 gulp.task('copy-js-files', gulp.series('copy-es-files', function() {
     var libs = [
-        'libs/ace/*.js',
-        'pages/pdf/*.js',
-        'libs/webfontloader.js'
+        'libs/ace/*.js'
     ];
+    if (buildTarget === "Chrome") {
+        libs.push("pages/pdf/*.js");
+        libs.push("libs/webfontloader.js");
+    }
     return gulp.src(libs, {base: "."})
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
@@ -110,7 +117,7 @@ gulp.task('build_background', function() {
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
-gulp.task('build_common_content_min', function() {
+gulp.task('build_common_content_min_without_lib', function() {
     var common_content = [
         "libs/trie.js",
         "content_scripts/keyboardUtils.js",
@@ -123,7 +130,6 @@ gulp.task('build_common_content_min', function() {
         "content_scripts/clipboard.js",
     ];
     if (buildTarget === "Firefox") {
-        common_content.push("libs/shadydom.min.js");
         common_content.push("content_scripts/firefox_fg.js");
     } else {
         common_content.push("content_scripts/chrome_fg.js");
@@ -136,6 +142,17 @@ gulp.task('build_common_content_min', function() {
         .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
+
+gulp.task('build_common_content_min', gulp.series('build_common_content_min_without_lib', function(cb) {
+    if (buildTarget === "Firefox") {
+        return gulp.src([`dist/${buildTarget}-extension/content_scripts/common_content.min.js`,"libs/shadydom.min.js"])
+            .pipe(gp_concat('common_content.min.js'))
+            .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
+    } else {
+        return gulp.src([`dist/${buildTarget}-extension/content_scripts/common_content.min.js`])
+            .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
+    }
+}));
 
 gulp.task('build_manifest', gulp.series('copy-non-js-files', 'copy-html-files', function(cb) {
     var json = JSON.parse(fs.readFileSync('manifest.json'));
