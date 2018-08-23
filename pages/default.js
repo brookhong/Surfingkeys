@@ -639,4 +639,10 @@ addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=',
     return res[1];
 });
 
+addSearchAliasX('i', 'wiki', 'https://en.wikipedia.org/wiki/Special:Search?search=', 's',
+'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&suggest=true&search=', function(response) {
+    return JSON.parse(response.text)[1]
+});
+
+
 document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
