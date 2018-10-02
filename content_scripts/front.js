@@ -217,6 +217,7 @@ var Front = (function() {
     self.performInlineQuery = function (query, showQueryResult) {
         if (_inlineQuery) {
             query = query.toLocaleLowerCase();
+            runtime.updateHistory('inlineQuery', query);
             httpRequest({
                 url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
                 headers: _inlineQuery.headers
