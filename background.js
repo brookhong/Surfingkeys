@@ -181,7 +181,7 @@ var ChromeService = (function() {
     var bookmarkFolders = [];
     function getFolders(tree, root) {
         var cd = root;
-        if (tree.title !== "" && !tree.hasOwnProperty('url')) {
+        if (tree.title !== "" && (!tree.hasOwnProperty('url') || tree.url === undefined)) {
             cd += "/" + tree.title;
             bookmarkFolders.push({id: tree.id, title: cd + "/"});
         }

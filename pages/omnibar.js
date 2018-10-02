@@ -490,7 +490,10 @@ var Omnibar = (function() {
             var li;
             if (b.hasOwnProperty('html')) {
                 li = self.createItemFromRawHtml(b);
-            } else if (b.hasOwnProperty('url')) {
+            } else if (b.hasOwnProperty('url') && b.url !== undefined) {
+                if (window.navigator.userAgent.indexOf("Firefox") !== -1 && /^(place|data):/i.test(b.url)) {
+                    return null;
+                }
                 li = self.createURLItem(b, rxp);
             } else if (_showFolder) {
                 li = createElement(`<li><div class="title">▷ ${self.highlight(rxp, b.title)}</div></li>`);
@@ -602,7 +605,10 @@ var Omnibar = (function() {
         }
         var ul = createElement("<ul/>");
         items.forEach(function(b) {
-            ul.append(renderItem(b));
+            var li = renderItem(b);
+            if (li) {
+                ul.append(li);
+            }
         });
         self.resultsDiv.append(ul);
         items = self.resultsDiv.querySelectorAll("#sk_omnibarSearchResult>ul>li");
@@ -766,7 +772,7 @@ var OpenBookmarks = (function() {
         var items = response.bookmarks;
         if (folderOnly) {
             items = items.filter(function(b) {
-                return !b.hasOwnProperty('url');
+                return !b.hasOwnProperty('url') || b.url === undefined;
             });
         }
         Omnibar.listURLs(items, true);
