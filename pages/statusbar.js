@@ -85,12 +85,14 @@ var Find = (function() {
         historyInc = -1;
         StatusBar.show(1, '<input id="sk_find" class="sk_theme"/>');
         input = Front.statusBar.querySelector("input");
-        input.oninput = function() {
-            Front.visualCommand({
-                action: 'visualUpdate',
-                query: input.value
-            });
-        };
+        if (runtime.conf.incsearch) {
+            input.oninput = function() {
+                Front.visualCommand({
+                    action: 'visualUpdate',
+                    query: input.value
+                });
+            };
+        }
         var findHistory = [];
         runtime.command({
             action: 'getSettings',
@@ -123,10 +125,12 @@ var Find = (function() {
                     historyInc = historyInc % findHistory.length;
                     var query = findHistory[historyInc];
                     input.value = query;
-                    Front.visualCommand({
-                        action: 'visualUpdate',
-                        query: query
-                    });
+                    if (runtime.conf.incsearch) {
+                        Front.visualCommand({
+                            action: 'visualUpdate',
+                            query: query
+                        });
+                    }
                 }
             }
         };

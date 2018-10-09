@@ -647,6 +647,7 @@ For example,
 | settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visible after user clicks on some other link. If you don't like the input to be focused when it's turned to visible, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
 | settings.caseSensitive | false | Whether finding in page is case sensitive. |
+| settings.incsearch | true | Whether find matches are highlighted before the query is finished. |
 | settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
 | settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
 

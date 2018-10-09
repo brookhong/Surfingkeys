@@ -16,6 +16,7 @@ var runtime = window.runtime || (function() {
             focusOnSaved: true,
             hintAlign: "center",
             historyMUOrder: true,
+            incsearch: true,
             language: undefined,
             lastQuery: "",
             modeAfterYank: "",
