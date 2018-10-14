@@ -474,11 +474,13 @@ var Normal = (function() {
                         || stepCompleted )// distance completed
                     ) {
                         keyHeld = 0;
+                        elm.style.scrollBehavior = '';
                         document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
                     } else {
                         return window.requestAnimationFrame(step);
                     }
                 }
+                elm.style.scrollBehavior = 'auto';
                 return window.requestAnimationFrame(step);
             }
         };
