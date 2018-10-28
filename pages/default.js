@@ -635,9 +635,11 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
 addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
 addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=', 's',
-'http://suggestqueries.google.com/complete/search?client=youtube&ds=yt&client=chrome-ext&q=', function(response) {
-    var res = JSON.parse(response.text);
-    return res[1];
+'https://clients1.google.com/complete/search?client=youtube&ds=yt&callback=cb&q=', function(response) {
+    var res = JSON.parse(response.text.substr(9, response.text.length-10));
+    return res[1].map(function(d) {
+        return d[0];
+    });
 });
 
 document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
