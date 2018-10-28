@@ -503,7 +503,7 @@ var Visual = (function() {
         if (matches.length === 0) {
             // find across nodes with window.find if no found within each node.
             selection.setPosition(null, 0);
-            while (findNextTextNodeBy(pattern.source, runtime.conf.caseSensitive, false)) {
+            while (findNextTextNodeBy(pattern.source, pattern.flags.indexOf('i') === -1, false)) {
                 if (selection.anchorNode !== selection.focusNode) {
                     createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
                 }
@@ -606,7 +606,7 @@ var Visual = (function() {
                 var pos = [selection.focusNode, selection.focusOffset];
                 runtime.updateHistory('find', query);
                 self.visualClear();
-                highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
+                highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
             }
@@ -632,7 +632,7 @@ var Visual = (function() {
             select(matches[currentOccurrence]);
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         } else if (runtime.conf.lastQuery) {
-            highlight(new RegExp(runtime.conf.lastQuery, "g" + (runtime.conf.caseSensitive ? "" : "i")));
+            highlight(new RegExp(runtime.conf.lastQuery, "g" + (runtime.getCaseSensitive(runtime.conf.lastQuery) ? "" : "i")));
             self.visualEnter(runtime.conf.lastQuery);
         }
     };
@@ -672,14 +672,15 @@ var Visual = (function() {
         var scrollTop = document.scrollingElement.scrollTop,
             posToStartFind = [selection.anchorNode, selection.anchorOffset];
 
-        if (findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
+        var caseSensitive = runtime.getCaseSensitive(query);
+        if (findNextTextNodeBy(query, caseSensitive, false)) {
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         } else {
             // start from beginning if no found from current position
             selection.setPosition(document.body.firstChild, 0);
         }
 
-        if (findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
+        if (findNextTextNodeBy(query, caseSensitive, false)) {
             if (document.scrollingElement.scrollTop !== scrollTop) {
                 // set new start position if there is no occurrence in current view.
                 scrollTop = document.scrollingElement.scrollTop;
@@ -687,7 +688,7 @@ var Visual = (function() {
             }
             createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
 
-            while (document.scrollingElement.scrollTop === scrollTop && findNextTextNodeBy(query, runtime.conf.caseSensitive, false)) {
+            while (document.scrollingElement.scrollTop === scrollTop && findNextTextNodeBy(query, caseSensitive, false)) {
                 createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
             }
             document.scrollingElement.scrollTop = scrollTop;
@@ -699,13 +700,13 @@ var Visual = (function() {
     // this is only for finding in frontend.html, like in usage popover.
     self.visualUpdate = function(query) {
         self.visualClear();
-        highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
+        highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
     };
 
     var registeredScrollNodes = [];
     self.visualEnter = function (query) {
         self.visualClear();
-        highlight(new RegExp(query, "g" + (runtime.conf.caseSensitive ? "" : "i")));
+        highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
         if (matches.length) {
             self.enter();
             select(matches[currentOccurrence]);

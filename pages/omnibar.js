@@ -881,8 +881,9 @@ var AddBookmark = (function() {
 
     self.onInput = function() {
         var query = Omnibar.input.value;
+        var caseSensitive = runtime.getCaseSensitive(query);
         var matches = folders.filter(function(b) {
-            if (runtime.conf.caseSensitive)
+            if (caseSensitive)
               return b.title.indexOf(query) !== -1;
             else
               return b.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;

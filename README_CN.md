@@ -632,6 +632,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
 | settings.caseSensitive | false | 网页内搜索是否大小写敏感。 |
+| settings.smartCase | true | 当搜索关键字里含有大写字符时，是否自动设为大小写敏感。 |
 | settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
 | settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
 

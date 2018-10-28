@@ -4,6 +4,7 @@ var runtime = window.runtime || (function() {
             lastKeys: "",
             // local part from settings
             blacklistPattern: undefined,
+            smartCase: true,
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
             clickableSelector: "",
@@ -167,6 +168,9 @@ var runtime = window.runtime || (function() {
         });
     };
 
+    self.getCaseSensitive = function(query) {
+        return self.conf.caseSensitive || (self.conf.smartCase && /[A-Z]/.test(query));
+    };
 
     return self;
 })();
