@@ -485,6 +485,9 @@ mapkey('ob', '#8Open Search with alias b', function() {
 mapkey('og', '#8Open Search with alias g', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "g"});
 });
+mapkey('od', '#8Open Search with alias d', function() {
+    Front.openOmnibar({type: "SearchEngine", extra: "d"});
+})
 mapkey('ow', '#8Open Search with alias w', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "w"});
 });
