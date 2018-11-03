@@ -222,7 +222,8 @@ var Mode = (function() {
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
-                        event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
+                        event.sk_stopPropagation = (!this.map_node.meta.keepPropagation
+                            || (this === Insert && key.charCodeAt(0) < 256));
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
                                 code();
