@@ -150,7 +150,8 @@ if (window === top) {
                 }
             }
         }, 0);
-    });
+        // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
+    }, {once: true});
 
     function _setScrollPos(x, y) {
         document.addEventListener('DOMContentLoaded', function(e) {
