@@ -445,9 +445,13 @@ By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/mark
 
 ## Capture page
 
+There are some circumstances that you want to take a screenshot on a page, below shortcuts could help you, especially when it is for a long page or just for some scrollable DIV on the page.
+
 * `yg` to capture current page.
 * `yG` to capture current full page if it is scrollable.
 * `yS` to capture current scroll target.
+
+After one of above shortcuts pressed, you could see a popup of captured image, on which you could then right click with a MOUSE( 😢 ) to save as or copy into system clipboard.
 
 ## Mermaid diagram generator
 
