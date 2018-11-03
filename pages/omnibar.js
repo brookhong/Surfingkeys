@@ -726,6 +726,9 @@ var OpenBookmarks = (function() {
                     action: 'getBookmarks',
                 }, self.onResponse);
             }
+            if (Omnibar.input.value !== "") {
+                self.onInput();
+            }
         });
     };
 
