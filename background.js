@@ -802,6 +802,14 @@ var ChromeService = (function() {
         chrome.tabs.query({currentWindow: true},
                           function(tabs) { _closeTab(sender, tabs.length - sender.tab.index); });
     };
+    self.tabOnly = function(message, sender, sendResponse) {
+        chrome.tabs.query({currentWindow: true}, function(tabs) {
+            tabs = tabs.map(function(e) { return e.id; }).filter(function(t) {
+                return t != sender.tab.id;
+            });
+            chrome.tabs.remove(tabs);
+        });
+    };
 
     self.muteTab = function(message, sender, sendResponse) {
         var tab = sender.tab;

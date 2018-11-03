@@ -572,6 +572,9 @@ mapkey('gx0', '#3Close all tabs on left', function() {
 mapkey('gx$', '#3Close all tabs on right', function() {
     RUNTIME("closeTabsToRight");
 });
+mapkey('gxx', '#3Close all tabs except current one', function() {
+    RUNTIME("tabOnly");
+});
 mapkey('se', '#11Edit Settings', function() {
     tabOpenLink("/pages/options.html");
 });
