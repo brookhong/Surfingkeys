@@ -87,7 +87,7 @@ var KeyboardUtils = (function() {
             if (this.keyNames.hasOwnProperty(event.keyCode)) {
                 character = "{0}".format(this.keyNames[event.keyCode]);
             } else {
-                character = event.key;
+                character = event.key || "";
                 if (!character) {
                     if (event.keyIdentifier) {
                         // keep for chrome version below 52
@@ -124,14 +124,16 @@ var KeyboardUtils = (function() {
             if (event.shiftKey && character.length > 1) {
                 character = "Shift-" + character;
             }
-            if (event.metaKey) {
-                character = "Meta-" + character;
-            }
-            if (event.altKey) {
-                character = "Alt-" + character;
-            }
-            if (event.ctrlKey) {
-                character = "Ctrl-" + character;
+            if (character.length > 0) {
+                if (event.metaKey) {
+                    character = "Meta-" + character;
+                }
+                if (event.altKey) {
+                    character = "Alt-" + character;
+                }
+                if (event.ctrlKey) {
+                    character = "Ctrl-" + character;
+                }
             }
             if (character.length > 1) {
                 character = "<{0}>".format(character);
