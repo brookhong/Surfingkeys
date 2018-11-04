@@ -126,12 +126,16 @@ var Mode = (function() {
     // as document.write will clear added eventListeners.
     if (window.location.href === "about:blank" && window.frameElement) {
         window.frameElement.addEventListener("load", function(evt) {
-            self.init();
-            _listenedEvents.forEach(function(evt) {
-                if (["keydown", "keyup"].indexOf(evt) === -1) {
-                    window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
-                }
-            });
+            try {
+                self.init();
+                _listenedEvents.forEach(function(evt) {
+                    if (["keydown", "keyup"].indexOf(evt) === -1) {
+                        window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
+                    }
+                });
+            } catch (e) {
+                console.log("Error on blank iframe loaded: " + e);
+            }
         });
     } else {
         self.init();
