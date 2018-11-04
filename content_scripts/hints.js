@@ -531,6 +531,8 @@ var Hints = (function() {
                 mask.style.height = be.height + "px";
                 mask.style.zIndex = z + 9999;
                 mask.link = e;
+                // prevent style from #sk_hints>div:empty
+                mask.innerText = " ";
                 holder.append(mask);
             });
             document.documentElement.prepend(holder);

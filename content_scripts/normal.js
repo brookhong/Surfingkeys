@@ -312,7 +312,7 @@ var Normal = (function() {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 realTarget.blur();
                 Insert.exit();
-            } else if (event.key === "Tab"){
+            } else {
                 // enable Tab key to focus next input
                 Normal.passFocus(true);
                 Insert.enter(realTarget);

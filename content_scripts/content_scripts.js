@@ -31,9 +31,13 @@ function createKeyTarget(code, ag, repeatIgnore) {
     return keybound;
 }
 
+function _isDomainApplicable(domain) {
+    return !domain || domain.test(document.location.href) || domain.test(window.origin);
+}
+
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
-    if (!options.domain || options.domain.test(document.location.href)) {
+    if (_isDomainApplicable(options.domain)) {
         keys = KeyboardUtils.encodeKeystroke(keys);
         mode.mappings.remove(keys);
         var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
@@ -54,7 +58,7 @@ function imapkey(keys, annotation, jscode, options) {
 }
 
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
             var keybound = createKeyTarget(function () {
@@ -70,7 +74,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
 }
 
 function unmap(keystroke, domain) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         var old_map = Normal.mappings.find(KeyboardUtils.encodeKeystroke(keystroke));
         if (old_map) {
             Normal.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
@@ -86,7 +90,7 @@ function unmap(keystroke, domain) {
 }
 
 function unmapAllExcept(keystrokes, domain) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         var modes = [Normal, Insert];
         modes.forEach(function(mode) {
             var _mappings = new Trie();
@@ -106,31 +110,31 @@ function unmapAllExcept(keystrokes, domain) {
 }
 
 function imap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         _map(Insert, new_keystroke, old_keystroke);
     }
 }
 
 function iunmap(keystroke, domain) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         Insert.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
     }
 }
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         Front.addCMap(new_keystroke, old_keystroke);
     }
 }
 
 function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         _map(Visual, new_keystroke, old_keystroke);
     }
 }
 
 function vunmap(keystroke, domain) {
-    if (!domain || domain.test(document.location.href)) {
+    if (_isDomainApplicable(domain)) {
         Visual.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
     }
 }
