@@ -1,3 +1,6 @@
+const separator = '➤';
+const separatorHtml = `<span class='separator'>${separator}</span>`;
+
 function _regexFromString(str, highlight) {
     var rxp = null;
     if (/^\/.+\/([gimuy]*)$/.test(str)) {
@@ -38,16 +41,51 @@ function _filterByTitleOrUrl(urls, query) {
     return urls;
 }
 
-var Omnibar = (function(mode, ui) {
-    var self = $.extend({
-        name: "Omnibar",
-        frontendOnly: true,
-        eventListeners: {}
-    }, mode);
+/**
+ * The omnibar provides kinds of functions that need user input, for example,
+ *
+ *  * Open url(from both bookmarks and history) with `t`
+ *  * Open bookmarks with `b`
+ *  * Open search engines with `og` / `ow` ...
+ *  * Open commands with `:`
+ *
+ * Key bindings in Omnibar:
+ *  * `Enter` to open selected item and close omnibar.
+ *  * `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+ *  * `Shift-Enter` to open selected item in current tab and close omnibar.
+ *    If you'd like to open in current tab by default, please use go.
+ *  * Tab to forward cycle through the candidates.
+ *  * `Shift-Tab` to backward cycle through the candidates.
+ *  * `Ctrl-`. to show results of next page
+ *  * `Ctrl-`, to show results of previous page
+ *  * `Ctrl-c` to copy all listed items
+ *  * In omnibar opened with `t:`
+ *
+ * `Ctrl - d` to delete from bookmark or history
+ *
+ *  * In omnibar opened with `b:`
+ *
+ * `Ctrl - Shift - <any letter>` to create vim-like global mark
+ *
+ * cmap could be used for Omnibar to change mappings, for example:
+ *
+ * ```js
+ * cmap('<Ctrl-n>', '<Tab>');
+ * cmap('<Ctrl-p>', '<Shift-Tab>');
+ * ```
+ * ---------
+ *
+ * @kind function
+ *
+ * @param {Object} mode
+ * @return {Omnibar} Omnibar instance
+ */
+var Omnibar = (function() {
+    var self = new Mode("Omnibar");
 
     self.addEventListener('keydown', function(event) {
         if (event.sk_keyName.length) {
-            Normal._handleMapKey.call(self, event);
+            Mode.handleMapKey.call(self, event);
         }
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
@@ -57,16 +95,15 @@ var Omnibar = (function(mode, ui) {
     self.mappings = new Trie();
     self.map_node = self.mappings;
 
-    self.mappings.add(encodeKeystroke("<Ctrl-d>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-d>"), {
         annotation: "Delete focused item from bookmark or history",
         feature_group: 8,
         code: function () {
-            var fi = Omnibar.resultsDiv.find('li.focused');
-            var uid = fi.data('uid');
-            if (uid) {
+            var fi = Omnibar.resultsDiv.querySelector('li.focused');
+            if (fi && fi.uid) {
                 runtime.command({
                     action: "removeURL",
-                    uid: uid
+                    uid: fi.uid
                 }, function(ret) {
                     if (ret.response === "Done") {
                         fi.remove();
@@ -76,25 +113,25 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-i>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-i>"), {
         annotation: "Edit selected URL with vim editor, then open",
         feature_group: 8,
         code: function () {
-            var fi = Omnibar.resultsDiv.find('li.focused');
-            var url = fi.data('url');
-            if (url) {
+            var fi = Omnibar.resultsDiv.querySelector('li.focused');
+            if (fi && fi.url) {
                 Front.showEditor({
                     initial_line: 1,
                     type: "url",
-                    content: url
-                }, function(data) {
-                    data && tabOpenLink(data);
+                    content: fi.url,
+                    onEditorSaved: function(data) {
+                        data && tabOpenLink(data);
+                    }
                 });
             }
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-j>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-j>"), {
         annotation: "Toggle Omnibar's position",
         feature_group: 8,
         code: function () {
@@ -104,14 +141,14 @@ var Omnibar = (function(mode, ui) {
                 runtime.conf.omnibarPosition = "bottom";
             }
             setTimeout(function() {
-                _savedAargs.pref = self.input.val();
+                _savedAargs.pref = self.input.value;
                 Front.hidePopup();
                 Front.openOmnibar(_savedAargs);
             }, 1);
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-.>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-.>"), {
         annotation: "Show results of next page",
         feature_group: 8,
         code: function () {
@@ -126,7 +163,7 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-,>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-,>"), {
         annotation: "Show results of previous page",
         feature_group: 8,
         code: function () {
@@ -141,23 +178,23 @@ var Omnibar = (function(mode, ui) {
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-c>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-c>"), {
         annotation: "Copy all listed items",
         feature_group: 8,
         code: function () {
             // hide Omnibar.input, so that we could use clipboard_holder to make copy
-            self.input.hide();
-            Front.writeClipboard(JSON.stringify(_page, null, 4));
-            self.input.show();
+            self.input.style.display = "none";
+            Clipboard.write(JSON.stringify(_page, null, 4));
+            self.input.style.display = "";
         }
     });
 
-    self.mappings.add(encodeKeystroke("<Ctrl-D>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-D>"), {
         annotation: "Delete all listed items from bookmark or history",
         feature_group: 8,
         code: function () {
-            var uids = Omnibar.resultsDiv.find('>ul>li').toArray().map(function(li) {
-                return $(li).data('uid');
+            var uids = Array.from(Omnibar.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li')).map(function(li) {
+                return li.uid;
             }).filter(function(u) {
                 return u;
             });
@@ -170,9 +207,38 @@ var Omnibar = (function(mode, ui) {
                         if (handler && handler.getResults) {
                             handler.getResults();
                         }
-                        self.input.trigger('input');
+                        Omnibar.triggerInput();
                     }
                 });
+            }
+        }
+    });
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-r>"), {
+        annotation: "Re-sort history by visitCount or lastVisitTime",
+        feature_group: 8,
+        code: function () {
+            if (handler && handler.onReset) {
+                handler.onReset();
+            }
+        }
+    });
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
+        annotation: "Close Omnibar",
+        feature_group: 8,
+        code: function () {
+            Front.hidePopup();
+        }
+    });
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-m>"), {
+        annotation: "Create vim-like mark for selected item",
+        feature_group: 8,
+        code: function (mark) {
+            var fi = Omnibar.resultsDiv.querySelector('li.focused');
+            if (fi) {
+                Normal.addVIMark(mark, fi.url);
             }
         }
     });
@@ -180,25 +246,38 @@ var Omnibar = (function(mode, ui) {
     var handlers = {},
         bookmarkFolders;
 
-    var lastInput, handler, lastHandler = null;
-    ui.on('click', function(event) {
-        self.input[0].focus();
-    });
+    var lastInput = "", handler, lastHandler = null;
+    var ui = Front.omnibar;
+    ui.onclick = function(e) {
+        if (handler.onClick) {
+            handler.onClick(e);
+        } else {
+            self.input.focus();
+        }
+    };
+
+    self.triggerInput = function() {
+        var event = new Event('input', {
+            'bubbles': true,
+            'cancelable': true
+        });
+        self.input.dispatchEvent(event);
+    };
 
     self.expandAlias = function(alias, val) {
         var eaten = false;
         if (handler !== SearchEngine && alias.length && SearchEngine.aliases.hasOwnProperty(alias)) {
             lastHandler = handler;
             handler = SearchEngine;
-            $.extend(SearchEngine, SearchEngine.aliases[alias]);
-            self.resultsDiv.html("");
-            self.promptSpan.html(handler.prompt)
-            resultPageSpan.html("");
+            Object.assign(SearchEngine, SearchEngine.aliases[alias]);
+            setInnerHTML(self.resultsDiv, "");
+            setInnerHTML(self.promptSpan, handler.prompt);
+            setInnerHTML(resultPageSpan, "");
             _items = null;
             self.collapsingPoint = val;
-            self.input.val(val);
+            self.input.value = val;
             if (val.length) {
-                self.input.trigger('input');
+                Omnibar.triggerInput();
             }
             eaten = true;
         }
@@ -206,109 +285,107 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.collapseAlias = function() {
-        var eaten = false, val = self.input.val();
+        var eaten = false, val = self.input.value;
         if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
-            self.promptSpan.html(handler.prompt)
+            setInnerHTML(self.promptSpan, handler.prompt);
             if (val.length) {
-                self.input.val(val.substr(0, val.length - 1));
+                self.input.value = val.substr(0, val.length - 1);
             }
-            self.input.trigger('input');
+            Omnibar.triggerInput();
             eaten = true;
         }
         return eaten;
     };
 
-    self.focusItem = function(sel) {
-        var fi = self.resultsDiv.find(sel);
-        fi.addClass('focused');
-        fi[0].scrollIntoViewIfNeeded();
+    self.focusItem = function(fi) {
+        if (typeof(fi) === 'string') {
+            fi = self.resultsDiv.querySelector(fi);
+        }
+        fi.classList.add('focused');
+        scrollIntoViewIfNeeded(fi);
     };
 
     function rotateResult(backward) {
-        var total = self.resultsDiv.find('li').length;
+        var items = Array.from(self.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li'));
+        var total = items.length;
         if (total > 0) {
-            var fi = self.resultsDiv.find('li.focused');
-            fi.removeClass('focused');
-            var lastFocused = fi.index();
+            var fi = self.resultsDiv.querySelector('li.focused');
+            if (fi) {
+                fi.classList.remove('focused');
+            }
+            var lastFocused = items.indexOf(fi);
             lastFocused = (lastFocused === -1) ? total : lastFocused;
             var toFocus = (backward ? (lastFocused + total) : (lastFocused + total + 2)) % (total + 1);
             if (toFocus < total) {
-                Omnibar.focusItem('li:nth({0})'.format(toFocus));
+                Omnibar.focusItem(items[toFocus]);
                 handler.onTabKey && handler.onTabKey();
             } else {
-                self.input.val(lastInput);
+                self.input.value = lastInput;
             }
         }
     }
 
-    self.input = ui.find('input');
-    self.promptSpan = ui.find('#sk_omnibarSearchArea>span.prompt');
-    var resultPageSpan = ui.find('#sk_omnibarSearchArea>span.resultPage');
-    self.resultsDiv = ui.find('#sk_omnibarSearchResult');
+    self.input = ui.querySelector('input');
+    self.promptSpan = ui.querySelector('#sk_omnibarSearchArea>span.prompt');
+    var resultPageSpan = ui.querySelector('#sk_omnibarSearchArea>span.resultPage');
+    self.resultsDiv = ui.querySelector('#sk_omnibarSearchResult');
 
     function _onIput() {
-        if (lastInput !== self.input.val()) {
-            lastInput = self.input.val();
+        if (lastInput !== self.input.value) {
+            lastInput = self.input.value;
         }
         handler.onInput && handler.onInput.call(this);
     }
-    function _onKeyDown() {
+    function _onKeyDown(evt) {
         if (handler && handler.onKeydown) {
-            handler.onKeydown.call(event.target, event) && event.preventDefault();
+            handler.onKeydown.call(evt.target, evt) && evt.preventDefault();
         }
-        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+        if (Mode.isSpecialKeyOf("<Esc>", evt.sk_keyName)) {
             Front.hidePopup();
-            event.preventDefault();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
-            handler.activeTab = !event.ctrlKey;
-            handler.tabbed = Omnibar.tabbed ^ event.shiftKey;
+            evt.preventDefault();
+        } else if (evt.keyCode === KeyboardUtils.keyCodes.enter) {
+            handler.activeTab = !evt.ctrlKey;
+            handler.tabbed = Omnibar.tabbed ^ evt.shiftKey;
             handler.onEnter() && Front.hidePopup();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
-            self.expandAlias(self.input.val(), '') && event.preventDefault();
-        } else if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
-            self.collapseAlias() && event.preventDefault();
+        } else if (evt.keyCode === KeyboardUtils.keyCodes.space) {
+            self.expandAlias(self.input.value, '') && evt.preventDefault();
+        } else if (evt.keyCode === KeyboardUtils.keyCodes.backspace) {
+            self.collapseAlias() && evt.preventDefault();
         }
     }
-    self.input.on('input', _onIput);
-    self.input.on('keydown', _onKeyDown);
-    self.input.on('compositionstart', function(evt) {
-        self.input.off('input', _onIput);
-        self.input.off('keydown', _onKeyDown);
-    }).on('compositionend', function(evt) {
-        self.input.on('input', _onIput);
-        self.input.on('keydown', _onKeyDown);
+    self.input.oninput = _onIput;
+    self.input.onkeydown = _onKeyDown;
+    self.input.addEventListener('compositionstart', function(evt) {
+        self.input.oninput = null;
+        self.input.onkeydown = null;
+    });
+    self.input.addEventListener('compositionend', function(evt) {
+        self.input.oninput = _onIput;
+        self.input.onkeydown = _onKeyDown;
         _onIput();
     });
 
-    self.mappings.add(encodeKeystroke("<Tab>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Tab>"), {
         annotation: "Forward cycle through the candidates.",
         feature_group: 8,
         code: function () {
             rotateResult(runtime.conf.omnibarPosition === "bottom");
         }
     });
-    self.mappings.add(encodeKeystroke("<Shift-Tab>"), {
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Shift-Tab>"), {
         annotation: "Backward cycle through the candidates.",
         feature_group: 8,
         code: function () {
             rotateResult(runtime.conf.omnibarPosition !== "bottom");
         }
     });
-
-    self.scrollIntoView = function() {
-        var start = self.resultsDiv.position().top;
-        var end = start + self.resultsDiv.outerHeight();
-        var fi = self.resultsDiv.find('li.focused');
-        var pos = fi.position();
-        if (pos && (pos.top < start || (pos.top + fi.outerHeight()) > end)) {
-            var pos = fi.offset().top - self.resultsDiv.find('>ul').offset().top;
-            self.resultsDiv.animate({
-                scrollTop: pos
-            }, 100);
-        }
-    };
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-'>"), {
+        annotation: "Toggle quotes in an input element",
+        feature_group: 8,
+        code: toggleQuote
+    });
 
     self.highlight = function(rxp, str) {
         if (str.substr(0, 11) === "data:image/") {
@@ -324,33 +401,38 @@ var Omnibar = (function(mode, ui) {
         var type = b.type, additional = "", uid = b.uid;
         if (!type) {
             if (b.hasOwnProperty('lastVisitTime')) {
-                type = "☼";
-                additional = "<span class=omnibar_timestamp># {0}</span>".format(timeStampString(b.lastVisitTime));
+                type = "🕜";
+                additional = `<span class=omnibar_timestamp># ${timeStampString(b.lastVisitTime)}</span>`;
                 additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
                 uid = "H" + b.url;
             } else if(b.hasOwnProperty('dateAdded')) {
-                type = "☆";
-                additional = "<span class=omnibar_folder>@ {0}</span> <span class=omnibar_timestamp># {1}</span>".format(bookmarkFolders[b.parentId].title || "", timeStampString(b.dateAdded));
+                type = "⭐";
+                additional = `<span class=omnibar_folder>@ ${bookmarkFolders[b.parentId].title || ""}</span> <span class=omnibar_timestamp># ${timeStampString(b.dateAdded)}</span>`;
                 uid = "B" + b.id;
             } else if(b.hasOwnProperty('width')) {
-                type = "▓";
+                type = "🔖";
                 uid = "T" + b.windowId + ":" + b.id;
             } else {
-                type = "▤";
+                type = "🔥";
             }
         }
-        var li = $('<li/>').html('<div class="title">{0} {1} {2}</div>'.format(
-            type,
-            self.highlight(rxp, htmlEncode(b.title)),
-            additional
-        ));
-        $('<div class="url">').html(self.highlight(rxp, b.url)).appendTo(li);
-        li.data('uid', uid).data('url', b.url);
+        var li = createElement(`<li><div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div></li>`);
+        li.uid = uid;
+        li.url = b.url;
+        return li;
+    };
+
+    self.createItemFromRawHtml = function({ html, props }) {
+        const li = createElement(html);
+        if (typeof props === "object") {
+            Object.assign(li, props);
+        }
         return li;
     };
 
     self.detectAndInsertURLItem = function(str, toList) {
-        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)$/i;
+        var urlPat = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n\s]+)\.([^:\/\n\s]+)/i,
+            urlPat1 = /^https?:\/\/(?:[^@\/\n]+@)?([^:\/\n\s]+)/i;
         if (urlPat.test(str)) {
             var url = str;
             if (! /^https?:\/\//.test(str)) {
@@ -360,15 +442,30 @@ var Omnibar = (function(mode, ui) {
                 title: str,
                 url: url
             });
+        } else if (urlPat1.test(str)) {
+            toList.unshift({
+                title: str,
+                url: str
+            });
         }
     };
 
     var _start, _items, _showFolder, _pageSize, _page;
+
     /**
      * List URLs like {url: "https://github.com", title: "github.com"} beneath omnibar
+     *
+     * @example
+     *
+     * Omnibar.listURLs ([{url: 'http://google.com', title: 'Google'}], false)
+     *
+     * @memberof Omnibar
+     * @instance
+     *
      * @param {Array} items - Array of url items with title.
      * @param {boolean} showFolder - True to show a item as folder if it has no property url.
      *
+     * @return {undefined}
      */
     self.listURLs = function(items, showFolder) {
         _pageSize = (runtime.conf.omnibarMaxResults || 10);
@@ -382,19 +479,26 @@ var Omnibar = (function(mode, ui) {
         var si = (_start - 1) * _pageSize,
             ei = si + _pageSize;
             ei = ei > _items.length ? _items.length : ei;
-        resultPageSpan.html(`${si + 1} - ${ei} / ${_items.length}`);
+        setInnerHTML(resultPageSpan, `${si + 1} - ${ei} / ${_items.length}`);
         _page = _items.slice(si, ei);
-        var query = self.input.val().trim();
+        var query = self.input.value.trim();
         var rxp = null;
         if (query.length) {
             rxp = _regexFromString(query, true);
         }
         self.listResults(_page, function(b) {
             var li;
-            if (b.hasOwnProperty('url')) {
+            if (b.hasOwnProperty('html')) {
+                li = self.createItemFromRawHtml(b);
+            } else if (b.hasOwnProperty('url') && b.url !== undefined) {
+                if (window.navigator.userAgent.indexOf("Firefox") !== -1 && /^(place|data):/i.test(b.url)) {
+                    return null;
+                }
                 li = self.createURLItem(b, rxp);
             } else if (_showFolder) {
-                li = $('<li/>').html('<div class="title">▷ {0}</div>'.format(self.highlight(rxp, b.title))).data('folder_name', b.title).data('folderId', b.id);
+                li = createElement(`<li><div class="title">▷ ${self.highlight(rxp, b.title)}</div></li>`);
+                li.folder_name = b.title;
+                li.folderId = b.id;
             }
             return li;
         });
@@ -403,37 +507,43 @@ var Omnibar = (function(mode, ui) {
     var _savedAargs;
     ui.onShow = function(args) {
         _savedAargs = args;
-        ui.removeClass("sk_omnibar_middle");
-        ui.removeClass("sk_omnibar_bottom");
-        ui.addClass("sk_omnibar_" + runtime.conf.omnibarPosition);
+        ui.classList.remove("sk_omnibar_middle");
+        ui.classList.remove("sk_omnibar_bottom");
+        ui.classList.add("sk_omnibar_" + runtime.conf.omnibarPosition);
         if (runtime.conf.omnibarPosition === "bottom") {
             self.resultsDiv.remove();
-            self.resultsDiv.insertBefore("#sk_omnibarSearchArea");
+            ui.insertBefore(self.resultsDiv, document.querySelector("#sk_omnibarSearchArea"));
         } else {
             self.resultsDiv.remove();
-            self.resultsDiv.insertAfter("#sk_omnibarSearchArea");
+            ui.append(self.resultsDiv);
         }
 
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
         handler = handlers[args.type];
-        self.input[0].focus();
+        self.input.focus();
         self.enter();
         if (args.pref) {
-            self.input.val(args.pref);
+            self.input.value = args.pref;
         }
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
-        self.promptSpan.html(handler.prompt)
-        resultPageSpan.html("")
-        ui[0].scrollTop = 0;
+        setInnerHTML(self.promptSpan, handler.prompt);
+        setInnerHTML(resultPageSpan, "");
+        ui.scrollTop = 0;
     };
 
     ui.onHide = function() {
+        // clear cache
+        delete self.cachedPromise;
+        // delete only deletes properties of an object and
+        // cannot normally delete a variable declared using var, whatever the scope.
         _items = null;
+        bookmarkFolders = null;
+
         lastInput = "";
-        self.input.val('');
-        self.resultsDiv.html("");
+        self.input.value = "";
+        setInnerHTML(self.resultsDiv, "");
         lastHandler = null;
         handler.onClose && handler.onClose();
         self.exit();
@@ -441,10 +551,12 @@ var Omnibar = (function(mode, ui) {
     };
 
     self.openFocused = function() {
-        var ret = false, fi = self.resultsDiv.find('li.focused');
-        var url = fi.data('url');
-        if (url === undefined) {
-            url = self.input.val();
+        var ret = false, fi = self.resultsDiv.querySelector('li.focused');
+        var url;
+        if (fi) {
+            url = fi.url;
+        } else {
+            url = self.input.value;
             if (url.indexOf(':') === -1) {
                 url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
             }
@@ -457,8 +569,9 @@ var Omnibar = (function(mode, ui) {
             }, function(ret) {
             });
         } else {
-            var type = "", uid = fi.data('uid');
-            if (uid) {
+            var type = "", uid;
+            if (fi && fi.uid) {
+                uid = fi.uid;
                 type = uid[0], uid = uid.substr(1);
             }
             if (type === 'T') {
@@ -482,36 +595,42 @@ var Omnibar = (function(mode, ui) {
         return this.activeTab;
     };
 
-    self.listResults = function(items, renderItem) {
-        self.resultsDiv.html("");
+    self.listResults = function (items, renderItem) {
+        setInnerHTML(self.resultsDiv, "");
         if (!items || items.length === 0) {
             return;
         }
         if (runtime.conf.omnibarPosition === "bottom") {
             items.reverse();
         }
-        var results = $("<ul/>");
+        var ul = createElement("<ul/>");
         items.forEach(function(b) {
-            renderItem(b).appendTo(results);
+            var li = renderItem(b);
+            if (li) {
+                ul.append(li);
+            }
         });
-        results.appendTo(self.resultsDiv);
-        if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
-            results.find('>li:last')[0].scrollIntoViewIfNeeded();
-        }
+        self.resultsDiv.append(ul);
+        items = self.resultsDiv.querySelectorAll("#sk_omnibarSearchResult>ul>li");
         if (runtime.conf.focusFirstCandidate) {
             var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
-            results.find('li:nth({0})'.format(fi)).addClass('focused');
+            items[fi].classList.add('focused');
+        }
+        if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
+            scrollIntoViewIfNeeded(items[items.length-1]);
         }
     };
 
     self.listWords = function(words) {
         self.listResults(words, function(w) {
-            return $('<li/>').html("⌕ " + w).data('query', w);
+            var li = createElement(`<li>⌕ ${w}</li>`);
+            li.query = w;
+            return li;
         });
     };
 
     self.html = function(content) {
-        self.resultsDiv.html(content);
+        setInnerHTML(self.resultsDiv, content);
     };
 
     self.addHandler = function(name, hdl) {
@@ -531,11 +650,11 @@ var Omnibar = (function(mode, ui) {
     };
 
     return self;
-})(Mode, Front.omnibar);
+})();
 
 var OpenBookmarks = (function() {
     var self = {
-        prompt: 'bookmark≫',
+        prompt: `bookmark${separatorHtml}`,
         inFolder: []
     };
 
@@ -554,28 +673,28 @@ var OpenBookmarks = (function() {
         } else {
             currentFolderId = undefined;
             runtime.command({
-                action: 'getBookmarks',
+                action: 'getBookmarks'
             }, self.onResponse);
         }
         self.prompt = fl.prompt;
-        Omnibar.promptSpan.html(self.prompt)
+        setInnerHTML(Omnibar.promptSpan, self.prompt);
         lastFocused = fl.focused;
-        eaten = true;
     }
 
     self.onEnter = function() {
+        var items = Array.from(Omnibar.resultsDiv.querySelectorAll("#sk_omnibarSearchResult>ul>li"));
         var ret = false,
-            fi = Omnibar.resultsDiv.find('li.focused');
-        var folderId = fi.data('folderId');
+            fi = Omnibar.resultsDiv.querySelector('li.focused');
+        var folderId = fi.folderId;
         if (folderId) {
             self.inFolder.push({
                 prompt: self.prompt,
                 folderId: currentFolderId,
-                focused: fi.index()
+                focused: items.indexOf(fi)
             });
-            self.prompt = fi.data('folder_name') + "≫";
-            Omnibar.promptSpan.html(self.prompt)
-            Omnibar.input.val('');
+            self.prompt = fi.folder_name + separator;
+            setInnerHTML(Omnibar.promptSpan, self.prompt);
+            Omnibar.input.value = "";
             currentFolderId = folderId;
             lastFocused = 0;
             runtime.command({
@@ -584,21 +703,38 @@ var OpenBookmarks = (function() {
             }, OpenBookmarks.onResponse);
         } else {
             ret = Omnibar.openFocused.call(self);
+            if (ret) {
+                self.inFolder.push({
+                    prompt: self.prompt,
+                    folderId: currentFolderId,
+                    focused: items.indexOf(fi)
+                });
+                localStorage.setItem("surfingkeys.lastOpenBookmark", JSON.stringify(self.inFolder));
+            }
         }
         return ret;
     };
 
     self.onOpen = function() {
         Omnibar.listBookmarkFolders(function() {
-            runtime.command({
-                action: 'getBookmarks',
-            }, self.onResponse);
+            var lastBookmarkFolder = localStorage.getItem("surfingkeys.lastOpenBookmark");
+            if (lastBookmarkFolder) {
+                self.inFolder = JSON.parse(lastBookmarkFolder);
+                onFolderUp();
+            } else {
+                runtime.command({
+                    action: 'getBookmarks',
+                }, self.onResponse);
+            }
+            if (Omnibar.input.value !== "") {
+                self.onInput();
+            }
         });
     };
 
     self.onClose = function() {
         self.inFolder = [];
-        self.prompt = "bookmark≫";
+        self.prompt = `bookmark${separatorHtml}`;
         currentFolderId = undefined;
     };
 
@@ -606,23 +742,23 @@ var OpenBookmarks = (function() {
         var eaten = false;
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
-            self.prompt = folderOnly ? "bookmark folder≫" : "bookmark≫";
-            Omnibar.promptSpan.html(self.prompt)
+            self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
+            setInnerHTML(Omnibar.promptSpan, self.prompt);
             runtime.command({
                 action: 'getBookmarks',
                 parentId: currentFolderId,
-                query: Omnibar.input.val()
+                query: Omnibar.input.value
             }, self.onResponse);
             eaten = true;
-        } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && self.inFolder.length && !Omnibar.input.val().length) {
+        } else if (event.keyCode === KeyboardUtils.keyCodes.backspace && self.inFolder.length && !Omnibar.input.value.length) {
             onFolderUp();
             eaten = true;
         } else if (event.ctrlKey && event.shiftKey && KeyboardUtils.isWordChar(event)) {
-            var fi = Omnibar.resultsDiv.find('li.focused');
-            if (fi.length) {
+            var fi = Omnibar.resultsDiv.querySelector('li.focused');
+            if (fi) {
                 var mark_char = String.fromCharCode(event.keyCode);
                 // global marks always from here
-                Normal.addVIMark(mark_char, fi.data('url'));
+                Normal.addVIMark(mark_char, fi.url);
                 eaten = true;
             }
         }
@@ -632,19 +768,20 @@ var OpenBookmarks = (function() {
         runtime.command({
             action: 'getBookmarks',
             parentId: currentFolderId,
-            query: Omnibar.input.val()
+            query: Omnibar.input.value
         }, self.onResponse);
     };
     self.onResponse = function(response) {
         var items = response.bookmarks;
         if (folderOnly) {
             items = items.filter(function(b) {
-                return !b.hasOwnProperty('url');
+                return !b.hasOwnProperty('url') || b.url === undefined;
             });
         }
         Omnibar.listURLs(items, true);
 
-        Omnibar.focusItem('li:nth({0})'.format(lastFocused));
+        var items = Omnibar.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li');
+        Omnibar.focusItem(items[lastFocused]);
     };
 
     return self;
@@ -653,7 +790,7 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 
 var AddBookmark = (function() {
     var self = {
-        prompt: 'add bookmark≫'
+        prompt: `add bookmark${separatorHtml}`
     }, folders, origFFC;
 
     self.onOpen = function(arg) {
@@ -664,16 +801,29 @@ var AddBookmark = (function() {
         Omnibar.listBookmarkFolders(function(response) {
             folders = response.folders;
             Omnibar.listResults(folders.slice(), function(f) {
-                return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
+                return createElement(`<li folder="${f.id}">▷ ${f.title}</li>`);
             });
             runtime.command({
                 action: "getBookmark"
             }, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
-                    Omnibar.promptSpan.html('edit bookmark≫');
-                    Omnibar.resultsDiv.find('li.focused').removeClass('focused');
-                    Omnibar.focusItem(`li[folder=${b.parentId}]`);
+                    setInnerHTML(Omnibar.promptSpan, `edit bookmark${separatorHtml}`);
+                    Omnibar.resultsDiv.querySelector('li.focused').classList.remove('focused');
+                    Omnibar.focusItem(`li[folder="${b.parentId}"]`);
+                }
+
+                //restore the last used bookmark folder input
+                var lastBookmarkFolder = localStorage.getItem("surfingkeys.lastAddedBookmark");
+                if (lastBookmarkFolder) {
+                    Omnibar.input.value = lastBookmarkFolder;
+
+                    //make the input selected, so if user don't want to use it,
+                    //just input to overwrite the previous value
+                    Omnibar.input.select();
+
+                    // trigger omnibar input matching
+                    self.onInput();
                 }
             });
         });
@@ -684,19 +834,19 @@ var AddBookmark = (function() {
     };
 
     self.onTabKey = function() {
-        var fi = Omnibar.resultsDiv.find('li.focused');
-        Omnibar.input.val(fi.html().substr(2));
+        var fi = Omnibar.resultsDiv.querySelector('li.focused');
+        Omnibar.input.value = fi.innerHTML.substr(2);
     };
 
     self.onEnter = function() {
         self.page.path = [];
-        var fi = Omnibar.resultsDiv.find('li.focused');
+        var fi = Omnibar.resultsDiv.querySelector('li.focused');
         var folderName;
-        if (fi.length) {
-            self.page.folder = fi.attr('folder');
-            folderName = fi.html().substr(2);
+        if (fi) {
+            self.page.folder = fi.getAttribute('folder');
+            folderName = fi.innerHTML.substr(2);
         } else {
-            var path = Omnibar.input.val();
+            var path = Omnibar.input.value;
             path = path.split('/');
             var title = path.pop();
             if (title.length) {
@@ -728,16 +878,21 @@ var AddBookmark = (function() {
         }, function(response) {
             Front.showBanner("Bookmark created at {0}.".format(folderName), 3000);
         });
+        localStorage.setItem("surfingkeys.lastAddedBookmark", Omnibar.input.value);
         return true;
     };
 
     self.onInput = function() {
-        var query = Omnibar.input.val();
+        var query = Omnibar.input.value;
+        var caseSensitive = runtime.getCaseSensitive(query);
         var matches = folders.filter(function(b) {
-            return b.title.indexOf(query) !== -1;
+            if (caseSensitive)
+              return b.title.indexOf(query) !== -1;
+            else
+              return b.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
         Omnibar.listResults(matches, function(f) {
-            return $('<li/>').attr('folder', f.id).html("▷ {0}".format(f.title));
+            return createElement(`<li folder="${f.id}">▷ ${f.title}</li>`);
         });
     };
 
@@ -747,8 +902,8 @@ Omnibar.addHandler('AddBookmark', AddBookmark);
 
 var OpenHistory = (function() {
     var self = {
-        prompt: 'history≫'
-    }, cachedPromise;
+        prompt: `history${separatorHtml}`
+    };
 
     self.onOpen = function(arg) {
         self.getResults();
@@ -756,19 +911,37 @@ var OpenHistory = (function() {
     };
 
     self.getResults = function() {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
-                action: 'getHistory'
+                action: 'getHistory',
+                sortByMostUsed: runtime.conf.historyMUOrder
             }, function(response) {
                 resolve(response.history);
             });
         });
     };
 
+    self.onReset = function() {
+        runtime.conf.historyMUOrder = !runtime.conf.historyMUOrder;
+        Omnibar.cachedPromise.then(function(cached) {
+            if (runtime.conf.historyMUOrder) {
+                cached = cached.sort(function(a, b) {
+                    return b.visitCount - a.visitCount;
+                });
+            } else {
+                cached = cached.sort(function(a, b) {
+                    return b.lastVisitTime - a.lastVisitTime;
+                });
+            }
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.value);
+            Omnibar.listURLs(filtered, false);
+        });
+    };
+
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
-            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
+        Omnibar.cachedPromise.then(function(cached) {
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.value);
             Omnibar.listURLs(filtered, false);
         });
     };
@@ -778,14 +951,15 @@ Omnibar.addHandler('History', OpenHistory);
 
 var OpenURLs = (function() {
     var self = {
-        prompt: '≫'
-    }, cachedPromise;
+        prompt: `${separatorHtml}`
+    };
 
     self.getResults = function() {
         if (self.action === "getAllSites") {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
-                    action: 'getTabs'
+                    action: 'getTabs',
+                    queryInfo: runtime.conf.omnibarTabsQuery
                 }, function(response) {
                     var cached = response.tabs;
                     runtime.command({
@@ -804,7 +978,7 @@ var OpenURLs = (function() {
                 });
             });
         } else {
-            cachedPromise = new Promise(function(resolve, reject) {
+            Omnibar.cachedPromise = new Promise(function(resolve, reject) {
                 runtime.command({
                     action: self.action
                 }, function(response) {
@@ -817,19 +991,19 @@ var OpenURLs = (function() {
     self.onOpen = function(arg) {
         self.action = arg;
         if (self.action === "getRecentlyClosed") {
-            self.prompt = 'Recently closed≫';
+            self.prompt = `Recently closed${separatorHtml}`;
         } else if (self.action === "getTabURLs") {
-            self.prompt = 'Tab History≫';
+            self.prompt = `Tab History${separatorHtml}`;
         } else {
-            self.prompt = '≫';
+            self.prompt = `${separatorHtml}`;
         }
         self.getResults();
         self.onInput();
     };
     self.onEnter = Omnibar.openFocused.bind(self);
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
-            var val = Omnibar.input.val();
+        Omnibar.cachedPromise.then(function(cached) {
+            var val = Omnibar.input.value;
             var filtered = _filterByTitleOrUrl(cached, val);
             if (filtered.length === 0) {
                 Omnibar.expandAlias(runtime.conf.defaultSearchEngine, val);
@@ -845,11 +1019,11 @@ Omnibar.addHandler('URLs', OpenURLs);
 
 var OpenTabs = (function() {
     var self = {
-        prompt: 'tabs≫'
-    }, cachedPromise;
+        prompt: `tabs${separatorHtml}`
+    };
 
     self.getResults = function () {
-        cachedPromise = new Promise(function(resolve, reject) {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
             runtime.command({
                 action: 'getTabs',
                 query: ''
@@ -864,8 +1038,8 @@ var OpenTabs = (function() {
         self.onInput();
     };
     self.onInput = function() {
-        cachedPromise.then(function(cached) {
-            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.val());
+        Omnibar.cachedPromise.then(function(cached) {
+            var filtered = _filterByTitleOrUrl(cached, Omnibar.input.value);
             Omnibar.listURLs(filtered, false);
         });
     };
@@ -875,11 +1049,11 @@ Omnibar.addHandler('Tabs', OpenTabs);
 
 var OpenVIMarks = (function() {
     var self = {
-        prompt: 'VIMarks≫'
+        prompt: `VIMarks${separatorHtml}`
     };
 
     self.onOpen = function() {
-        var query = Omnibar.input.val();
+        var query = Omnibar.input.value;
         var urls = [];
         runtime.command({
             action: 'getSettings',
@@ -892,7 +1066,7 @@ var OpenVIMarks = (function() {
                         url: markInfo,
                         scrollLeft: 0,
                         scrollTop: 0
-                    }
+                    };
                 }
                 if (query === "" || markInfo.url.indexOf(query) !== -1) {
                     urls.push({
@@ -916,29 +1090,51 @@ var SearchEngine = (function() {
     var self = {};
     self.aliases = {};
 
+    var _pendingRequest = undefined; // timeout ID
+    function clearPendingRequest() {
+        if (_pendingRequest) {
+            clearTimeout(_pendingRequest);
+            _pendingRequest = undefined;
+        }
+    }
+
+    function formatURL(url, query) {
+        if (url.indexOf("%s") !== -1) {
+            return url.replace("%s", query);
+        }
+        return url + query;
+    }
+
     self.onOpen = function(arg) {
-        $.extend(self, self.aliases[arg]);
-        var q = Omnibar.input.val();
+        Object.assign(self, self.aliases[arg]);
+        var q = Omnibar.input.value;
         if (q.length) {
             var b = q.match(/^(site:\S+\s*).*/);
             if (b) {
-                Omnibar.input[0].setSelectionRange(b[1].length, q.length);
+                Omnibar.input.setSelectionRange(b[1].length, q.length);
             }
-            Omnibar.input.trigger('input');
+            Omnibar.triggerInput();
         }
     };
     self.onClose = function() {
+        clearPendingRequest();
         self.prompt = undefined;
         self.url = undefined;
         self.suggestionURL = undefined;
-        self.listSuggestion = undefined;
     };
     self.onTabKey = function() {
-        Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('query'));
+        var fi = Omnibar.resultsDiv.querySelector('li.focused');
+        if (fi && fi.query) {
+            Omnibar.input.value = fi.query;
+        }
     };
     self.onEnter = function() {
-        var fi = Omnibar.resultsDiv.find('li.focused');
-        var url = fi.data('url') || constructSearchURL(self.url, (fi.data('query') || Omnibar.input.val()) );
+        var fi = Omnibar.resultsDiv.querySelector('li.focused'), url;
+        if (fi) {
+            url = fi.url || constructSearchURL(self.url, (fi.query || encodeURIComponent(Omnibar.input.value)));
+        } else {
+            url = constructSearchURL(self.url, encodeURIComponent(Omnibar.input.value));
+        }
         runtime.command({
             action: "openLink",
             tab: {
@@ -949,19 +1145,47 @@ var SearchEngine = (function() {
         });
         return this.activeTab;
     };
-    self.onInput = function() {
-        if (self.suggestionURL) {
-            var val = Omnibar.input.val();
+    self.onInput = function () {
+        var canSuggest = self.suggestionURL;
+        var showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
+
+        if (!showSuggestions) return false;
+
+        var val = encodeURIComponent(Omnibar.input.value);
+        clearPendingRequest();
+        // Set a timeout before the request is dispatched so that it can be canceled if necessary.
+        // This helps prevent rate-limits when typing a long query.
+        // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
+        _pendingRequest = setTimeout(function() {
             runtime.command({
                 action: 'request',
                 method: 'get',
-                url: self.suggestionURL + val
-            }, function(resp) {
-                if (typeof(self.listSuggestion === "function")) {
-                    self.listSuggestion(resp);
-                }
+                url: formatURL(self.suggestionURL, val)
+            }, function (resp) {
+                Front.contentCommand({
+                    action: 'getSearchSuggestions',
+                    url: self.suggestionURL,
+                    response: resp
+                }, function(resp) {
+                    resp = resp.data;
+                    if (Array.isArray(resp)) {
+                        Omnibar.detectAndInsertURLItem(Omnibar.input.value, resp);
+                        var rxp = _regexFromString(val, true);
+                        Omnibar.listResults(resp, function (w) {
+                            if (w.hasOwnProperty('html')) {
+                                return Omnibar.createItemFromRawHtml(w);
+                            } else if (w.hasOwnProperty('url')) {
+                                return Omnibar.createURLItem(w, rxp);
+                            } else {
+                                var li = createElement(`<li>⌕ ${w}</li>`);
+                                li.query = w;
+                                return li;
+                            }
+                        });
+                    }
+                });
             });
-        }
+        }, runtime.conf.omnibarSuggestionTimeout);
     };
     return self;
 })();
@@ -975,6 +1199,14 @@ var Commands = (function() {
 
     var historyInc = 0;
 
+    /**
+     * List commands when OmniBar opens
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @return {undefined}
+     */
     self.onOpen = function() {
         historyInc = -1;
         runtime.command({
@@ -984,55 +1216,90 @@ var Commands = (function() {
             var candidates = response.settings.cmdHistory;
             if (candidates.length) {
                 Omnibar.listResults(candidates, function(c) {
-                    return $('<li/>').data('cmd', c).html(c);
+                    var li = createElement(`<li>${c}</li>`);
+                    li.cmd = c;
+                    return li;
                 });
             }
         });
     };
+
+    self.onReset = self.onOpen;
+
     self.onInput = function() {
-        var cmd = Omnibar.input.val();
+        var cmd = Omnibar.input.value;
         var candidates = Object.keys(self.items).filter(function(c) {
             return cmd === "" || c.indexOf(cmd) !== -1;
         });
         if (candidates.length) {
             Omnibar.listResults(candidates, function(c) {
-                return $('<li/>').data('cmd', c).html("{0}<span class=annotation>{1}</span>".format(c, htmlEncode(self.items[c].annotation)));
+                var li = createElement(`<li>${c}<span class=annotation>${htmlEncode(self.items[c].annotation)}</span></li>`);
+                li.cmd = c;
+                return li;
             });
         }
     };
+
     self.onTabKey = function() {
-        Omnibar.input.val(Omnibar.resultsDiv.find('li.focused').data('cmd'));
+        Omnibar.input.value = Omnibar.resultsDiv.querySelector('li.focused').cmd;
     };
+
+    /**
+     * Execute command after pressing the return key.
+     *
+     * Displays any output if the command.
+     *
+     * @memberof Omnibar
+     * @instance
+     *
+     * @returns {boolean}
+     */
     self.onEnter = function() {
         var ret = false;
-        var cmdline = Omnibar.input.val();
+        var cmdline = Omnibar.input.value;
         if (cmdline.length) {
             runtime.updateHistory('cmd', cmdline);
-            var args = parseCommand(cmdline);
-            var cmd = args.shift();
-            if (self.items.hasOwnProperty(cmd)) {
-                var code = self.items[cmd].code;
-                ret = code.call(code, args);
-            } else {
-                var out;
-                try {
-                    var F = new Function("return " + cmdline);
-                    out = F();
-                } catch (e) {
-                    out = e.toString();
-                }
-                if (out !== undefined) {
-                    out = JSON.stringify(out);
-                    out = htmlEncode(out);
-                    Omnibar.listResults([out], function(c) {
-                        return $('<li/>').html(c);
-                    });
-                }
-            }
-            Omnibar.input.val('');
+            self.execute(cmdline);
+            Omnibar.input.value = "";
         }
         return ret;
     };
+
+    function parseCommand(cmdline) {
+        var cmdline = cmdline.trim();
+        var tokens = [];
+        var pendingToken = false;
+        var part = '';
+        for (var i = 0; i < cmdline.length; i++) {
+            if (cmdline.charAt(i) === ' ' && !pendingToken) {
+                tokens.push(part);
+                part = '';
+            } else {
+                if (cmdline.charAt(i) === '\"') {
+                    pendingToken = !pendingToken;
+                } else {
+                    part += cmdline.charAt(i);
+                }
+            }
+        }
+        tokens.push(part);
+        return tokens;
+    }
+
+    self.execute = function(cmdline) {
+        var args = parseCommand(cmdline);
+        var cmd = args.shift();
+        if (self.items.hasOwnProperty(cmd)) {
+            var meta = self.items[cmd];
+            meta.code.call(meta.code, args);
+        } else {
+            Front.contentCommand({
+                action: 'executeScript',
+                cmdline: cmdline
+            });
+        }
+    };
+
     return self;
 })();
 Omnibar.addHandler('Commands', Commands);
@@ -1041,19 +1308,47 @@ var OmniQuery = (function() {
     var self = {
         prompt: 'ǭ'
     };
+
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+    var _words;
     self.onOpen = function(arg) {
         if (arg) {
-            Omnibar.input.val(arg);
+            Omnibar.input.value = arg;
             Front.contentCommand({
                 action: 'omnibar_query_entered',
                 query: arg
             });
         }
+        Front.contentCommand({
+            action: 'getPageText'
+        }, function(message) {
+            var splitRegex = /[^a-zA-Z]+/;
+            _words = message.data.toLowerCase().split(splitRegex).filter(onlyUnique);
+        });
     };
+
+    self.onInput = function() {
+        var iw = Omnibar.input.value;
+        var candidates = _words.filter(function(w) {
+            return w.indexOf(iw) !== -1;
+        });
+        if (candidates.length) {
+            Omnibar.listResults(candidates, function(w) {
+                return createElement(`<li>${w}</li>`);
+            });
+        }
+    };
+
+    self.onTabKey = function() {
+        Omnibar.input.value = Omnibar.resultsDiv.querySelector('li.focused').innerText;
+    };
+
     self.onEnter = function() {
         Front.contentCommand({
             action: 'omnibar_query_entered',
-            query: Omnibar.input.val()
+            query: Omnibar.input.value
         });
     };
 

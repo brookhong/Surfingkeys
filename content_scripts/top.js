@@ -1,141 +1,162 @@
-// Hook focus on top window on load
-// test with http://askubuntu.com/questions/529781/upgrade-from-gdb-7-7-to-7-8
-var TopHook = (function(mode) {
-    var self = $.extend({name: "TopHook", eventListeners: {}}, mode);
-
-    self.addEventListener('blur', function(event) {
-        setTimeout(function() {
-            window.focus();
-        }, 0);
-    });
-
-    self.addEventListener('mousedown', function(event) {
-        self.exit();
-    });
-
-    self.addEventListener('keydown', function(event) {
-        self.exit();
-    });
-
-    self.addEventListener('pushState', function(event) {
-        event.sk_suppressed = true;
-        Insert.exit();
-    });
-
-    return self;
-})(Mode);
-TopHook.enter(9999);
-
-var frontendFrame = (function() {
-    var self = {};
+if (window === top) {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
-    var ifr = $('<iframe allowtransparency=true frameborder=0 scrolling=no class=sk_ui src="{0}" />'.format(frontEndURL));
-    uiHost.createShadowRoot();
+    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" />`);
+    uiHost.attachShadow({mode:'open'});
     var sk_style = document.createElement("style");
-    sk_style.innerHTML = '@import url("{0}");'.format(chrome.runtime.getURL("pages/shadow.css"));
+    setInnerHTML(sk_style, `@import url("${chrome.runtime.getURL("pages/shadow.css")}");`);
     uiHost.shadowRoot.appendChild(sk_style);
-    ifr.appendTo(uiHost.shadowRoot);
+    uiHost.shadowRoot.appendChild(ifr);
 
-    function initPort() {
+    ifr.addEventListener("load", function() {
         this.contentWindow.postMessage({
-            action: 'initPort',
-            from: 'top'
-        }, frontEndURL, [this.channel.port2]);
-        self.contentWindow = this.contentWindow;
-        $(document).trigger("surfingkeys:frontendReady");
-    }
+            action: 'initFrontend',
+            ack: true,
+            origin: getDocumentOrigin()
+        }, frontEndURL);
 
-    var lastStateOfPointerEvents = "none", _origOverflow;
-    self.setFrontFrame = function(response) {
-        ifr.css('height', response.frameHeight);
+        window.addEventListener('message', function(event) {
+            var _message = event.data;
+            if (_message.commandToFrontend || _message.responseToFrontend) {
+                // forward message to frontend
+                ifr.contentWindow.postMessage(_message, frontEndURL);
+                if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
+                    if (!activeContent || activeContent.window !== event.source) {
+                        // reset active Content
+
+                        if (activeContent) {
+                            activeContent.window.postMessage({
+                                action: 'deactivated',
+                                direct: true,
+                                reason: `${_message.action}@${event.timeStamp}`,
+                                commandToContent: true
+                            }, activeContent.origin);
+                        }
+
+                        activeContent = {
+                            window: event.source,
+                            origin: _message.origin
+                        };
+
+                        activeContent.window.postMessage({
+                            action: 'activated',
+                            direct: true,
+                            reason: `${_message.action}@${event.timeStamp}`,
+                            commandToContent: true
+                        }, activeContent.origin);
+                    }
+                }
+                if (_message.action === "visualUpdatedForFirefox") {
+                    document.activeElement.blur();
+                }
+            } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+                _actions[_message.action](_message);
+            } else if (_message.commandToContent || _message.responseToContent) {
+                // forward message to content
+                if (activeContent && !_message.direct && activeContent.window !== top) {
+                    activeContent.window.postMessage(_message, activeContent.origin);
+                }
+            }
+        }, true);
+
+    }, false);
+
+    var lastStateOfPointerEvents = "none", _origOverflowY;
+    var _actions = {}, activeContent = null, _initialized = false;
+    _actions['initFrontendAck'] = function(response) {
+        if (!_initialized) {
+            _initialized = true;
+            Front.resolve(window.location.href);
+            Front.resolve = null;
+        }
+    };
+    _actions['setFrontFrame'] = function(response) {
+        ifr.style.height = response.frameHeight;
         if (response.pointerEvents) {
-            ifr.css('pointer-events', response.pointerEvents);
+            ifr.style.pointerEvents = response.pointerEvents;
         }
         if (response.pointerEvents === "none") {
             uiHost.blur();
+            ifr.blur();
             // test with https://docs.google.com/ and https://web.whatsapp.com/
             if (lastStateOfPointerEvents !== response.pointerEvents) {
-                runtime.command({
+                activeContent.window.postMessage({
                     action: 'getBackFocus',
-                    toContent: true
-                });
+                    commandToContent: true
+                }, activeContent.origin);
             }
             if (document.body) {
                 document.body.style.animationFillMode = "";
-                document.body.style.overflow = _origOverflow;
+                document.body.style.overflowY = _origOverflowY;
             }
         } else {
             if (document.body) {
                 document.body.style.animationFillMode = "none";
-                _origOverflow = document.body.style.overflow;
-                document.body.style.overflow = 'visible';
+                if (_origOverflowY === undefined) {
+                    _origOverflowY = document.body.style.overflowY;
+                }
+                document.body.style.overflowY = 'visible';
             }
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };
-    self.create = function() {
-        ifr[0].channel = new MessageChannel();
-        ifr[0].channel.port1.onmessage = function(message) {
-            var _message = message.data;
-            if (_message.action && self.hasOwnProperty(_message.action)) {
-                var ret = self[_message.action](_message);
-                if (ret) {
-                    _message.data = ret;
-                    self.contentWindow.postMessage(_message, frontEndURL);
+
+    document.addEventListener('DOMContentLoaded', function (e) {
+        document.documentElement.appendChild(uiHost);
+
+        runtime.command({
+            action: 'tabURLAccessed',
+            title: document.title,
+            url: window.location.href
+        }, function (resp) {
+            if (resp.index > 0) {
+                var showTabIndexInTitle = function () {
+                    skipObserver = true;
+                    document.title = myTabIndex + " " + originalTitle;
+                };
+
+                var myTabIndex = resp.index,
+                    skipObserver = false,
+                    originalTitle = document.title;
+
+                new MutationObserver(function (mutationsList) {
+                    if (skipObserver) {
+                        skipObserver = false;
+                    } else {
+                        originalTitle = document.title;
+                        showTabIndexInTitle();
+                    }
+                }).observe(document.querySelector("title"), { childList: true });;
+
+                showTabIndexInTitle();
+
+                runtime.runtime_handlers['tabIndexChange'] = function(msg, sender, response) {
+                    if (msg.index !== myTabIndex) {
+                        myTabIndex = msg.index;
+                        showTabIndexInTitle();
+                    }
+                };
+            }
+        });
+
+        setTimeout(function () {
+            // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
+            for (var p in AutoCommands) {
+                var c = AutoCommands[p];
+                if (c.regex.test(window.location.href)) {
+                    c.code();
                 }
             }
-        };
-        ifr[0].removeEventListener("load", initPort, false);
-        ifr[0].addEventListener("load", initPort, false);
+        }, 0);
+        // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
+    }, {once: true});
 
-        document.documentElement.appendChild(uiHost);
-    };
-
-    return self;
-})();
-
-document.addEventListener('DOMContentLoaded', function(e) {
-
-    runtime.command({
-        action: 'tabURLAccessed',
-        title: document.title,
-        url: window.location.href
-    });
-
-    var fakeBody = $('body[createdBySurfingkeys=1]');
-    if (fakeBody.length) {
-        fakeBody.remove();
-        frontendFrame.contentWindow = null;
+    function _setScrollPos(x, y) {
+        document.addEventListener('DOMContentLoaded', function(e) {
+            document.scrollingElement.scrollLeft = x;
+            document.scrollingElement.scrollTop = y;
+        });
     }
-    setTimeout(function() {
-        // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
-        createFrontEnd();
-        for (var p in AutoCommands) {
-            var c = AutoCommands[p];
-            if (c.regex.test(window.location.href)) {
-                c.code();
-            }
-        }
-    }, 0);
-});
-function createFrontEnd() {
-    if (!frontendFrame) {
-        return;
-    }
-    var frontendReady = frontendFrame.contentWindow && frontendFrame.contentWindow.top === top;
-    if (!frontendReady) {
-        frontendFrame.create();
-        frontendReady = true;
-    }
-    return frontendReady;
-}
-
-function _setScrollPos(x, y) {
-    $(document).ready(function() {
-        document.body.scrollLeft = x;
-        document.body.scrollTop = y;
-    });
 }

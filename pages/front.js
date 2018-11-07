@@ -1,19 +1,22 @@
-var Front = (function(mode) {
-    var self = $.extend({
-        name: "Front",
-        frontendOnly: true,
-        eventListeners: {},
-        ports: {}
-    }, mode);
+var Front = (function() {
+    var self = new Mode("Front");
 
     // this object is implementation of UI, it's UI provider
     self.isProvider = function() {
         return true;
     };
 
-    self.contentCommand = function(args, cb) {
-        args.toContent = true;
-        runtime.command(args, cb);
+    var topOrigin,
+        _actions = {},
+        _callbacks = {};
+    self.contentCommand = function(args, successById) {
+        args.commandToContent = true;
+        args.id = generateQuickGuid();
+        if (successById) {
+            args.ack = true;
+            _callbacks[args.id] = successById;
+        }
+        top.postMessage(args, topOrigin);
     };
 
     self.addEventListener('keydown', function(event) {
@@ -21,28 +24,7 @@ var Front = (function(mode) {
             self.hidePopup();
             event.sk_stopPropagation = true;
         } else {
-            if (self.showPressed) {
-                if (event.sk_keyName.length > 1) {
-                    var keyStr = JSON.stringify({
-                        metaKey: event.metaKey,
-                        altKey: event.altKey,
-                        ctrlKey: event.ctrlKey,
-                        shiftKey: event.shiftKey,
-                        keyCode: event.keyCode,
-                        code: event.code,
-                        composed: event.composed,
-                        key: event.key
-                    }, null, 4);
-                    reportIssue("Unrecognized key event: {0}".format(event.sk_keyName), keyStr);
-                } else {
-                    var s = htmlEncode(decodeKeystroke(event.sk_keyName));
-                    if (!s) {
-                        s = "&nbsp;";
-                    }
-                    _popup.find("kbd").html(s);
-                }
-                event.sk_stopPropagation = true;
-            } else if (_tabs.trie) {
+            if (_tabs.trie) {
                 _tabs.trie = _tabs.trie.find(event.sk_keyName);
                 if (!_tabs.trie) {
                     self.hidePopup();
@@ -60,25 +42,22 @@ var Front = (function(mode) {
         }
     });
 
-    self.postMessage = function(to, message) {
-        if (self.ports[to]) {
-            self.ports[to].postMessage(message);
-        }
-    };
     self.flush = function() {
-        var visibleDivs = $('body>div:visible').toArray();
+        var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
+            return n.style.display !== "none";
+        });
         var pointerEvents = visibleDivs.map(function(d) {
-            var id = $(d).attr('id');
-            var divNoPointerEvents = ["sk_keystroke", "sk_richKeystroke", "sk_bubble", "sk_banner", "sk_frame"];
+            var id = d.id;
+            var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
             if (divNoPointerEvents.indexOf(id) !== -1) {
                 // no pointerEvents for bubble
                 return false;
             } else if (id === "sk_status") {
                 // only pointerEvents when input in statusBar
-                return $('#sk_status').find('input').length > 0;
+                return self.statusBar.querySelector('input') !== null;
             } else {
-                // with pointerEvents for all other DIVs
-                return true;
+                // with pointerEvents for all other DIVs except that noPointerEvents is set.
+                return !d.noPointerEvents;
             }
         });
         // to make pointerEvents not empty
@@ -88,141 +67,108 @@ var Front = (function(mode) {
         });
         if (pointerEvents) {
             window.focus();
-            var input = $('#sk_status').find('input').length ? $('#sk_status').find('input') : Omnibar.input;
-            input.focus();
+            if (visibleDivs[0] === self.omnibar) {
+                self.omnibar.querySelector("input").focus();
+            } else {
+                visibleDivs[0].focus();
+            }
         }
-        self.postMessage('top', {
+        top.postMessage({
             action: 'setFrontFrame',
             pointerEvents: pointerEvents ? "all" : "none",
             frameHeight: visibleDivs.length > 0 ? "100%" : "0px"
-        });
+        }, topOrigin);
     };
     self.visualCommand = function(args) {
-        if (_usage.is(':visible')) {
+        if (_usage.style.display !== "none") {
             // visual mode in frontend.html
             Visual[args.action](args.query);
         } else {
             // visual mode for all content windows
-            Front.contentCommand(args);
+            self.contentCommand(args);
         }
     };
 
-    self.omnibar = $('#sk_omnibar').hide();
-    self.statusBar = $('#sk_status').hide();
-    var frameElement = $('<div id=sk_frame class=sk_theme>').appendTo('body').hide();
-    var _usage = $('<div id=sk_usage class=sk_theme>').appendTo('body').hide();
-    var _popup = $('<div id=sk_popup class=sk_theme>').appendTo('body').hide();
-    var _editor = $('<div id=sk_editor>').appendTo('body').hide();
-    var _tabs = $("<div id=sk_tabs><div class=sk_tabs_fg></div><div class=sk_tabs_bg></div></div>").appendTo('body').hide();
-    var banner = $('<div id=sk_banner class=sk_theme>').appendTo('body').hide();
-    var _bubble = $("<div id=sk_bubble>").html("<div class=sk_bubble_content></div>").appendTo('body').hide();
-    $("<div class=sk_arrow>").html("<div></div><div></div>").css('position', 'absolute').css('top', '100%').appendTo(_bubble);
-    var keystroke = $('<div id=sk_keystroke class=sk_theme>').appendTo('body').hide();
-    var _richKeystroke = $('<div id=sk_richKeystroke class=sk_theme>').appendTo('body').hide();
+    self.omnibar = document.getElementById('sk_omnibar');
+    self.statusBar = document.getElementById('sk_status');
+    var _usage = document.getElementById('sk_usage');
+    var _popup = document.getElementById('sk_popup');
+    var _editor = document.getElementById('sk_editor');
+    var _tabs = document.getElementById('sk_tabs');
+    var banner = document.getElementById('sk_banner');
+    var _bubble = document.getElementById('sk_bubble');
+    var sk_bubble_content = _bubble.querySelector("div.sk_bubble_content");
+    var sk_bubble_arrow = _bubble.querySelector('div.sk_arrow');
+    var sk_bubbleClassList = sk_bubble_content.classList;
+    function clearScrollerIndicator() {
+        sk_bubbleClassList.remove("sk_scroller_indicator_top");
+        sk_bubbleClassList.remove("sk_scroller_indicator_middle");
+        sk_bubbleClassList.remove("sk_scroller_indicator_bottom");
+    }
+    sk_bubble_content.onscroll = function(evt) {
+        clearScrollerIndicator();
+        if (this.scrollTop === 0) {
+            sk_bubbleClassList.add("sk_scroller_indicator_top");
+        } else if (this.scrollTop + this.offsetHeight >= this.scrollHeight) {
+            sk_bubbleClassList.add("sk_scroller_indicator_bottom");
+        } else {
+            sk_bubbleClassList.add("sk_scroller_indicator_middle");
+        }
+    };
+    var keystroke = document.getElementById('sk_keystroke');
 
     var _display;
-    self.hidePopup = function() {
-        if (_display && _display.is(':visible')) {
-            _display.hide();
+    _actions['hidePopup'] = function() {
+        if (_display && _display.style.display !== "none") {
+            _display.style.display = "none";
             self.flush();
             _display.onHide && _display.onHide();
-            self.showPressed = false;
             self.exit();
         }
     };
+    self.hidePopup = _actions['hidePopup'];
+
     function showPopup(td, args) {
-        self.enter();
-        if (_display && _display.is(':visible')) {
-            _display.hide();
+        self.enter(0, true);
+        if (_display && _display.style.display !== "none") {
+            _display.style.display = "none";
             _display.onHide && _display.onHide();
         }
         _display = td;
-        _display.show();
-        self.flush();
+        _display.style.display = "";
         _display.onShow && _display.onShow(args);
-        if (_editor !== td) {
-            // don't set focus for editor, as it may lead frontend.html hold focus.
-            window.focus();
-        }
-    }
-
-    self.highlightElement = function(message) {
-        var rect = message.rect;
-        frameElement.css('top', rect.top).css('left', rect.left).css('width', rect.width).css('height', rect.height).show();
         self.flush();
-        setTimeout(function() {
-            frameElement.hide();
-            self.flush();
-        }, message.duration);
-    };
-    runtime.on('highlightElement', self.highlightElement);
+    }
 
     _tabs.onShow = function(tabs) {
-        var tabs_fg = _tabs.find('div.sk_tabs_fg');
-        tabs_fg.html("");
+        setInnerHTML(_tabs, "");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
-        var tabstr = "<div class=sk_tab style='max-width: {0}px'>".format(window.innerWidth - 50);
-        var items = tabs.forEach(function(t, i) {
-            var tab = $(tabstr);
+        var tabstr = "<div class=sk_tab style='width: 200px'>";
+        tabs.forEach(function(t, i) {
+            var tab = createElement(tabstr);
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            tab.html("<div class=sk_tab_hint>{0}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='{1}'></div><div class=sk_tab_title>{2}</div></div>".format(hintLabels[i], t.favIconUrl, htmlEncode(t.title)));
-            tab.data('url', t.url);
-            tabs_fg.append(tab);
-        })
-        tabs_fg.find('div.sk_tab').each(function() {
-            $(this).css('width', $(this).width() + 10);
-            $(this).append($("<div class=sk_tab_url>{0}</div>".format($(this).data('url'))));
+            setInnerHTML(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
+            tab.url = t.url;
+            _tabs.append(tab);
         });
-        _tabs.find('div.sk_tabs_bg').css('width', window.innerWidth).css('height', window.innerHeight);
-    }
-    self.chooseTab = function() {
+        _tabs.querySelectorAll('div.sk_tab').forEach(function(tab) {
+            tab.append(createElement(`<div class=sk_tab_url>${tab.url}</div>`));
+        });
+    };
+    _actions['chooseTab'] = function() {
         runtime.command({
             action: 'getTabs'
         }, function(response) {
             if (response.tabs.length > runtime.conf.tabsThreshold) {
                 showPopup(self.omnibar, {type: 'Tabs'});
-            } else {
+            } else if (response.tabs.length > 0) {
                 showPopup(_tabs, response.tabs);
             }
         });
     };
-    runtime.on('chooseTab', self.chooseTab);
 
-    function _initL10n(cb) {
-        var lang = runtime.conf.language || window.navigator.language;
-        if (lang === "en-US") {
-            cb(function(str) {
-                return str;
-            });
-        } else {
-            fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
-                return res.json();
-            }).then(function(l10n) {
-                if (typeof(l10n[lang]) === "object") {
-                    l10n = l10n[lang];
-                    cb(function(str) {
-                        return l10n[str] ? l10n[str] : str;
-                    })
-                } else {
-                    cb(function(str) {
-                        return str;
-                    });
-                }
-            });
-        }
-    }
-
-    var callbacks = {};
-    self.topCommand = function(args, cb) {
-        args.id = generateQuickGuid();
-        if (cb) {
-            callbacks[args.id] = cb;
-        }
-        self.postMessage('top', args);
-    };
-
-    _usage.onShow = function(message) {
+    function buildUsage(metas, cb) {
         var feature_groups = [
             'Help',                  // 0
             'Mouse Click',           // 1
@@ -241,27 +187,16 @@ var Front = (function(mode) {
             'Misc',                  // 14
             'Insert Mode',           // 15
         ];
-        var holder = $('<div/>');
-        var help_groups = feature_groups.map(function(){return [];});
 
-        _initL10n(function(locale) {
+        initL10n(function(locale) {
+            var help_groups = feature_groups.map(function(){return [];});
             help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
 
-            [ Normal.mappings,
-                Visual.mappings,
-                Insert.mappings,
-                Omnibar.mappings
-            ].map(function(mappings) {
-                var words = mappings.getWords();
-                for (var i = 0; i < words.length; i++) {
-                    var w = words[i];
-                    var meta = mappings.find(w).meta;
-                    w = decodeKeystroke(w);
-                    if (meta.annotation.length) {
-                        var item = "<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(htmlEncode(w), locale(meta.annotation));
-                        help_groups[meta.feature_group].push(item);
-                    }
-                }
+            metas = metas.concat(getAnnotations(Omnibar.mappings));
+            metas.forEach(function(meta) {
+                var w = KeyboardUtils.decodeKeystroke(meta.word);
+                var item = `<div><span class=kbd-span><kbd>${htmlEncode(w)}</kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
+                help_groups[meta.feature_group].push(item);
             });
             help_groups = help_groups.map(function(g, i) {
                 if (g.length) {
@@ -270,32 +205,77 @@ var Front = (function(mode) {
                     return "";
                 }
             }).join("");
-            $(help_groups).appendTo(holder);
-            $("<p style='float:right; width:100%; text-align:right'>").html("<a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>{0}</a>".format(locale("More help"))).appendTo(holder);
-            _usage.html(holder.html());
+
+            help_groups += `<p style='float:right; width:100%; text-align:right'><a href='https://github.com/brookhong/surfingkeys' target='_blank' style='color:#0095dd'>${locale("More help")}</a></p>`;
+            cb(help_groups);
+        });
+    }
+
+    _usage.onShow = function(message) {
+        buildUsage(message.metas, function(usage) {
+            setInnerHTML(_usage, usage);
         });
     };
 
-    runtime.on('showUsage', function(message) {
+    _actions['showUsage'] = function(message) {
         showPopup(_usage, message);
-    });
-
-    self.showUsage = function() {
-        // showUsage in frontend.html once more will hide it.
-        self.hidePopup();
+    };
+    _actions['applyUserSettings'] = function (message) {
+        for (var k in message.userSettings) {
+            if (runtime.conf.hasOwnProperty(k)) {
+                runtime.conf[k] = message.userSettings[k];
+            }
+        }
+        if ('theme' in message.userSettings) {
+            setInnerHTML(document.getElementById("sk_theme"), message.userSettings.theme);
+        }
+    };
+    _actions['executeCommand'] = function (message) {
+        Commands.execute(message.cmdline);
+    };
+    _actions['addCMap'] = function (message) {
+        _map(Omnibar, message.new_keystroke, message.old_keystroke);
+    };
+    _actions['addVimMap'] = function (message) {
+        self.vimMappings.push([message.lhs, message.rhs, message.ctx]);
+    };
+    _actions['addVimKeyMap'] = function (message) {
+        self.vimKeyMap = message.vimKeyMap;
+    };
+    _actions['addSearchAlias'] = function (message) {
+        SearchEngine.aliases[message.alias] = {
+            prompt: '' + message.prompt + separatorHtml,
+            url: message.url,
+            suggestionURL: message.suggestionURL
+        };
+    };
+    _actions['removeSearchAlias'] = function (message) {
+        delete SearchEngine.aliases[message.alias];
+    };
+    _actions['getUsage'] = function (message) {
+        // send response in callback from buildUsage
+        delete message.ack;
+        buildUsage(message.metas, function(usage) {
+            top.postMessage({
+                data: usage,
+                action: message.action + "Ack",
+                responseToContent: message.commandToFrontend,
+                id: message.id
+            }, topOrigin);
+        });
     };
 
-    self.showPopup = function(message) {
-        _popup.html(message);
+    self.showUsage = self.hidePopup;
+
+    _actions['showPopup'] = function(message) {
+        self.showPopup(message.content);
+    };
+
+    self.showPopup = function(content) {
+        setInnerHTML(_popup, content);
         showPopup(_popup);
     };
-    runtime.on('showPopup', function(message) {
-        self.showPopup(message.content);
-    });
-    runtime.on('showPressed', function(message) {
-        self.showPressed = true;
-        self.showPopup("<h3>Please any key to check how to use it with SurfingKeys, Esc to quit.</h3><div class='pressedKey'><kbd>&nbsp;</kbd></div>");
-    });
+
     self.vimMappings = [];
     _editor.onShow = function(message) {
         if (typeof(AceEditor) !== "undefined") {
@@ -312,227 +292,228 @@ var Front = (function(mode) {
             });
         }
     };
-    self.showEditor = function(element, cb) {
-        self.hidePopup();
-        self.onEditorSaved = cb;
-        setTimeout(function() {
-            showPopup(_editor, element);
-        }, 10);
-    };
-    runtime.on('showEditor', function(message) {
+    _actions['showEditor'] = function(message) {
+        if (message.onEditorSaved) {
+            self.onEditorSaved = message.onEditorSaved;
+        }
         showPopup(_editor, message);
-    });
-    runtime.on('updateOmnibarResult', function(message) {
+    };
+    self.showEditor = _actions['showEditor'];
+    _actions['updateOmnibarResult'] = function(message) {
         Omnibar.listWords(message.words);
-    });
-    self.openOmnibar = function(message) {
+    };
+    _actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
         var style = message.style || "";
-        self.omnibar.find('style').html("#sk_omnibar {" + style + "}");
+        setInnerHTML(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
     };
-    runtime.on('openOmnibar', self.openOmnibar);
-    self.openFinder = function() {
+    self.openOmnibar = _actions['openOmnibar'];
+    _actions['openFinder'] = function() {
         Find.open();
     };
-    runtime.on('openFinder', self.openFinder);
-    self.showBanner = function(message, linger_time) {
-        banner.finish();
-        banner.html(htmlEncode(message)).show();
+    self.openFinder = _actions['openFinder'];
+
+    self.showBanner = function (content, linger_time) {
+        banner.classList.remove("slideInBanner");
+        banner.style.display = "";
+        setInnerHTML(banner, htmlEncode(content));
         self.flush();
-        banner.animate({
-            "top": "0"
-        }, 300);
-        banner.delay(linger_time || 1000).animate({
-            "top": "-3rem"
-        }, 300, function() {
-            banner.html("").hide();
+
+        banner.classList.add("slideInBanner");
+        banner.one('animationend', function() {
+            banner.classList.remove("slideInBanner");
+            banner.style.display = "none";
             self.flush();
         });
     };
-    runtime.on('showBanner', function(message) {
+    _actions['showBanner'] = function(message) {
         self.showBanner(message.content, message.linger_time);
-    });
-    runtime.on('showBubble', function(message) {
+    };
+    _actions['showBubble'] = function(message) {
         var pos = message.position;
-        _bubble.find('div.sk_bubble_content').html(message.content);
-        _bubble.show();
-        self.flush();
-        var w = _bubble.width(),
-            h = _bubble.height();
+        pos.left += pos.winX;
+        pos.top += pos.winY;
+        // set position to (0, 0) to leave enough space for content.
+        _bubble.style.top = "0px";
+        _bubble.style.left = "0px";
+        setInnerHTML(sk_bubble_content, message.content);
+        sk_bubble_content.style.maxWidth = (pos.winWidth - 32) + "px";
+        sk_bubble_content.scrollTop = 0;
+        clearScrollerIndicator();
+        _bubble.style.display = "";
+        var w = _bubble.offsetWidth,
+            h = _bubble.offsetHeight;
         var left = [pos.left - 11 - w / 2, w / 2];
-        if (left[0] < 0) {
-            left[1] += left[0];
-            left[0] = 0;
-        } else if ((left[0] + w) > window.innerWidth) {
-            left[1] += left[0] - window.innerWidth + w;
-            left[0] = window.innerWidth - w;
+        if (left[0] < pos.winX) {
+            left[1] += left[0] - pos.winX;
+            left[0] = pos.winX;
+        } else if ((left[0] + w) > pos.winWidth) {
+            left[1] += left[0] - pos.winX - pos.winWidth + w;
+            left[0] = pos.winX + pos.winWidth - w;
         }
-        var arrow = _bubble.find('div.sk_arrow');
-        if (pos.top - h - 12 >= 0) {
-            arrow.attr('dir', 'down');
-            arrow.css('top', '100%');
-            _bubble.css('top', pos.top - h - pos.height - 12).css('left', left[0]);
+        sk_bubble_arrow.style.left = (left[1] + pos.width / 2 - 2) + "px";
+        _bubble.style.left = left[0] + "px";
+        _bubble.noPointerEvents = message.noPointerEvents;
+
+        if (pos.top + pos.height / 2 > pos.winHeight / 2) {
+            sk_bubble_arrow.setAttribute("dir", "down");
+            sk_bubble_arrow.style.top = "100%";
+            sk_bubble_content.style.maxHeight = (pos.top - 12 - 32) + "px";
+            h = _bubble.offsetHeight;
+            _bubble.style.top = (pos.top - h - 12) + "px";
         } else {
-            arrow.attr('dir', 'up');
-            arrow.css('top', -12);
-            _bubble.css('top', pos.top + pos.height + 12).css('left', left[0]);
+            sk_bubble_arrow.setAttribute("dir", "up");
+            sk_bubble_arrow.style.top = "-12px";
+            sk_bubble_content.style.maxHeight = (pos.winHeight - (pos.top + pos.height + 12) - 32) + "px";
+            h = _bubble.offsetHeight;
+            _bubble.style.top = pos.top + pos.height + 12 + "px";
         }
-        arrow.css('left', left[1]);
-    });
-    self.hideBubble = function() {
-        _bubble.hide();
+        if (sk_bubble_content.scrollHeight > sk_bubble_content.offsetHeight) {
+            _bubble.noPointerEvents = false;
+            sk_bubbleClassList.add("sk_scroller_indicator_top");
+        }
+        self.flush();
+        if (!_bubble.noPointerEvents) {
+            _display = _bubble;
+            self.onShowBubble && self.onShowBubble(_bubble);
+            self.enter(0, true);
+        }
+    };
+    self.showBubble = function() {
+    };
+
+    _actions['hideBubble'] = function() {
+        _bubble.style.display = "none";
         self.flush();
     };
-    runtime.on('hideBubble', function(message) {
-        self.hideBubble();
-    });
+    self.hideBubble = _actions['hideBubble'];
 
-    self.showStatus = function(pos, content, duration) {
-        StatusBar.show(pos, content, duration);
+    _actions['visualUpdatedForFirefox'] = function(message) {
+        self.statusBar.querySelector('input').focus();
     };
 
-    runtime.on('showStatus', function(message) {
-        self.showStatus(message.position, message.content, message.duration);
-    });
-
-    self.toggleStatus = function(message) {
-        self.statusBar.toggle();
-    };
-    runtime.on('toggleStatus', self.toggleStatus);
-
-    var clipboard_holder = $('<textarea id=sk_clipboard/>');
-    clipboard_holder = clipboard_holder[0];
-    self.getContentFromClipboard = function(cb) {
-        var result = '';
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = '';
-        clipboard_holder.select();
-        if (document.execCommand('paste')) {
-            result = clipboard_holder.value;
+    _actions['showStatus'] = function(message) {
+        if (Mode.stack()[0] !== Find) {
+            self.showStatus(message.position, message.content, message.duration);
         }
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
-        if (cb) {
-            // to make getContentFromClipboard have a same syntax with Front in content window
-            // pass result as data attribute of an object.
-            cb({data: result});
-        }
-        return result;
     };
-    runtime.on('getContentFromClipboard', function(message) {
-        return self.getContentFromClipboard();
-    });
-    self.writeClipboard = function(message) {
-        document.body.appendChild(clipboard_holder);
-        clipboard_holder.value = message;
-        clipboard_holder.select();
-        document.execCommand('copy');
-        clipboard_holder.value = '';
-        clipboard_holder.remove();
+    self.showStatus = function(position, content, duration) {
+        StatusBar.show(position, content, duration);
     };
-    runtime.on('writeClipboard', function(message) {
-        self.writeClipboard(message.content);
-    });
-    var _key = "";
-    self.hideKeystroke = function() {
-        if (runtime.conf.richHintsForKeystroke) {
-            _richKeystroke.hide();
-            _key = "";
-            self.flush();
+
+    self.toggleStatus = function(visible) {
+        if (visible) {
+            self.statusBar.style.display = "";
         } else {
-            keystroke.animate({
-                right: "-2rem"
-            }, 300, function() {
-                keystroke.html("");
-                keystroke.hide();
+            self.statusBar.style.display = "none";
+        }
+    };
+    _actions['toggleStatus'] = function(message) {
+        self.toggleStatus(message.visible);
+    };
+
+    var _pendingHint;
+    function clearPendingHint() {
+        if (_pendingHint) {
+            clearTimeout(_pendingHint);
+            _pendingHint = undefined;
+        }
+    }
+
+    _actions['hideKeystroke'] = function() {
+        if (keystroke.style.display !== "none") {
+            var outClass = keystroke.classList.contains("expandRichHints") ? "collapseRichHints" : "slideOutRight";
+            keystroke.classList.remove("expandRichHints");
+            keystroke.classList.add(outClass);
+            keystroke.one('animationend', function() {
+                setInnerHTML(keystroke, "");
+                keystroke.style.display = "none";
                 self.flush();
             });
         }
+        if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
+            clearPendingHint();
+        }
     };
-    runtime.on('hideKeystroke', self.hideKeystroke);
+    self.hideKeystroke = _actions['hideKeystroke'];
     Visual.mappings.add("y", {
         annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
         feature_group: 9
     });
-    self.showKeystroke = function(key, mode) {
-        if (runtime.conf.richHintsForKeystroke) {
-            _initL10n(function(locale) {
-                _key += key;
-                var root = window[mode].mappings.find(_key), words = _key;
-                if (root) {
-                    words = root.getWords("", true).sort().map(function(w) {
-                        var meta = root.find(w).meta;
-                        if (meta.annotation || mode !== "Normal") {
-                            return "<div><span class=kbd-span><kbd>{0}<span class=candidates>{1}</span></kbd></span><span class=annotation>{2}</span></div>".format(_key, w, locale(meta.annotation));
-                        } else {
-                            return "";
-                        }
-                    }).join("");
-                    if (words.length === 0) {
-                        words = _key;
-                    }
+    function showRichHints(keyHints) {
+        initL10n(function (locale) {
+            var words = keyHints.accumulated;
+            var cc = keyHints.candidates;
+            words = Object.keys(cc).sort().map(function (w) {
+                var meta = cc[w];
+                if (meta.annotation) {
+                    return `<div><span class=kbd-span><kbd>${htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated))}<span class=candidates>${w.substr(keyHints.accumulated.length)}</span></kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
+                } else {
+                    return "";
                 }
-                _richKeystroke.html(words).show();
+            }).join("");
+            if (words.length > 0 && _pendingHint) {
+                setInnerHTML(keystroke, words);
+                var cl = keystroke.classList;
+                cl.remove("expandRichHints");
+                cl.remove("simpleHint");
+                cl.add("expandRichHints");
                 self.flush();
-            });
+            }
+        });
+    }
+    _actions['showKeystroke'] = function (message) {
+        if (keystroke.style.display !== "none" && keystroke.classList.contains("expandRichHints")) {
+            showRichHints(message.keyHints);
         } else {
-            if (keystroke.is(':animated')) {
-                keystroke.finish()
-            }
-            keystroke.show();
+            clearPendingHint();
+            keystroke.style.display = "";
             self.flush();
-            var keys = keystroke.html() + key;
-            keystroke.html(htmlEncode(keys));
-            if (keystroke.css('right') !== '0px') {
-                keystroke.animate({
-                    right: 0
-                }, 300);
+            var keys = keystroke.innerHTML + htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
+            setInnerHTML(keystroke, keys);
+
+            var cl = keystroke.classList;
+            cl.remove("slideInRight");
+            cl.remove("slideOutRight");
+            cl.remove("collapseRichHints");
+            cl.add("slideInRight");
+            cl.add("simpleHint");
+
+            if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
+                _pendingHint = setTimeout(function() {
+                    showRichHints(message.keyHints);
+                }, runtime.conf.richHintsForKeystroke);
             }
         }
     };
-    runtime.on('showKeystroke', function(message) {
-        self.showKeystroke(message.key, message.mode);
-    });
-
-    self.initPort = function(message) {
-        self.ports[message.from] = event.ports[0];
+    self.showKeystroke = function() {
     };
 
-    self.handleMessage = function(event) {
+    _actions['initFrontend'] = function(message) {
+        topOrigin = message.origin;
+        return new Date().getTime();
+    };
+
+    window.addEventListener('message', function(event) {
         var _message = event.data;
-        if (callbacks[_message.id]) {
-            var f = callbacks[_message.id];
-            delete callbacks[_message.id];
-            f(_message);
-        } else if (_message.action && self.hasOwnProperty(_message.action)) {
-            var ret = self[_message.action](_message) || {};
-            ret.id = _message.id;
-            if (_message.from && self.ports[_message.from]) {
-                self.ports[_message.from].postMessage(ret);
+        if (_callbacks[_message.id]) {
+            var f = _callbacks[_message.id];
+            // returns true to make callback stay for coming response.
+            if (!f(_message)) {
+                delete _callbacks[_message.id];
+            }
+        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+            var ret = _actions[_message.action](_message);
+            if (_message.ack) {
+                top.postMessage({
+                    data: ret,
+                    action: _message.action + "Ack",
+                    responseToContent: _message.commandToFrontend,
+                    id: _message.id
+                }, topOrigin);
             }
         }
-    };
+    }, true);
 
     return self;
-})(Mode);
-
-function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
-    SearchEngine.aliases[alias] = {
-        prompt: prompt + "≫",
-        url: url,
-        suggestionURL: suggestionURL || "",
-        listSuggestion: listSuggestion
-    };
-}
-
-function removeSearchAlias(alias) {
-    delete SearchEngine.aliases[alias];
-}
-
-window.addEventListener('message', function(event) {
-    Front.handleMessage(event);
-}, true);
-
-$(document).on('surfingkeys:themeChanged', function(evt, theme) {
-    $('#sk_theme').html(theme);
-});
+})();

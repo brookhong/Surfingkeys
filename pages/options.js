@@ -2,36 +2,45 @@ var defaultMappingsEditor = ace.edit("defaultMappings");
 defaultMappingsEditor.setTheme("ace/theme/chrome");
 defaultMappingsEditor.setKeyboardHandler('ace/keyboard/vim');
 defaultMappingsEditor.getSession().setMode("ace/mode/javascript");
-$(defaultMappingsEditor.container).hide();
+defaultMappingsEditor.container.hide();
 defaultMappingsEditor.setReadOnly(true);
 defaultMappingsEditor.container.style.background="#f1f1f1";
 defaultMappingsEditor.$blockScrolling = Infinity;
 
 var mappingsEditor = null;
-function createMappingEditor(mode, elmId) {
-    var self = ace.edit(elmId);
-    self = $.extend(self, mode);
-    self = $.extend(self, {name: "mappingsEditor", eventListeners: {}, mode: 'normal'});
+function createMappingEditor(elmId) {
+    var _ace = ace.edit(elmId);
+    _ace.mode = "normal";
+
+    var self = new Mode("mappingsEditor");
+
+    self.container = _ace.container;
+    self.setValue = function(v, cursorPos) {
+        _ace.setValue(v, cursorPos);
+    };
+    self.getValue = function() {
+        return _ace.getValue();
+    };
 
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)
-            && self.mode === 'normal' // vim in normal mode
-            && (self.state.cm.state.vim.status === null || self.state.cm.state.vim.status === "") // and no pending normal operation
+            && _ace.mode === 'normal' // vim in normal mode
+            && (_ace.state.cm.state.vim.status === null || _ace.state.cm.state.vim.status === "") // and no pending normal operation
         ) {
             document.activeElement.blur();
             self.exit();
         }
     });
-    $('#mappings textarea').on('focus', function() {
+    document.querySelector('#mappings textarea').onfocus = function() {
         setTimeout(function() {
             Hints.exit();
             Insert.exit();
-            self.enter();
+            self.enter(0, true);
         }, 10);
-    });
+    };
 
-    self.setTheme("ace/theme/chrome");
+    _ace.setTheme("ace/theme/chrome");
     ace.config.loadModule('ace/ext/language_tools', function (mod) {
         ace.config.loadModule('ace/autocomplete', function (mod) {
             mod.Autocomplete.startCommand.bindKey = "Tab";
@@ -39,16 +48,16 @@ function createMappingEditor(mode, elmId) {
             mod.Autocomplete.prototype.commands['Tab'] = mod.Autocomplete.prototype.commands['Down'];
             mod.Autocomplete.prototype.commands['Shift-Tab'] = mod.Autocomplete.prototype.commands['Up'];
         });
-        self.setOptions({
+        _ace.setOptions({
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: false,
             enableSnippets: false
         });
     });
-    self.setKeyboardHandler('ace/keyboard/vim', function() {
-        var cm = self.state.cm;
+    _ace.setKeyboardHandler('ace/keyboard/vim', function() {
+        var cm = _ace.state.cm;
         cm.on('vim-mode-change', function(data) {
-            self.mode = data.mode;
+            _ace.mode = data.mode;
         });
         cm.constructor.Vim.defineEx("write", "w", function(cm, input) {
             saveSettings();
@@ -57,36 +66,181 @@ function createMappingEditor(mode, elmId) {
             window.close();
         });
     });
-    self.getSession().setMode("ace/mode/javascript");
-    self.$blockScrolling = Infinity;
-
-    self.setExampleValue = function() {
-        self.setValue("// an example to create a new mapping `ctrl-y`\nmapkey('<Ctrl-y>', 'Show me the money', function() {\n    Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');\n});\n\n// an example to replace `u` with `?`, click `Default mappings` to see how `u` works.\nmap('?', 'u');\n\n// an example to remove mapkey `Ctrl-i`\nunmap('<Ctrl-i>');\n\n// click `Save` button to make above settings to take effect.\n// set theme\nsettings.theme = `\n.sk_theme {\n    background: #000;\n    color: #fff;\n}\n.sk_theme tbody {\n    color: #000;\n}\n.sk_theme input {\n    color: #317ef3;\n}\n.sk_theme .url {\n    color: #38f;\n}\n.sk_theme .annotation {\n    color: #38f;\n}\n\n.sk_theme .focused {\n    background: #aaa;\n}`;\n", -1);
-    };
+    _ace.getSession().setMode("ace/mode/javascript");
+    _ace.$blockScrolling = Infinity;
 
     return self;
 }
 
+var proxyModeSelect = document.querySelector("#proxyMode>select");
+var proxyGroup = document.getElementById("proxyMode").parentElement;
+var addProxyPair = document.getElementById('addProxyPair');
+addProxyPair.onclick = function () {
+    _updateProxy({
+        number: document.querySelectorAll('div.proxyPair').length,
+        proxy: "SOCKS5 127.0.0.1:1080"
+    });
+};
+
+function renderProxySettings(rs) {
+    proxyModeSelect.value = rs.proxyMode;
+    proxyModeSelect.onchange = function() {
+        _updateProxy({
+            mode: this.value
+        });
+    };
+    document.querySelectorAll('#proxyMode span[mode]').forEach(function(span) {
+        span.hide();
+    });
+    document.querySelector(`#proxyMode span[mode=${rs.proxyMode}]`).show();
+    if (rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
+
+        var proxyPairs = document.querySelectorAll('div.proxyPair');
+        if (proxyPairs.length > rs.proxy.length) {
+            proxyPairs.remove();
+        }
+        rs.proxy.forEach(function(proxy, number) {
+            var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
+            if (divProxyPair === null) {
+                divProxyPair = createElement(document.getElementById("templateProxyPair").textContent.trim());
+                divProxyPair.setAttribute("number", number);
+                proxyGroup.insertBefore(divProxyPair, addProxyPair);
+            }
+
+            var proxyDiv = divProxyPair.querySelector(".proxy");
+            var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
+
+            var proxySelect = divProxyPair.querySelector(".proxy>select");
+            var proxyInput = divProxyPair.querySelector(".proxy>input");
+
+            function __updateProxy(data) {
+                _updateProxy({
+                    number: number,
+                    proxy: proxySelect.value + " " + proxyInput.value
+                });
+            }
+
+            proxySelect.onchange = __updateProxy;
+            proxyInput.onblur = __updateProxy;
+
+            var p = proxy.split(/\s+/);
+            if (p.length > 0) {
+                proxySelect.value = p[0];
+                proxyInput.value = p[1];
+            } else {
+                proxySelect.value = "PROXY";
+            }
+
+            var desc = "For below hosts, above proxy will be used, click ❌ to remove one.";
+            if (rs.proxyMode === "bypass") {
+                desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
+            }
+            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
+
+            var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
+
+            var ih = autoproxyHostsInput.value;
+            autoproxyHostsInput.value = "";
+            var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
+                return `<aphost><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
+            }).join("");
+            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
+
+            autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
+                ph.onclick = function() {
+                    var elm = this.closest('aphost');
+                    runtime.command({
+                        action: 'updateProxy',
+                        number: number,
+                        host: elm.querySelector("span").innerText,
+                        operation: 'remove'
+                    }, function() {
+                        elm.remove();
+                    });
+                };
+            });
+
+            function addAutoProxyHost() {
+                _updateProxy({
+                    number: number,
+                    host: autoproxyHostsInput.value,
+                    operation: 'add'
+                });
+            }
+
+            autoproxyHostsInput.onkeyup = function(e) {
+                if (e.keyCode === 13) {
+                    addAutoProxyHost();
+                }
+            };
+
+            divProxyPair.querySelector('.autoproxy_hosts>button').onclick = addAutoProxyHost;
+
+            divProxyPair.querySelector('.deleteProxyPair').onclick = function() {
+                _updateProxy({
+                    number: number,
+                    operation: "deleteProxyPair"
+                });
+            };
+
+        });
+        var deleteProxyPairs = document.querySelectorAll('div.deleteProxyPair');
+        if (deleteProxyPairs.length > 1) {
+            deleteProxyPairs.show();
+        } else {
+            deleteProxyPairs.hide();
+        }
+    }
+}
+
+function _updateProxy(data) {
+    data.action = 'updateProxy';
+    runtime.command(data, function(res) {
+        renderProxySettings(res);
+    });
+}
+
+var basicMappingsDiv = document.getElementById("basicMappings");
+var advancedSettingDiv = document.getElementById("advancedSetting");
+var advancedTogglerDiv = document.getElementById("advancedToggler");
+function showAdvanced(flag) {
+    if (flag) {
+        basicMappingsDiv.hide();
+        advancedSettingDiv.show();
+        advancedTogglerDiv.setAttribute('checked', 'checked');
+    } else {
+        basicMappingsDiv.show();
+        advancedSettingDiv.hide();
+        advancedTogglerDiv.removeAttribute('checked');
+    }
+}
+
 var localPathSaved = "";
+var localPathInput = document.getElementById("localPath");
+var sample = document.getElementById("sample").innerHTML;
 function renderSettings(rs) {
-    $('#localPath').val(rs.localPath);
+    showAdvanced(rs.showAdvanced);
+    localPathInput.value = rs.localPath;
     localPathSaved = rs.localPath;
-    var h = $(window).height() - $('#save_container').outerHeight() * 4;
-    $(mappingsEditor.container).css('height', h);
-    $(defaultMappingsEditor.container).css('height', h);
+    var h = window.innerHeight / 2;
+    mappingsEditor.container.style.height = h + "px";
+    defaultMappingsEditor.container.style.height = h + "px";
     if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
-        mappingsEditor.setExampleValue();
+        mappingsEditor.setValue(sample, -1);
     }
+
+    renderProxySettings(rs);
 }
 
 runtime.on('settingsUpdated', function(resp) {
     if ('snippets' in resp.settings) {
+        renderKeyMappings(resp.settings);
         if (resp.settings.snippets.length) {
             mappingsEditor.setValue(resp.settings.snippets, -1);
         } else {
-            mappingsEditor.setExampleValue();
+            mappingsEditor.setValue(sample, -1);
         }
     }
 });
@@ -94,41 +248,60 @@ runtime.on('settingsUpdated', function(resp) {
 runtime.command({
     action: 'getSettings'
 }, function(response) {
-    mappingsEditor = createMappingEditor(Mode, 'mappings');
+    mappingsEditor = createMappingEditor('mappings');
     renderSettings(response.settings);
     if ('error' in response.settings) {
         Front.showBanner(response.settings.error, 5000);
     }
 });
 
-$('#reset_button').click(function() {
-    runtime.command({
-        action: "resetSettings"
-    }, function(response) {
-        renderSettings(response.settings);
-        Front.showBanner('Settings reset', 300);
+advancedTogglerDiv.onclick = function() {
+    var newFlag = this.checked;
+    showAdvanced(newFlag);
+    RUNTIME('updateSettings', {
+        settings: {
+            showAdvanced: newFlag
+        }
     });
-});
+};
+document.getElementById('resetSettings').onclick = function() {
+    if (this.innerText === "Reset") {
+        this.innerText = "WARNING! This will clear all your settings. Click this again to continue.";
+    } else {
+        runtime.command({
+            action: "resetSettings"
+        }, function(response) {
+            renderSettings(response.settings);
+            renderKeyMappings(response.settings);
+            Front.showBanner('Settings reset', 300);
+        });
+    }
+};
 
-$('.infoPointer').click(function() {
-    $('#' + $(this).attr('for')).toggle();
-});
+document.querySelector('.infoPointer').onclick = function() {
+    var f = document.getElementById(this.getAttribute("for"));
+    if (f.style.display === "none") {
+        f.style.display = "";
+    } else {
+        f.style.display = "none";
+    }
+};
 
-$('#showDefaultSettings').click(function() {
-    if ($(defaultMappingsEditor.container).is(':visible')) {
-        $(defaultMappingsEditor.container).hide();
-        $(mappingsEditor.container).css('width', '100%');
+document.getElementById('showDefaultSettings').onclick = function() {
+    if (defaultMappingsEditor.container.style.display !== "none") {
+        defaultMappingsEditor.container.hide();
+        mappingsEditor.container.style.width = "100%";
     } else {
         httpRequest({
             url: chrome.extension.getURL('/pages/default.js'),
         }, function(res) {
-            $(defaultMappingsEditor.container).css('display', 'inline-block');
+            defaultMappingsEditor.container.style.display = "inline-block";
             defaultMappingsEditor.setValue(res.text, -1);
-            $(defaultMappingsEditor.container).css('width', '50%');
+            defaultMappingsEditor.container.style.width = "50%";
         });
-        $(mappingsEditor.container).css('width', '50%');
+        mappingsEditor.container.style.width = "50%";
     }
-});
+};
 
 function getURIPath(fn) {
     if (fn.length && !/^\w+:\/\/\w+/i.test(fn) && fn.indexOf('file:///') === -1) {
@@ -142,27 +315,180 @@ function getURIPath(fn) {
 }
 function saveSettings() {
     var settingsCode = mappingsEditor.getValue();
-    var localPath = getURIPath($('#localPath').val().trim());
+    var localPath = getURIPath(localPathInput.value.trim());
     if (localPath.length && localPath !== localPathSaved) {
         RUNTIME("loadSettingsFromUrl", {
             url: localPath
         });
         Front.showBanner('Loading settings from ' + localPath, 300);
     } else {
-        var delta = runUserScript(settingsCode);
-        if (delta.error === "") {
+        RUNTIME('updateSettings', {
+            settings: {
+                snippets: settingsCode,
+                localPath: getURIPath(localPathInput.value)
+            }
+        });
 
-            RUNTIME('updateSettings', {
-                settings: {
-                    snippets: settingsCode,
-                    localPath: getURIPath($('#localPath').val())
-                }
-            });
-
-            Front.showBanner('Settings saved', 300);
-        } else {
-            Front.showBanner(delta.error, 9000);
-        }
+        Front.showBanner('Settings saved', 300);
     }
 }
-$('#save_button').click(saveSettings);
+document.getElementById('save_button').onclick = saveSettings;
+
+var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
+
+basicMappings = basicMappings.map(function(w, i) {
+    return {
+        origin: w,
+        annotation: Normal.mappings.find(KeyboardUtils.encodeKeystroke(w)).meta.annotation
+    };
+});
+
+var _sanboxCallback = {};
+function evalInSandbox(code, cb) {
+    var id = generateQuickGuid();
+    document.getElementById("sandbox").contentWindow.postMessage({
+        id: id,
+        action: "evalInSandbox",
+        code: code
+    }, '*');
+    if (cb) {
+        _sanboxCallback[id] = cb;
+    }
+}
+window.addEventListener('message', function(event) {
+    var command = event.data.action;
+    switch(command) {
+        case 'resultInSandbox':
+            if (_sanboxCallback.hasOwnProperty(event.data.id)) {
+                _sanboxCallback[event.data.id](event.data.result);
+                delete _sanboxCallback[event.data.id];
+            }
+            break;
+        default:
+            break;
+    }
+});
+
+function renderKeyMappings(rs) {
+    evalInSandbox(rs.snippets, function(delta) {
+
+        initL10n(function (locale) {
+            var customization = basicMappings.map(function (w, i) {
+                var newKey = w.origin;
+                if (delta.settings.map.hasOwnProperty(w.origin)) {
+                    newKey = delta.settings.map[w.origin];
+                }
+                return `<div>
+    <span class=annotation>${locale(w.annotation)}</span>
+    <span class=kbd-span><kbd origin="${w.origin}" new="${newKey}">${newKey ? htmlEncode(newKey) : "🚫"}</kbd></span>
+    </div>`;
+            });
+
+            setInnerHTML(basicMappingsDiv, customization.join(""));
+            basicMappingsDiv.querySelectorAll("kbd").forEach(function(d) {
+                d.onclick = function () {
+                    KeyPicker.enter(this);
+                };
+            });
+        });
+    });
+}
+
+document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
+    renderKeyMappings(evt.detail);
+});
+
+var KeyPicker = (function() {
+    var self = new Mode("KeyPicker");
+
+    function showKey() {
+        var s = htmlEncode(_key);
+        if (!s) {
+            s = "&nbsp;";
+        }
+        setInnerHTML(document.getElementById("inputKey"), s);
+    }
+
+    var _key = "";
+    var keyPickerDiv = document.getElementById("keyPicker");
+    self.addEventListener('keydown', function(event) {
+        if (event.keyCode === 27) {
+            keyPickerDiv.hide();
+            self.exit();
+        } else if (event.keyCode === 8) {
+            var ek = KeyboardUtils.encodeKeystroke(_key);
+            ek = ek.substr(0, ek.length - 1);
+            _key = KeyboardUtils.decodeKeystroke(ek);
+            showKey();
+        } else if (event.keyCode === 13) {
+            keyPickerDiv.hide();
+            self.exit();
+            setInnerHTML(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
+            _elm.setAttribute('new', _key);
+            var kbds = Array.from(basicMappingsDiv.querySelectorAll("kbd"));
+            var originalKeys = kbds.map(function(m) {
+                return m.getAttribute('origin');
+            }, {} );
+            var realDefMap = [];
+            var kbdMap = kbds.map(function(m, i) {
+                var n = m.getAttribute('new'), o = m.getAttribute('origin');
+                var c = [];
+                if (n === "") {
+                    c.push(`unmap("${o}");`);
+                } else if (n !== o) {
+                    var j = originalKeys.indexOf(n);
+                    if (j !== -1 && i < j) {
+                        // if the new key that user choosed was in default mappings
+                        // and has not been modified (i < j)
+                        // we need save the default binding first
+                        c.push(`map(">_${n}", "${n}");`);
+                        realDefMap.push(n);
+                    }
+                    if (realDefMap.indexOf(o) === -1) {
+                        c.push(`map("${n}", "${o}");`);
+                    } else {
+                        c.push(`map("${n}", ">_${o}");`);
+                    }
+                }
+                return c.join("\n");
+            }).filter(function(m) {
+                return m != "";
+            }).join("\n");
+            RUNTIME('updateSettings', {
+                settings: {
+                    snippets: kbdMap
+                }
+            });
+        } else {
+            if (event.sk_keyName.length > 1) {
+                var keyStr = JSON.stringify({
+                    metaKey: event.metaKey,
+                    altKey: event.altKey,
+                    ctrlKey: event.ctrlKey,
+                    shiftKey: event.shiftKey,
+                    keyCode: event.keyCode,
+                    code: event.code,
+                    composed: event.composed,
+                    key: event.key
+                }, null, 4);
+                reportIssue(`Unrecognized key event: {event.sk_keyName}`, keyStr);
+            } else {
+                _key += KeyboardUtils.decodeKeystroke(event.sk_keyName);
+                showKey();
+            }
+        }
+        event.sk_stopPropagation = true;
+    });
+
+    var _elm;
+    var _enter = self.enter;
+    self.enter = function(elm) {
+        _enter.call(self);
+        _key = elm.getAttribute("new");
+        showKey();
+        keyPickerDiv.show();
+        _elm = elm;
+    };
+
+    return self;
+})();

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>New Tab</title>
+        <link rel="stylesheet" href="../content_scripts/content_scripts.css">
+        <link rel="stylesheet" href="markdown.css">
+        <link rel="stylesheet" href="start.css">
+    </head>
+    <body>
+        <script src="../content_scripts/common_content.min.js"></script>
+        <script src="../content_scripts/front.js"></script>
+        <script src="../content_scripts/content_scripts.js"></script>
+        <script src="../content_scripts/top.js"></script>
+        <script src="default.js"></script>
+
+        <script id="quickIntroSource" type="text/template">
+## Get started with Surfingkeys.
+* `f` to follow links.
+* `gg` to scroll to the top of the page.
+* `G` to scroll to the bottom of the page.
+* `e` to scroll a page up.
+* `d` to scroll a page down.
+* `E` to go one tab left.
+* `R` to go one tab right.
+* `S` to go back in history.
+* `D` to go forward in history.
+* `og` to open Google Search.
+* `ob` to open Baidu Search.
+* `t` to open URL.
+* `se` to edit Settings.
+* `?` to find more shortcuts.
+
+## [FAQ from Surfingkeys wiki](https://github.com/brookhong/Surfingkeys/wiki/FAQ)
+## [Show full list of Surfingkeys](#)
+        </script>
+        <div id="content" class="markdown-body">
+            <div id="screen1" style="display: none;">
+                <div id="quickIntro">
+                </div>
+                <div id="topSites">
+                    <h2>Top Sites</h2>
+                    <ul></ul>
+                </div>
+                <div id="randomTip"></div>
+            </div>
+            <div id="screen2" style="display: none;">
+                <p id="back"><a href='#'>🔙</a></p>
+                <div id="sk_usage">
+                </div>
+            </div>
+        </div>
+        <script src="../libs/marked.min.js"></script>
+        <script src="start.js"></script>
+        <script src="ga.js"></script>
+        <script async src='https://www.google-analytics.com/analytics.js'></script>
+    </body>
+</html>

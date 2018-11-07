@@ -1,11 +1,15 @@
 surfingkeys_mark {
     background-color: #ff0;
     color: #000;
+    opacity: 0.7;
 }
 div.surfingkeys_cursor {
     background-color: #0642CE;
-    color: #0642CE;
+    color: #f0f8ff;
+}
+div.surfingkeys_cursor:empty {
     padding: 0px 2px;
+    min-height: 12px;
 }
 #sk_hints>div {
     position: absolute;
@@ -18,9 +22,19 @@ div.surfingkeys_cursor {
     border: solid 1px #C38A22;
     border-radius: 3px;
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
+    width: auto;
+}
+#sk_hints>div:empty {
+    display: none;
 }
 #sk_hints[mode=text]>div {
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff)) !important;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
+}
+#sk_hints[mode=input]>div {
+    background: rgba(255, 217, 0, 0.25);
+}
+#sk_hints[mode=input]>div.activeInput {
+    background: rgba(0, 0, 255, 0.25);
 }
 #sk_emoji {
     z-index: 2147483000;
@@ -42,4 +56,19 @@ div.surfingkeys_cursor {
 #sk_emoji>div.selected {
     background: #3174e2;
     color: white;
+}
+#sk_clipboard {
+    position: fixed;
+    z-index: -999;
+    top: 0;
+    left: 0;
+    opacity: 0;
+}
+#sk_frame {
+    position: fixed;
+    border: 4px solid #3CF30F;
+    box-sizing: border-box;
+    z-index: 2147483000;
+    background: rgba(129, 120, 222, 0.62);
+    box-shadow: 0px 0px 10px rgba(218, 60, 13, 0.8);
 }

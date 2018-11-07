@@ -1,38 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-eval' 'sha256-nWgGskPWTedp2TpUOZNWBmUL17nlwxaRUKiNdVES5rE=' https://www.google-analytics.com">
         <meta charset="UTF-8">
         <title>Mermaid diagram generator</title>
         <link rel="stylesheet" href="../content_scripts/content_scripts.css">
         <link rel="stylesheet" href="common.css">
-        <link rel="stylesheet" href="mermaid.css">
     </head>
     <body>
-        <!-- build:common_content -->
-        <script src="../libs/trie.js"></script>
-        <script src="../libs/jquery.js"></script>
-        <script src="../content_scripts/utils.js"></script>
-        <script src="../content_scripts/debug_utils.js"></script>
-        <script src="../content_scripts/runtime.js"></script>
-        <script src="../content_scripts/normal.js"></script>
-        <script src="../content_scripts/insert.js"></script>
-        <script src="../content_scripts/visual.js"></script>
-        <script src="../content_scripts/hints.js"></script>
-        <!-- endbuild -->
+        <script src="../content_scripts/common_content.min.js"></script>
         <script src="../content_scripts/front.js"></script>
         <script src="../content_scripts/content_scripts.js"></script>
-        <script src="default.js"></script>
         <script src="../content_scripts/top.js"></script>
+        <script src="default.js"></script>
 
-        <script src="../libs/webfontloader.js"></script>
-        <script src="../libs/mermaid.min.js"></script>
-        <script src="mermaid.js"></script>
-        <script src="common.js"></script>
-        <script src="ga.js"></script>
         <div class="content">
             <div class="mermaid">
             </div>
         </div>
+
+        <script src="../libs/mermaid.min.js"></script>
+        <script src="mermaid.js"></script>
+        <script src="common.js"></script>
+        <script src="ga.js"></script>
+        <script async src='https://www.google-analytics.com/analytics.js'></script>
     </body>
 </html>

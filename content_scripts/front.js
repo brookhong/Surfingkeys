@@ -6,25 +6,136 @@ var Front = (function() {
 
     // this object is stub of UI, it's UI consumer
     self.isProvider = function() {
-        return window.location.href.indexOf(chrome.extension.getURL("/pages")) === 0;
+        return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
     };
 
-    function frontendCommand(args, successById) {
-        args.toFrontend = true;
+    var frontendPromise = new Promise(function (resolve, reject) {
         if (window === top) {
-            createFrontEnd();
+            self.resolve = resolve;
+        } else {
+            resolve(window.location.href);
         }
-        runtime.command(args, successById);
+    });
+
+    var _callbacks = {};
+    function frontendCommand(args, successById) {
+        args.commandToFrontend = true;
+        args.origin = getDocumentOrigin();
+        args.id = generateQuickGuid();
+        if (successById) {
+            args.ack = true;
+            _callbacks[args.id] = successById;
+        }
+        frontendPromise.then(function() {
+            runtime.postTopMessage(args);
+        });
     }
 
-    self.highlightElement = function(sn) {
-        sn.action = 'highlightElement';
-        frontendCommand(sn);
+    self.applyUserSettings = function (us) {
+        frontendCommand({
+            action: 'applyUserSettings',
+            userSettings: us
+        });
     };
+
+    var _listSuggestions = {};
+    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion) {
+        if (suggestionURL && listSuggestion) {
+            _listSuggestions[suggestionURL] = listSuggestion;
+        }
+        frontendCommand({
+            action: 'addSearchAlias',
+            alias: alias,
+            prompt: prompt,
+            url: url,
+            suggestionURL: suggestionURL
+        });
+    };
+    self.removeSearchAlias = function (alias) {
+        frontendCommand({
+            action: 'removeSearchAlias',
+            alias: alias
+        });
+    };
+
+    var _actions = {};
+
+    self.registerAction = function(action, cb) {
+        _actions[action] = cb;
+    };
+
+    _actions["getSearchSuggestions"] = function (message) {
+        var ret = null;
+        if (_listSuggestions.hasOwnProperty(message.url)) {
+            ret = _listSuggestions[message.url](message.response);
+        }
+        return ret;
+    };
+
+    self.executeCommand = function (cmd) {
+        frontendCommand({
+            action: 'executeCommand',
+            cmdline: cmd
+        });
+    };
+    self.addCMap = function (new_keystroke, old_keystroke) {
+        frontendCommand({
+            action: 'addCMap',
+            new_keystroke: new_keystroke,
+            old_keystroke: old_keystroke
+        });
+    };
+    self.addVimMap = function (lhs, rhs, ctx) {
+        frontendCommand({
+            action: 'addVimMap',
+            lhs: lhs,
+            rhs: rhs,
+            ctx: ctx
+        });
+    };
+    self.addVimKeyMap = function (vimKeyMap) {
+        frontendCommand({
+            action: 'addVimKeyMap',
+            vimKeyMap: vimKeyMap
+        });
+    };
+
+    var frameElement = createElement('<div id=sk_frame>');
+    self.highlightElement = function (sn) {
+        document.body.append(frameElement);
+        var rect = sn.rect;
+        frameElement.style.top = rect.top + "px";
+        frameElement.style.left = rect.left + "px";
+        frameElement.style.width = rect.width + "px";
+        frameElement.style.height = rect.height + "px";
+        frameElement.style.display = "";
+        setTimeout(function() {
+            frameElement.remove();
+        }, sn.duration);
+    };
+
+    function getAllAnnotations() {
+        return [ Normal.mappings,
+            Visual.mappings,
+            Insert.mappings
+        ].map(getAnnotations).reduce(function(a, b) {
+            return a.concat(b);
+        });
+    }
 
     self.showUsage = function() {
         frontendCommand({
-            action: 'showUsage'
+            action: 'showUsage',
+            metas: getAllAnnotations()
+        });
+    };
+
+    self.getUsage = function(cb) {
+        frontendCommand({
+            action: 'getUsage',
+            metas: getAllAnnotations()
+        }, function(response) {
+            cb(response.data);
         });
     };
 
@@ -35,33 +146,49 @@ var Front = (function() {
         });
     };
 
-    self.showPressed = function(content) {
+    self.hidePopup = function() {
         frontendCommand({
-            action: 'showPressed'
+            action: 'hidePopup'
         });
     };
 
+    function updateElementBehindEditor(data) {
+        if (elementBehindEditor.nodeName === "DIV") {
+            elementBehindEditor.innerText = data;
+        } else {
+            elementBehindEditor.value = data;
+        }
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("change", false, true);
+        elementBehindEditor.dispatchEvent(evt);
+    }
+
     var onEditorSaved, elementBehindEditor;
     self.showEditor = function(element, onWrite, type) {
-        var content, initial_line = 0;
+        var content,
+            type = type || element.localName,
+            initial_line = 0;
         if (typeof(element) === "string") {
             content = element;
             elementBehindEditor = document.body;
         } else if (type === 'select') {
-            var selected = $(element).val();
-            var options = $(element).find('option').map(function(i) {
-                if ($(this).val() === selected) {
+            var selected = element.value;
+            content = Array.from(element.querySelectorAll('option')).map(function(n, i) {
+                if (n.value === selected) {
                     initial_line = i;
                 }
-                return "{0} >< {1}".format($(this).text(), $(this).val());
-            }).toArray();
-            content = options.join('\n');
+                return n.innerText.trim() + " >< " + n.value;
+            }).join('\n');
             elementBehindEditor = element;
         } else {
-            content = $(element).val();
             elementBehindEditor = element;
+            if (elementBehindEditor.nodeName === "DIV") {
+                content = elementBehindEditor.innerText;
+            } else {
+                content = elementBehindEditor.value;
+            }
         }
-        onEditorSaved = onWrite;
+        onEditorSaved = onWrite || updateElementBehindEditor;
         frontendCommand({
             action: 'showEditor',
             type: type || "textarea",
@@ -71,9 +198,13 @@ var Front = (function() {
     };
 
     self.chooseTab = function() {
-        frontendCommand({
-            action: 'chooseTab'
-        });
+        if (Normal.repeats !== "") {
+            RUNTIME('focusTabByIndex');
+        } else {
+            frontendCommand({
+                action: 'chooseTab'
+            });
+        }
     };
 
     self.openOmnibar = function(args) {
@@ -81,21 +212,35 @@ var Front = (function() {
         frontendCommand(args);
     };
 
-    var onOmniQuery;
-    self.openOmniquery = function(args) {
-        onOmniQuery = function(query) {
+    var _inlineQuery;
+    var _showQueryResult;
+    self.performInlineQuery = function (query, showQueryResult) {
+        if (_inlineQuery) {
+            query = query.toLocaleLowerCase();
+            runtime.updateHistory('inlineQuery', query);
             httpRequest({
-                'url': (typeof(args.url) === "function") ? args.url(query) : args.url + query
+                url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
+                headers: _inlineQuery.headers
             }, function(res) {
-                var words = args.parseResult(res);
-
-                frontendCommand({
-                    action: 'updateOmnibarResult',
-                    words: words
-                });
+                showQueryResult(_inlineQuery.parseResult(res));
             });
-        };
-        self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}))
+        } else if (Front.isProvider()) {
+            _showQueryResult = showQueryResult;
+            document.getElementById("proxyFrame").contentWindow.postMessage({
+                action: "performInlineQuery",
+                query: query
+            }, "*");
+        } else {
+            tabOpenLink("https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query");
+            self.hidePopup();
+        }
+    };
+
+    self.registerInlineQuery = function(args) {
+        _inlineQuery = args;
+    };
+    self.openOmniquery = function(args) {
+        self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}));
     };
 
     self.openFinder = function() {
@@ -112,12 +257,23 @@ var Front = (function() {
         });
     };
 
-    self.showBubble = function(pos, msg) {
-        frontendCommand({
-            action: "showBubble",
-            content: msg,
-            position: pos
-        });
+    self.showBubble = function(pos, msg, noPointerEvents) {
+        if (msg.length > 0) {
+            pos.winWidth = window.innerWidth;
+            pos.winHeight = window.innerHeight;
+            pos.winX = 0;
+            pos.winY = 0;
+            if (window.frameElement) {
+                pos.winX = window.frameElement.offsetLeft;
+                pos.winY = window.frameElement.offsetTop;
+            }
+            frontendCommand({
+                action: "showBubble",
+                content: msg,
+                position: pos,
+                noPointerEvents: noPointerEvents
+            });
+        }
     };
 
     self.hideBubble = function() {
@@ -126,87 +282,178 @@ var Front = (function() {
         });
     };
 
-    self.getContentFromClipboard = function(onReady) {
-        frontendCommand({
-            action: 'getContentFromClipboard'
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            onReady(response);
-        });
-    };
-
-    self.writeClipboard = function(text) {
-        frontendCommand({
-            action: 'writeClipboard',
-            content: text
-        }, function(response) {
-            // get focus back from frontend for this action, as focus is stolen by the clipboard_holder.
-            window.focus();
-            Front.showBanner("Copied: " + text);
-        });
+    var _keyHints = {
+        accumulated: "",
+        candidates: {},
+        key: ""
     };
 
     self.hideKeystroke = function() {
+        _keyHints.accumulated = "";
+        _keyHints.candidates = {};
         frontendCommand({
             action: 'hideKeystroke'
         });
     };
 
     self.showKeystroke = function(key, mode) {
+        _keyHints.accumulated += key;
+        _keyHints.key = key;
+        _keyHints.candidates = {};
+
+        var root = mode.mappings.find(_keyHints.accumulated);
+        if (root) {
+            root.getMetas(function(m) {
+                return true;
+            }).forEach(function(m) {
+                _keyHints.candidates[m.word] = {
+                    annotation: m.annotation
+                };
+            });
+        }
+
         frontendCommand({
             action: 'showKeystroke',
-            mode: mode,
-            key: decodeKeystroke(key)
+            keyHints: _keyHints
         });
     };
 
     self.showStatus = function (pos, msg, duration) {
-        // don't createFrontEnd for showStatus, test on issues.xxxxxx.com
-        runtime.command({
+        frontendCommand({
             action: "showStatus",
             content: msg,
             duration: duration,
-            toFrontend: true,
             position: pos
         });
     };
-    self.toggleStatus = function () {
-        runtime.command({
+    self.toggleStatus = function (visible) {
+        frontendCommand({
             action: "toggleStatus",
-            toFrontend: true
+            visible: visible
         });
     };
 
-    runtime.on('ace_editor_saved', function(response) {
+    self.getFrameId = function () {
+        if (document.body.offsetWidth && document.body.offsetHeight && document.body.innerText
+            && !window.frameId) {
+            window.frameId = generateQuickGuid();
+        }
+        return window.frameId;
+    };
+
+    _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {
             onEditorSaved(response.data);
         }
         if (runtime.conf.focusOnSaved && isEditable(elementBehindEditor)) {
+            Normal.passFocus(true);
             elementBehindEditor.focus();
-            window.focus();
-            Insert.enter();
+            Insert.enter(elementBehindEditor);
         }
-    });
+    };
+    _actions["nextEdit"] = function(response) {
+        var sel = Hints.getSelector() || "input, textarea, *[contenteditable=true], select";
+        sel = getElements(sel);
+        if (sel.length) {
+            var i = sel.indexOf(elementBehindEditor);
+            i = (i + (response.backward ? -1 : 1)) % sel.length;
+            sel = sel[i];
+            scrollIntoViewIfNeeded(sel);
+            Hints.flashPressedLink(sel);
 
-    runtime.on('omnibar_query_entered', function(response) {
+            self.showEditor(sel);
+        }
+    };
+
+    _actions["omnibar_query_entered"] = function(response) {
+        readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
-        onOmniQuery(response.query);
-    });
+        self.performInlineQuery(response.query, function(queryResult) {
+            if (queryResult.constructor.name !== "Array") {
+                queryResult = [queryResult];
+            }
+            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+                var sentence = Visual.findSentenceOf(response.query);
+                if (sentence.length > 0) {
+                    queryResult.push(sentence);
+                }
+            }
 
-    runtime.on('getBackFocus', function(response) {
+            frontendCommand({
+                action: 'updateOmnibarResult',
+                words: queryResult
+            });
+        });
+    };
+
+    _actions["executeScript"] = function(message) {
+        runtime.command({
+            action: 'executeScript',
+            code: message.cmdline
+        }, function (response) {
+            frontendCommand({
+                action: 'updateOmnibarResult',
+                words: response.response
+            });
+        });
+    };
+
+    _actions["getBackFocus"] = function(response) {
         window.focus();
-    });
+        if (window === top && document.activeElement === ifr[0]) {
+            // fix for Firefox, blur from iframe for frontend after Omnibar closed.
+            document.activeElement.blur();
+        }
+    };
 
-    runtime.on('getPageText', function(response) {
+    _actions["getPageText"] = function(response) {
         return document.body.innerText;
-    });
+    };
+
+    var _pendingQuery;
+    function clearPendingQuery() {
+        if (_pendingQuery) {
+            clearTimeout(_pendingQuery);
+            _pendingQuery = undefined;
+        }
+    }
+
+    _actions["visualUpdate"] = function(message) {
+        clearPendingQuery();
+        _pendingQuery = setTimeout(function() {
+            Visual.visualUpdateForContentWindow(message.query);
+            if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+                frontendCommand({
+                    action: "visualUpdatedForFirefox"
+                });
+            }
+        }, 500);
+    };
+
+    _actions["visualClear"] = function(message) {
+        clearPendingQuery();
+        Visual.visualClear();
+    };
+
+    _actions["visualEnter"] = function(message) {
+        clearPendingQuery();
+        Visual.visualEnter(message.query);
+    };
+
+    var _active = false;
+    _actions['deactivated'] = function(message) {
+        _active = false;
+    };
+
+    _actions['activated'] = function(message) {
+        _active = true;
+    };
 
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
-            document.body.scrollIntoViewIfNeeded();
-            var rc = (window.frameElement || document.body).getBoundingClientRect();
+            scrollIntoViewIfNeeded(document.body);
+            var rc = document.body.getBoundingClientRect();
             self.highlightElement({
                 duration: 500,
                 rect: {
@@ -219,9 +466,48 @@ var Front = (function() {
 
             Normal.exit();
             Normal.enter();
-            GetBackFocus.enter(0, true);
         }
     };
+
+    document.addEventListener('DOMContentLoaded', function (e) {
+        if (window.location.href.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
+            document.getElementById("proxyFrame").src = window.location.search.substr(3);
+        }
+    });
+
+    window.addEventListener('message', function (event) {
+        var _message = event.data;
+        if (_message.action === "performInlineQuery") {
+            self.performInlineQuery(_message.query, function (queryResult) {
+                event.source.postMessage({
+                    action: "performInlineQueryResult",
+                    result: queryResult
+                }, event.origin);
+            });
+        } else if (_message.action === "performInlineQueryResult") {
+            _showQueryResult(_message.result);
+        } else if (_active) {
+            if (_message.responseToContent && _callbacks[_message.id]) {
+                var f = _callbacks[_message.id];
+                // returns true to make callback stay for coming response.
+                if (!f(_message)) {
+                    delete _callbacks[_message.id];
+                }
+            } else if (_message.commandToContent && _message.action && _actions.hasOwnProperty(_message.action)) {
+                var ret = _actions[_message.action](_message);
+                if (_message.ack) {
+                    runtime.postTopMessage({
+                        data: ret,
+                        responseToFrontend: true,
+                        origin: _message.origin,
+                        id: _message.id
+                    });
+                }
+            }
+        } else if (_message.action === "activated") {
+            _actions['activated'](_message);
+        }
+    }, true);
 
     return self;
 })();

@@ -4,22 +4,88 @@ function timeStampString(t) {
     return dt.toLocaleString();
 }
 
+function getDocumentOrigin() {
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+    // Lastly, posting a message to a page at a file: URL currently requires that the targetOrigin argument be "*".
+    // file:// cannot be used as a security restriction; this restriction may be modified in the future.
+    // Firefox provides window.origin instead of document.origin.
+    var origin = window.location.origin ? window.location.origin : "*";
+    if (origin === "file://" || origin === "null") {
+        origin = "*";
+    }
+    return origin;
+}
+
 function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-function htmlEncode(str) {
-    return $('<div/>').text(str).html();
+function listElements(root, whatToShow, filter) {
+    const elms = [];
+    let currentNode;
+    const nodeIterator = document.createNodeIterator(
+        root,
+        whatToShow,
+        null
+    );
+
+    while (currentNode = nodeIterator.nextNode()) {
+        filter(currentNode) && elms.push(currentNode);
+
+        if (currentNode.shadowRoot) {
+            elms.push(...listElements(currentNode.shadowRoot, whatToShow, filter));
+        }
+    }
+
+    return elms;
 }
 
-function htmlDecode(str) {
-    return $('<div/>').html(str).text();
+function isElementVisible(elm) {
+    return elm.offsetHeight > 0 && elm.offsetWidth > 0;
 }
+
+function isElementClickable(e) {
+    var cssSelector = "a, button, select, input, textarea, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role]";
+    if (runtime.conf.clickableSelector.length) {
+        cssSelector += ", " + runtime.conf.clickableSelector;
+    }
+
+    return e.matches(cssSelector)
+        || getComputedStyle(e).cursor === "pointer"
+        || getComputedStyle(e).cursor.substr(0, 4) === "url("
+        || e.closest("a, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button") !== null;
+}
+
+function getRealEdit(event) {
+    var rt = event ? event.target : document.activeElement;
+    // on some pages like chrome://history/, input is in shadowRoot of several other recursive shadowRoots.
+    while (rt && rt.shadowRoot) {
+        if (rt.shadowRoot.activeElement) {
+            rt = rt.shadowRoot.activeElement;
+        } else if (rt.shadowRoot.querySelector('input, textarea, select')) {
+            rt = rt.shadowRoot.querySelector('input, textarea, select');
+            break;
+        } else {
+            break;
+        }
+    }
+    return rt;
+}
+
+function toggleQuote() {
+    var elm = getRealEdit(), val = elm.value;
+    if (val[0] === '"') {
+        elm.value = val.substr(1, val.length - 2);
+    } else {
+        elm.value = '"' + val + '"';
+    }
+}
+
 function isEditable(element) {
-    return element.localName === 'textarea'
+    return !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
-        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type));
+        || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
 }
 
 function parseQueryString(query) {
@@ -44,31 +110,110 @@ function reportIssue(title, description) {
     Front.showPopup(error);
 }
 
-function hasScroll(el, direction, barSize) {
-    var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
-    var result = el[offset[0]];
-
-    if (result < barSize) {
-        // set scroll offset to barSize, and verify if we can get scroll offset as barSize
-        var originOffset = el[offset[0]];
-        el[offset[0]] = el.getBoundingClientRect()[offset[1]];
-        result = el[offset[0]];
-        el[offset[0]] = originOffset;
+function scrollIntoViewIfNeeded(elm, ignoreSize) {
+    if (elm.scrollIntoViewIfNeeded) {
+        elm.scrollIntoViewIfNeeded();
+    } else if (!isElementPartiallyInViewport(elm, ignoreSize)) {
+        elm.scrollIntoView();
     }
-    return result >= barSize && (
-        el === document.body
-        || $(el).css('overflow-' + direction) === 'auto'
-        || $(el).css('overflow-' + direction) === 'scroll');
 }
 
-function isElementPartiallyInViewport(el) {
+function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return rect.width > 4 && rect.height > 4
-        && (rect.top <= windowHeight) && ((rect.top + rect.height) >= 0)
-        && (rect.left <= windowWidth) && ((rect.left + rect.width) >= 0)
+    return (ignoreSize || (rect.width > 4 && rect.height > 4))
+        && (rect.top < windowHeight) && (rect.bottom > 0)
+        && (rect.left < windowWidth) && (rect.right > 0);
+}
+
+function getVisibleElements(filter) {
+    var all = Array.from(document.documentElement.getElementsByTagName("*"));
+    var visibleElements = [];
+    for (var i = 0; i < all.length; i++) {
+        var e = all[i];
+        // include elements in a shadowRoot.
+        if (e.shadowRoot) {
+            var cc = e.shadowRoot.querySelectorAll('*');
+            for (var j = 0; j < cc.length; j++) {
+                all.push(cc[j]);
+            }
+        }
+        var rect = e.getBoundingClientRect();
+        if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
+            && (rect.left <= window.innerWidth) && (rect.right >= 0)
+            && rect.height < window.innerHeight && rect.height > 0
+        ) {
+            filter(e, visibleElements);
+        }
+    }
+    return visibleElements;
+}
+
+function actionWithSelectionPreserved(cb) {
+    var selection = document.getSelection();
+    var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
+
+    var dt = document.scrollingElement.scrollTop;
+
+    cb(selection);
+
+    document.scrollingElement.scrollTop = dt;
+
+    if (pos[0] === "None") {
+        selection.empty();
+    } else if (pos[0] === "Caret") {
+        selection.setPosition(pos[3], pos[4]);
+    } else if (pos[0] === "Range") {
+        selection.setPosition(pos[1], pos[2]);
+        selection.extend(pos[3], pos[4]);
+    }
+}
+
+function filterAncestors(elements) {
+    var tmp = [];
+    if (elements.length > 0) {
+        // filter out element which has its children covered
+        tmp = [elements[elements.length - 1]];
+        for (var i = elements.length - 2; i >= 0; i--) {
+            if (!elements[i].contains(tmp[0])) {
+                tmp.unshift(elements[i]);
+            }
+        }
+    }
+
+    return tmp;
+}
+
+function filterOverlapElements(elements) {
+    // filter out tiny elements
+    elements = elements.filter(function(e) {
+        var be = e.getClientRects()[0];
+        if (e.disabled || e.readOnly || be.width <= 4) {
+            return false;
+        } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
+            return true;
+        } else {
+            var el = document.elementFromPoint(be.left + be.width / 2, be.top + 3);
+            return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
+        }
+    });
+
+    // if an element has href, all its children will be filtered out.
+    var elementWithHref = null;
+    elements = elements.filter(function(e) {
+        var flag = true;
+        if (e.href) {
+            elementWithHref = e;
+        }
+        if (elementWithHref && elementWithHref !== e && elementWithHref.contains(e)) {
+            flag = false;
+        }
+        return flag;
+    });
+
+    return filterAncestors(elements);
 }
 
 function getTextNodes(root, pattern, flag) {
@@ -77,8 +222,11 @@ function getTextNodes(root, pattern, flag) {
         root,
         NodeFilter.SHOW_TEXT, {
             acceptNode: function(node) {
-                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data))
+                if (!node.data.trim() || !node.parentNode.offsetParent || skip_tags.indexOf(node.parentNode.localName.toLowerCase()) !== -1 || !pattern.test(node.data)) {
+                    // node changed, reset pattern.lastIndex
+                    pattern.lastIndex = 0;
                     return NodeFilter.FILTER_REJECT;
+                }
                 var br = node.parentNode.getBoundingClientRect();
                 if (br.width < 4 || br.height < 4) {
                     return NodeFilter.FILTER_REJECT;
@@ -102,6 +250,30 @@ function getTextNodes(root, pattern, flag) {
     return nodes;
 }
 
+function initL10n(cb) {
+    var lang = runtime.conf.language || window.navigator.language;
+    if (lang === "en-US") {
+        cb(function(str) {
+            return str;
+        });
+    } else {
+        fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
+            return res.json();
+        }).then(function(l10n) {
+            if (typeof(l10n[lang]) === "object") {
+                l10n = l10n[lang];
+                cb(function(str) {
+                    return l10n[str] ? l10n[str] : str;
+                });
+            } else {
+                cb(function(str) {
+                    return str;
+                });
+            }
+        });
+    }
+}
+
 String.prototype.format = function() {
     var formatted = this;
     for (var i = 0; i < arguments.length; i++) {
@@ -115,307 +287,195 @@ RegExp.prototype.toJSON = function() {
     return {source: this.source, flags: this.flags};
 };
 
-(function($) {
-    $.fn.regex = function(pattern, fn, fn_a) {
-        var fn = fn || $.fn.text;
-        return this.filter(function() {
-            return pattern.test(fn.apply($(this), fn_a));
-        });
-    };
-    $.expr[':'].css = function(elem, pos, match) {
-        var sel = match[3].split('=');
-        return $(elem).css(sel[0]) == sel[1];
-    };
-    $.fn.topInView = function() {
-        return this.filter(function() {
-            return $(this).width() * $(this).height() > 0 && $(this).offset().top > document.body.scrollTop;
-        });
-    };
-
-    $.fn.filterInvisible = function() {
-        return this.filter(function(i) {
-            var ret = null;
-            var elm = this;
-            var style = getComputedStyle(elm);
-            if ($(elm).attr('disabled') === undefined && style.visibility !== "hidden") {
-                var r = elm.getBoundingClientRect();
-                if (r.width === 0 || r.height === 0) {
-                    // use the first visible child instead
-                    var children = $(elm).find('*').filter(function(j) {
-                        var r = this.getBoundingClientRect();
-                        return (r.width > 0 && r.height > 0);
-                    });
-                    if (children.length) {
-                        elm = children[0];
-                    }
-                }
-                if (isElementPartiallyInViewport(elm)) {
-                    ret = elm;
-                }
-            }
-            return ret !== null;
-        });
-    };
-    $.fn.filterChildren = function() {
-        var elements = this;
-        return this.filter(function() {
-            // filter out element which has his children covered
-            return !$(this.children).toArray().some(function(element, index, array) {
-                return elements.toArray().indexOf(element) !== -1;
-            });
-        });
-    };
-})(jQuery);
-
-(function() {
-    var KeyboardUtils, root;
-
-    KeyboardUtils = {
-        keyCodesMac: {
-            Minus: ["-", "_"],
-            Equal: ["=", "+"],
-            BracketLeft: ["[", "{"],
-            BracketRight: ["]", "}"],
-            Backslash: ["\\", "|"],
-            Semicolon: [";", ":"],
-            Quote: ["'", "\""],
-            Comma: [",", "<"],
-            Period: [".", ">"],
-            Slash: ["/", "?"]
-        },
-        keyCodes: {
-            ESC: 27,
-            backspace: 8,
-            deleteKey: 46,
-            enter: 13,
-            ctrlEnter: 10,
-            space: 32,
-            shiftKey: 16,
-            ctrlKey: 17,
-            f1: 112,
-            f12: 123,
-            comma: 188,
-            tab: 9,
-            downArrow: 40,
-            upArrow: 38
-        },
-        modifierKeys: {
-            16: "Shift",
-            17: "Ctrl",
-            18: "Alt",
-            91: "Meta",
-            92: "Meta",
-            93: "ContextMenu",
-            229: "Process"
-        },
-        keyNames: {
-            8:   'Backspace',
-            9:   'Tab',
-            12:  'NumLock',
-            27:  'Esc',
-            32:  'Space',
-            46:  'Delete',
-        },
-        keyIdentifierCorrectionMap: {
-            "U+00C0": ["U+0060", "U+007E"],
-            "U+0030": ["U+0030", "U+0029"],
-            "U+0031": ["U+0031", "U+0021"],
-            "U+0032": ["U+0032", "U+0040"],
-            "U+0033": ["U+0033", "U+0023"],
-            "U+0034": ["U+0034", "U+0024"],
-            "U+0035": ["U+0035", "U+0025"],
-            "U+0036": ["U+0036", "U+005E"],
-            "U+0037": ["U+0037", "U+0026"],
-            "U+0038": ["U+0038", "U+002A"],
-            "U+0039": ["U+0039", "U+0028"],
-            "U+00BD": ["U+002D", "U+005F"],
-            "U+00BB": ["U+003D", "U+002B"],
-            "U+00DB": ["U+005B", "U+007B"],
-            "U+00DD": ["U+005D", "U+007D"],
-            "U+00DC": ["U+005C", "U+007C"],
-            "U+00BA": ["U+003B", "U+003A"],
-            "U+00DE": ["U+0027", "U+0022"],
-            "U+00BC": ["U+002C", "U+003C"],
-            "U+00BE": ["U+002E", "U+003E"],
-            "U+00BF": ["U+002F", "U+003F"]
-        },
-        init: function() {
-            if (navigator.platform.indexOf("Mac") !== -1) {
-                return this.platform = "Mac";
-            } else if (navigator.userAgent.indexOf("Linux") !== -1) {
-                return this.platform = "Linux";
-            } else {
-                return this.platform = "Windows";
-            }
-        },
-        getKeyChar: function(event) {
-            var character;
-            if (event.keyCode in this.modifierKeys) {
-                character = "";
-            } else {
-                if (this.keyNames.hasOwnProperty(event.keyCode)) {
-                    character = "{0}".format(this.keyNames[event.keyCode]);
-                } else {
-                    character = event.key;
-                    if (!character) {
-                        if (event.keyIdentifier) {
-                            // keep for chrome version below 52
-                            if (event.keyIdentifier.slice(0, 2) !== "U+") {
-                                character = "{0}".format(event.keyIdentifier);
-                            } else {
-                                var keyIdentifier = event.keyIdentifier;
-                                if ((this.platform === "Windows" || this.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
-                                    var correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
-                                    keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
-                                }
-                                var unicodeKeyInHex = "0x" + keyIdentifier.substring(2);
-                                character = String.fromCharCode(parseInt(unicodeKeyInHex));
-                                character = event.shiftKey ? character : character.toLowerCase();
-                            }
-                        }
-                    } else {
-                        if (character.charCodeAt(0) > 127   // Alt-s is ß under Mac
-                            || character === "Dead"         // Alt-i is Dead under Mac
-                        ) {
-                            if (event.keyCode < 127) {
-                                character = String.fromCharCode(event.keyCode);
-                                character = event.shiftKey ? character : character.toLowerCase();
-                            } else if (this.keyCodesMac.hasOwnProperty(event.code)) {
-                                // Alt-/ or Alt-?
-                                character = this.keyCodesMac[event.code][event.shiftKey ? 1 : 0];
-                            }
-                        } else if (character === "Unidentified") {
-                            // for IME on
-                            character = "";
-                        }
-                    }
-                }
-                if (event.shiftKey && character.length > 1) {
-                    character = "Shift-" + character;
-                }
-                if (event.metaKey) {
-                    character = "Meta-" + character;
-                }
-                if (event.altKey) {
-                    character = "Alt-" + character;
-                }
-                if (event.ctrlKey) {
-                    character = "Ctrl-" + character;
-                }
-                if (character.length > 1) {
-                    character = "<{0}>".format(character);
-                }
-            }
-            if (decodeKeystroke(encodeKeystroke(character)) === character) {
-                character = encodeKeystroke(character);
-            }
-            return character;
-        },
-        isWordChar: function(event) {
-            return (event.keyCode < 123 && event.keyCode >= 97 || event.keyCode < 91 && event.keyCode >= 65 || event.keyCode < 58 && event.keyCode >= 48);
-        }
-    };
-
-    KeyboardUtils.init();
-
-    root = typeof exports !== "undefined" && exports !== null ? exports : window;
-
-    root.KeyboardUtils = KeyboardUtils;
-
-    root.keyCodes = KeyboardUtils.keyCodes;
-
-}).call(this);
-
-// <Esc>: ✐: <Esc>
-// <Alt-Space>: ⤑: <Alt-Space>
-// <Ctrl-Alt-F7>: ⨘: <Ctrl-Alt-F7>
-// <Ctrl-'>: ⠷: <Ctrl-'>
-// <Alt-i>: ⥹: <Alt-i>
-// <Ctrl-Alt-z>: ⪊: <Ctrl-Alt-z>
-// <Ctrl-Alt-Meta-h>: ⹸: <Ctrl-Alt-Meta-h>
-function encodeKeystroke(s) {
-    var code = s, groups = s.match(/<(?:Ctrl-)?(?:Alt-)?(?:Meta-)?(?:Shift-)?(.+)>/);
-    if (groups) {
-        var mod = 0;
-        if (s.indexOf("Ctrl-") !== -1) {
-            mod |= 1;
-        }
-        if (s.indexOf("Alt-") !== -1) {
-            mod |= 2;
-        }
-        if (s.indexOf("Meta-") !== -1) {
-            mod |= 4;
-        }
-        if (s.indexOf("Shift-") !== -1) {
-            mod |= 8;
-        }
-        if (groups[1].length > 1) {
-            code = encodeKeystroke.specialKeys.indexOf(groups[1]);
-        } else {
-            code = groups[1].charCodeAt(0);
-        }
-
-        code = ((mod<<8) + 10000) + code;
-        code = String.fromCharCode(code);
+function _parseAnnotation(ag) {
+    var annotations = ag.annotation.match(/#(\d+)(.*)/);
+    if (annotations !== null) {
+        ag.feature_group = parseInt(annotations[1]);
+        ag.annotation = annotations[2];
     }
-    return code;
+    return ag;
 }
-encodeKeystroke.specialKeys = ['Esc', 'Space', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Enter', 'Tab', 'Delete', 'End', 'Home', 'Insert', 'NumLock', 'PageDown', 'PageUp', 'Pause', 'ScrollLock', 'CapsLock', 'PrintScreen', 'Escape', 'Hyper'];
 
-function decodeKeystroke(s) {
-    var r = s.charCodeAt(0);
-    if (r >= 10000) {
-        r = r - 10000;
-        var c;
-        if (r % 256 < encodeKeystroke.specialKeys.length) {
-            c = encodeKeystroke.specialKeys[r % 256];
-        } else {
-            c = String.fromCharCode(r % 256);
-        }
-        r = r >> 8;
-        if (r & 8) {
-            c = "Shift-" + c;
-        }
-        if (r & 4) {
-            c = "Meta-" + c;
-        }
-        if (r & 2) {
-            c = "Alt-" + c;
-        }
-        if (r & 1) {
-            c = "Ctrl-" + c;
-        }
-        r = "<" + c + ">";
+function _map(mode, nks, oks) {
+    oks = KeyboardUtils.encodeKeystroke(oks);
+    var old_map = mode.mappings.find(oks);
+    if (old_map) {
+        nks = KeyboardUtils.encodeKeystroke(nks);
+        mode.mappings.remove(nks);
+        // meta.word need to be new
+        var meta = Object.assign({}, old_map.meta);
+        mode.mappings.add(nks, meta);
+    }
+    return old_map;
+}
+
+function RUNTIME(action, args) {
+    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight', 'focusTabByIndex'];
+    (args = args || {}).action = action;
+    if (actionsRepeatBackground.indexOf(action) !== -1) {
+        // if the action can only be repeated in background, pass repeats to background with args,
+        // and set RUNTIME.repeats 1, so that it won't be repeated in foreground's _handleMapKey
+        args.repeats = RUNTIME.repeats;
+        RUNTIME.repeats = 1;
+    }
+    try {
+        chrome.runtime.sendMessage(args);
+    } catch (e) {
+        Front.showPopup('[runtime exception] ' + e);
+    }
+}
+
+function getAnnotations(mappings) {
+    return mappings.getWords().map(function(w) {
+        var meta = mappings.find(w).meta;
+        return {
+            word: w,
+            feature_group: meta.feature_group,
+            annotation: meta.annotation
+        };
+    }).filter(function(m) {
+        return m.annotation && m.annotation.length > 0;
+    });
+}
+
+function constructSearchURL(se, word) {
+    if (se.indexOf("{0}") > 0) {
+        return se.format(word);
     } else {
-        r = s;
+        return se + word;
     }
-    return r;
 }
 
-/*
- * test code
- *
+function tabOpenLink(str, simultaneousness) {
+    simultaneousness = simultaneousness || 5;
 
-for ( var i = 0; i < encodeKeystroke.specialKeys.length; i++) {
-    var c = encodeKeystroke.specialKeys[i];
-    ["", "Ctrl-", "Alt-", "Shift-", "Meta-", "Ctrl-Alt-", "Ctrl-Shift-", "Ctrl-Meta-", "Alt-Shift-", "Alt-Meta-", "Alt-Meta-Shift-", "Meta-Shift-", "Ctrl-Alt-Shift-", "Ctrl-Alt-Meta-", "Ctrl-Meta-Shift-", "Ctrl-Alt-Meta-Shift-"].forEach(function(u) {
-        var keystr = "<" + u + c + ">";
-        var encoded = encodeKeystroke(keystr);
-        var decoded = decodeKeystroke(encoded);
-        if (keystr !== decoded) {
-            console.log(keystr + ": " + encoded + ": " + decoded);
-        }
+    var urls;
+    if (str.constructor.name === "Array") {
+        urls = str;
+    } else if (str instanceof NodeList) {
+        urls = Array.from(str).map(function(n) {
+            return n.href;
+        });
+    } else {
+        urls = str.trim().split('\n');
+    }
+
+    urls = urls.map(function(u) {
+        return u.trim();
+    }).filter(function(u) {
+        return u.length > 0;
+    });
+    // open the first batch links immediately
+    urls.slice(0, simultaneousness).forEach(function(url) {
+        RUNTIME("openLink", {
+            tab: {
+                tabbed: true
+            },
+            url: url
+        });
+    });
+    // queue the left for later opening when there is one tab closed.
+    if (urls.length > simultaneousness) {
+        RUNTIME("queueURLs", {
+            urls: urls.slice(simultaneousness)
+        });
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+
+function getElements(selectorString) {
+    return listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
+        return n.offsetHeight && n.offsetWidth && n.matches(selectorString);
     });
 }
-for ( var i = 32; i < 256; i++) {
-    var c = String.fromCharCode(i);
-    ["Ctrl-", "Alt-", "Meta-", "Ctrl-Alt-", "Ctrl-Meta-", "Alt-Meta-", "Ctrl-Alt-Meta-"].forEach(function(u) {
-        var keystr = "<" + u + c + ">";
-        var encoded = encodeKeystroke(keystr);
-        var decoded = decodeKeystroke(encoded);
-        if (keystr !== decoded) {
-            console.log(keystr + ": " + encoded + ": " + decoded);
-        }
+
+function getClickableElements(selectorString, pattern) {
+    var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
+        return n.offsetHeight && n.offsetWidth
+            && (n.matches(selectorString) || getComputedStyle(n).cursor === "pointer")
+            && (!pattern || pattern.test(n.textContent));
+    });
+    return filterOverlapElements(nodes);
+}
+
+function filterInvisibleElements(nodes) {
+    return nodes.filter(function(n) {
+        return n.offsetHeight && n.offsetWidth
+            && !n.getAttribute('disabled') && isElementPartiallyInViewport(n);
     });
 }
-*/
+
+function setInnerHTML(elm, str) {
+    elm.innerHTML = str;
+}
+
+function createElement(str) {
+    var div = document.createElement('div');
+    setInnerHTML(div, str);
+
+    return div.firstChild;
+}
+
+function hasScroll(el, direction, barSize) {
+    var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
+    var result = el[offset[0]];
+
+    if (result < barSize) {
+        // set scroll offset to barSize, and verify if we can get scroll offset as barSize
+        var originOffset = el[offset[0]];
+        el[offset[0]] = el.getBoundingClientRect()[offset[1]];
+        result = el[offset[0]];
+        el[offset[0]] = originOffset;
+    }
+    return result >= barSize;
+}
+
+function isEmptyObject(obj) {
+    for (var name in obj) {
+        return false;
+    }
+    return true;
+}
+
+var _divForHtmlEncoder = createElement("<div>");
+function htmlEncode(str) {
+    _divForHtmlEncoder.innerText = str;
+    return _divForHtmlEncoder.innerHTML;
+}
+
+HTMLElement.prototype.one = function (evt, handler) {
+    function _onceHandler() {
+        handler.call(this);
+        this.removeEventListener(evt, _onceHandler);
+    }
+    this.addEventListener(evt, _onceHandler);
+};
+
+HTMLElement.prototype.show = function () {
+    this.style.display = "";
+};
+
+HTMLElement.prototype.hide = function () {
+    this.style.display = "none";
+};
+
+HTMLElement.prototype.removeAttributes = function () {
+    while (this.attributes.length > 0) {
+        this.removeAttribute(this.attributes[0].name);
+    }
+};
+NodeList.prototype.remove = function() {
+    this.forEach(function(node) {
+        node.remove();
+    });
+};
+NodeList.prototype.show = function() {
+    this.forEach(function(node) {
+        node.show();
+    });
+};
+NodeList.prototype.hide = function() {
+    this.forEach(function(node) {
+        node.hide();
+    });
+};

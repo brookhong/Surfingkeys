@@ -77,6 +77,19 @@ var Trie = (function() {
             return ret;
         },
 
+        getMetas: function(criterion) {
+            var ret = [];
+            if (this.hasOwnProperty('meta') && criterion(this.meta)) {
+                ret.push(this.meta);
+            }
+            for (var k in this) {
+                if (k.length === 1) {
+                    ret = ret.concat(this[k].getMetas(criterion));
+                }
+            }
+            return ret;
+        },
+
         getPrefixWord: function() {
             // unmapAllExcept could make this Trie object empty.
             if (Object.keys(this).length === 0) {

@@ -1,12 +1,19 @@
 # Surfingkeys - Expand your browser with javascript and keyboard.
 
-Surfingkeys is another Chrome extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
+Surfingkeys is another Chrome/Firefox extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
         Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
+
+Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exceptions:
+
+* Sync settings across devices for same account
+* Proxy settings
+* Markdown preview
+
 
 [Reference for editing your own settings](#edit-your-own-settings).
 
@@ -33,7 +40,6 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 * [Mermaid diagram generator](#mermaid-diagram-generator)
 * [PDF viewer](#pdf-viewer)
 * [Edit your own settings](#edit-your-own-settings)
-* [Build](#build)
 * [License](#license)
 
 ## Feature list
@@ -57,7 +63,7 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
 
 ## Quick start
 
-After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
+After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
 
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 
@@ -162,12 +168,6 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
 Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\bkeyword\b`.
 
-### Show pressed keys
-
-This is helper mode for you to see what keys Surfingkeys recognized when you press one. It helps you when you don't know how to specify the keys that you need map.
-
-`spk` to open it.
-
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,
@@ -197,8 +197,6 @@ In omnibar opened with `b`:
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
-To create new map keys for Omnibar using `cmapkey`.
-
 `cmap` could be used for Omnibar to change mappings, for example:
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -212,7 +210,7 @@ The `g` in `sg` is a search alias for google, there are some other built-in sear
 
 Besides that, there is a `sog`, to search selected text only in this site with google. For `sog`, `s` is the search_leader_key, `o` is the only_this_site_key, `g` is the search alias.
 
-The search_leader_key `s` plus captial alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAliasX` work in same way.
+The search_leader_key `s` plus capital alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAliasX` work in same way.
 
 ## Vim-like marks
 
@@ -240,7 +238,9 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 If you prefer to use omnibar always, use below mapping:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', 'Front.openOmnibar({type: "Tabs"})');
+    mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        Front.openOmnibar({type: "Tabs"});
+    });
 
 which works same as:
 
@@ -252,22 +252,7 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
 
 ## Commands
 
-`:` to open omnibar for commands, then you can execute any pre-defined or customized command there. The result will be displayed below the omnibar. To create your own command as below:
-
-    command('<command_name>', '<help message for this command>', function() {
-        // to do
-    });
-
-For example,
-
-    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-        // args is an array of arguments
-        RUNTIME('updateProxy', {
-            mode: args[0]
-        });
-        // return true to close Omnibar for Commands, false to keep Omnibar on
-        return true;
-    });
+`:` to open omnibar for commands, then you can execute any pre-defined there. The result will be displayed below the omnibar.
 
     // create shortcuts for the command with different parameters
     map('spa', ':setProxyMode always');
@@ -280,7 +265,7 @@ Besides commands, you can also run javascript code.
 
 ## Smooth scroll
 
-Smooth scroll works for any scrollable element. It is on by defualt, to turn it off as below:
+Smooth scroll works for any scrollable element. It is on by default, to turn it off as below:
 
     settings.smoothScroll = false;
 
@@ -359,13 +344,14 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, to set proxy mode, there are five modes: direct, byhost, always, system and clear.
+* setProxyMode, to set proxy mode, there are five modes: direct, byhost, bypass, always, system and clear.
 
         direct      Chrome will connect to all sites directly.
-        byhost      Chrome will only connect to sites added by `addProxySite` through proxy.
+        byhost      Chrome will only connect to sites added by `addProxySite` through related proxy. You could add multiple pairs of `proxy` and `hosts`, for hosts matched with `hosts` `proxy` will be used.
+        bypass      Chrome will connect to all sites through proxy, with specified hosts excluded.
         always      Chrome will connect to all sites through proxy.
         system      Use proxy configuration taken from the operating system.
-        clear       Surfingkeys will take on control of proxy settings, this is the default mode.
+        clear       Surfingkeys will not take control of proxy settings, this is the default mode.
 
 * addProxySite, removeProxySite, toggleProxySite, to make Chrome connect to site through proxy or not, examples:
 
@@ -437,7 +423,9 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 All keystrokes in normal mode are repeatable by dot, except those keystrokes mapped with `repeatIgnore` as `true`, for example,
 
-    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+    mapkey('e', '#2Scroll a page up', function() {
+        Normal.scroll("pageUp");
+    }, {repeatIgnore: true});
 
 Then `.` will not repeat action to page up, even `e` is just pressed.
 
@@ -446,7 +434,7 @@ Then `.` will not repeat action to page up, even `e` is just pressed.
 1. copy your markdown source into clipboard.
 1. `sm` to open markdown preview, which will preview markdown from clipboard.
 1. Then on the preview page, another `sm` will open vim editor to edit markdown source.
-1. `:wp` to refresh preview.
+1. `:wq` to refresh preview.
 1. `r` to reload markdown source from clipboard.
 
 ![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)
@@ -457,9 +445,13 @@ By default, Surfingkeys uses this [markdown parser](https://github.com/chjj/mark
 
 ## Capture page
 
+There are some circumstances that you want to take a screenshot on a page, below shortcuts could help you, especially when it is for a long page or just for some scrollable DIV on the page.
+
 * `yg` to capture current page.
 * `yG` to capture current full page if it is scrollable.
 * `yS` to capture current scroll target.
+
+After one of above shortcuts pressed, you could see a popup of captured image, on which you could then right click with a MOUSE( 😢 ) to save as or copy into system clipboard.
 
 ## Mermaid diagram generator
 
@@ -485,21 +477,23 @@ Some functionalities are also available when you're using original pdf viewer, b
 |:---------------| :-----|
 |**keystroke**                   | string, any keystroke to trigger the action|
 |**help_string**                 | string, a help message to describe the action, which will displayed in help opened by `u`.|
-|**action_code**                 | string or function, action code can be a snippet of Javascript code or a Javascript function. If the function needs an argument, next pressed key will be fed to the function.|
+|**action_code**                 | function, a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.|
 |**options**                     | object, properties listed below|
 |**domain**                      | regex[optional], a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com.|
 |**repeatIgnore**                | boolean[optional], whether this keystroke will be repeat by dot command.|
 
 Just an example to map one keystroke to different functions on different sites,
 
-    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
+    mapkey('zz', 'Choose a tab', function() {
+        Front.chooseTab();
+    }, {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', function() {
+        Front.showUsage();
+    }, {domain: /google\.com/i});
 
 mapkey in visual mode and omnibar bar.
 
     vmapkey(keystroke, help_string, action_code, [options])
-
-    cmapkey(keystroke, help_string, action_code, [options])
 
 ### map a keystroke to another
 
@@ -576,8 +570,12 @@ This version will create a mapping to search selected text with `search_url` on 
 works like
 
     addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-    mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
-    vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+    mapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
+    vmapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
 
 ### remove search alias and its bindings
 
@@ -590,9 +588,13 @@ works like
 
 ### Styling
 
-Change the style of the link hints:
+To change style for link hints:
 
     Hints.style('border: solid 3px #552a48; color:#efe1eb; background: initial; background-color: #552a48;');
+
+To Change style for text hints:
+
+    Hints.style("border: solid 8px #C38A22;padding: 1px;background: #e39913", "text");
 
 Change the style of the search marks and cursor:
 
@@ -612,14 +614,17 @@ For example,
 | key | default value | explanation |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
+| Hints.numericHints | false | Whether to use digit as hint label, if it is on, you could type text to filter links. |
 | Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
 | settings.showModeStatus | false | Whether always to show mode status. |
 | settings.showProxyInStatusBar | false | Whether to show proxy info in status bar. |
-| settings.richHintsForKeystroke | true | Whether to show rich hints for keystroke. |
+| settings.richHintsForKeystroke | 500 | Timeout(ms) to show rich hints for keystroke, 0 will disable rich hints. |
 | settings.useLocalMarkdownAPI |  true | Whether to use [chjj/marked](https://github.com/chjj/marked) to parse markdown, otherwise use github markdown API. |
-| settings.focusOnSaved | true | Whether to focus text input after quiting from vim editor. |
+| settings.focusOnSaved | true | Whether to focus text input after quitting from vim editor. |
 | settings.omnibarMaxResults | 10 | How many results will be listed out each page for Omnibar. |
 | settings.omnibarPosition | "middle" | Where to position Omnibar. ["middle", "bottom"] |
+| settings.omnibarSuggestion | false | Show suggestion URLs|
+| settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
@@ -628,8 +633,9 @@ For example,
 | settings.smoothScroll | true | Whether to use smooth scrolling when pressing keys like `j`/`k`/`e`/`d` to scroll page or elements. |
 | settings.modeAfterYank | "" | Which mode to fall back after yanking text in visual mode. Value could be one of ["", "Caret", "Normal"], default is "", which means no action after yank.|
 | settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
-| settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indiate next page. |
-| settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indiate previous page. |
+| settings.scrollFriction | 0 | A force that is needed to start continuous scrolling after initial scroll step. A bigger number will cause a flicker after initial step, but help to keep the first step precise. |
+| settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indicate next page. |
+| settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indicate previous page. |
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
@@ -637,12 +643,17 @@ For example,
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
-| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "default"] |
-| settings.interceptedErrors | [] | Indiates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
+| settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "last", "default"] |
+| settings.interceptedErrors | [] | Indicates for which errors Surfingkeys will show error page, so that you could use Surfingkeys on those error pages. For example, ["*"] to show error page for all errors, or ["net::ERR_NAME_NOT_RESOLVED"] to show error page only for ERR_NAME_NOT_RESOLVED, please refer to [net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h) for complete error list.  |
 | settings.startToShowEmoji | 2 | How many characters are needed after colon to show emoji suggestion. |
 | settings.language | undefined | The language of the usage popover, only "zh-CN" is added for now, PR for any other language is welcomed, please see [l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/pages/l108.json). |
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
+| settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visible after user clicks on some other link. If you don't like the input to be focused when it's turned to visible, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
+| settings.caseSensitive | false | Whether finding in page is case sensitive. |
+| settings.smartCase | true | Whether to make caseSensitive true if the search pattern contains upper case characters. |
+| settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
+| settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
 
 ### Example of settings.theme, below is to set font size of status bar
 
@@ -652,15 +663,17 @@ For example,
         }
     }`;
 
-## Build
+## API Documentation
 
-    npm install
-    npm run build
+> The API documentation is currently a work in progress.
+
+* [Markdown](docs/API.md)
+* [HTML](http://brookhong.github.io/Surfingkeys)
 
 ## Credits
 
-* [jQuery](https://github.com/jquery/jquery), for clean coding.
-* [TRIE](https://github.com/mikedeboer/trie), finally replaced by my own simple implementation for less memory usage and better performance.
+* ~~[jQuery](https://github.com/jquery/jquery)~~, removed for less memory usage and better performance.
+* ~~[TRIE](https://github.com/mikedeboer/trie)~~, finally replaced by my own simple implementation for less memory usage and better performance.
 * [ACE vim editor](https://github.com/ajaxorg/ace), for vim editor.
 * [markdown parser](https://github.com/chjj/marked), for markdown parser.
 * [pdf.js](https://github.com/mozilla/pdf.js), for pdf viewer.

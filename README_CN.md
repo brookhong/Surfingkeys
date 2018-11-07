@@ -1,12 +1,17 @@
 # Surfingkeys -- 用javascript和键盘扩展你的chrome
 
-Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用chrome浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
+Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用Chrome/Firefox浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
     mapkey('<Ctrl-y>', 'Show me the money', function() {
         Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
+
+Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
+* 同步不同设备间的设置
+* 代理设置
+* Markdown预览
 
 [配置参考](#配置参考).
 
@@ -58,6 +63,10 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
 * 所有按键对PDF适用
 
 ## 快速上手
+
+* [Chrome插件安装地址](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Firefox插件安装地址](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
 试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
@@ -196,8 +205,6 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
-`cmapkey`用于搜索栏里创建按键。
-
 `cmap`用于搜索栏修改按键，如：
 
     cmap('<Ctrl-n>', '<Tab>');
@@ -239,7 +246,9 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 如果你希望一直用搜索栏来选择标签页，可使用如下设置:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', 'Front.openOmnibar({type: "Tabs"})');
+    mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        Front.openOmnibar({type: "Tabs"});
+    });
 
 效果相当于：
 
@@ -251,22 +260,7 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 ## 命令
 
-用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。可以添加你自己的命令如下：
-
-    command('<command_name>', '<help message for this command>', function() {
-        // to do
-    });
-
-例如，
-
-    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-        // args is an array of arguments
-        RUNTIME('updateProxy', {
-            mode: args[0]
-        });
-        // return true to close Omnibar for Commands, false to keep Omnibar on
-        return true;
-    });
+用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。
 
     // 映射不同的按键到该命令，但采用不同的参数。
     map('spa', ':setProxyMode always');
@@ -358,10 +352,11 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, 设置代理模式，有五种模式：direct, byhost, always, system 和 clear。
+* setProxyMode, 设置代理模式，有五种模式：direct, byhost, bypass, always, system 和 clear。
 
         direct      Chrome不使用代理访问任何网站。
-        byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。
+        byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。你可以添加多条映射，让不同的网站使用不同的代理。
+        bypass      Chrome使用代理访问所有网站，除了通过`addProxySite`命令添加过的网站。
         always      Chrome使用代理访问所有网站。
         system      Chrome使用操作系统设置的代理。
         clear       Surfingkeys不管代理，有其他插件管理，也就是禁用Surfingkeys的代理管理功能, 这是默认模式。
@@ -436,7 +431,9 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 所有normal模式下的按键都可以由点来重复，除了那些在创建时指定`repeatIgnore`为`true`的按键，如
 
-    mapkey('e', '#2Scroll a page up', 'Normal.scroll("pageUp")', {repeatIgnore: true});
+    mapkey('e', '#2Scroll a page up', function() {
+        Normal.scroll("pageUp");
+    }, {repeatIgnore: true});
 
 这样，`.`就不会往上翻页，即使你刚刚按了`e`。
 
@@ -445,7 +442,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 1. 复制markdown代码到系统剪贴板。
 1. `sm`预览剪贴板里的markdown。
 1. 在预览页，再按`sm`会打开vim编辑器编辑markdown。
-1. `:wp`刷新预览。
+1. `:wq`刷新预览。
 1. `r`可以从系统剪贴板里重新加载markdown.
 
 ![markdown](https://cloud.githubusercontent.com/assets/288207/17669897/0b6fbaf6-6342-11e6-8583-86eb8691190d.gif)
@@ -456,9 +453,13 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 ## 截屏
 
+如果你需要截屏，下面这些按键用得上，尤其是当你想截长屏／或页面中某个可以滚动的DIV时。
+
 * `yg` 截当前页的屏。
 * `yG` 滚动截完整页。
 * `yS` 截当前滚动对象的屏。
+
+按完以上任一快捷键之后，会弹出你所截取的图片，然后你可以用鼠标（😢）右键单击图片来保存或者复制。
 
 ## mermaid图形生成器
 
@@ -483,23 +484,23 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 |:---------------| :-----|
 |**keystroke**                   | 字符串，触发某个操作的按键|
 |**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
-|**action_code**                 | 字符串或者函数，一段Javascript代码，或者一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
+|**action_code**                 | 函数，一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
 |**options**                     | object, 字段属性如下 |
 |**domain**                      | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
 |**repeatIgnore**                | 布尔值[可选]，是否可通过点命令重复该按键。|
 
 一个示例，在不同网站上映射相同的按键到不同的操作：
 
-    mapkey('zz', 'Choose a tab', 'Front.chooseTab()', {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', 'Front.showUsage()', {domain: /google\.com/i});
+    mapkey('zz', 'Choose a tab', function() {
+        Front.chooseTab();
+    }, {domain: /github\.com/i});
+    mapkey('zz', 'Show usage', function() {
+        Front.showUsage();
+    }, {domain: /google\.com/i});
 
 可视化模式下的mapkey
 
     vmapkey(keystroke, help_string, action_code, [options])
-
-搜索栏里用
-
-    cmapkey(keystroke, help_string, action_code, [options])
 
 ### 映射按键到其他按键
 
@@ -570,8 +571,12 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 就相当于
 
     addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-    mapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
-    vmapkey('os', 'Search Selected with stackoverflow',  'searchSelectedWith("http://stackoverflow.com/search?q=")');
+    mapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
+    vmapkey('os', 'Search Selected with stackoverflow', function() {
+        searchSelectedWith("http://stackoverflow.com/search?q=");
+    });
 
 ### 删除搜索别名及相关绑定
 
@@ -595,14 +600,16 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | 属性 | 默认值 | 解释 |
 |:---------------|:-----|:-----|
 | Hints.characters | "asdfgqwertzxcvb" | 可用于生成拨号盘的字符。 |
+| Hints.numericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
 | Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
-| settings.richHintsForKeystroke | true | 是否启用实时按键提示。 |
+| settings.richHintsForKeystroke | 500 | 超过指定毫秒数后显示按键提示，如果指定值等于0会禁用按键提示。 |
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
 | settings.omnibarPosition | "middle" | 定义搜索框位置。 ["middle", "bottom"] |
+| settings.omnibarSuggestionTimeout | 200 | 设置触发搜索引擎提示的超时，当按键过去设定毫秒后才发起搜索引擎提示的请求，这样避免每次按键就触发请求。|
 | settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
@@ -611,6 +618,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
 | settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |
+| settings.scrollFriction | 0 | 在滚动一步之后，开始连续滚动所需要的力。数字大，表示需要更大的力来启动连续滚动，这样在开始连续滚动时会有一个抖动，但也能保证第一步的滚动幅度是精确的。 |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | 匹配下一页链接的正则表达式。 |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| 匹配上一页链接的正则表达式。 |
 | settings.hintAlign | "center" | 拨号键与它对应的目标如何对齐。["left", "center", "right"] |
@@ -625,7 +633,12 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.startToShowEmoji | 2 | 在冒号后输入多少个字符才显示表情下拉选项。 |
 | settings.language | undefined | 帮助中使用何种语言，目前只支持中英文，设为"zh-CN"显示中文帮助。 |
 | settings.stealFocusOnLoad | true | 是否阻止光标定位到输入框，默认为true，这样我们可以在页面加载结束之后直接使用Surfingkeys提供的各类按键，否则需要按Esc退出输入框。 |
+| settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
+| settings.caseSensitive | false | 网页内搜索是否大小写敏感。 |
+| settings.smartCase | true | 当搜索关键字里含有大写字符时，是否自动设为大小写敏感。 |
+| settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
+| settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
 
 ### settings.theme示例，修改状态栏字体
 
@@ -639,6 +652,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
     npm install
     npm run build
+
+    npm run build firefox # build webextension for firefox
 
 ## Credits
 

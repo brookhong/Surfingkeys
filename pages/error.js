@@ -5,18 +5,17 @@ runtime.command({
         window.location.href = chrome.extension.getURL("pages/options.html");
     } else {
         var tabError = response.tabError[0];
-        $('#main-message .error-code').html(tabError.error);
-        var a = $('#main-message a');
-        a.html(tabError.url);
-        a.attr('href', tabError.url);
+        setInnerHTML(document.querySelector('#main-message .error-code'), tabError.error);
+        var a = document.querySelector('#main-message a');
+        setInnerHTML(a, tabError.url);
+        a.setAttribute('href', tabError.url);
         var host = tabError.url.replace(/^\w+:\/\/([^\/]+)\/.*$/i, "$1");
         if (/.*\..*\./.test(host)) {
             host = host.replace(/^[^\.]*\./, '');
         }
-        $('#errorHost').html(host);
-        var wrapper = $('div.interstitial-wrapper');
-        var margin = "15% calc(50% - {0}px)".format(wrapper.width() / 2);
-        wrapper.css('margin', margin);
+        setInnerHTML(document.getElementById('errorHost'), host);
+        var wrapper = document.querySelector('div.interstitial-wrapper');
+        wrapper.style.margin = `15% calc(50% - ${wrapper.offsetWidth / 2}px)`;;
 
         mapkey('r', 'reload', function() {
             window.location.href = tabError.url;

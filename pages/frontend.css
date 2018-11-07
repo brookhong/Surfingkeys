@@ -2,9 +2,6 @@
     background: #fff;
     color: #000;
 }
-.sk_theme tbody {
-    color: #000;
-}
 .sk_theme input {
     color: #000;
 }
@@ -13,9 +10,6 @@
 }
 .sk_theme .annotation {
     color: #222;
-}
-.sk_theme .focused {
-    background: #cddef9 !important;
 }
 .sk_theme kbd {
     background: #ddd;
@@ -42,6 +36,9 @@
 .sk_theme .feature_name {
     color: #e09b7e;
 }
+.sk_theme .separator {
+    color: #b5b507;
+}
 
 body {
     margin: 0;
@@ -49,7 +46,6 @@ body {
     font-size: 12px;
 }
 #sk_omnibar {
-    display: none;
     overflow: hidden;
     position: fixed;
     width: 80%;
@@ -105,6 +101,7 @@ body {
 #sk_omnibarSearchResult {
     max-height: 600px;
     overflow: hidden;
+    margin: 0rem 0.6rem;
 }
 #sk_omnibarSearchResult:empty {
     display: none;
@@ -113,12 +110,24 @@ body {
     padding: 0;
 }
 #sk_omnibarSearchResult>ul>li {
-    margin: 0rem 0.6rem;
-    padding: 0.2rem;
+    padding: 0.2rem 0rem;
     display: block;
+    max-height: 600px;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
-#sk_omnibarSearchResult>ul>li:nth-child(odd) {
+.sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
     background: #fafafa;
+}
+.sk_theme #sk_omnibarSearchResult>ul>li.focused {
+    background: #cddef9;
+}
+.sk_theme div.table {
+    display: table;
+}
+.sk_theme div.table>* {
+    vertical-align: middle;
+    display: table-cell;
 }
 #sk_omnibarSearchResult li div.title {
     text-align: left;
@@ -134,7 +143,6 @@ body {
     float: right;
 }
 #sk_status {
-    display: none;
     position: fixed;
     bottom: 0;
     right: 20%;
@@ -147,29 +155,19 @@ body {
 #sk_status>span {
     line-height: 16px;
 }
-#sk_richKeystroke {
-    z-index: 2147483001;
-    position: absolute;
-    background: #fff;
-    max-width: 18%;
-    bottom: -4px;
-    right: -4px;
-    padding: 4px 20px 8px 4px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
-}
-#sk_richKeystroke span.annotation {
+.expandRichHints span.annotation {
     padding-left: 4px;
 }
-#sk_richKeystroke .kbd-span {
-    width: 30px;
+.expandRichHints .kbd-span {
+    min-width: 30px;
     text-align: right;
     display: inline-block;
 }
-#sk_richKeystroke kbd>.candidates {
+.expandRichHints kbd>.candidates {
     color: #de0606;
     font-weight: bold;
 }
-#sk_richKeystroke kbd {
+.expandRichHints kbd {
     padding: 1px 2px;
 }
 #sk_find {
@@ -177,14 +175,15 @@ body {
     outline: none;
 }
 #sk_keystroke {
-    background-color: #000;
-    color: #fff;
     padding: 6px;
     position: fixed;
     float: right;
     bottom: 0px;
-    right: -2rem;
     z-index: 2147483000;
+}
+.simpleHint {
+    background: #000;
+    color: #fff;
 }
 #sk_usage, #sk_popup, #sk_editor {
     overflow: auto;
@@ -236,29 +235,6 @@ kbd {
     border-radius: 3px;
     box-shadow: inset 0 -1px 0 #bbb;
 }
-div.pressedKey {
-    text-align: center;
-    padding: 50px;
-}
-div.pressedKey kbd {
-    font-size: 24pt;
-    padding: 16px;
-}
-#sk_frame {
-    position: absolute;
-    border: 4px solid #3CF30F;
-    box-sizing: border-box;
-    z-index: 2147483000;
-    background: rgba(129, 120, 222, 0.62);
-    box-shadow: 0px 0px 10px rgba(218, 60, 13, 0.8);
-}
-#sk_clipboard {
-    position: fixed;
-    z-index: -999;
-    top: 0;
-    left: 0;
-    opacity: 0;
-}
 #sk_banner {
     padding: 0.5rem;
     position: fixed;
@@ -282,17 +258,8 @@ div.pressedKey kbd {
     width: 100%;
     height: 100%;
     background: transparent;
+    overflow: auto;
     z-index: 2147483000;
-}
-div.sk_tabs_fg {
-    position: fixed;
-    z-index: 2147483001;
-}
-div.sk_tabs_bg {
-    position: fixed;
-    z-index: 2147483299;
-    background: #eee;
-    opacity: 0.2;
 }
 div.sk_tab {
     display: inline-block;
@@ -313,6 +280,7 @@ div.sk_tab_icon>img {
     width: 18px;
 }
 div.sk_tab_title {
+    width: 150px;
     display: inline-block;
     vertical-align: middle;
     font-size: 10pt;
@@ -352,6 +320,21 @@ div.sk_tab_hint {
     z-index: 2147483000;
     font-size: 14px;
 }
+#sk_bubble .sk_bubble_content {
+    overflow-y: scroll;
+    background-size: 3px 100%;
+    background-position: 100%;
+    background-repeat: no-repeat;
+}
+.sk_scroller_indicator_top {
+    background-image: linear-gradient(rgb(0, 0, 0), transparent);
+}
+.sk_scroller_indicator_middle {
+    background-image: linear-gradient(transparent, rgb(0, 0, 0), transparent);
+}
+.sk_scroller_indicator_bottom {
+    background-image: linear-gradient(transparent, rgb(0, 0, 0));
+}
 #sk_bubble * {
     color: #000 !important;
 }
@@ -387,4 +370,84 @@ div.sk_arrow[dir=up]>div:nth-of-type(2) {
 .ace_editor.ace_autocomplete {
     z-index: 2147483300 !important;
     width: 80% !important;
+}
+
+@keyframes slideInBanner {
+    0%, 100% {
+        top: -3rem;
+    }
+
+    18%, 82% {
+        top: 0px;
+    }
+}
+
+.slideInBanner {
+    animation: 1.6s ease-in-out 1 both slideInBanner;
+}
+
+@keyframes slideInRight {
+    0% {
+        right: -2rem;
+    }
+
+    100% {
+        right: 0px;
+    }
+}
+
+.slideInRight {
+    right: 0rem;
+    animation: 0.3s ease-in-out 1 forwards slideInRight;
+}
+
+@keyframes slideOutRight {
+    0% {
+        right: 0px;
+    }
+
+    100% {
+        right: -2rem;
+    }
+}
+
+.slideOutRight {
+    right: -2rem;
+    animation: 0.3s ease-in-out 1 forwards slideOutRight;
+}
+
+@keyframes expandRichHints {
+    0% {
+        opacity: 0.4;
+        box-shadow: 0px 0px 0px;
+        transform: scale3d(.3, .3, .3);
+        transform-origin: right bottom;
+    }
+
+    100% {
+        opacity: 1;
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
+    }
+}
+
+.expandRichHints {
+    animation: 0.2s ease-in-out 1 forwards expandRichHints;
+}
+
+@keyframes collapseRichHints {
+    0% {
+        opacity: 1;
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    100% {
+        opacity: 0;
+        box-shadow: 0px 0px 0px;
+        transform: scale3d(.3, .3, .3);
+        transform-origin: right bottom;
+    }
+}
+
+.collapseRichHints {
+    animation: 0.2s ease-in-out 1 forwards collapseRichHints;
 }

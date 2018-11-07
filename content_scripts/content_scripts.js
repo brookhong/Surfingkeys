@@ -1,98 +1,4 @@
-document.addEventListener("DOMNodeInsertedIntoDocument", function(evt) {
-    var elm = evt.srcElement;
-    if (elm.tagName === "EMBED" && elm.type === "application/pdf") {
-        var url = new URL(elm.src);
-        chrome.storage.local.get("noPdfViewer", function(resp) {
-            if (!resp.noPdfViewer) {
-                setTimeout(function() {
-                    // stop before redirect to prevent chrome crash
-                    window.stop();
-                    window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?r=" + elm.src);
-                }, 0);
-            }
-        });
-    }
-}, true);
-
-var getTopURLPromise = new Promise(function(resolve, reject) {
-    if (window === top) {
-        resolve(window.location.href);
-    } else {
-        runtime.command({
-            action: "getTopURL"
-        }, function(rs) {
-            resolve(rs.url);
-        });
-    }
-});
-
-function shouldWorkFor(domain, cb) {
-    getTopURLPromise.then(function(url) {
-        if (!domain || domain.test(url)) {
-            cb();
-        }
-    });
-}
-
-if (typeof(Commands) === 'undefined') {
-    Commands = { items: {} };
-}
-
-function command(cmd, annotation, jscode) {
-    if (typeof(jscode) === 'string') {
-        jscode = new Function(jscode);
-    }
-    var cmd_code = {
-        code: jscode
-    };
-    if (Front.isProvider()) {
-        // annotations for commands ared used in frontend.html
-        var ag = _parseAnnotation({annotation: annotation, feature_group: 14});
-        cmd_code.feature_group = ag.feature_group;
-        cmd_code.annotation = ag.annotation;
-    }
-    Commands.items[cmd] = cmd_code;
-}
-
-function parseCommand(cmdline) {
-    var cmdline = cmdline.trim();
-    var tokens = [];
-    var pendingToken = false;
-    var part = '';
-    for (var i = 0; i < cmdline.length; i++) {
-        if (cmdline.charAt(i) === ' ' && !pendingToken) {
-            tokens.push(part);
-            part = '';
-        } else {
-            if (cmdline.charAt(i) === '\"') {
-                pendingToken = !pendingToken;
-            } else {
-                part += cmdline.charAt(i);
-            }
-        }
-    }
-    tokens.push(part);
-    return tokens;
-}
-
-RUNTIME = function(action, args) {
-    var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight'];
-    (args = args || {}).action = action;
-    if (actionsRepeatBackground.indexOf(action) !== -1) {
-        // if the action can only be repeated in background, pass repeats to background with args,
-        // and set RUNTIME.repeats 1, so that it won't be repeated in foreground's _handleMapKey
-        args.repeats = RUNTIME.repeats;
-        RUNTIME.repeats = 1;
-    }
-    try {
-        chrome.runtime.sendMessage(args);
-    } catch (e) {
-        console.log('[runtime exception] ' + e);
-        window.location.reload();
-    }
-}
-
-AutoCommands = {};
+var AutoCommands = {};
 function autocmd(domain, jscode) {
     var dp = "",
         po;
@@ -103,22 +9,10 @@ function autocmd(domain, jscode) {
         dp = domain;
         po = new RegExp(domain);
     }
-    if (typeof(jscode) === 'string') {
-        jscode = new Function(jscode);
-    }
     AutoCommands[dp] = {
         code: jscode,
         regex: po
     };
-}
-
-function _parseAnnotation(ag) {
-    var annotations = ag.annotation.match(/#(\d+)(.*)/);
-    if (annotations !== null) {
-        ag.feature_group = parseInt(annotations[1]);
-        ag.annotation = annotations[2];
-    }
-    return ag;
 }
 
 function createKeyTarget(code, ag, repeatIgnore) {
@@ -133,22 +27,18 @@ function createKeyTarget(code, ag, repeatIgnore) {
         keybound.feature_group = ag.feature_group;
         keybound.annotation = ag.annotation;
     }
+
     return keybound;
 }
 
 function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
-    shouldWorkFor(options.domain, function() {
-        keys = encodeKeystroke(keys);
+    if (!options.domain || options.domain.test(document.location.href)) {
+        keys = KeyboardUtils.encodeKeystroke(keys);
         mode.mappings.remove(keys);
-        if (typeof(jscode) === 'string') {
-            jscode = new Function(jscode);
-        }
-        // to save memory, we keep annotations only in frontend.html, where they are used to create usage message.
-        var ag = (!Front.isProvider()) ? null : {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)};
-        var keybound = createKeyTarget(jscode, ag, options.repeatIgnore);
+        var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
-    });
+    }
 }
 
 function mapkey(keys, annotation, jscode, options) {
@@ -163,44 +53,27 @@ function imapkey(keys, annotation, jscode, options) {
     _mapkey(Insert, keys, annotation, jscode, options);
 }
 
-function cmapkey(keys, annotation, jscode, options) {
-    if (typeof(Omnibar) !== 'undefined') {
-        _mapkey(Omnibar, keys, annotation, jscode, options);
-    }
-}
-
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         if (old_keystroke[0] === ':') {
             var cmdline = old_keystroke.substr(1);
-            var args = parseCommand(cmdline);
-            var cmd = args.shift();
-            if (Commands.items.hasOwnProperty(cmd)) {
-                var meta = Commands.items[cmd];
-                var ag = (!Front.isProvider()) ? null : {annotation: new_annotation || meta.annotation, feature_group: meta.feature_group};
-                var keybound = createKeyTarget(function() {
-                    meta.code.call(meta.code, args);
-                }, ag, meta.repeatIgnore);
-                Normal.mappings.add(encodeKeystroke(new_keystroke), keybound);
-            }
+            var keybound = createKeyTarget(function () {
+                Front.executeCommand(cmdline);
+            }, new_annotation ? _parseAnnotation({ annotation: new_annotation }) : null, false);
+            Normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
         } else {
-            var old_map = Normal.mappings.find(encodeKeystroke(old_keystroke));
-            if (old_map) {
-                var nks = encodeKeystroke(new_keystroke);
-                Normal.mappings.remove(nks);
-                Normal.mappings.add(nks, old_map.meta);
-            } else if (old_keystroke in Mode.specialKeys) {
+            if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
             }
         }
-    });
+    }
 }
 
 function unmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
-        var old_map = Normal.mappings.find(encodeKeystroke(keystroke));
+    if (!domain || domain.test(document.location.href)) {
+        var old_map = Normal.mappings.find(KeyboardUtils.encodeKeystroke(keystroke));
         if (old_map) {
-            Normal.mappings.remove(encodeKeystroke(keystroke));
+            Normal.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
         } else {
             for (var k in Mode.specialKeys) {
                 var idx = Mode.specialKeys[k].indexOf(keystroke);
@@ -209,17 +82,17 @@ function unmap(keystroke, domain) {
                 }
             }
         }
-    });
+    }
 }
 
 function unmapAllExcept(keystrokes, domain) {
-    shouldWorkFor(domain, function() {
+    if (!domain || domain.test(document.location.href)) {
         var modes = [Normal, Insert];
         modes.forEach(function(mode) {
             var _mappings = new Trie();
             keystrokes = keystrokes || [];
             for (var i = 0, il = keystrokes.length; i < il; i++) {
-                var ks = encodeKeystroke(keystrokes[i]);
+                var ks = KeyboardUtils.encodeKeystroke(keystrokes[i]);
                 var node = mode.mappings.find(ks);
                 if (node) {
                     _mappings.add(ks, node.meta);
@@ -229,104 +102,85 @@ function unmapAllExcept(keystrokes, domain) {
             mode.mappings = _mappings;
             mode.map_node = _mappings;
         });
-    });
+    }
 }
 
 function imap(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
-        var old_map = Insert.mappings.find(encodeKeystroke(old_keystroke));
-        if (old_map) {
-            var nks = encodeKeystroke(new_keystroke);
-            Insert.mappings.remove(nks);
-            // meta.word need to be new
-            var meta = $.extend({}, old_map.meta);
-            Insert.mappings.add(nks, meta);
-        }
-    });
+    if (!domain || domain.test(document.location.href)) {
+        _map(Insert, new_keystroke, old_keystroke);
+    }
 }
 
 function iunmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
-        Insert.mappings.remove(encodeKeystroke(keystroke));
-    });
+    if (!domain || domain.test(document.location.href)) {
+        Insert.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
+    }
 }
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    if (typeof(Omnibar) !== 'undefined') {
-        shouldWorkFor(domain, function() {
-            var old_map = Omnibar.mappings.find(encodeKeystroke(old_keystroke));
-            if (old_map) {
-                var nks = encodeKeystroke(new_keystroke);
-                Omnibar.mappings.remove(nks);
-                // meta.word need to be new
-                var meta = $.extend({}, old_map.meta);
-                Omnibar.mappings.add(nks, meta);
-            }
-        });
+    if (!domain || domain.test(document.location.href)) {
+        Front.addCMap(new_keystroke, old_keystroke);
     }
 }
 
 function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
-    shouldWorkFor(domain, function() {
-        var old_map = Visual.mappings.find(encodeKeystroke(old_keystroke));
-        if (old_map) {
-            var nks = encodeKeystroke(new_keystroke);
-            Visual.mappings.remove(nks);
-            // meta.word need to be new
-            var meta = $.extend({}, old_map.meta);
-            Visual.mappings.add(nks, meta);
-        }
-    });
+    if (!domain || domain.test(document.location.href)) {
+        _map(Visual, new_keystroke, old_keystroke);
+    }
 }
 
 function vunmap(keystroke, domain) {
-    shouldWorkFor(domain, function() {
-        Visual.mappings.remove(encodeKeystroke(keystroke));
-    });
+    if (!domain || domain.test(document.location.href)) {
+        Visual.mappings.remove(KeyboardUtils.encodeKeystroke(keystroke));
+    }
 }
 
 function aceVimMap(lhs, rhs, ctx) {
-    if (typeof(Front.vimMappings) !== 'undefined') {
-        Front.vimMappings.push(arguments);
-    }
+    Front.addVimMap(lhs, rhs, ctx);
 }
 
-function onAceVimKeymapInit(fn) {
-    if (typeof(Front.vimMappings) !== 'undefined') {
-        Front.keymapModifier = fn;
-    }
+function addVimMapKey() {
+    Front.addVimKeyMap(Array.from(arguments));
+}
+
+function addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
+    Front.addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion);
+}
+
+function removeSearchAlias(alias) {
+    Front.removeSearchAlias(alias);
 }
 
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
-    if (typeof(addSearchAlias) !== 'undefined') {
-        addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+    addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
+    function ssw() {
+        searchSelectedWith(search_url);
     }
-    mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, 'searchSelectedWith("{0}")'.format(search_url));
-    vmapkey((search_leader_key || 's') + alias, '', 'searchSelectedWith("{0}")'.format(search_url));
-    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', 'searchSelectedWith("{0}", true)'.format(search_url));
-    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', 'searchSelectedWith("{0}", true)'.format(search_url));
+    mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
+    vmapkey((search_leader_key || 's') + alias, '', ssw);
+    function ssw2() {
+        searchSelectedWith(search_url, true);
+    }
+    mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
+    vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
 
     var capitalAlias = alias.toUpperCase();
     if (capitalAlias !== alias) {
-        mapkey((search_leader_key || 's') + capitalAlias, '', function() {
+        function ssw4() {
             searchSelectedWith(search_url, false, true, alias);
-        });
-        vmapkey((search_leader_key || 's') + capitalAlias, '', function() {
-            searchSelectedWith(search_url, false, true, alias);
-        });
-        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', function() {
+        }
+        mapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
+        vmapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
+        function ssw5() {
             searchSelectedWith(search_url, true, true, alias);
-        });
-        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', function() {
-            searchSelectedWith(search_url, true, true, alias);
-        });
+        }
+        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
+        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
     }
 }
 
 function removeSearchAliasX(alias, search_leader_key, only_this_site_key) {
-    if (typeof(removeSearchAlias) !== 'undefined') {
-        removeSearchAlias(alias);
-    }
+    removeSearchAlias(alias);
     unmap((search_leader_key || 's') + alias);
     vunmap((search_leader_key || 's') + alias);
     unmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
@@ -355,7 +209,8 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.prevLinkRegex);
+    var prevLinks = getClickableElements("a, button", runtime.conf.prevLinkRegex);
+    prevLinks = filterOverlapElements(prevLinks);
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -365,7 +220,8 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = $('a:visible, button:visible, *:visible:css(cursor=pointer)').regex(runtime.conf.nextLinkRegex);
+    var nextLinks = getClickableElements("a, button", runtime.conf.nextLinkRegex);
+    nextLinks = filterOverlapElements(nextLinks);
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
@@ -374,59 +230,8 @@ function nextPage() {
     }
 }
 
-function tabOpenLink(str, simultaneousness) {
-    simultaneousness = simultaneousness || 5;
-
-    var urls;
-    if (str.constructor.name === "Array") {
-        urls = str
-    } else if (str.constructor.name === "jQuery") {
-        urls = str.map(function() {
-            return this.href;
-        }).toArray();
-    } else {
-        urls = str.trim().split('\n');
-    }
-
-    urls = urls.map(function(u) {
-        return u.trim();
-    }).filter(function(u) {
-        return u.length > 0;
-    });
-    // open the first batch links immediately
-    urls.slice(0, simultaneousness).forEach(function(url) {
-        if (/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
-            if (/^[\w-]+?:\/\//i.test(url)) {
-                url = url
-            } else {
-                url = "http://" + url;
-            }
-        }
-        RUNTIME("openLink", {
-            tab: {
-                tabbed: true
-            },
-            url: url
-        });
-    });
-    // queue the left for later opening when there is one tab closed.
-    if (urls.length > simultaneousness) {
-        RUNTIME("queueURLs", {
-            urls: urls.slice(simultaneousness)
-        });
-    }
-}
-
-function constructSearchURL(se, word) {
-    if (se.indexOf("{0}") > 0) {
-        return se.format(word);
-    } else {
-        return se + word;
-    }
-}
-
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-    Front.getContentFromClipboard(function(response) {
+    Clipboard.read(function(response) {
         var query = window.getSelection().toString() || response.data;
         if (onlyThisSite) {
             query = "site:" + window.location.hostname + " " + query;
@@ -440,58 +245,45 @@ function searchSelectedWith(se, onlyThisSite, interactive, alias) {
 }
 
 function clickOn(links, force) {
-    var ret = false;
     if (typeof(links) === 'string') {
-        links = $(links);
+        links = getClickableElements(links);
     }
-    var clean = [], pushed = {};
-    links.each(function() {
-        if (this.href) {
-            if (!pushed.hasOwnProperty(this.href)) {
-                clean.push(this);
-                pushed[this.href] = 1;
-            }
-        } else {
-            clean.push(this);
-        }
-    });
-    if (clean.length > 1) {
+    if (links.length > 1) {
         if (force) {
-            clean.forEach(function(u) {
+            links.forEach(function(u) {
                 Hints.dispatchMouseClick(u);
             });
         } else {
-            Hints.create(clean, Hints.dispatchMouseClick);
+            Hints.create(links, Hints.dispatchMouseClick);
         }
-    } else if (clean.length === 1) {
-        Hints.dispatchMouseClick(clean[0]);
+    } else if (links.length === 1) {
+        Hints.dispatchMouseClick(links[0]);
     }
 }
 
 function getFormData(form, format) {
+    var formData = new FormData(form);
     if (format === "json") {
-        var unindexed_array = $(form).serializeArray();
-        var indexed_array = {};
+        var obj = {};
 
-        $.map(unindexed_array, function(n, i){
-            var nn = n['name'];
-            var vv = n['value'];
-            if (indexed_array.hasOwnProperty(nn)) {
-                var p = indexed_array[nn];
+        formData.forEach(function(value, key) {
+            if (obj.hasOwnProperty(key)) {
+                var p = obj[key];
                 if (p.constructor.name === "Array") {
-                    p.push(vv);
+                    p.push(value);
                 } else {
-                    indexed_array[nn] = [];
-                    indexed_array[nn].push(p);
-                    indexed_array[nn].push(vv);
+                    obj[key] = [];
+                    obj[key].push(p);
+                    obj[key].push(value);
                 }
             } else {
-                indexed_array[nn] = vv;
+                obj[key] = value;
             }
         });
-        return indexed_array;
+
+        return obj;
     } else {
-        return $(form).serialize();
+        return new URLSearchParams(formData).toString();
     }
 }
 
@@ -504,7 +296,7 @@ function httpRequest(args, onSuccess) {
 /*
  * run user snippets, and return settings updated in snippets
  */
-function runUserScript(snippets) {
+function runScript(snippets) {
     var result = { settings: {}, error: "" };
     try {
         var F = new Function('settings', snippets);
@@ -524,8 +316,8 @@ function applySettings(rs) {
     if ('findHistory' in rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
-    if (('snippets' in rs) && rs.snippets) {
-        var delta = runUserScript(rs.snippets);
+    if ('snippets' in rs && rs.snippets && !Front.isProvider()) {
+        var delta = runScript(rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
                 Front.showPopup("Error found in settings: " + delta.error);
@@ -533,11 +325,8 @@ function applySettings(rs) {
                 console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
             }
         }
-        if (!jQuery.isEmptyObject(delta.settings)) {
-            if ('theme' in delta.settings) {
-                $(document).trigger("surfingkeys:themeChanged", [delta.settings.theme]);
-                delete delta.settings.theme;
-            }
+        if (!isEmptyObject(delta.settings)) {
+            Front.applyUserSettings(JSON.parse(JSON.stringify(delta.settings)));
             // overrides local settings from snippets
             for (var k in delta.settings) {
                 if (runtime.conf.hasOwnProperty(k)) {
@@ -545,7 +334,7 @@ function applySettings(rs) {
                     delete delta.settings[k];
                 }
             }
-            if (Object.keys(delta.settings).length > 0) {
+            if (Object.keys(delta.settings).length > 0 && window === top) {
                 // left settings are for background, need not broadcast the update, neither persist into storage
                 runtime.command({
                     action: 'updateSettings',
@@ -590,7 +379,7 @@ runtime.on('settingsUpdated', function(response) {
     }
 });
 
-$(document).on('surfingkeys:defaultSettingsLoaded', function() {
+function _init() {
     runtime.command({
         action: 'getSettings'
     }, function(response) {
@@ -602,40 +391,26 @@ $(document).on('surfingkeys:defaultSettingsLoaded', function() {
 
         runtime.command({
             action: 'getDisabled',
-            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-        }, function(resp) {
+            blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
+        }, function (resp) {
             if (resp.disabled) {
                 Disabled.enter(0, true);
             } else {
-                document.addEventListener('DOMContentLoaded', function(e) {
-                    GetBackFocus.enter(0, true);
-                });
+                usePdfViewer();
             }
 
             if (window === top) {
-                // this block being put here instead of top.js is to ensure sequence.
                 runtime.command({
                     action: 'setSurfingkeysIcon',
                     status: resp.disabled
                 });
             }
         });
-    });
-});
 
-Normal.insertJS(function() {
-    var _wr = function(type) {
-        var orig = history[type];
-        return function() {
-            var rv = orig.apply(this, arguments);
-            var e = new NativeEventForSK(type);
-            e.arguments = arguments;
-            window.dispatchEvent(e);
-            return rv;
-        };
-    };
-    // Hold Event at NativeEventForSK in case of it is overrided
-    // test with http://search.bilibili.com/
-    var NativeEventForSK = Event;
-    history.pushState = _wr('pushState'), history.replaceState = _wr('replaceState');
+        document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+    });
+}
+
+document.addEventListener("surfingkeys:defaultSettingsLoaded", function (evt) {
+    _init();
 });
