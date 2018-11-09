@@ -331,6 +331,28 @@ var Hints = (function() {
         document.documentElement.prepend(holder);
     }
 
+    function createHintsForElements(elements, attrs) {
+        attrs = Object.assign({
+            active: true,
+            tabbed: false,
+            mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
+            multipleHits: false,
+            filterInvisible: true
+        }, attrs || {});
+        for (var attr in attrs) {
+            behaviours[attr] = attrs[attr];
+        }
+        self.statusLine = (attrs && attrs.statusLine) || "Hints to click";
+
+        if (attrs.filterInvisible) {
+            elements = filterInvisibleElements(elements);
+        }
+        if (elements.length > 0) {
+            placeHints(elements);
+        }
+        return elements.length;
+    }
+
     function createHintsForClick(cssSelector, attrs) {
         self.statusLine = "Hints to click";
 
@@ -467,7 +489,12 @@ var Hints = (function() {
     }
 
     function createHints(cssSelector, attrs) {
-        return (cssSelector.constructor.name === "RegExp") ? createHintsForTextNode(cssSelector, attrs) : createHintsForClick(cssSelector, attrs);
+        if (cssSelector.constructor.name === "RegExp") {
+            return createHintsForTextNode(cssSelector, attrs);
+        } else if (Array.isArray(cssSelector)) {
+            return createHintsForElements(cssSelector, attrs);
+        }
+        return createHintsForClick(cssSelector, attrs);
     }
 
     self.createInputLayer = function() {
