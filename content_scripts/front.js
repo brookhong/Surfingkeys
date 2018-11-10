@@ -452,7 +452,11 @@ var Front = (function() {
     runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
-            scrollIntoViewIfNeeded(document.body);
+            document.body.scrollIntoView({
+                behavior: 'auto',
+                block: 'center',
+                inline: 'center'
+            });
             var rc = document.body.getBoundingClientRect();
             self.highlightElement({
                 duration: 500,

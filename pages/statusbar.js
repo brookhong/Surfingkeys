@@ -127,6 +127,7 @@ var Find = (function() {
                         action: 'visualUpdate',
                         query: query
                     });
+                    event.preventDefault();
                 }
             }
         };
