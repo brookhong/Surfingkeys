@@ -169,7 +169,7 @@ var Mode = (function() {
         return mode_stack;
     };
 
-    function _finish(mode) {
+    self.finish = function (mode) {
         var ret = false;
         if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
             mode.map_node = mode.mappings;
@@ -188,7 +188,7 @@ var Mode = (function() {
             key = event.sk_keyName;
         this.isTrustedEvent = event.isTrusted;
 
-        if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
+        if (Mode.isSpecialKeyOf("<Esc>", key) && self.finish(this)) {
             event.sk_stopPropagation = true;
             event.sk_suppressed = true;
         } else if (this.pendingMap) {
@@ -198,7 +198,7 @@ var Mode = (function() {
                 || this.map_node.meta.stopPropagation(key));
             setTimeout(function() {
                 pf(key);
-                _finish(thisMode);
+                self.finish(thisMode);
                 onAfterHandler(thisMode, event);
             }, 0);
         } else if (this.repeats !== undefined &&
@@ -215,7 +215,7 @@ var Mode = (function() {
             if (!this.map_node) {
                 onNoMatched && onNoMatched(last);
                 event.sk_suppressed = (last !== this.mappings);
-                _finish(this);
+                self.finish(this);
             } else {
                 if (this.map_node.meta) {
                     var code = this.map_node.meta.code;
@@ -234,7 +234,7 @@ var Mode = (function() {
                                 code();
                                 RUNTIME.repeats--;
                             }
-                            _finish(thisMode);
+                            self.finish(thisMode);
                             onAfterHandler(thisMode, event);
                         }, 0);
                     }
@@ -324,6 +324,7 @@ var Normal = (function() {
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist();
+            Mode.finish(self);
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event);
