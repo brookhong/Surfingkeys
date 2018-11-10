@@ -194,7 +194,8 @@ var Mode = (function() {
         } else if (this.pendingMap) {
             this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
             var pf = this.pendingMap.bind(this);
-            event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
+            event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
+                || this.map_node.meta.stopPropagation(key));
             setTimeout(function() {
                 pf(key);
                 _finish(thisMode);
@@ -226,8 +227,8 @@ var Mode = (function() {
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
-                        event.sk_stopPropagation = (!this.map_node.meta.keepPropagation
-                            || (this === Insert && key.charCodeAt(0) < 256));
+                        event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
+                            || this.map_node.meta.stopPropagation(key));
                         setTimeout(function() {
                             while(RUNTIME.repeats > 0) {
                                 code();

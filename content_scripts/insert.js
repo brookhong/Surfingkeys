@@ -139,7 +139,11 @@ var Insert = (function() {
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
         annotation: "Exit insert mode",
         feature_group: 15,
-        keepPropagation: true,
+        stopPropagation: function(key) {
+            // return true only if bind key is not an ASCII key
+            // so that imap(',,', "<Esc>") won't leave a comma in input
+            return key.charCodeAt(0) < 256;
+        },
         code: function() {
             getRealEdit().blur();
             self.exit();
@@ -153,7 +157,9 @@ var Insert = (function() {
     self.mappings.add(":", {
         annotation: "Input emoji",
         feature_group: 15,
-        keepPropagation: true,
+        stopPropagation: function() {
+            return false;
+        },
         code: function() {
             var element = getRealEdit();
             if (element.selectionStart !== undefined) {
