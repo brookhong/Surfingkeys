@@ -401,13 +401,13 @@ var Insert = (function() {
 
     var _element;
     var _enter = self.enter;
-    self.enter = function(elm) {
+    self.enter = function(elm, keepCursor) {
         var changed = (_enter.call(self) === -1);
         if (_element !== elm) {
             _element = elm;
             changed = true;
         }
-        if (changed && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
+        if (changed && !keepCursor && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
             moveCusorEOL();
         }
     };

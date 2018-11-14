@@ -318,9 +318,9 @@ var Normal = (function() {
                 realTarget.blur();
                 Insert.exit();
             } else {
-                // enable Tab key to focus next input
                 Normal.passFocus(true);
-                Insert.enter(realTarget);
+                // keep cursor where it is
+                Insert.enter(realTarget, true);
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist();
