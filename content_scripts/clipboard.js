@@ -8,7 +8,8 @@ var Clipboard = (function(mode) {
 
     function clipboardActionWithSelectionPreserved(cb) {
         actionWithSelectionPreserved(function(selection) {
-            document.body.appendChild(holder);
+            // avoid editable body
+            document.documentElement.appendChild(holder);
 
             cb(selection);
 
