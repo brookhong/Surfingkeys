@@ -639,6 +639,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.smartCase | true | 当搜索关键字里含有大写字符时，是否自动设为大小写敏感。 |
 | settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
 | settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
+| settings.editableBodyCare | true | 当焦点定位到一个可编辑的元素时，Insert模式会自动激活，所以如果某个window/iframe里的document.body本身就是可编辑的（例如docs.google.com），Insert模式会一直处于激活状态，这样所有Normal模式下的按键都不可用了。当`editableBodyCare`为`true`时，Insert模式在这种情况下不会自动激活。|
 
 ### settings.theme示例，修改状态栏字体
 

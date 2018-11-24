@@ -654,6 +654,7 @@ For example,
 | settings.smartCase | true | Whether to make caseSensitive true if the search pattern contains upper case characters. |
 | settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
 | settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
+| settings.editableBodyCare | true | Insert mode is activated automatically when an editable element is focused, so if document.body is editable for some window/iframe (such as docs.google.com), Insert mode is always activated on the window/iframe, which means all shortcuts from Normal mode will not be available. With `editableBodyCare` as `true`, Insert mode will not be activated automatically in this case. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

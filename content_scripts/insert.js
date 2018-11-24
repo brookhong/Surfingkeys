@@ -270,7 +270,6 @@ var Insert = (function() {
     var _suppressKeyup = false;
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
-        event.sk_suppressed = true;
         var realTarget = getRealEdit(event);
         if (_emojiDiv.offsetHeight > 0) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
@@ -341,6 +340,7 @@ var Insert = (function() {
                 }
             });
         }
+        event.sk_suppressed = true;
     });
     self.addEventListener('keyup', function(event) {
         var realTarget = getRealEdit(event);
@@ -402,6 +402,9 @@ var Insert = (function() {
     var _element;
     var _enter = self.enter;
     self.enter = function(elm, keepCursor) {
+        if (elm === document.body) {
+            runtime.conf.showModeStatus = false;
+        }
         var changed = (_enter.call(self) === -1);
         if (_element !== elm) {
             _element = elm;

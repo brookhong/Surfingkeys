@@ -11,6 +11,7 @@ var runtime = window.runtime || (function() {
             cursorAtEndOfInput: true,
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
+            editableBodyCare: true,
             enableAutoFocus: true,
             experiment: false,
             focusFirstCandidate: false,
