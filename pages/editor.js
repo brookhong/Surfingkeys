@@ -246,22 +246,24 @@ var AceEditor = (function() {
             originValue = message.content;
             _ace.container.querySelector('textarea').focus();
             self.enter();
-            vim.map('<CR>', ':wq', 'insert');
             _editorType = message.type;
             _ace.setFontSize(16);
+            vim.unmap('<CR>', 'insert');
+            vim.unmap('<C-CR>', 'insert');
             if (message.type === 'url') {
+                vim.map('<CR>', ':wq', 'insert');
                 _ace.renderer.setOption('showLineNumbers', false);
                 _ace.language_tools.setCompleters([urlCompleter]);
                 _ace.container.style.height = "30%";
             } else if (message.type === 'input') {
+                vim.map('<CR>', ':wq', 'insert');
                 _ace.renderer.setOption('showLineNumbers', false);
                 _ace.language_tools.setCompleters([pageWordCompleter]);
                 _ace.container.style.height = "";
             } else {
+                vim.map('<C-CR>', ':wq', 'insert');
                 _ace.renderer.setOption('showLineNumbers', true);
                 _ace.language_tools.setCompleters([pageWordCompleter]);
-                vim.unmap('<CR>', 'insert');
-                vim.map('<C-CR>', ':wq', 'insert');
                 _ace.container.style.height = "30%";
             }
             _ace.setReadOnly(message.type === 'select');
