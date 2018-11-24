@@ -539,6 +539,7 @@ var Hints = (function() {
             _lastCreateAttrs.activeInput = 0;
             var ai = document.querySelector('#sk_hints[mode=input]>div');
             ai.classList.add("activeInput");
+            Normal.passFocus(true);
             ai.link.focus();
         } else if (elements.length === 1) {
             Normal.passFocus(true);
