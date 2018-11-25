@@ -30,6 +30,9 @@ div.surfingkeys_cursor:empty {
 #sk_hints[mode=text]>div {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
+#sk_hints[mode=text]>div.begin {
+    color: #00f !important;
+}
 #sk_hints[mode=input]>div {
     background: rgba(255, 217, 0, 0.25);
 }

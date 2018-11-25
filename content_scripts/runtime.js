@@ -39,6 +39,7 @@ var runtime = window.runtime || (function() {
             startToShowEmoji: 2,
             stealFocusOnLoad: true,
             tabsThreshold: 9,
+            textAnchorPat: /(^[\n\r\s]*\S{3,}|\b\S{5,})/g,
             scrollFriction: 0,
             useLocalMarkdownAPI: true,
         },
@@ -113,9 +114,9 @@ var runtime = window.runtime || (function() {
                     action: 'updateSettings',
                     settings: toUpdate
                 });
-            } else if (cmd.length) {
+            } else if (cmd.trim().length && cmd !== ".") {
                 list = list.filter(function(c) {
-                    return c.length && c !== cmd;
+                    return c.trim().length && c !== cmd && c !== ".";
                 });
                 list.unshift(cmd);
                 if (list.length > 50) {

@@ -86,10 +86,12 @@ var Find = (function() {
         StatusBar.show(1, '<input id="sk_find" class="sk_theme"/>');
         input = Front.statusBar.querySelector("input");
         input.oninput = function() {
-            Front.visualCommand({
-                action: 'visualUpdate',
-                query: input.value
-            });
+            if (input.value.length && input.value !== ".") {
+                Front.visualCommand({
+                    action: 'visualUpdate',
+                    query: input.value
+                });
+            }
         };
         var findHistory = [];
         runtime.command({
@@ -106,7 +108,7 @@ var Find = (function() {
                 });
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.value;
-                if (query.length > 0) {
+                if (query.length && query !== ".") {
                     if (event.ctrlKey) {
                         query = '\\b' + query + '\\b';
                     }
