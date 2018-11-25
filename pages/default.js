@@ -247,9 +247,6 @@ cmap('<ArrowDown>', '<Tab>');
 cmap('<ArrowUp>', '<Shift-Tab>');
 cmap('<Ctrl-n>', '<Tab>');
 cmap('<Ctrl-p>', '<Shift-Tab>');
-mapkey('q', '#1Click on an Image or a button', function() {
-    Hints.create("img, button", Hints.dispatchMouseClick);
-});
 mapkey('<Alt-i>', '#0enter PassThrough mode to temporarily suppress SurfingKeys', function() {
     Normal.passThrough();
 });
@@ -440,6 +437,14 @@ mapkey('yf', '#7Copy form data in JSON on current page', function() {
         fd[(form.method || "get") + "::" + form.action] = getFormData(form, "json");
     });
     Clipboard.write(JSON.stringify(fd, null, 4));
+});
+mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
+    runtime.command({
+        action: 'getSettings',
+        key: 'OmniQueryHistory'
+    }, function(response) {
+        Clipboard.write(response.settings.OmniQueryHistory.join("\n"));
+    });
 });
 mapkey(';pf', '#7Fill form with data from yf', function() {
     Hints.create('form', function(element, event) {

@@ -996,6 +996,14 @@ var Normal = (function() {
             Visual.toggle();
         }
     });
+    self.mappings.add("qv", {
+        annotation: "Query word in visual mode",
+        feature_group: 7,
+        repeatIgnore: true,
+        code: function() {
+            Visual.toggle("q");
+        }
+    });
     self.mappings.add("/", {
         annotation: "Find in current page",
         feature_group: 9,

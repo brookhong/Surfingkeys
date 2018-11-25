@@ -393,21 +393,6 @@ var Hints = (function() {
         return elements.length;
     }
 
-    function getTextNodePos(node, offset) {
-        var selection = document.getSelection();
-        selection.setBaseAndExtent(node, offset, node, node.data.length);
-        var br = selection.getRangeAt(0).getClientRects()[0];
-        var pos = {
-            left: -1,
-            top: -1
-        };
-        if (br.height > 0 && br.width > 0) {
-            pos.left = br.left;
-            pos.top = br.top;
-        }
-        return pos;
-    }
-
     function createHintsForTextNode(rxp, attrs) {
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];

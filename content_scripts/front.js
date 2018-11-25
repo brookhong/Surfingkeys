@@ -64,6 +64,18 @@ var Front = (function() {
         _actions[action] = cb;
     };
 
+    _actions["updateInlineQuery"] = function (message) {
+        var b = document.getSelection().getRangeAt(0).getClientRects()[0];
+        Front.performInlineQuery(message.word, function(queryResult) {
+            Front.showBubble({
+                top: b.top,
+                left: b.left,
+                height: b.height,
+                width: b.width
+            }, queryResult, false);
+        });
+    };
+
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
         if (_listSuggestions.hasOwnProperty(message.url)) {
@@ -217,7 +229,7 @@ var Front = (function() {
     self.performInlineQuery = function (query, showQueryResult) {
         if (_inlineQuery) {
             query = query.toLocaleLowerCase();
-            runtime.updateHistory('inlineQuery', query);
+            runtime.updateHistory('OmniQuery', query);
             httpRequest({
                 url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
                 headers: _inlineQuery.headers
