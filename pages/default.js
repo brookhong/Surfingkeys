@@ -247,6 +247,9 @@ cmap('<ArrowDown>', '<Tab>');
 cmap('<ArrowUp>', '<Shift-Tab>');
 cmap('<Ctrl-n>', '<Tab>');
 cmap('<Ctrl-p>', '<Shift-Tab>');
+mapkey('q', '#1Click on an Image or a button', function() {
+    Hints.create("img, button", Hints.dispatchMouseClick);
+});
 mapkey('<Alt-i>', '#0enter PassThrough mode to temporarily suppress SurfingKeys', function() {
     Normal.passThrough();
 });

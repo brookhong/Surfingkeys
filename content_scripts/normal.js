@@ -996,8 +996,8 @@ var Normal = (function() {
             Visual.toggle();
         }
     });
-    self.mappings.add("qv", {
-        annotation: "Query word in visual mode",
+    self.mappings.add("cq", {
+        annotation: "Query word with Hints",
         feature_group: 7,
         repeatIgnore: true,
         code: function() {

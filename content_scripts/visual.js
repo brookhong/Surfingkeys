@@ -279,6 +279,30 @@ var Visual = (function() {
             }
         }
     });
+
+    self.mappings.add("p", {
+        annotation: "Expand selection to parent element",
+        feature_group: 9,
+        code: function() {
+            var p = selection.focusNode;
+            while (p !== document.body) {
+                p = p.parentElement;
+                var textNodes = getTextNodes(p, /./);
+                var lastNode = textNodes[textNodes.length-1];
+                var range = selection.getRangeAt(0);
+                if (range.comparePoint(textNodes[0], 0) === -1
+                    || range.comparePoint(lastNode, lastNode.length) === 1) {
+                    self.hideCursor();
+                    state = 2;
+                    _onStateChange();
+                    selection.setBaseAndExtent(textNodes[0], 0, lastNode, lastNode.length);
+                    self.showCursor();
+                    break;
+                }
+            }
+        }
+    });
+
     self.mappings.add("q", {
         annotation: "Translate word under cursor",
         feature_group: 9,
