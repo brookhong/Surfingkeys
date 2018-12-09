@@ -304,6 +304,12 @@ RegExp.prototype.toJSON = function() {
     return {source: this.source, flags: this.flags};
 };
 
+if (!Array.prototype.flatMap) {
+    Array.prototype.flatMap = function(lambda) {
+        return Array.prototype.concat.apply([], this.map(lambda));
+    };
+}
+
 function _parseAnnotation(ag) {
     var annotations = ag.annotation.match(/#(\d+)(.*)/);
     if (annotations !== null) {
