@@ -500,11 +500,11 @@ mapkey('oy', '#8Open Search with alias y', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "y"});
 });
 if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-    mapkey('on', '#3Open Firefox newtab', function() {
+    mapkey('on', '#3Open newtab', function() {
         tabOpenLink("about:blank");
     });
 } else {
-    mapkey('on', '#3Open Chrome newtab', function() {
+    mapkey('on', '#3Open newtab', function() {
         tabOpenLink("chrome://newtab/");
     });
     mapkey('ga', '#12Open Chrome About', function() {

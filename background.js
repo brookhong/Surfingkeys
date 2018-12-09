@@ -1,3 +1,22 @@
+function request(url, onReady, headers, data, onException) {
+    headers = headers || {};
+    return new Promise(function(acc, rej) {
+        var xhr = new XMLHttpRequest();
+        var method = (data !== undefined) ? "POST" : "GET";
+        xhr.open(method, url);
+        for (var h in headers) {
+            xhr.setRequestHeader(h, headers[h]);
+        }
+        xhr.onload = function() {
+            acc(xhr.responseText);
+        };
+        xhr.onerror = rej.bind(null, xhr);
+        xhr.send(data);
+    }).then(onReady).catch(function(exp) {
+        onException && onException(exp);
+    });
+}
+
 function dictFromArray(arry, val) {
     var dict = {};
     arry.forEach(function(h) {
@@ -536,9 +555,12 @@ var ChromeService = (function() {
         });
     };
 
-    function _loadSettingsFromUrl(url) {
+    function _loadSettingsFromUrl(url, cb) {
         request(url, function(resp) {
             _updateAndPostSettings({localPath: url, snippets: resp});
+            cb({status: "Succeeded", snippets: resp});
+        }, undefined, undefined, function (po) {
+            cb({status: "Failed"});
         });
     };
 
@@ -560,7 +582,9 @@ var ChromeService = (function() {
         });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
-        _loadSettingsFromUrl(message.url);
+        _loadSettingsFromUrl(message.url, function(status) {
+            _response(message, sendResponse, status);
+        });
     };
     function _filterByTitleOrUrl(tabs, query) {
         if (query && query.length) {

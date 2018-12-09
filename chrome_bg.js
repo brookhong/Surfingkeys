@@ -85,22 +85,3 @@ function _applyProxySettings(proxyConf) {
         });
     }
 }
-
-function request(url, onReady, headers, data, onException) {
-    headers = headers || {};
-    return new Promise(function(acc, rej) {
-        var xhr = new XMLHttpRequest();
-        var method = (data !== undefined) ? "POST" : "GET";
-        xhr.open(method, url);
-        for (var h in headers) {
-            xhr.setRequestHeader(h, headers[h]);
-        }
-        xhr.onload = function() {
-            acc(xhr.responseText);
-        };
-        xhr.onerror = rej.bind(null, xhr);
-        xhr.send(data);
-    }).then(onReady).catch(function(exp) {
-        onException && onException(exp);
-    });
-}

@@ -39,7 +39,7 @@ var runtime = window.runtime || (function() {
             startToShowEmoji: 2,
             stealFocusOnLoad: true,
             tabsThreshold: 9,
-            textAnchorPat: /(^[\n\r\s]*\S{3,}|\b\S{5,})/g,
+            textAnchorPat: /(^[\n\r\s]*\S{3,}|\b\S{4,})/g,
             scrollFriction: 0,
             useLocalMarkdownAPI: true,
         },
