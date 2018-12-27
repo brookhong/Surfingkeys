@@ -86,6 +86,11 @@ Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hin
 
     Hints.characters = 'yuiophjklnm'; // for right hand
 
+Default hint characters is upper case.
+If you want lower case:
+
+    Hints.charactersUpper = false;
+
 When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
 
 Hints are placed in center of target links, you could add below line in your settings to let them aligned left.

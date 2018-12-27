@@ -57,7 +57,7 @@ var Hints = (function() {
                         }
                         handleHint();
                     } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
-                        prefix = prefix + key.toUpperCase();
+                        prefix = prefix + keyToDisplay(key);
                         handleHint();
                     } else {
                         if (self.scrollKeys.indexOf(key) === -1) {
@@ -87,6 +87,7 @@ var Hints = (function() {
         holder = createElement('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
         shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
+    self.charactersUpper = true;
     self.scrollKeys = '0jkhlG$';
     var _lastCreateAttrs = {},
         _onHintKey = self.dispatchMouseClick,
@@ -95,6 +96,13 @@ var Hints = (function() {
     function isCapital(key) {
         return key === key.toUpperCase() &&
                key !== key.toLowerCase(); // in case key is a symbol or special character
+    }
+
+    function keyToDisplay(key) {
+        if (self.charactersUpper) {
+            return key.toUpperCase();
+        }
+        return key.toLowerCase();
     }
 
     function getZIndex(node) {
@@ -241,12 +249,12 @@ var Hints = (function() {
 
     self.genLabels = function(M) {
         if (M <= self.characters.length) {
-            return self.characters.slice(0, M).toUpperCase().split('');
+            return keyToDisplay(self.characters.slice(0, M)).split('');
         }
         var codes = [];
         var genCodeWord = function(N, length) {
             for (var i = 0, word = ''; i < length; i++) {
-                word += self.characters.charAt(N % self.characters.length).toUpperCase();
+                word += keyToDisplay(self.characters.charAt(N % self.characters.length));
                 N = ~~(N / self.characters.length);
             }
             codes.push(word.split('').reverse().join(''));
