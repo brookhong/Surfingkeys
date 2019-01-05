@@ -382,10 +382,6 @@ div.sk_arrow[dir=up]>div:nth-of-type(2) {
     }
 }
 
-.slideInBanner {
-    animation: 1.6s ease-in-out 1 both slideInBanner;
-}
-
 @keyframes slideInRight {
     0% {
         right: -2rem;

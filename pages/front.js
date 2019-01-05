@@ -317,14 +317,15 @@ var Front = (function() {
     self.openFinder = _actions['openFinder'];
 
     self.showBanner = function (content, linger_time) {
-        banner.classList.remove("slideInBanner");
+        banner.style.cssText = "";
         banner.style.display = "";
         setInnerHTML(banner, htmlEncode(content));
         self.flush();
 
-        banner.classList.add("slideInBanner");
+        let timems = (linger_time || 1600) / 1000;
+        banner.style.cssText = `animation: ${timems}s ease-in-out 1 both slideInBanner;`;
         banner.one('animationend', function() {
-            banner.classList.remove("slideInBanner");
+            banner.style.cssText = "";
             banner.style.display = "none";
             self.flush();
         });
