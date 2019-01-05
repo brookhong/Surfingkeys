@@ -68,6 +68,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
         } else {
             if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
+                Front.addMapkey("Mode", new_keystroke, old_keystroke);
             }
         }
     }
@@ -123,7 +124,7 @@ function iunmap(keystroke, domain) {
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
     if (_isDomainApplicable(domain)) {
-        Front.addCMap(new_keystroke, old_keystroke);
+        Front.addMapkey("Omnibar", new_keystroke, old_keystroke);
     }
 }
 

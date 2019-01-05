@@ -188,7 +188,12 @@ var Mode = (function() {
             key = event.sk_keyName;
         this.isTrustedEvent = event.isTrusted;
 
-        if (Mode.isSpecialKeyOf("<Esc>", key) && self.finish(this)) {
+        var isEscKey = Mode.isSpecialKeyOf("<Esc>", key);
+        if (isEscKey) {
+            key = KeyboardUtils.encodeKeystroke("<Esc>");
+        }
+
+        if (isEscKey && self.finish(this)) {
             event.sk_stopPropagation = true;
             event.sk_suppressed = true;
         } else if (this.pendingMap) {

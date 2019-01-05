@@ -236,8 +236,12 @@ var Front = (function() {
     _actions['executeCommand'] = function (message) {
         Commands.execute(message.cmdline);
     };
-    _actions['addCMap'] = function (message) {
-        _map(Omnibar, message.new_keystroke, message.old_keystroke);
+    _actions['addMapkey'] = function (message) {
+        if (message.old_keystroke in Mode.specialKeys) {
+            Mode.specialKeys[message.old_keystroke].push(message.new_keystroke);
+        } else if (window.hasOwnProperty(message.mode)) {
+            _map(window[message.mode], message.new_keystroke, message.old_keystroke);
+        }
     };
     _actions['addVimMap'] = function (message) {
         self.vimMappings.push([message.lhs, message.rhs, message.ctx]);

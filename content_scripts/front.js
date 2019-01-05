@@ -90,9 +90,10 @@ var Front = (function() {
             cmdline: cmd
         });
     };
-    self.addCMap = function (new_keystroke, old_keystroke) {
+    self.addMapkey = function (mode, new_keystroke, old_keystroke) {
         frontendCommand({
-            action: 'addCMap',
+            action: 'addMapkey',
+            mode: mode,
             new_keystroke: new_keystroke,
             old_keystroke: old_keystroke
         });

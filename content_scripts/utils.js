@@ -258,7 +258,7 @@ function getTextNodePos(node, offset, length) {
         left: -1,
         top: -1
     };
-    if (br.height > 0 && br.width > 0) {
+    if (br && br.height > 0 && br.width > 0) {
         pos.left = br.left;
         pos.top = br.top;
         pos.width = br.width;
@@ -328,6 +328,9 @@ function _map(mode, nks, oks) {
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
         mode.mappings.add(nks, meta);
+        if (!Front.isProvider()) {
+            Front.addMapkey(mode.name, nks, oks);
+        }
     }
     return old_map;
 }
