@@ -3,7 +3,7 @@ if (window === top) {
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
-    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" />`);
+    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" title="Surfingkeys" />`);
     uiHost.attachShadow({mode:'open'});
     var sk_style = document.createElement("style");
     setInnerHTML(sk_style, `@import url("${chrome.runtime.getURL("pages/shadow.css")}");`);
