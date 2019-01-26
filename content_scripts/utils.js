@@ -69,6 +69,9 @@ function getRealEdit(event) {
             break;
         }
     }
+    if (rt === window) {
+        rt = document.body;
+    }
     return rt;
 }
 

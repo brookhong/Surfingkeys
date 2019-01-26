@@ -333,6 +333,9 @@ var Normal = (function() {
                     Normal.passFocus(true);
                     event.sk_stopPropagation = (runtime.conf.editableBodyCare
                         && realTarget === document.body && event.key === "i");
+                    if (event.sk_stopPropagation) {
+                        realTarget.focus();
+                    }
                     // keep cursor where it is
                     Insert.enter(realTarget, true);
                 }
