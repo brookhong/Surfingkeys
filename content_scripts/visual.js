@@ -535,6 +535,13 @@ var Visual = (function() {
         }
         if (matches.length) {
             currentOccurrence = 0;
+            for (var i = 0; i < matches.length; i++) {
+                var br = matches[i][2].getBoundingClientRect();
+                if (br.top > 0) {
+                    currentOccurrence = i;
+                    break;
+                }
+            }
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         }
     }
