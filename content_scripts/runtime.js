@@ -43,6 +43,7 @@ var runtime = window.runtime || (function() {
             ignoredFrameHosts: ["https://tpc.googlesyndication.com"],
             scrollFriction: 0,
             aceKeybindings: "vim",
+            caretViewport: null,
             useLocalMarkdownAPI: true,
         },
         runtime_handlers: {}

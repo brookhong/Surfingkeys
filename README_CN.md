@@ -646,6 +646,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.editableBodyCare | true | 当焦点定位到一个可编辑的元素时，Insert模式会自动激活，所以如果某个window/iframe里的document.body本身就是可编辑的（例如docs.google.com），Insert模式会一直处于激活状态，这样所有Normal模式下的按键都不可用了。当`editableBodyCare`为`true`时，Insert模式在这种情况下不会自动激活。|
 | settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | 当用`w`切换frame时，你可以用这个设置来过滤掉某些frame，比如那些做广告的frame。|
 | settings.aceKeybindings | "vim" | 改为"emacs"可以在ACE编辑器里使用Emacs按键。 |
+| settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
 
 ### settings.theme示例，修改状态栏字体
 

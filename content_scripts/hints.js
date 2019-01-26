@@ -436,8 +436,15 @@ var Hints = (function() {
 
         elements = positions.map(function(e) {
             var pos = getTextNodePos(e[0], e[1]);
-            if (e[0].data.trim().length === 0 || pos.top < 0 || pos.top > window.innerHeight
-                || pos.left < 0 || pos.left > window.innerWidth) {
+            var caretViewport = [0, 0, window.innerHeight, window.innerWidth];
+            if (runtime.conf.caretViewport && runtime.conf.caretViewport.length === 4) {
+                caretViewport = runtime.conf.caretViewport;
+            }
+            if (e[0].data.trim().length === 0
+                || pos.top < caretViewport[0]
+                || pos.left < caretViewport[1]
+                || pos.top > caretViewport[2]
+                || pos.left > caretViewport[3]) {
                 return null;
             } else {
                 var z = getZIndex(e[0].parentNode);
