@@ -565,6 +565,9 @@ mapkey('gu', '#4Go up one path in the URL', function() {
 mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
+mapkey('g#', '#4Reload current page without hash fragment', function() {
+    window.location.href = window.location.href.replace(/\#[^\#]*$/, '');
+});
 mapkey('gU', '#4Go to root of current URL hierarchy', function() {
     window.location.href = window.location.origin;
 });
