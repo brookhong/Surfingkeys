@@ -33,7 +33,7 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * [前缀数字可多次重复相应操作](#前缀数字可多次重复相应操作)
 * [开关热键](#开关热键)
 * [代理设置](#代理设置)
-* [VIM编辑器](#vim编辑器)
+* [VIM编辑器或者Emacs编辑器](#vim编辑器或者emacs编辑器)
 * [点命令重复前一个操作](#点命令重复前一个操作)
 * [Markdown预览](#markdown预览)
 * [截屏](#截屏)
@@ -379,13 +379,19 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
 * `spi`, `:proxyInfo`快捷键。
 
-## VIM编辑器
+## VIM编辑器或者Emacs编辑器
 
 Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 * 编辑网页上的各类文本输入框。
 * 编辑URL并在新标签页打开
 * 编辑设置
+
+你可以加上如下设置来使用Emacs按键：
+
+    settings.aceKeybindings = "emacs";
+
+使用Emacs按键时，用`C-x C-s`来保存你的输入。
 
 ### 编辑网页上的各类文本输入框
 
@@ -639,6 +645,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
 | settings.editableBodyCare | true | 当焦点定位到一个可编辑的元素时，Insert模式会自动激活，所以如果某个window/iframe里的document.body本身就是可编辑的（例如docs.google.com），Insert模式会一直处于激活状态，这样所有Normal模式下的按键都不可用了。当`editableBodyCare`为`true`时，Insert模式在这种情况下不会自动激活。|
 | settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | 当用`w`切换frame时，你可以用这个设置来过滤掉某些frame，比如那些做广告的frame。|
+| settings.aceKeybindings | "vim" | 改为"emacs"可以在ACE编辑器里使用Emacs按键。 |
 
 ### settings.theme示例，修改状态栏字体
 

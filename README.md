@@ -33,7 +33,7 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * [Repeats action by pressing number before mapkey](#repeats-action-by-pressing-number-before-mapkey)
 * [Hotkey to toggle Surfingkeys](#hotkey-to-toggle-surfingkeys)
 * [Proxy settings](#proxy-settings)
-* [VIM editor](#vim-editor)
+* [VIM editor and Emacs editor](#vim-editor-and-emacs-editor)
 * [Dot to repeat previous action](#dot-to-repeat-previous-action)
 * [Markdown preview](#markdown-preview)
 * [Capture page](#capture-page)
@@ -377,13 +377,19 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `spi`, shortcut for `:proxyInfo`
 
-## VIM editor
+## VIM editor and Emacs editor
 
 Thanks ACE for the vim editor, Surfingkeys integrates ACE for the vim editor. The vim editor is used:
 
 * to edit any input on html page
 * to edit URL to open in new tab
 * to edit settings
+
+You could change to Emacs keybindings for the editor by adding below settings:
+
+    settings.aceKeybindings = "emacs";
+
+With Emacs keybindings, use `C-x C-s` to save your input.
 
 ### Edit any input on html page
 
@@ -660,6 +666,7 @@ For example,
 | settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
 | settings.editableBodyCare | true | Insert mode is activated automatically when an editable element is focused, so if document.body is editable for some window/iframe (such as docs.google.com), Insert mode is always activated on the window/iframe, which means all shortcuts from Normal mode will not be available. With `editableBodyCare` as `true`, Insert mode will not be activated automatically in this case. |
 | settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | When using `w` to loop through frames, you could use this settings to exclude some of them, such as those for advertisements. |
+| settings.aceKeybindings | "vim" | Set it "emacs" to use emacs keybindings in the ACE editor. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

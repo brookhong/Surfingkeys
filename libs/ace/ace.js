@@ -4742,615 +4742,6 @@ define("ace/keyboard/keybinding", ["require", "exports", "module", "ace/lib/keys
     exports.KeyBinding = KeyBinding;
 });
 
-define("ace/lib/bidiutil", ["require", "exports", "module"], function(require, exports, module) {
-    "use strict";
-
-    var ArabicAlefBetIntervalsBegine = ['\u0621', '\u0641'];
-    var ArabicAlefBetIntervalsEnd = ['\u063A', '\u064a'];
-    var dir = 0,
-        hiLevel = 0;
-    var lastArabic = false,
-        hasUBAT_AL = false,
-        hasUBAT_B = false,
-        hasUBAT_S = false,
-        hasBlockSep = false,
-        hasSegSep = false;
-
-    var impTab_LTR = [
-        [0, 3, 0, 1, 0, 0, 0],
-        [0, 3, 0, 1, 2, 2, 0],
-        [0, 3, 0, 0x11, 2, 0, 1],
-        [0, 3, 5, 5, 4, 1, 0],
-        [0, 3, 0x15, 0x15, 4, 0, 1],
-        [0, 3, 5, 5, 4, 2, 0]
-    ];
-
-    var impTab_RTL = [
-        [2, 0, 1, 1, 0, 1, 0],
-        [2, 0, 1, 1, 0, 2, 0],
-        [2, 0, 2, 1, 3, 2, 0],
-        [2, 0, 2, 0x21, 3, 1, 1]
-    ];
-
-    var LTR = 0,
-        RTL = 1;
-
-    var L = 0;
-    var R = 1;
-    var EN = 2;
-    var AN = 3;
-    var ON = 4;
-    var B = 5;
-    var S = 6;
-    var AL = 7;
-    var WS = 8;
-    var CS = 9;
-    var ES = 10;
-    var ET = 11;
-    var NSM = 12;
-    var LRE = 13;
-    var RLE = 14;
-    var PDF = 15;
-    var LRO = 16;
-    var RLO = 17;
-    var BN = 18;
-
-    var UnicodeTBL00 = [
-        BN, BN, BN, BN, BN, BN, BN, BN, BN, S, B, S, WS, B, BN, BN,
-        BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, B, B, B, S,
-        WS, ON, ON, ET, ET, ET, ON, ON, ON, ON, ON, ES, CS, ES, CS, CS,
-        EN, EN, EN, EN, EN, EN, EN, EN, EN, EN, CS, ON, ON, ON, ON, ON,
-        ON, L, L, L, L, L, L, L, L, L, L, L, L, L, L, L,
-        L, L, L, L, L, L, L, L, L, L, L, ON, ON, ON, ON, ON,
-        ON, L, L, L, L, L, L, L, L, L, L, L, L, L, L, L,
-        L, L, L, L, L, L, L, L, L, L, L, ON, ON, ON, ON, BN,
-        BN, BN, BN, BN, BN, B, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN,
-        BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN, BN,
-        CS, ON, ET, ET, ET, ET, ON, ON, ON, ON, L, ON, ON, BN, ON, ON,
-        ET, ET, EN, EN, ON, L, ON, ON, ON, EN, L, ON, ON, ON, ON, ON
-    ];
-
-    var UnicodeTBL20 = [
-        WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, BN, BN, BN, L, R,
-        ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON,
-        ON, ON, ON, ON, ON, ON, ON, ON, WS, B, LRE, RLE, PDF, LRO, RLO, CS,
-        ET, ET, ET, ET, ET, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON,
-        ON, ON, ON, ON, CS, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON,
-        ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, ON, WS
-    ];
-
-    function _computeLevels(chars, levels, len, charTypes) {
-        var impTab = dir ? impTab_RTL : impTab_LTR,
-            prevState = null,
-            newClass = null,
-            newLevel = null,
-            newState = 0,
-            action = null,
-            cond = null,
-            condPos = -1,
-            i = null,
-            ix = null,
-            classes = [];
-
-        if (!charTypes) {
-            for (i = 0, charTypes = []; i < len; i++) {
-                charTypes[i] = _getCharacterType(chars[i]);
-            }
-        }
-        hiLevel = dir;
-        lastArabic = false;
-        hasUBAT_AL = false;
-        hasUBAT_B = false;
-        hasUBAT_S = false;
-        for (ix = 0; ix < len; ix++) {
-            prevState = newState;
-            classes[ix] = newClass = _getCharClass(chars, charTypes, classes, ix);
-            newState = impTab[prevState][newClass];
-            action = newState & 0xF0;
-            newState &= 0x0F;
-            levels[ix] = newLevel = impTab[newState][5];
-            if (action > 0) {
-                if (action == 0x10) {
-                    for (i = condPos; i < ix; i++) {
-                        levels[i] = 1;
-                    }
-                    condPos = -1;
-                } else {
-                    condPos = -1;
-                }
-            }
-            cond = impTab[newState][6];
-            if (cond) {
-                if (condPos == -1) {
-                    condPos = ix;
-                }
-            } else {
-                if (condPos > -1) {
-                    for (i = condPos; i < ix; i++) {
-                        levels[i] = newLevel;
-                    }
-                    condPos = -1;
-                }
-            }
-            if (charTypes[ix] == B) {
-                levels[ix] = 0;
-            }
-            hiLevel |= newLevel;
-        }
-        if (hasUBAT_S) {
-            for (i = 0; i < len; i++) {
-                if (charTypes[i] == S) {
-                    levels[i] = dir;
-                    for (var j = i - 1; j >= 0; j--) {
-                        if (charTypes[j] == WS) {
-                            levels[j] = dir;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    function _invertLevel(lev, levels, _array) {
-        if (hiLevel < lev) {
-            return;
-        }
-        if (lev == 1 && dir == RTL && !hasUBAT_B) {
-            _array.reverse();
-            return;
-        }
-        var len = _array.length,
-            start = 0,
-            end, lo, hi, tmp;
-        while (start < len) {
-            if (levels[start] >= lev) {
-                end = start + 1;
-                while (end < len && levels[end] >= lev) {
-                    end++;
-                }
-                for (lo = start, hi = end - 1; lo < hi; lo++, hi--) {
-                    tmp = _array[lo];
-                    _array[lo] = _array[hi];
-                    _array[hi] = tmp;
-                }
-                start = end;
-            }
-            start++;
-        }
-    }
-
-    function _getCharClass(chars, types, classes, ix) {
-        var cType = types[ix],
-            wType, nType, len, i;
-        switch (cType) {
-            case L:
-            case R:
-                lastArabic = false;
-            case ON:
-            case AN:
-                return cType;
-            case EN:
-                return lastArabic ? AN : EN;
-            case AL:
-                lastArabic = true;
-                hasUBAT_AL = true;
-                return R;
-            case WS:
-                return ON;
-            case CS:
-                if (ix < 1 || (ix + 1) >= types.length ||
-                    ((wType = classes[ix - 1]) != EN && wType != AN) ||
-                    ((nType = types[ix + 1]) != EN && nType != AN)) {
-                    return ON;
-                }
-                if (lastArabic) {
-                    nType = AN;
-                }
-                return nType == wType ? nType : ON;
-            case ES:
-                wType = ix > 0 ? classes[ix - 1] : B;
-                if (wType == EN && (ix + 1) < types.length && types[ix + 1] == EN) {
-                    return EN;
-                }
-                return ON;
-            case ET:
-                if (ix > 0 && classes[ix - 1] == EN) {
-                    return EN;
-                }
-                if (lastArabic) {
-                    return ON;
-                }
-                i = ix + 1;
-                len = types.length;
-                while (i < len && types[i] == ET) {
-                    i++;
-                }
-                if (i < len && types[i] == EN) {
-                    return EN;
-                }
-                return ON;
-            case NSM:
-                len = types.length;
-                i = ix + 1;
-                while (i < len && types[i] == NSM) {
-                    i++;
-                }
-                if (i < len) {
-                    var c = chars[ix],
-                        rtlCandidate = (c >= 0x0591 && c <= 0x08FF) || c == 0xFB1E;
-
-                    wType = types[i];
-                    if (rtlCandidate && (wType == R || wType == AL)) {
-                        return R;
-                    }
-                }
-
-                if (ix < 1 || (wType = types[ix - 1]) == B) {
-                    return ON;
-                }
-                return classes[ix - 1];
-            case B:
-                lastArabic = false;
-                hasUBAT_B = true;
-                return dir;
-            case S:
-                hasUBAT_S = true;
-                return ON;
-            case LRE:
-            case RLE:
-            case LRO:
-            case RLO:
-            case PDF:
-                lastArabic = false;
-            case BN:
-                return ON;
-        }
-    }
-
-    function _getCharacterType(ch) {
-        var uc = ch.charCodeAt(0),
-            hi = uc >> 8;
-
-        if (hi == 0) {
-            return ((uc > 0x00BF) ? L : UnicodeTBL00[uc]);
-        } else if (hi == 5) {
-            return (/[\u0591-\u05f4]/.test(ch) ? R : L);
-        } else if (hi == 6) {
-            if (/[\u0610-\u061a\u064b-\u065f\u06d6-\u06e4\u06e7-\u06ed]/.test(ch))
-                return NSM;
-            else if (/[\u0660-\u0669\u066b-\u066c]/.test(ch))
-                return AN;
-            else if (uc == 0x066A)
-                return ET;
-            else if (/[\u06f0-\u06f9]/.test(ch))
-                return EN;
-            else
-                return AL;
-        } else if (hi == 0x20 && uc <= 0x205F) {
-            return UnicodeTBL20[uc & 0xFF];
-        } else if (hi == 0xFE) {
-            return (uc >= 0xFE70 ? AL : ON);
-        }
-        return ON;
-    }
-
-    function _isArabicDiacritics(ch) {
-        return (ch >= '\u064b' && ch <= '\u0655');
-    }
-    exports.L = L;
-    exports.R = R;
-    exports.EN = EN;
-    exports.ON_R = 3;
-    exports.AN = 4;
-    exports.R_H = 5;
-    exports.B = 6;
-
-    exports.DOT = "\xB7";
-    exports.doBidiReorder = function(text, textCharTypes, isRtl) {
-        if (text.length < 2)
-            return {};
-
-        var chars = text.split(""),
-            logicalFromVisual = new Array(chars.length),
-            bidiLevels = new Array(chars.length),
-            levels = [];
-
-        dir = isRtl ? RTL : LTR;
-
-        _computeLevels(chars, levels, chars.length, textCharTypes);
-
-        for (var i = 0; i < logicalFromVisual.length; logicalFromVisual[i] = i, i++);
-
-        _invertLevel(2, levels, logicalFromVisual);
-        _invertLevel(1, levels, logicalFromVisual);
-
-        for (var i = 0; i < logicalFromVisual.length - 1; i++) { //fix levels to reflect character width
-            if (textCharTypes[i] === AN) {
-                levels[i] = exports.AN;
-            } else if (levels[i] === R && ((textCharTypes[i] > AL && textCharTypes[i] < LRE) || textCharTypes[i] === ON || textCharTypes[i] === BN)) {
-                levels[i] = exports.ON_R;
-            } else if ((i > 0 && chars[i - 1] === '\u0644') && /\u0622|\u0623|\u0625|\u0627/.test(chars[i])) {
-                levels[i - 1] = levels[i] = exports.R_H;
-                i++;
-            }
-        }
-        if (chars[chars.length - 1] === exports.DOT)
-            levels[chars.length - 1] = exports.B;
-
-        for (var i = 0; i < logicalFromVisual.length; i++) {
-            bidiLevels[i] = levels[logicalFromVisual[i]];
-        }
-
-        return {
-            'logicalFromVisual': logicalFromVisual,
-            'bidiLevels': bidiLevels
-        };
-    };
-    exports.hasBidiCharacters = function(text, textCharTypes) {
-        var ret = false;
-        for (var i = 0; i < text.length; i++) {
-            textCharTypes[i] = _getCharacterType(text.charAt(i));
-            if (!ret && (textCharTypes[i] == R || textCharTypes[i] == AL))
-                ret = true;
-        }
-        return ret;
-    };
-    exports.getVisualFromLogicalIdx = function(logIdx, rowMap) {
-        for (var i = 0; i < rowMap.logicalFromVisual.length; i++) {
-            if (rowMap.logicalFromVisual[i] == logIdx)
-                return i;
-        }
-        return 0;
-    };
-
-});
-
-define("ace/bidihandler", ["require", "exports", "module", "ace/lib/bidiutil", "ace/lib/lang", "ace/lib/useragent"], function(require, exports, module) {
-    "use strict";
-
-    var bidiUtil = require("./lib/bidiutil");
-    var lang = require("./lib/lang");
-    var useragent = require("./lib/useragent");
-    var BidiHandler = function(session) {
-        this.session = session;
-        this.bidiMap = {};
-        this.currentRow = null;
-        this.bidiUtil = bidiUtil;
-        this.charWidths = [];
-        this.EOL = "\xAC";
-        this.showInvisibles = true;
-        this.isRtlDir = false;
-        this.line = "";
-        this.wrapIndent = 0;
-        this.isLastRow = false;
-        this.EOF = "\xB6";
-    };
-
-    (function() {
-        this.isBidiRow = function(screenRow, docRow, splitIndex) {
-            if (screenRow !== this.currentRow) {
-                this.currentRow = screenRow;
-                this.updateRowLine(docRow, splitIndex);
-                this.updateBidiMap();
-            }
-            return this.bidiMap.bidiLevels;
-        };
-
-        this.getDocumentRow = function() {
-            var docRow = 0;
-            var rowCache = this.session.$screenRowCache;
-            if (rowCache.length) {
-                var index = this.session.$getRowCacheIndex(rowCache, this.currentRow);
-                if (index >= 0)
-                    docRow = this.session.$docRowCache[index];
-            }
-
-            return docRow;
-        };
-
-        this.getSplitIndex = function() {
-            var splitIndex = 0;
-            var rowCache = this.session.$screenRowCache;
-            if (rowCache.length) {
-                var currentIndex, prevIndex = this.session.$getRowCacheIndex(rowCache, this.currentRow);
-                while (this.currentRow - splitIndex > 0) {
-                    currentIndex = this.session.$getRowCacheIndex(rowCache, this.currentRow - splitIndex - 1);
-                    if (currentIndex !== prevIndex)
-                        break;
-
-                    prevIndex = currentIndex;
-                    splitIndex++;
-                }
-            }
-
-            return splitIndex;
-        };
-
-        this.updateRowLine = function(docRow, splitIndex) {
-            if (docRow === undefined)
-                docRow = this.getDocumentRow();
-
-            this.wrapIndent = 0;
-            this.isLastRow = (docRow === this.session.getLength() - 1);
-            this.line = this.session.getLine(docRow);
-            if (this.session.$useWrapMode) {
-                var splits = this.session.$wrapData[docRow];
-                if (splits) {
-                    if (splitIndex === undefined)
-                        splitIndex = this.getSplitIndex();
-
-                    if (splitIndex > 0 && splits.length) {
-                        this.wrapIndent = splits.indent;
-                        this.line = (splitIndex < splits.length) ?
-                            this.line.substring(splits[splitIndex - 1], splits[splits.length - 1]) :
-                            this.line.substring(splits[splits.length - 1]);
-                    } else {
-                        this.line = this.line.substring(0, splits[splitIndex]);
-                    }
-                }
-            }
-            var session = this.session,
-                shift = 0,
-                size;
-            this.line = this.line.replace(/\t|[\u1100-\u2029, \u202F-\uFFE6]/g, function(ch, i) {
-                if (ch === '\t' || session.isFullWidth(ch.charCodeAt(0))) {
-                    size = (ch === '\t') ? session.getScreenTabSize(i + shift) : 2;
-                    shift += size - 1;
-                    return lang.stringRepeat(bidiUtil.DOT, size);
-                }
-                return ch;
-            });
-        };
-
-        this.updateBidiMap = function() {
-            var textCharTypes = [],
-                endOfLine = this.isLastRow ? this.EOF : this.EOL;
-            var line = this.line + (this.showInvisibles ? endOfLine : bidiUtil.DOT);
-            if (bidiUtil.hasBidiCharacters(line, textCharTypes)) {
-                this.bidiMap = bidiUtil.doBidiReorder(line, textCharTypes, this.isRtlDir);
-            } else {
-                this.bidiMap = {};
-            }
-        };
-        this.markAsDirty = function() {
-            this.currentRow = null;
-        };
-        this.updateCharacterWidths = function($fontMetrics) {
-            var _regularCharWidth = $fontMetrics.$measureCharWidth('a'),
-                _bidiCharWidth = $fontMetrics.$measureCharWidth('\u05d4');
-
-            this.charWidths[bidiUtil.L] = this.charWidths[bidiUtil.EN] = this.charWidths[bidiUtil.ON_R] = _regularCharWidth;
-            this.charWidths[bidiUtil.R] = this.charWidths[bidiUtil.AN] = _bidiCharWidth;
-            this.charWidths[bidiUtil.R_H] = useragent.isChrome ? _bidiCharWidth : _bidiCharWidth * 0.45;
-            this.charWidths[bidiUtil.B] = 0;
-
-            if (this.currentRow !== null) {
-                this.updateBidiMap();
-            }
-        };
-
-        this.getShowInvisibles = function() {
-            return this.showInvisibles;
-        };
-
-        this.setShowInvisibles = function(showInvisibles) {
-            this.showInvisibles = showInvisibles;
-            if (this.currentRow !== null) {
-                this.updateBidiMap();
-            }
-        };
-
-        this.setEolChar = function(eolChar) {
-            this.EOL = eolChar;
-        };
-
-        this.setTextDir = function(isRtlDir) {
-            this.isRtlDir = isRtlDir;
-        };
-        this.getPosLeft = function(col) {
-            col -= this.wrapIndent;
-            var visualIdx = bidiUtil.getVisualFromLogicalIdx(col > 0 ? col - 1 : 0, this.bidiMap),
-                levels = this.bidiMap.bidiLevels,
-                left = 0;
-
-            if (col === 0 && levels[visualIdx] % 2 !== 0)
-                visualIdx++;
-
-            for (var i = 0; i < visualIdx; i++) {
-                left += this.charWidths[levels[i]];
-            }
-
-            if (col !== 0 && levels[visualIdx] % 2 === 0)
-                left += this.charWidths[levels[visualIdx]];
-
-            if (this.wrapIndent)
-                left += this.wrapIndent * this.charWidths[bidiUtil.L];
-
-            return left;
-        };
-        this.getSelections = function(startCol, endCol) {
-            var map = this.bidiMap,
-                levels = map.bidiLevels,
-                level, offset = this.wrapIndent * this.charWidths[bidiUtil.L],
-                selections = [],
-                selColMin = Math.min(startCol, endCol) - this.wrapIndent,
-                selColMax = Math.max(startCol, endCol) - this.wrapIndent,
-                isSelected = false,
-                isSelectedPrev = false,
-                selectionStart = 0;
-
-            for (var logIdx, visIdx = 0; visIdx < levels.length; visIdx++) {
-                logIdx = map.logicalFromVisual[visIdx];
-                level = levels[visIdx];
-                isSelected = (logIdx >= selColMin) && (logIdx < selColMax);
-                if (isSelected && !isSelectedPrev) {
-                    selectionStart = offset;
-                } else if (!isSelected && isSelectedPrev) {
-                    selections.push({
-                        left: selectionStart,
-                        width: offset - selectionStart
-                    });
-                }
-                offset += this.charWidths[level];
-                isSelectedPrev = isSelected;
-            }
-
-            if (isSelected && (visIdx === levels.length)) {
-                selections.push({
-                    left: selectionStart,
-                    width: offset - selectionStart
-                });
-            }
-
-            return selections;
-        };
-        this.offsetToCol = function(posX) {
-            var logicalIdx = 0,
-                posX = Math.max(posX, 0),
-                offset = 0,
-                visualIdx = 0,
-                levels = this.bidiMap.bidiLevels,
-                charWidth = this.charWidths[levels[visualIdx]];
-
-            if (this.wrapIndent) {
-                posX -= this.wrapIndent * this.charWidths[bidiUtil.L];
-            }
-
-            while (posX > offset + charWidth / 2) {
-                offset += charWidth;
-                if (visualIdx === levels.length - 1) {
-                    charWidth = 0;
-                    break;
-                }
-                charWidth = this.charWidths[levels[++visualIdx]];
-            }
-
-            if (visualIdx > 0 && (levels[visualIdx - 1] % 2 !== 0) && (levels[visualIdx] % 2 === 0)) {
-                if (posX < offset)
-                    visualIdx--;
-                logicalIdx = this.bidiMap.logicalFromVisual[visualIdx];
-
-            } else if (visualIdx > 0 && (levels[visualIdx - 1] % 2 === 0) && (levels[visualIdx] % 2 !== 0)) {
-                logicalIdx = 1 + ((posX > offset) ? this.bidiMap.logicalFromVisual[visualIdx] : this.bidiMap.logicalFromVisual[visualIdx - 1]);
-
-            } else if ((this.isRtlDir && visualIdx === levels.length - 1 && charWidth === 0 && (levels[visualIdx - 1] % 2 === 0)) || (!this.isRtlDir && visualIdx === 0 && (levels[visualIdx] % 2 !== 0))) {
-                logicalIdx = 1 + this.bidiMap.logicalFromVisual[visualIdx];
-            } else {
-                if (visualIdx > 0 && (levels[visualIdx - 1] % 2 !== 0) && charWidth !== 0)
-                    visualIdx--;
-                logicalIdx = this.bidiMap.logicalFromVisual[visualIdx];
-            }
-
-            return (logicalIdx + this.wrapIndent);
-        };
-
-    }).call(BidiHandler.prototype);
-
-    exports.BidiHandler = BidiHandler;
-});
-
 define("ace/range", ["require", "exports", "module"], function(require, exports, module) {
     "use strict";
     var comparePoints = function(p1, p2) {
@@ -6099,25 +5490,14 @@ define("ace/selection", ["require", "exports", "module", "ace/lib/oop", "ace/lib
                 this.lead.column
             );
 
-            var offsetX;
-
             if (chars === 0) {
-                if (rows !== 0) {
-                    if (this.session.$bidiHandler.isBidiRow(screenPos.row, this.lead.row)) {
-                        offsetX = this.session.$bidiHandler.getPosLeft(screenPos.column);
-                        screenPos.column = Math.round(offsetX / this.session.$bidiHandler.charWidths[0]);
-                    } else {
-                        offsetX = screenPos.column * this.session.$bidiHandler.charWidths[0];
-                    }
-                }
-
                 if (this.$desiredColumn)
                     screenPos.column = this.$desiredColumn;
                 else
                     this.$desiredColumn = screenPos.column;
             }
 
-            var docPos = this.session.screenToDocumentPosition(screenPos.row + rows, screenPos.column, offsetX);
+            var docPos = this.session.screenToDocumentPosition(screenPos.row + rows, screenPos.column);
 
             if (rows !== 0 && chars === 0 && docPos.row === this.lead.row && docPos.column === this.lead.column) {
                 if (this.session.lineWidgets && this.session.lineWidgets[docPos.row]) {
@@ -9969,12 +9349,11 @@ define("ace/edit_session/bracket_match", ["require", "exports", "module", "ace/t
 
 });
 
-define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/lib/lang", "ace/bidihandler", "ace/config", "ace/lib/event_emitter", "ace/selection", "ace/mode/text", "ace/range", "ace/document", "ace/background_tokenizer", "ace/search_highlight", "ace/edit_session/folding", "ace/edit_session/bracket_match"], function(require, exports, module) {
+define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/lib/lang", "ace/config", "ace/lib/event_emitter", "ace/selection", "ace/mode/text", "ace/range", "ace/document", "ace/background_tokenizer", "ace/search_highlight", "ace/edit_session/folding", "ace/edit_session/bracket_match"], function(require, exports, module) {
     "use strict";
 
     var oop = require("./lib/oop");
     var lang = require("./lib/lang");
-    var BidiHandler = require("./bidihandler").BidiHandler;
     var config = require("./config");
     var EventEmitter = require("./lib/event_emitter").EventEmitter;
     var Selection = require("./selection").Selection;
@@ -10003,7 +9382,6 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
         if (typeof text != "object" || !text.getLine)
             text = new Document(text);
 
-        this.$bidiHandler = new BidiHandler(this);
         this.setDocument(text);
         this.selection = new Selection(this);
 
@@ -10082,7 +9460,7 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
 
         this.onChange = function(delta) {
             this.$modified = true;
-            this.$bidiHandler.markAsDirty();
+
             this.$resetRowCache(delta.start.row);
 
             var removedFolds = this.$updateInternalDataOnChange(delta);
@@ -10933,7 +10311,6 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
                     max: max
                 };
                 this.$modified = true;
-                this.$bidiHandler.markAsDirty();
                 if (this.$useWrapMode)
                     this._signal("changeWrapMode");
             }
@@ -11361,7 +10738,7 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
         this.screenToDocumentColumn = function(screenRow, screenColumn) {
             return this.screenToDocumentPosition(screenRow, screenColumn).column;
         };
-        this.screenToDocumentPosition = function(screenRow, screenColumn, offsetX) {
+        this.screenToDocumentPosition = function(screenRow, screenColumn) {
             if (screenRow < 0)
                 return {
                     row: 0,
@@ -11422,11 +10799,11 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
                 line = this.getLine(docRow);
                 foldLine = null;
             }
-            var wrapIndent = 0,
-                splitIndex = Math.floor(screenRow - row);
+            var wrapIndent = 0;
             if (this.$useWrapMode) {
                 var splits = this.$wrapData[docRow];
                 if (splits) {
+                    var splitIndex = Math.floor(screenRow - row);
                     column = splits[splitIndex];
                     if (splitIndex > 0 && splits.length) {
                         wrapIndent = splits.indent;
@@ -11435,9 +10812,6 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
                     }
                 }
             }
-
-            if (offsetX !== undefined && this.$bidiHandler.isBidiRow(row + splitIndex, docRow, splitIndex))
-                screenColumn = this.$bidiHandler.offsetToCol(offsetX);
 
             docColumn += this.$getStringScreenWidth(line, screenColumn - wrapIndent)[1];
             if (this.$useWrapMode && docColumn >= column)
@@ -11606,8 +10980,6 @@ define("ace/edit_session", ["require", "exports", "module", "ace/lib/oop", "ace/
             }
             this.$stopWorker();
         };
-
-        this.isFullWidth = isFullWidth;
 
         function isFullWidth(c) {
             if (c < 0x1100)
@@ -15578,7 +14950,7 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "ace/li
                 range = range.toScreenRange(this.session);
                 if (marker.renderer) {
                     var top = this.$getTop(range.start.row, config);
-                    var left = this.$padding + (this.session.$bidiHandler.isBidiRow(range.start.row) ? this.session.$bidiHandler.getPosLeft(range.start.column) : range.start.column * config.characterWidth);
+                    var left = this.$padding + range.start.column * config.characterWidth;
                     marker.renderer(html, range, left, top, config);
                 } else if (marker.type == "fullLine") {
                     this.drawFullLineMarker(html, range, marker.clazz, config);
@@ -15590,11 +14962,7 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "ace/li
                     else
                         this.drawMultiLineMarker(html, range, marker.clazz, config);
                 } else {
-                    if (this.session.$bidiHandler.isBidiRow(range.start.row)) {
-                        this.drawBidiSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config);
-                    } else {
-                        this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config);
-                    }
+                    this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config);
                 }
             }
             this.element.innerHTML = html.join("");
@@ -15615,7 +14983,6 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "ace/li
             var prev = 0;
             var curr = 0;
             var next = session.getScreenLastRowColumn(row);
-            var clazzModified = null;
             var lineRange = new Range(row, range.start.column, row, curr);
             for (; row <= end; row++) {
                 lineRange.start.row = lineRange.end.row = row;
@@ -15624,55 +14991,35 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "ace/li
                 prev = curr;
                 curr = next;
                 next = row + 1 < end ? session.getScreenLastRowColumn(row + 1) : row == end ? 0 : range.end.column;
-                clazzModified = clazz + (row == start ? " ace_start" : "") + " ace_br" + getBorderClass(row == start || row == start + 1 && range.start.column, prev < curr, curr > next, row == end);
-
-                if (this.session.$bidiHandler.isBidiRow(row)) {
-                    this.drawBidiSingleLineMarker(stringBuilder, lineRange, clazzModified,
-                        layerConfig, row == end ? 0 : 1, extraStyle);
-                } else {
-                    this.drawSingleLineMarker(stringBuilder, lineRange, clazzModified,
-                        layerConfig, row == end ? 0 : 1, extraStyle);
-                }
+                this.drawSingleLineMarker(stringBuilder, lineRange,
+                    clazz + (row == start ? " ace_start" : "") + " ace_br" + getBorderClass(row == start || row == start + 1 && range.start.column, prev < curr, curr > next, row == end),
+                    layerConfig, row == end ? 0 : 1, extraStyle);
             }
         };
         this.drawMultiLineMarker = function(stringBuilder, range, clazz, config, extraStyle) {
             var padding = this.$padding;
-            var height, top, left;
+            var height = config.lineHeight;
+            var top = this.$getTop(range.start.row, config);
+            var left = padding + range.start.column * config.characterWidth;
             extraStyle = extraStyle || "";
-            if (this.session.$bidiHandler.isBidiRow(range.start.row)) {
-                var range1 = range.clone();
-                range1.end.row = range1.start.row;
-                range1.end.column = this.session.getLine(range1.start.row).length;
-                this.drawBidiSingleLineMarker(stringBuilder, range1, clazz + " ace_br1 ace_start", config, null, extraStyle);
-            } else {
-                height = config.lineHeight;
-                top = this.$getTop(range.start.row, config);
-                left = padding + range.start.column * config.characterWidth;
-                stringBuilder.push(
-                    "<div class='", clazz, " ace_br1 ace_start' style='",
-                    "height:", height, "px;",
-                    "right:0;",
-                    "top:", top, "px;",
-                    "left:", left, "px;", extraStyle, "'></div>"
-                );
-            }
-            if (this.session.$bidiHandler.isBidiRow(range.end.row)) {
-                var range1 = range.clone();
-                range1.start.row = range1.end.row;
-                range1.start.column = 0;
-                this.drawBidiSingleLineMarker(stringBuilder, range1, clazz + " ace_br12", config, null, extraStyle);
-            } else {
-                var width = range.end.column * config.characterWidth;
-                height = config.lineHeight;
-                top = this.$getTop(range.end.row, config);
-                stringBuilder.push(
-                    "<div class='", clazz, " ace_br12' style='",
-                    "height:", height, "px;",
-                    "width:", width, "px;",
-                    "top:", top, "px;",
-                    "left:", padding, "px;", extraStyle, "'></div>"
-                );
-            }
+
+            stringBuilder.push(
+                "<div class='", clazz, " ace_br1 ace_start' style='",
+                "height:", height, "px;",
+                "right:0;",
+                "top:", top, "px;",
+                "left:", left, "px;", extraStyle, "'></div>"
+            );
+            top = this.$getTop(range.end.row, config);
+            var width = range.end.column * config.characterWidth;
+
+            stringBuilder.push(
+                "<div class='", clazz, " ace_br12' style='",
+                "height:", height, "px;",
+                "width:", width, "px;",
+                "top:", top, "px;",
+                "left:", padding, "px;", extraStyle, "'></div>"
+            );
             height = (range.end.row - range.start.row - 1) * config.lineHeight;
             if (height <= 0)
                 return;
@@ -15702,22 +15049,6 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "ace/li
                 "top:", top, "px;",
                 "left:", left, "px;", extraStyle || "", "'></div>"
             );
-        };
-        this.drawBidiSingleLineMarker = function(stringBuilder, range, clazz, config, extraLength, extraStyle) {
-            var height = config.lineHeight,
-                top = this.$getTop(range.start.row, config),
-                padding = this.$padding;
-            var selections = this.session.$bidiHandler.getSelections(range.start.column, range.end.column);
-
-            selections.forEach(function(selection) {
-                stringBuilder.push(
-                    "<div class='", clazz, "' style='",
-                    "height:", height, "px;",
-                    "width:", selection.width + (extraLength || 0), "px;",
-                    "top:", top, "px;",
-                    "left:", padding + selection.left, "px;", extraStyle || "", "'></div>"
-                );
-            });
         };
 
         this.drawFullLineMarker = function(stringBuilder, range, clazz, config, extraStyle) {
@@ -16424,8 +15755,7 @@ define("ace/layer/cursor", ["require", "exports", "module", "ace/lib/dom"], func
             if (!position)
                 position = this.session.selection.getCursor();
             var pos = this.session.documentToScreenPosition(position);
-            var cursorLeft = this.$padding + (this.session.$bidiHandler.isBidiRow(pos.row, position.row) ? this.session.$bidiHandler.getPosLeft(pos.column) : pos.column * this.config.characterWidth);
-
+            var cursorLeft = this.$padding + pos.column * this.config.characterWidth;
             var cursorTop = (pos.row - (onScreen ? this.config.firstRowScreen : 0)) *
                 this.config.lineHeight;
 
@@ -17421,7 +16751,6 @@ left: -100000px !important;\
         this.onChangeNewLineMode = function() {
             this.$loop.schedule(this.CHANGE_TEXT);
             this.$textLayer.$updateEolChar();
-            this.session.$bidiHandler.setEolChar(this.$textLayer.EOL_CHAR);
         };
 
         this.onChangeTabSize = function() {
@@ -17557,7 +16886,6 @@ left: -100000px !important;\
         };
         this.setShowInvisibles = function(showInvisibles) {
             this.setOption("showInvisibles", showInvisibles);
-            this.session.$bidiHandler.setShowInvisibles(showInvisibles);
         };
         this.getShowInvisibles = function() {
             return this.getOption("showInvisibles");
@@ -17813,11 +17141,6 @@ left: -100000px !important;\
                 this.$markerBack.update(config);
                 this.$markerFront.update(config);
                 this.$cursorLayer.update(config);
-
-                this.session.$bidiHandler.updateCharacterWidths(this.$fontMetrics);
-                if (this.session.$bidiHandler.getShowInvisibles() === undefined)
-                    this.session.$bidiHandler.setShowInvisibles(this.getShowInvisibles());
-
                 this.$moveTextAreaToCursor();
                 this.$highlightGutterLine && this.$updateGutterLineHighlight();
                 this._signal("afterRender");
@@ -18231,35 +17554,33 @@ left: -100000px !important;\
         this.pixelToScreenCoordinates = function(x, y) {
             var canvasPos = this.scroller.getBoundingClientRect();
 
-            var offsetX = x + this.scrollLeft - canvasPos.left - this.$padding;
-            var offset = offsetX / this.characterWidth;
+            var offset = (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth;
             var row = Math.floor((y + this.scrollTop - canvasPos.top) / this.lineHeight);
             var col = Math.round(offset);
 
             return {
                 row: row,
                 column: col,
-                side: offset - col > 0 ? 1 : -1,
-                offsetX: offsetX
+                side: offset - col > 0 ? 1 : -1
             };
         };
 
         this.screenToTextCoordinates = function(x, y) {
             var canvasPos = this.scroller.getBoundingClientRect();
-            var offsetX = x + this.scrollLeft - canvasPos.left - this.$padding;
 
-            var col = Math.round(offsetX / this.characterWidth);
+            var col = Math.round(
+                (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth
+            );
 
             var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
 
-            return this.session.screenToDocumentPosition(row, Math.max(col, 0), offsetX);
+            return this.session.screenToDocumentPosition(row, Math.max(col, 0));
         };
         this.textToScreenCoordinates = function(row, column) {
             var canvasPos = this.scroller.getBoundingClientRect();
             var pos = this.session.documentToScreenPosition(row, column);
 
-            var x = this.$padding + (this.session.$bidiHandler.isBidiRow(pos.row, row) ? this.session.$bidiHandler.getPosLeft(pos.column) : Math.round(pos.column * this.characterWidth));
-
+            var x = this.$padding + Math.round(pos.column * this.characterWidth);
             var y = pos.row * this.lineHeight;
 
             return {
@@ -19069,7 +18390,7 @@ define("ace/mouse/multi_select_handler", ["require", "exports", "module", "ace/l
             var rectSel = [];
             var blockSelect = function() {
                 var newCursor = editor.renderer.pixelToScreenCoordinates(mouseX, mouseY);
-                var cursor = session.screenToDocumentPosition(newCursor.row, newCursor.column, newCursor.offsetX);
+                var cursor = session.screenToDocumentPosition(newCursor.row, newCursor.column);
 
                 if (isSamePoint(screenCursor, newCursor) && isSamePoint(cursor, selection.lead))
                     return;
@@ -19478,13 +18799,9 @@ define("ace/multi_select", ["require", "exports", "module", "ace/range_list", "a
             if (xBackwards) {
                 var startColumn = screenCursor.column;
                 var endColumn = screenAnchor.column;
-                var startOffsetX = screenCursor.offsetX;
-                var endOffsetX = screenAnchor.offsetX;
             } else {
                 var startColumn = screenAnchor.column;
                 var endColumn = screenCursor.column;
-                var startOffsetX = screenAnchor.offsetX;
-                var endOffsetX = screenCursor.offsetX;
             }
 
             var yBackwards = screenCursor.row < screenAnchor.row;
@@ -19506,8 +18823,8 @@ define("ace/multi_select", ["require", "exports", "module", "ace/range_list", "a
 
             for (var row = startRow; row <= endRow; row++) {
                 var range = Range.fromPoints(
-                    this.session.screenToDocumentPosition(row, startColumn, startOffsetX),
-                    this.session.screenToDocumentPosition(row, endColumn, endOffsetX)
+                    this.session.screenToDocumentPosition(row, startColumn),
+                    this.session.screenToDocumentPosition(row, endColumn)
                 );
                 if (range.isEmpty()) {
                     if (docEnd && isSamePoint(range.end, docEnd))
