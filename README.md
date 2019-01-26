@@ -168,6 +168,10 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
 Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\bkeyword\b`.
 
+### PassThrough mode
+
+To press `Alt-i` to enter PassThrough mode gives you a chance to temporarily suppress SurfingKeys, which means Surfingkeys will not care any key press until leaving this mode by pressing `Esc`. In this mode, you could use built-in shortcuts from any site itself. Please see [Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656) for why we brought this in and the difference between `Alt-i` and `Alt-s`.
+
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,

@@ -170,11 +170,9 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 按`Ctrl-Enter`查找完整的单词，就像输入`\bkeyword\b`一样。
 
-### 按键测试
+### PassThrough mode
 
-`spk`可以打开按键测试模式。
-
-在这个辅助模式下，你每按下一按键，Surfingkeys按显示出来，便于你确定mapkey的第一个参数。
+按`Alt-i`进入PassThrough模式可让你暂时放弃SurfingKeys，这时SurfingKeys所有按键不再有用，直到你按`Esc`退出PassThrough模式。在该模式下，你可以充分使用任何网站本身提供的快捷键。请参考[Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656)了解为什么引入这种模式以及它与`Alt-s`的区别。
 
 ## 搜索栏
 
