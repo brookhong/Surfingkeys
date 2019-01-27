@@ -88,6 +88,9 @@ var KeyboardUtils = (function() {
                 character = "{0}".format(this.keyNames[event.keyCode]);
             } else {
                 character = event.key || "";
+                if (["Shift", "Meta", "Alt", "Ctrl"].indexOf(character) !== -1) {
+                    character = "";
+                }
                 if (!character) {
                     if (event.keyIdentifier) {
                         // keep for chrome version below 52
