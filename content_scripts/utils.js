@@ -85,7 +85,8 @@ function toggleQuote() {
 }
 
 function isEditable(element) {
-    return !element.disabled && (element.localName === 'textarea'
+    return element
+        && !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
