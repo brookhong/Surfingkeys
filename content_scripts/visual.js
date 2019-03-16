@@ -239,11 +239,22 @@ var Visual = (function() {
             self.star();
         }
     });
+    function clickLink(element, shiftKey) {
+        Hints.flashPressedLink(element);
+        dispatchMouseEvent(element, ['click'], shiftKey);
+    }
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Enter>"), {
         annotation: "Click on node under cursor.",
         feature_group: 9,
         code: function() {
-            Hints.dispatchMouseClick(selection.focusNode.parentNode);
+            clickLink(selection.focusNode.parentNode, false);
+        }
+    });
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Shift-Enter>"), {
+        annotation: "Click on node under cursor.",
+        feature_group: 9,
+        code: function() {
+            clickLink(selection.focusNode.parentNode, true);
         }
     });
     self.mappings.add("zz", {

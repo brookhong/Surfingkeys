@@ -124,20 +124,6 @@ var Hints = (function() {
         }
     }
 
-    function dispatchMouseEvent(element, events) {
-        events.forEach(function(eventName) {
-            var mouseButton = shiftKey ? 1 : 0;
-            var event = new MouseEvent(eventName, {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                button: mouseButton
-            });
-            element.dispatchEvent(event);
-        });
-        lastMouseTarget = element;
-    }
-
     function refreshByTextFilter() {
         var hints = holder.querySelectorAll('#sk_hints>div');
         hints = Array.from(hints);
@@ -613,13 +599,14 @@ var Hints = (function() {
                 });
             } else {
                 self.mouseoutLastElement();
-                dispatchMouseEvent(element, behaviours.mouseEvents);
+                dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
+                lastMouseTarget = element;
             }
         }
     };
     self.mouseoutLastElement = function() {
         if (lastMouseTarget) {
-            dispatchMouseEvent(lastMouseTarget, ['mouseout']);
+            dispatchMouseEvent(lastMouseTarget, ['mouseout'], false);
             lastMouseTarget = null;
         }
     };
