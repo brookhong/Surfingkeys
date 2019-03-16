@@ -523,5 +523,37 @@ var Front = (function() {
         }
     }, true);
 
+
+    // for mouseSelectToQuery
+    document.onmouseup = function(e) {
+        if (!_bubble.contains(e.target)) {
+            _bubble.style.display = "none";
+            Front.flush();
+        } else {
+            var sel = window.getSelection().toString().trim() || Visual.getWordUnderCursor();
+            if (sel && sel.length > 0) {
+                Front.contentCommand({
+                    action: 'updateInlineQuery',
+                    word: sel
+                });
+            }
+        }
+    };
+    window.onresize = function(evt) {
+        if (_bubble.style.display !== "none") {
+            Front.contentCommand({
+                action: 'updateInlineQuery'
+            });
+        }
+    };
+    _bubble.querySelector("div.sk_bubble_content").onmousewheel = function(evt) {
+        if (evt.deltaY > 0 && this.scrollTop + this.offsetHeight >= this.scrollHeight) {
+            return false;
+        } else if (evt.deltaY < 0 && this.scrollTop <= 0) {
+            return false;
+        }
+        return true;
+    };
+
     return self;
 })();

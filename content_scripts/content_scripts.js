@@ -413,6 +413,24 @@ function _init() {
         });
 
         document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+        if (runtime.conf.mouseSelectToQuery) {
+            document.onmouseup = function(event) {
+                if (!isElementClickable(event.target) && !event.target.matches(".cm-matchhighlight")) {
+                    // perform inline query after 1 ms
+                    // to avoid calling on selection collapse
+                    setTimeout(function() {
+                        var selection = document.getSelection();
+                        var word = selection.toString().trim();
+                        if (word && word.length && selection.type === "Range") {
+                            Front.performInlineQueryOnSelection(word);
+                        }
+                    }, 1);
+                }
+            };
+            document.addEventListener('click', function() {
+                Front.hideBubble();
+            }, true);
+        }
     });
 }
 

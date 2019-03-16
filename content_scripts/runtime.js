@@ -44,6 +44,7 @@ var runtime = window.runtime || (function() {
             scrollFriction: 0,
             aceKeybindings: "vim",
             caretViewport: null,
+            mouseSelectToQuery: false,
             useLocalMarkdownAPI: true,
         },
         runtime_handlers: {}
