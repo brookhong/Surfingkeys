@@ -529,6 +529,9 @@ var Front = (function() {
         if (!_bubble.contains(e.target)) {
             _bubble.style.display = "none";
             Front.flush();
+            Front.visualCommand({
+                action: 'emptySelection'
+            });
         } else {
             var sel = window.getSelection().toString().trim() || Visual.getWordUnderCursor();
             if (sel && sel.length > 0) {

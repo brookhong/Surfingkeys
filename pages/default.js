@@ -215,6 +215,11 @@ mapkey('O', '#1Open detected links from text', function() {
         createElement(`<a href=${element[2]}>`).click();
     }, {statusLine: "Open detected links from text"});
 });
+
+mapkey(';q', 'Toggle mouseSelectToQuery', function() {
+    runtime.command({ action: 'toggleMouseQuery' });
+});
+
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
     var pdfUrl = window.location.href;
     if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
@@ -616,7 +621,7 @@ mapkey(';pp', '#7Paste html on current page', function() {
         setInnerHTML(document.body, response.data);
     });
 });
-mapkey(';q', '#14Insert jquery library on current page', function() {
+mapkey(';i', '#14Insert jquery library on current page', function() {
     Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js");
 });
 mapkey(';t', 'Translate selected text with google', function() {

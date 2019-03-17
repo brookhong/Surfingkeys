@@ -647,7 +647,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | 当用`w`切换frame时，你可以用这个设置来过滤掉某些frame，比如那些做广告的frame。|
 | settings.aceKeybindings | "vim" | 改为"emacs"可以在ACE编辑器里使用Emacs按键。 |
 | settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
-| settings.mouseSelectToQuery | false | 是否启用鼠标选择查询功能。 |
+| settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
 
 ### settings.theme示例，修改状态栏字体
 

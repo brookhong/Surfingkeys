@@ -71,9 +71,20 @@ var Front = (function() {
             }, queryResult, false);
         });
     };
+    self.querySelectedWord = function() {
+        var selection = document.getSelection();
+        var word = selection.toString().trim();
+        if (word && word.length && selection.type === "Range") {
+            self.performInlineQueryOnSelection(word);
+        }
+    };
 
     _actions["updateInlineQuery"] = function (message) {
-        self.performInlineQueryOnSelection(message.word);
+        if (message.word) {
+            self.performInlineQueryOnSelection(message.word);
+        } else {
+            self.querySelectedWord();
+        }
     };
 
     _actions["getSearchSuggestions"] = function (message) {
@@ -452,6 +463,10 @@ var Front = (function() {
     _actions["visualEnter"] = function(message) {
         clearPendingQuery();
         Visual.visualEnter(message.query);
+    };
+
+    _actions["emptySelection"] = function(message) {
+        document.getSelection().empty();
     };
 
     var _active = false;

@@ -538,6 +538,21 @@ var ChromeService = (function() {
             });
         });
     };
+    self.toggleMouseQuery = function(message, sender, sendResponse) {
+        loadSettings('mouseSelectToQuery', function(data) {
+            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
+                var origin = new URL(sender.tab.url).origin;
+                var mouseSelectToQuery = data.mouseSelectToQuery || [];
+                var idx = mouseSelectToQuery.indexOf(origin);
+                if (idx === -1) {
+                    mouseSelectToQuery.push(origin);
+                } else {
+                    mouseSelectToQuery.splice(idx, 1);
+                }
+                _updateAndPostSettings({mouseSelectToQuery: mouseSelectToQuery});
+            }
+        });
+    };
     self.getDisabled = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             if (sender.tab) {
