@@ -987,17 +987,23 @@ var ChromeService = (function() {
                 }
             });
         } else {
-            chrome.tabs.update({
-                url: url,
-                pinned: message.tab.pinned || sender.tab.pinned
-            }, function(tab) {
-                if (message.scrollLeft || message.scrollTop) {
-                    tabMessages[tab.id] = {
-                        scrollLeft: message.scrollLeft,
-                        scrollTop: message.scrollTop
-                    };
-                }
-            });
+            if (url.startsWith("javascript:")) {
+                chrome.tabs.executeScript(sender.tab.id, {
+                    code: url.substr(11)
+                });
+            } else {
+                chrome.tabs.update({
+                    url: url,
+                    pinned: message.tab.pinned || sender.tab.pinned
+                }, function(tab) {
+                    if (message.scrollLeft || message.scrollTop) {
+                        tabMessages[tab.id] = {
+                            scrollLeft: message.scrollLeft,
+                            scrollTop: message.scrollTop
+                        };
+                    }
+                });
+            }
         }
     };
     self.viewSource = function(message, sender, sendResponse) {
