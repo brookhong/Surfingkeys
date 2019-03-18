@@ -684,6 +684,10 @@ For example,
 * [Markdown](docs/API.md)
 * [HTML](http://brookhong.github.io/Surfingkeys)
 
+## Other
+
+* [Anki Study Deck](https://ankiweb.net/shared/info/1195173768), Anki Study Deck (helpful for memorizing keyboard mappings) 
+
 ## Credits
 
 * ~~[jQuery](https://github.com/jquery/jquery)~~, removed for less memory usage and better performance.
