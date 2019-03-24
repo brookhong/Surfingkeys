@@ -558,7 +558,11 @@ var Omnibar = (function() {
         } else {
             url = self.input.value;
             if (url.indexOf(':') === -1) {
-                url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
+                try {
+                    url = new URL(`https://${url}`).href;
+                } catch(e) {
+                    url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
+                }
             }
         }
         if (/^javascript:/.test(url)) {
