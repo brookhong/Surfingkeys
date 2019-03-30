@@ -65,7 +65,7 @@ function _filterByTitleOrUrl(urls, query) {
  *
  *  * In omnibar opened with `b:`
  *
- * `Ctrl - Shift - <any letter>` to create vim-like global mark
+ * `Ctrl - Shift - <any letter>` to create vim-like mark
  *
  * cmap could be used for Omnibar to change mappings, for example:
  *
@@ -565,36 +565,27 @@ var Omnibar = (function() {
                 }
             }
         }
-        if (/^javascript:/.test(url)) {
-            var code = url.replace(/^javascript:/,'');
+        var type = "", uid;
+        if (fi && fi.uid) {
+            uid = fi.uid;
+            type = uid[0], uid = uid.substr(1);
+        }
+        if (type === 'T') {
+            uid = uid.split(":");
             runtime.command({
-                action: "executeScript",
-                code: code
-            }, function(ret) {
+                action: 'focusTab',
+                window_id: parseInt(uid[0]),
+                tab_id: parseInt(uid[1])
             });
-        } else {
-            var type = "", uid;
-            if (fi && fi.uid) {
-                uid = fi.uid;
-                type = uid[0], uid = uid.substr(1);
-            }
-            if (type === 'T') {
-                uid = uid.split(":");
-                runtime.command({
-                    action: 'focusTab',
-                    window_id: parseInt(uid[0]),
-                    tab_id: parseInt(uid[1])
-                });
-            } else if (url && url.length) {
-                runtime.command({
-                    action: "openLink",
-                    tab: {
-                        tabbed: this.tabbed,
-                        active: this.activeTab
-                    },
-                    url: url
-                });
-            }
+        } else if (url && url.length) {
+            runtime.command({
+                action: "openLink",
+                tab: {
+                    tabbed: this.tabbed,
+                    active: this.activeTab
+                },
+                url: url
+            });
         }
         return this.activeTab;
     };
@@ -761,7 +752,6 @@ var OpenBookmarks = (function() {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
             if (fi) {
                 var mark_char = String.fromCharCode(event.keyCode);
-                // global marks always from here
                 Normal.addVIMark(mark_char, fi.url);
                 eaten = true;
             }

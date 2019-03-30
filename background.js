@@ -388,6 +388,7 @@ var ChromeService = (function() {
         historyTabAction = false;
         chromelikeNewTabPosition = 0;
 
+        _setScrollPos_bg(activeInfo.tabId);
         _updateTabIndices();
     });
     chrome.tabs.onDetached.addListener(function() {
@@ -567,6 +568,41 @@ var ChromeService = (function() {
         loadSettings('marks', function(data) {
             extendObject(data.marks, message.mark);
             _updateAndPostSettings({marks: data.marks});
+        });
+    };
+    self.jumpVIMark = function(message, sender, sendResponse) {
+        loadSettings("marks", function(data) {
+            var marks = data.marks;
+            if (marks.hasOwnProperty(message.mark)) {
+                var markInfo = marks[message.mark];
+                chrome.tabs.query({}, function(tabs) {
+                    tabs = tabs.filter(function(t) {
+                        return t.url === markInfo.url;
+                    });
+
+                    if (tabs.length === 0) {
+                        markInfo.tab = {
+                            tabbed: true,
+                            active: true
+                        };
+                        self.openLink(markInfo, sender, sendResponse);
+                    } else {
+                        if (markInfo.scrollLeft || markInfo.scrollTop) {
+                            tabMessages[tabs[0].id] = {
+                                scrollLeft: markInfo.scrollLeft,
+                                scrollTop: markInfo.scrollTop
+                            };
+                        }
+                        if (tabs[0].id === sender.tab.id) {
+                            _setScrollPos_bg(tabs[0].id);
+                        } else {
+                            chrome.tabs.update(tabs[0].id, {
+                                active: true
+                            });
+                        }
+                    }
+                });
+            }
         });
     };
 
@@ -951,45 +987,45 @@ var ChromeService = (function() {
     }
     self.openLink = function(message, sender, sendResponse) {
         var url = normalizeURL(message.url);
-        if (message.tab.tabbed) {
-            var newTabPosition;
-            if (sender.tab) {
-                switch (conf.newTabPosition) {
-                    case 'left':
-                        newTabPosition = sender.tab.index;
-                        break;
-                    case 'right':
-                        newTabPosition = sender.tab.index + 1;
-                        break;
-                    case 'first':
-                        newTabPosition = 0;
-                        break;
-                    case 'last':
-                        break;
-                    default:
-                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
-                        chromelikeNewTabPosition++;
-                        break;
-                }
-            }
-            chrome.tabs.create({
-                url: url,
-                active: message.tab.active,
-                index: newTabPosition,
-                pinned: message.tab.pinned,
-                openerTabId: sender.tab.id
-            }, function(tab) {
-                if (message.scrollLeft || message.scrollTop) {
-                    tabMessages[tab.id] = {
-                        scrollLeft: message.scrollLeft,
-                        scrollTop: message.scrollTop
-                    };
-                }
+        if (url.startsWith("javascript:")) {
+            chrome.tabs.executeScript(sender.tab.id, {
+                code: url.substr(11)
             });
         } else {
-            if (url.startsWith("javascript:")) {
-                chrome.tabs.executeScript(sender.tab.id, {
-                    code: url.substr(11)
+            if (message.tab.tabbed) {
+                var newTabPosition;
+                if (sender.tab) {
+                    switch (conf.newTabPosition) {
+                        case 'left':
+                            newTabPosition = sender.tab.index;
+                            break;
+                        case 'right':
+                            newTabPosition = sender.tab.index + 1;
+                            break;
+                        case 'first':
+                            newTabPosition = 0;
+                            break;
+                        case 'last':
+                            break;
+                        default:
+                            newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
+                            chromelikeNewTabPosition++;
+                            break;
+                    }
+                }
+                chrome.tabs.create({
+                    url: url,
+                    active: message.tab.active,
+                    index: newTabPosition,
+                    pinned: message.tab.pinned,
+                    openerTabId: sender.tab.id
+                }, function(tab) {
+                    if (message.scrollLeft || message.scrollTop) {
+                        tabMessages[tab.id] = {
+                            scrollLeft: message.scrollLeft,
+                            scrollTop: message.scrollTop
+                        };
+                    }
                 });
             } else {
                 chrome.tabs.update({

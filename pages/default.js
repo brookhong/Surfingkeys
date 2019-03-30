@@ -367,7 +367,7 @@ mapkey('W', '#3New window with current tab',  function() {
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
 mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
-    Normal.jumpVIMark(mark, true);
+    Normal.jumpVIMark(mark);
 });
 mapkey('<<', '#3Move current tab to left', function() {
     RUNTIME('moveTab', {

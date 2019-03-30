@@ -197,7 +197,7 @@ In omnibar opened with `t`:
 
 In omnibar opened with `b`:
 
-`Ctrl - Shift - <any letter>` to create vim-like global mark
+`Ctrl - Shift - <any letter>` to create vim-like mark
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
@@ -218,13 +218,13 @@ The search_leader_key `s` plus capital alias `G` will search selected with googl
 
 ## Vim-like marks
 
-You can create vim-like marks by pressing `m`, followed by a word character(a-z for local marks, others like 0-9 / A-Z for global marks), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
+You can create vim-like marks by pressing `m`, followed by a word character(0-9 / a-z / A-Z), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
 
 In this way, the created mark always points to current URL. You can also create vim-like marks from the bookmarks. Try following steps:
 
 1. press `b` to open bookmarks.
 1. type something to locate the URL you'd like to create vim-like mark for.
-1. press Ctrl, plus a mark name, such as `f`.
+1. Hold Ctrl + Shift, press a mark name, such as `f`.
 
 Then afterwards `'F` will open that URL directly.
 

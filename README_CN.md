@@ -199,7 +199,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 用`b`打开搜索栏时，
 
-`Ctrl - Shift - <any letter>` 创建相应的类似vim的全局标示。
+`Ctrl - Shift - <any letter>` 创建相应的类似vim标示。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
@@ -220,13 +220,13 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 ## 类vim标示
 
-简单说，vim中的marks就是按`m`，然后跟一个字符（a-z为当前页内标示，其它的如0-9，A-Z为全局标示），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
+简单说，vim中的marks就是按`m`，然后跟一个字符（0-9 / a-z / A-Z），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
 
 除了`m`键创建标示外，你还可以从收藏夹里按住Ctrl，加上标示符来创建。如下：
 
 1. 按下`b`打开收藏夹。
 1. 随便输点啥，定位到你要标示的网址。
-1. 按住Ctrl，加上你选中的标示符，比如`f`。
+1. 按住Ctrl + Shift，加上你选中的标示符，比如`f`。
 
 之后，按`'F`就可以直接打开该网址来。
 

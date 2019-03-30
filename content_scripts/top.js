@@ -154,9 +154,7 @@ if (window === top) {
     }, {once: true});
 
     function _setScrollPos(x, y) {
-        document.addEventListener('DOMContentLoaded', function(e) {
-            document.scrollingElement.scrollLeft = x;
-            document.scrollingElement.scrollTop = y;
-        });
+        document.scrollingElement.scrollLeft = x;
+        document.scrollingElement.scrollTop = y;
     }
 }
