@@ -217,7 +217,7 @@ mapkey('O', '#1Open detected links from text', function() {
 });
 
 mapkey(';q', 'Toggle mouseSelectToQuery', function() {
-    runtime.command({ action: 'toggleMouseQuery' });
+    runtime.command({ action: 'toggleMouseQuery', origin: window.location.origin });
 });
 
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
