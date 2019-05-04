@@ -286,21 +286,26 @@ var ChromeService = (function() {
     loadSettings(null, _applyProxySettings);
 
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
-        var tabId = details.tabId;
-        if (tabId !== -1 && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
-            if (!tabErrors.hasOwnProperty(tabId)) {
-                tabErrors[tabId] = [];
-            }
-            if (details.type === "main_frame") {
-                tabErrors[tabId] = [];
-                if (details.error !== "net::ERR_ABORTED") {
-                    chrome.tabs.update(tabId, {
-                        url: chrome.extension.getURL("pages/error.html")
-                    });
+        loadSettings('blacklist', function(data) {
+            var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID"];
+            var tabId = details.tabId;
+            var disabled = _getDisabled(data, new URL(details.url), null);
+            if (!disabled && tabId !== -1 &&
+                (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
+                if (!tabErrors.hasOwnProperty(tabId)) {
+                    tabErrors[tabId] = [];
                 }
+                if (details.type === "main_frame") {
+                    tabErrors[tabId] = [];
+                    if (excluded.indexOf(details.error) === -1) {
+                        chrome.tabs.update(tabId, {
+                            url: chrome.extension.getURL("pages/error.html")
+                        });
+                    }
+                }
+                tabErrors[tabId].push(details);
             }
-            tabErrors[tabId].push(details);
-        }
+        });
     }, {
         urls: ["<all_urls>"]
     });
