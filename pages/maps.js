@@ -1,8 +1,7 @@
-function rmap(newKey, oldKey, domain, annotation) { // replacing map
-    map(newKey, oldKey, domain, annotation);
-    unmap(oldKey);
-}
 
+
+unmap('r'); // r is used for remove, use ctrl-r to reload
+unmap('u'); // u is used for undo;
 /*
  ** iteration in collection or tree
  **
@@ -17,78 +16,106 @@ function rmap(newKey, oldKey, domain, annotation) { // replacing map
  ** all command could be prefix with numbers to repeat.
  ** the prefix number for 'to' command is the object index in collection
  */
-map('<F1>', '?');
-map(']t', 'R');
-map('[t', 'E');
-rmap('{t', 'g0');
-rmap('|t', '<Ctrl-6>');
-rmap('}t', 'g$');
-rmap(']s', 'cs');
-map(']h', 'D');
-map('[h', 'S');
-rmap('[u', 'gu');
-rmap('{u', 'gU');
+keyMaps = [
+    ['<F1>', '?', false],
+    [']t', 'R', false],
+    ['[t', 'E', false],
+    ['{t', 'g0', true],
+    ['|t', '<Ctrl-6>', true],
+    ['}t', 'g$', true],
+    [']s', 'cs', true],
+    [']h', 'D', false],
+    ['[h', 'S', false],
+    ['[u', 'gu', true],
+    ['{u', 'gU', true],
 
-rmap('<Alt-t>', '<Alt-s>'); // toggle surfkey
-rmap('<Alt-s>', 'd'); // down
-rmap('<Alt-w>', 'e'); // up
-rmap('{i', 'gi');
+    ['<Alt-t>', '<Alt-s>', true], // toggle surfkey
+    ['<Alt-s>', 'd', true], // down
+    ['<Alt-w>', 'e', true], // up
+    ['{i', 'gi', true],
 
-// display hints
-rmap('dh', '<Ctrl-h>');
-rmap('dH', '<Ctrl-j>');
-rmap('dmy', 'yma');
-rmap('dyc', 'yc');
-rmap('dyi', 'yi');
-rmap('dyt', 'yv');// yank element text
-rmap('dmyc', 'ymc');
-rmap('di', 'q');
-rmap('ds', 'zv'); // visual element select
-
-
-// add
-rmap('aj', ';i'); // add jquery
-map('an', 'on');
-
-// remove
-unmap('r'); // r is used for remove, use ctrl-r to reload
-rmap('rh', ';dh'); // delete history older than 30 days
-rmap('rb', ';db'); // remove bookmark of this page
-// open
-rmap('oo', 'H'); // open opened tab in current tab
-rmap('ot', 'Q'); // open selection with google translation
-
-// show: s
-rmap('ss', 'se', undefined, '#11Show settings');
-rmap('sla', 'sql'); // show loat action
-// close
-rmap('cd', ';j');
-rmap('c}', 'gx$');
-rmap('c{', 'gx0');
-rmap('c[', 'gxt');
-rmap('c]', 'gxT');
-rmap("c'", 'gxx');
-
-// move
-rmap('\\l', '<<');
-rmap('\\r', '>>');
-map('\\o', 'W');
-
-// copy(yank)
-
-// edit
-rmap('eur', 'sU');
-rmap('eut', 'su');
+    // display hints
+    ['dh', '<Ctrl-h>', true],
+    ['dH', '<Ctrl-j>', true],
+    ['dmy', 'yma', true],
+    ['dmt', 'cf', true],
+    ['dt', 'gf', true],
+    ['dT', 'af', true],
+    ['dyc', 'yc', true],
+    ['dyi', 'yi', true],
+    ['dyt', 'yv', true],// yank element text
+    ['dmyc', 'ymc', true],
+    ['di', 'q', true], // click image or button
+    ['ds', 'zv', true], // visual element select
 
 
-// undo: u
-unmap('u');
-rmap('uh', ';m'); // hover
+    // add
+    ['aj', ';i', true], // add jquery
 
-// toggle
-rmap(';pi', '<Alt-p>'); // pin
-rmap(';pr', 'cp'); // proxy
-rmap(';m', '<Alt-m>'); // mute
+    // remove
+    ['rh', ';dh', true], // delete history older than 30 days
+    ['rb', ';db', true], // remove bookmark of this page
 
-// mis
-map('z0', 'zr');
+    // search and show
+    ['sla', 'sql', true], // show last action
+    ['sb', 'ob', true],
+    ['sg', 'og', true],
+    ['sd', 'od', true],
+    ['sw', 'ow', true],
+    ['sy', 'oy', true],
+    // open
+    ['oo', 'H', true], // open opened tab in current tab
+    ['ot', 'Q', true], // open selection with google translation
+    ['oo', 'se', true, '#11Open options'],
+    ['oba', 'ga', true], // browser about
+    ['obb', 'gb', true], // browser bookmark
+    ['obc', 'gc', true], // browser cache
+    ['obd', 'gd', true], // browser download
+    ['obh', 'gh', true], // browser history
+    ['obk', 'gk', true], // browser cookies
+    ['obe', 'ge', true], // browser extensions
+    ['obn', 'gn', true], // browser net-internals
+    ['obs', 'gs', true], // browser page source
+    ['obi', 'si', true], // browser inspect
+    ['om', 'sm', true], // markdown preview
+
+    // close
+    ['cd', ';j', true],
+    ['c}', 'gx$', true],
+    ['c{', 'gx0', true],
+    ['c[', 'gxt', true],
+    ['c]', 'gxT', true],
+    ["c'", 'gxx', true],
+
+    // move
+    ['\\l', '<<', true],
+    ['\\r', '>>', true],
+    ['\\o', 'W', false],
+
+    // copy(yank)
+
+    // edit
+    ['eur', 'sU', true],
+    ['eut', 'su', true],
+
+
+    // undo: u
+    ['uh', ';m', true], // hover
+    ['uc', 'X'], // undo tab close
+    // toggle
+    [';pi', '<Alt-p>', true], // pin
+    [';pr', 'cp', true], // proxy
+    [';m', '<Alt-m>', true], // mute
+
+    // mis
+    ['z0', 'zr']
+];
+
+function rmap(newKey, oldKey, ummapOldKey, domain, annotation) { // replacing map
+    map(newKey, oldKey, domain, annotation);
+    !!ummapOldKey && unmap(oldKey);
+}
+
+keyMaps.forEach(map => {
+    rmap(map[0], map[1], map[2], undefined, map[3]);
+});
