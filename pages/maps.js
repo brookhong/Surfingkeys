@@ -17,13 +17,17 @@ function rmap(newKey, oldKey, domain, annotation) { // replacing map
  ** all command could be prefix with numbers to repeat.
  ** the prefix number for 'to' command is the object index in collection
  */
-
+map('<F1>', '?');
 map(']t', 'R');
 map('[t', 'E');
 rmap('{t', 'g0');
 rmap('|t', '<Ctrl-6>');
 rmap('}t', 'g$');
 rmap(']s', 'cs');
+map(']h', 'D');
+map('[h', 'S');
+rmap('[u', 'gu');
+rmap('{u', 'gU');
 
 rmap('<Alt-t>', '<Alt-s>'); // toggle surfkey
 rmap('<Alt-s>', 'd'); // down
@@ -44,6 +48,7 @@ rmap('ds', 'zv'); // visual element select
 
 // add
 rmap('aj', ';i'); // add jquery
+map('an', 'on');
 
 // remove
 unmap('r'); // r is used for remove, use ctrl-r to reload
