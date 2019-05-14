@@ -1,5 +1,5 @@
 
-
+settings.hintAlign = 'left';
 unmap('r'); // r is used for remove, use ctrl-r to reload
 unmap('u'); // u is used for undo;
 /*
