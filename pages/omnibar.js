@@ -1139,13 +1139,30 @@ var SearchEngine = (function() {
         });
         return this.activeTab;
     };
+    function listSuggestions(suggestions) {
+        Omnibar.detectAndInsertURLItem(Omnibar.input.value, suggestions);
+        var rxp = _regexFromString(encodeURIComponent(Omnibar.input.value), true);
+        Omnibar.listResults(suggestions, function (w) {
+            if (w.hasOwnProperty('html')) {
+                return Omnibar.createItemFromRawHtml(w);
+            } else if (w.hasOwnProperty('url')) {
+                return Omnibar.createURLItem(w, rxp);
+            } else {
+                var li = createElement(`<li>⌕ ${w}</li>`);
+                li.query = w;
+                return li;
+            }
+        });
+    }
     self.onInput = function () {
         var canSuggest = self.suggestionURL;
         var showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
 
-        if (!showSuggestions) return false;
+        if (!showSuggestions) {
+            listSuggestions([]);
+            return;
+        }
 
-        var val = encodeURIComponent(Omnibar.input.value);
         clearPendingRequest();
         // Set a timeout before the request is dispatched so that it can be canceled if necessary.
         // This helps prevent rate-limits when typing a long query.
@@ -1154,7 +1171,7 @@ var SearchEngine = (function() {
             runtime.command({
                 action: 'request',
                 method: 'get',
-                url: formatURL(self.suggestionURL, val)
+                url: formatURL(self.suggestionURL, encodeURIComponent(Omnibar.input.value))
             }, function (resp) {
                 Front.contentCommand({
                     action: 'getSearchSuggestions',
@@ -1162,21 +1179,10 @@ var SearchEngine = (function() {
                     response: resp
                 }, function(resp) {
                     resp = resp.data;
-                    if (Array.isArray(resp)) {
-                        Omnibar.detectAndInsertURLItem(Omnibar.input.value, resp);
-                        var rxp = _regexFromString(val, true);
-                        Omnibar.listResults(resp, function (w) {
-                            if (w.hasOwnProperty('html')) {
-                                return Omnibar.createItemFromRawHtml(w);
-                            } else if (w.hasOwnProperty('url')) {
-                                return Omnibar.createURLItem(w, rxp);
-                            } else {
-                                var li = createElement(`<li>⌕ ${w}</li>`);
-                                li.query = w;
-                                return li;
-                            }
-                        });
+                    if (!Array.isArray(resp)) {
+                        resp = [];
                     }
+                    listSuggestions(resp);
                 });
             });
         }, runtime.conf.omnibarSuggestionTimeout);

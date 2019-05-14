@@ -208,6 +208,9 @@ Surfingkeys有三种模式：normal，visual和insert。
     cmap('<Ctrl-n>', '<Tab>');
     cmap('<Ctrl-p>', '<Shift-Tab>');
 
+### 添加书签
+`ab`可以把当前页加入书签。按`ab`后，搜索栏会弹出来让你选择放到哪个目录。如果你希望放到一个新建目录下面，可以输入新的目录名，**并以`/`结尾**，比如我选中了`/Bookmarks Bar/tool/`，然后在后面输入`abc/`，会把当前页加到`/Bookmarks Bar/tool/abc/`这个目录里。如果`abc`后面没有`/`，`abc`会被当作新建书签的标题保存。
+
 ## 搜索选中文本
 
 从使用Firefox时起，我就必装的一个插件。无论Firefox还是Chrome，我用的插件都是通过右键菜单来实现的。Surfingkeys则通过按键来实现。默认情况下，当你在normal mode下按`sg`，Surfingkeys会打开google搜索选中文本，如果没有文字被选中，则搜索系统剪贴板里面的文字。在visual mode下，它只会搜索选中文本。

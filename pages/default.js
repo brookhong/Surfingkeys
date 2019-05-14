@@ -439,13 +439,6 @@ mapkey('yh', "#7Copy current page's host", function() {
 mapkey('yl', "#7Copy current page's title", function() {
     Clipboard.write(document.title);
 });
-mapkey('yf', '#7Copy form data in JSON on current page', function() {
-    var fd = {};
-    document.querySelectorAll('form').forEach(function(form) {
-        fd[(form.method || "get") + "::" + form.action] = getFormData(form, "json");
-    });
-    Clipboard.write(JSON.stringify(fd, null, 4));
-});
 mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
     runtime.command({
         action: 'getSettings',
@@ -454,15 +447,25 @@ mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
         Clipboard.write(response.settings.OmniQueryHistory.join("\n"));
     });
 });
+function generateFormKey(form) {
+    return (form.method || "get") + "::" + new URL(form.action).pathname;
+}
+mapkey('yf', '#7Copy form data in JSON on current page', function() {
+    var fd = {};
+    document.querySelectorAll('form').forEach(function(form) {
+        fd[generateFormKey(form)] = getFormData(form, "json");
+    });
+    Clipboard.write(JSON.stringify(fd, null, 4));
+});
 mapkey(';pf', '#7Fill form with data from yf', function() {
     Hints.create('form', function(element, event) {
-        var formKey = (element.method || "get") + "::" + element.action;
+        var formKey = generateFormKey(element);
         Clipboard.read(function(response) {
             var forms = JSON.parse(response.data.trim());
             if (forms.hasOwnProperty(formKey)) {
                 var fd = forms[formKey];
-                element.querySelectorAll('input[type=text]').forEach(function(ip) {
-                    if (fd.hasOwnProperty(ip.name)) {
+                element.querySelectorAll('input').forEach(function(ip) {
+                    if (fd.hasOwnProperty(ip.name) && typeof(fd[ip.name]) !== "object") {
                         ip.value = fd[ip.name];
                     }
                 });
