@@ -293,6 +293,7 @@ var Hints = (function() {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
             var link = createElement(`<div>${hintLabels[i]}</div>`);
+            if(isDev) elm.dataset.hint_lable = hintLabels[i];
             link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
             link.style.zIndex = z + 9999;
