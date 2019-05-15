@@ -38,7 +38,7 @@
     "build": "gulp",
     "dev": "gulp --env development",
     "watch": "gulp watch --env development --nominify",
-    "watch_ff": "gulp watch_firfox --env development --nominify",
+    "watch_ff": "gulp watch_firefox --env development --nominify",
     "docs:watch": "documentation serve pages/*.js --watch"
   },
   "repository": {
