@@ -277,4 +277,4 @@ gulp.task('watch', gulp.series(['build', function watch() {
     ], gulp.series('copy-non-js-files'));
 }]));
 
-gulp.task('watch_firfox', gulp.series(['set_target_firefox', 'watch']));
+gulp.task('watch_firefox', gulp.series(['set_target_firefox', 'watch']));
