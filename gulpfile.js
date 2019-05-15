@@ -134,6 +134,7 @@ gulp.task('build_common_content_min_without_lib', function() {
     } else {
         common_content.push("content_scripts/chrome_fg.js");
     }
+    if (options.env === 'development') common_content.unshift('content_scripts/debug_utils.js');
     return gulp.src(common_content)
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('common_content.min.js'))
@@ -238,7 +239,8 @@ gulp.task('watch', gulp.series(['build', function watch() {
         "content_scripts/clipboard.js",
         "content_scripts/firefox_fg.js",
         "content_scripts/chrome_fg.js",
-        "libs/shadydom.min.js"
+        "libs/shadydom.min.js",
+        "content_scripts/debug_utils.js"
     ], gulp.series('build_common_content_min'));
 
     gulp.watch([

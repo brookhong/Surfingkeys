@@ -1,3 +1,4 @@
+var isDev = true;
 /*
 *
 * breakOn("aa.scrollTop", 1)            break when aa.scrollTop is changed
