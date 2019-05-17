@@ -364,8 +364,6 @@ var Hints = (function() {
                     }
                 });
                 elements = filterOverlapElements(elements);
-                var scrollables = Normal.refreshScrollableElements();
-                elements = elements.concat(scrollables);
             } else if (Array.isArray(cssSelector)) {
                 elements = filterInvisibleElements(cssSelector);
             } else {
