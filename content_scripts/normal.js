@@ -521,17 +521,39 @@ var Normal = (function() {
         }
     }
 
+    function scrollableMousedownHandler(e) {
+        var n = e.currentTarget;
+        if (!n.contains(e.target)) return;
+        var index = scrollNodes.lastIndexOf(e.target);
+        if (index === -1) {
+            for (var i = scrollNodes.length - 1; i >= 0; i--) {
+                if (scrollNodes[i].contains(e.target)) {
+                    index = i;break;
+                }
+            }
+            if (index === -1) console.warn('cannot find scrollable', e.target);
+        }
+        scrollIndex = index;
+    };
+
     function getScrollableElements() {
         var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
             return (hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (hasScroll(n, 'x', 16) && n.scrollWidth > 200);
         });
         nodes.sort(function(a, b) {
+            if (b.contains(a)) return 1;
+            else if (a.contains(b)) return -1;
             return b.scrollHeight * b.scrollWidth - a.scrollHeight * a.scrollWidth;
         });
         if (document.scrollingElement.scrollHeight > window.innerHeight
             || document.scrollingElement.scrollWidth > window.innerWidth) {
             nodes.unshift(document.scrollingElement);
         }
+        nodes.forEach(function (n) {
+            n.removeEventListener('mousedown', scrollableMousedownHandler);
+            n.addEventListener('mousedown', scrollableMousedownHandler);
+            n.dataset.hint_scrollable = true;
+        });
         return nodes;
     }
 
@@ -624,6 +646,12 @@ var Normal = (function() {
             default:
                 break;
         }
+    };
+
+    self.refreshScrollableElements = function () {
+        scrollNodes = null;
+        initScrollIndex();
+        return scrollNodes;
     };
 
     self.getScrollableElements = function() {
@@ -954,11 +982,20 @@ var Normal = (function() {
     });
 
     self.mappings.add("f", {
-        annotation: "Open a link, press SHIFT to flip hints if they are overlapped.",
+        annotation: "Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints",
         feature_group: 1,
         repeatIgnore: true,
         code: function() {
             Hints.create("", Hints.dispatchMouseClick);
+        }
+    });
+
+    self.mappings.add(";fs", {
+        annotation: "Display hints to focus scrollable elements",
+        feature_group: 1,
+        repeatIgnore: true,
+        code: function() {
+            Hints.create(Normal.refreshScrollableElements(), Hints.dispatchMouseClick);
         }
     });
 

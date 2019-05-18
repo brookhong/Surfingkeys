@@ -94,7 +94,7 @@ var Hints = (function() {
 
     function isCapital(key) {
         return key === key.toUpperCase() &&
-               key !== key.toLowerCase(); // in case key is a symbol or special character
+            key !== key.toLowerCase(); // in case key is a symbol or special character
     }
 
     function getZIndex(node) {
@@ -293,6 +293,7 @@ var Hints = (function() {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
             var link = createElement(`<div>${hintLabels[i]}</div>`);
+            if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
             link.style.zIndex = z + 9999;
