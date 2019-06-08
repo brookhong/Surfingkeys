@@ -150,7 +150,7 @@ var Insert = (function() {
         }
     });
 
-    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;"/>'),
+    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;" />'),
         _emojiList,
         _emojiPending = -1;
 

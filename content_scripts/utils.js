@@ -480,7 +480,7 @@ function isEmptyObject(obj) {
     return true;
 }
 
-var _divForHtmlEncoder = createElement("<div>");
+var _divForHtmlEncoder = createElement("<div />");
 function htmlEncode(str) {
     _divForHtmlEncoder.innerText = str;
     return _divForHtmlEncoder.innerHTML;

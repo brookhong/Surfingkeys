@@ -124,7 +124,7 @@ var Front = (function() {
         });
     };
 
-    var frameElement = createElement('<div id=sk_frame>');
+    var frameElement = createElement('<div id="sk_frame" />');
     self.highlightElement = function (sn) {
         document.body.append(frameElement);
         var rect = sn.rect;
