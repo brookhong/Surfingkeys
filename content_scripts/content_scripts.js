@@ -413,7 +413,7 @@ function _init() {
         });
 
         document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
-        document.onmouseup = function(event) {
+        document.addEventListener("mouseup", event => {
             if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
                 && !isElementClickable(event.target)
                 && !event.target.matches(".cm-matchhighlight")) {
@@ -421,7 +421,7 @@ function _init() {
                 // to avoid calling on selection collapse
                 setTimeout(Front.querySelectedWord, 1);
             }
-        };
+        });
     });
 }
 
