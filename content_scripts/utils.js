@@ -45,7 +45,7 @@ function isElementVisible(elm) {
 }
 
 function isElementClickable(e) {
-    var cssSelector = "a, button, select, input, textarea, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role]";
+    var cssSelector = "a, button, select, input, textarea, summary, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role]";
     if (runtime.conf.clickableSelector.length) {
         cssSelector += ", " + runtime.conf.clickableSelector;
     }
