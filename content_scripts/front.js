@@ -63,12 +63,14 @@ var Front = (function() {
     self.performInlineQueryOnSelection = function(word) {
         var b = document.getSelection().getRangeAt(0).getClientRects()[0];
         Front.performInlineQuery(word, function(queryResult) {
-            Front.showBubble({
-                top: b.top,
-                left: b.left,
-                height: b.height,
-                width: b.width
-            }, queryResult, false);
+            if (queryResult) {
+                Front.showBubble({
+                    top: b.top,
+                    left: b.left,
+                    height: b.height,
+                    width: b.width
+                }, queryResult, false);
+            }
         });
     };
     self.querySelectedWord = function() {

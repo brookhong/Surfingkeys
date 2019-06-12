@@ -135,12 +135,18 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
     }
 }
 
+function isElementDrawn(e, rect) {
+    var min = isEditable(e) ? 1 : 4;
+    rect = rect || e.getBoundingClientRect();
+    return rect.width > min && rect.height > min;
+}
+
 function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return (ignoreSize || (rect.width > 4 && rect.height > 4))
+    return (ignoreSize || isElementDrawn(el, rect))
         && (rect.top < windowHeight) && (rect.bottom > 0)
         && (rect.left < windowWidth) && (rect.right > 0);
 }
@@ -207,7 +213,7 @@ function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
         var be = e.getClientRects()[0];
-        if (e.disabled || e.readOnly || be.width <= 4) {
+        if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
             return false;
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
