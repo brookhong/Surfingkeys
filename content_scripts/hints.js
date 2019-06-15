@@ -211,16 +211,12 @@ var Hints = (function() {
         }
     }
 
-    var _origOverflow;
     self.onEnter = function() {
-        _origOverflow = document.body.style.overflowX;
-        document.body.style.overflowX = "hidden";
         document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.addEventListener("surfingkeys:scrollDone", resetHints);
     };
 
     self.onExit = function() {
-        document.body.style.overflowX = _origOverflow;
         document.removeEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.removeEventListener("surfingkeys:scrollDone", resetHints);
     };
