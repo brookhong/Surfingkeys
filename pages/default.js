@@ -653,7 +653,7 @@ addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://sugges
     var res = response.text.match(/,s:\[("[^\]]+")]}/);
     return res ? res[1].replace(/"/g, '').split(",") : [];
 });
-addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
+addSearchAliasX('w', 'bing', 'http://cn.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
     var res = JSON.parse(response.text);
     return res[1];
 });
