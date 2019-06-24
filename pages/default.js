@@ -212,7 +212,7 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
 });
 mapkey('O', '#1Open detected links from text', function() {
     Hints.create(runtime.conf.clickablePat, function(element) {
-        createElement(`<a href=${element[2]}>`).click();
+        window.location.assign(element[2]);
     }, {statusLine: "Open detected links from text"});
 });
 
