@@ -134,6 +134,7 @@ gulp.task('build_common_content_min_without_lib', function() {
     } else {
         common_content.push("content_scripts/chrome_fg.js");
     }
+    if (options.env === 'development') common_content.unshift('content_scripts/debug_utils.js');
     return gulp.src(common_content)
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('common_content.min.js'))
@@ -224,3 +225,58 @@ gulp.task('set_target_firefox', function (cb) {
     cb();
 });
 gulp.task('firefox', gulp.series(['set_target_firefox', 'build']));
+
+gulp.task('watch', gulp.series(['build', function watch() {
+    gulp.watch([
+        "libs/trie.js",
+        "content_scripts/keyboardUtils.js",
+        "content_scripts/utils.js",
+        "content_scripts/runtime.js",
+        "content_scripts/normal.js",
+        "content_scripts/insert.js",
+        "content_scripts/visual.js",
+        "content_scripts/hints.js",
+        "content_scripts/clipboard.js",
+        "content_scripts/firefox_fg.js",
+        "content_scripts/chrome_fg.js",
+        "libs/shadydom.min.js",
+        "content_scripts/debug_utils.js"
+    ], gulp.series('build_common_content_min'));
+
+    gulp.watch([
+        'background.js',
+        "firefox_pac.js",
+        "firefox_bg.js",
+        "chrome_bg.js"
+    ], gulp.series('build_background'));
+
+    gulp.watch(['manifest.json'], gulp.series('build_manifest'));
+
+    gulp.watch(['pages/*.html'], gulp.series('copy-html-files'));
+
+    gulp.watch([
+        'content_scripts/front.js',
+        'content_scripts/content_scripts.js',
+        'content_scripts/top.js',
+        'pages/*.js'
+    ], gulp.series('copy-es-files'));
+
+    gulp.watch([
+        'libs/ace/*.js',
+        "pages/pdf/*.js",
+        "libs/webfontloader.js",
+        'pages/default.js'
+    ], gulp.series('copy-pretty-default-js'));
+
+    gulp.watch([
+        'icons/**',
+        'content_scripts/**',
+        '!content_scripts/**/*.js',
+        'pages/**',
+        'libs/marked.min.js',
+        '!pages/**/*.html',
+        '!pages/**/*.js'
+    ], gulp.series('copy-non-js-files'));
+}]));
+
+gulp.task('watch_firefox', gulp.series(['set_target_firefox', 'watch']));
