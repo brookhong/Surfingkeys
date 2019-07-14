@@ -152,7 +152,7 @@ function renderProxySettings(rs) {
                     runtime.command({
                         action: 'updateProxy',
                         number: number,
-                        host: elm.querySelector("span").innerText,
+                        host: elm.querySelector("span:nth-child(2)").innerText,
                         operation: 'remove'
                     }, function() {
                         elm.remove();
