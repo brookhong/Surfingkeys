@@ -549,14 +549,11 @@ var Front = (function() {
             });
         }
     };
-    _bubble.querySelector("div.sk_bubble_content").onmousewheel = function(evt) {
-        if (evt.deltaY > 0 && this.scrollTop + this.offsetHeight >= this.scrollHeight) {
-            return false;
-        } else if (evt.deltaY < 0 && this.scrollTop <= 0) {
-            return false;
+    _bubble.querySelector("div.sk_bubble_content").addEventListener("mousewheel", function (evt) {
+        if (evt.deltaY > 0 && this.scrollTop + this.offsetHeight >= this.scrollHeight || evt.deltaY < 0 && this.scrollTop <= 0) {
+            evt.preventDefault();
         }
-        return true;
-    };
+    }, { passive: false });
 
     return self;
 })();
