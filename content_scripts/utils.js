@@ -441,8 +441,8 @@ function getElements(selectorString) {
 function getClickableElements(selectorString, pattern) {
     var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
         return n.offsetHeight && n.offsetWidth
-            && (n.matches(selectorString) || getComputedStyle(n).cursor === "pointer")
-            && (!pattern || pattern.test(n.textContent));
+            && getComputedStyle(n).cursor === "pointer"
+            && (n.matches(selectorString) || pattern.test(n.textContent));
     });
     return filterOverlapElements(nodes);
 }

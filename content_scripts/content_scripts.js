@@ -214,8 +214,7 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = getClickableElements("a, button", runtime.conf.prevLinkRegex);
-    prevLinks = filterOverlapElements(prevLinks);
+    var prevLinks = getClickableElements("[rel=prev]", runtime.conf.prevLinkRegex);
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -225,8 +224,7 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = getClickableElements("a, button", runtime.conf.nextLinkRegex);
-    nextLinks = filterOverlapElements(nextLinks);
+    var nextLinks = getClickableElements("[rel=next]", runtime.conf.nextLinkRegex);
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
