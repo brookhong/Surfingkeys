@@ -270,7 +270,7 @@ var Hints = (function() {
         _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        var style = createElement(`<style>#sk_hints>div{${_styleForClick}}</style>`);
+        var style = createElement(`<style>#sk_hints>div.myHint{${_styleForClick}}</style>`);
         holder.prepend(style);
         var links = elements.map(function(elm, i) {
             var pos = elm.getClientRects()[0],
@@ -288,7 +288,7 @@ var Hints = (function() {
             } else if (left + 32 > window.pageXOffset + window.innerWidth) {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
-            var link = createElement(`<div>${hintLabels[i]}</div>`);
+            var link = createElement(`<div class="myHint">${hintLabels[i]}</div>`);
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
