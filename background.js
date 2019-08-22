@@ -311,19 +311,20 @@ var ChromeService = (function() {
     });
 
     chrome.runtime.onConnect.addListener(function(port) {
-        var sender = port.sender;
         activePorts.push(port);
         port.onMessage.addListener(function(message, port) {
-            return handleMessage(message, port.sender, function(resp) {
-                try {
-                    if (!port.isDisconnected) {
-                        port.postMessage(resp);
+            getActiveTab(function(tab) {
+                handleMessage(message, {tab: tab}, function(resp) {
+                    try {
+                        if (!port.isDisconnected) {
+                            port.postMessage(resp);
+                        }
+                    } catch (e) {
+                        console.log(message.action + ": " + e);
+                        console.log(port);
                     }
-                } catch (e) {
-                    console.log(message.action + ": " + e);
-                    console.log(port);
-                }
-            }, port);
+                }, port);
+            });
         });
         port.onDisconnect.addListener(function() {
             port.isDisconnected = true;
@@ -402,6 +403,12 @@ var ChromeService = (function() {
     chrome.tabs.onAttached.addListener(function() {
         _updateTabIndices();
     });
+
+    function getActiveTab(cb) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            tabs.length > 0 && cb(tabs[0]);
+        });
+    }
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
             case 'restartext':
@@ -409,8 +416,7 @@ var ChromeService = (function() {
                 break;
             case 'previousTab':
             case 'nextTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    var tab = tabs[0];
+                getActiveTab(function(tab) {
                     var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
                     chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
                         index = ((index % tabs.length) + tabs.length) % tabs.length;
@@ -419,21 +425,18 @@ var ChromeService = (function() {
                 });
                 break;
             case 'closeTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    chrome.tabs.remove(tabs[0].id);
+                getActiveTab(function(tab) {
+                    chrome.tabs.remove(tab.id);
                 });
                 break;
             case 'proxyThis':
-                chrome.tabs.query({
-                    currentWindow: true,
-                    active: true
-                }, function(resp) {
-                    var host = new URL(resp[0].url).host;
+                getActiveTab(function(tab) {
+                    var host = new URL(tab.url).host;
                     updateProxy({
                         host: host,
                         operation: "toggle"
                     }, function() {
-                        chrome.tabs.reload(resp[0].id, {
+                        chrome.tabs.reload(tab.id, {
                             bypassCache: true
                         });
                     });
@@ -739,8 +742,7 @@ var ChromeService = (function() {
         });
     };
     self.togglePinTab = function(message, sender, sendResponse) {
-        chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-            var tab = tabs[0];
+        getActiveTab(function(tab) {
             return chrome.tabs.update(tab.id, {
                 pinned: !tab.pinned
             });
