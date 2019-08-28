@@ -313,18 +313,18 @@ var ChromeService = (function() {
     chrome.runtime.onConnect.addListener(function(port) {
         activePorts.push(port);
         port.onMessage.addListener(function(message, port) {
-            getActiveTab(function(tab) {
-                handleMessage(message, {tab: tab}, function(resp) {
-                    try {
-                        if (!port.isDisconnected) {
-                            port.postMessage(resp);
-                        }
-                    } catch (e) {
-                        console.log(message.action + ": " + e);
-                        console.log(port);
+            // using port.sender here is must, as call to these service APIs may be made from
+            // any inactive tab, such as API getDisabled.
+            return handleMessage(message, port.sender, function(resp) {
+                try {
+                    if (!port.isDisconnected) {
+                        port.postMessage(resp);
                     }
-                }, port);
-            });
+                } catch (e) {
+                    console.log(message.action + ": " + e);
+                    console.log(port);
+                }
+            }, port);
         });
         port.onDisconnect.addListener(function() {
             port.isDisconnected = true;
@@ -991,6 +991,44 @@ var ChromeService = (function() {
         }
         return url;
     }
+
+    function openUrlInNewTab(currentTab, url, message) {
+        var newTabPosition;
+        if (currentTab) {
+            switch (conf.newTabPosition) {
+                case 'left':
+                    newTabPosition = currentTab.index;
+                    break;
+                case 'right':
+                    newTabPosition = currentTab.index + 1;
+                    break;
+                case 'first':
+                    newTabPosition = 0;
+                    break;
+                case 'last':
+                    break;
+                default:
+                    newTabPosition = currentTab.index + 1 + chromelikeNewTabPosition;
+                    chromelikeNewTabPosition++;
+                    break;
+            }
+        }
+        chrome.tabs.create({
+            url: url,
+            active: message.tab.active,
+            index: newTabPosition,
+            pinned: message.tab.pinned,
+            openerTabId: currentTab.id
+        }, function(tab) {
+            if (message.scrollLeft || message.scrollTop) {
+                tabMessages[tab.id] = {
+                    scrollLeft: message.scrollLeft,
+                    scrollTop: message.scrollTop
+                };
+            }
+        });
+    }
+
     self.openLink = function(message, sender, sendResponse) {
         var url = normalizeURL(message.url);
         if (url.startsWith("javascript:")) {
@@ -999,40 +1037,15 @@ var ChromeService = (function() {
             });
         } else {
             if (message.tab.tabbed) {
-                var newTabPosition;
-                if (sender.tab) {
-                    switch (conf.newTabPosition) {
-                        case 'left':
-                            newTabPosition = sender.tab.index;
-                            break;
-                        case 'right':
-                            newTabPosition = sender.tab.index + 1;
-                            break;
-                        case 'first':
-                            newTabPosition = 0;
-                            break;
-                        case 'last':
-                            break;
-                        default:
-                            newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
-                            chromelikeNewTabPosition++;
-                            break;
-                    }
+                if (sender.frameId !== 0 && chrome.extension.getURL("pages/frontend.html") === sender.url) {
+                    // if current call was made from Omnibar, the sender.tab may be stale,
+                    // as sender was bound when port was created.
+                    getActiveTab(function(tab) {
+                        openUrlInNewTab(tab, url, message);
+                    });
+                } else {
+                    openUrlInNewTab(sender.tab, url, message);
                 }
-                chrome.tabs.create({
-                    url: url,
-                    active: message.tab.active,
-                    index: newTabPosition,
-                    pinned: message.tab.pinned,
-                    openerTabId: sender.tab.id
-                }, function(tab) {
-                    if (message.scrollLeft || message.scrollTop) {
-                        tabMessages[tab.id] = {
-                            scrollLeft: message.scrollLeft,
-                            scrollTop: message.scrollTop
-                        };
-                    }
-                });
             } else {
                 chrome.tabs.update({
                     url: url,

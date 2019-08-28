@@ -1,4 +1,117 @@
 # Changelog of Surfingkeys
+## 0.9.47
+
+* Using port.sender is must, as calls to background service APIs may be made
+from any inactive tab, such as API getDisabled.
+
+* For API openLink in background, we can't just use sender.tab when calls to
+this API was made from Omnibar, as it may be stale, which was bound when port
+was created.
+
+## 0.9.46
+
+Fix message listener of long-lived connections, in which case sender.tab is not valid.
+
+Fixed #1004 Open default search engine after Enter not working most of the time
+
+Fixed #989 previousPage/nextPage ([[/]]) should respect the rel HTML attribute
+
+Fixed #993 Chrome warning on scroll listener
+
+Fixed #1000 Hint styling not working in Firefox
+
+bug fix: unable to remove proxied host on setting page
+
+Fix the 'O' default mapping on Firefox (closes #990) (#991)
+
+Unlike Chrome, trying to follow generated links with the click()
+method has no effect on Firefox. Assigning the URL to window.location
+instead works in both browsers.
+
+## 0.9.45
+
+Fixed #985 Pressing 'f' causes text to vanish
+
+Fixed #982 Cannot enter the edit box on wandbox.org
+
+Fixed #970 keep cursor on mouse click to enter Insert mode
+
+Fixed #962 Facebook Messsenger "Could not display conversation list"
+
+Fixed #870 use precise roles of elements to match clickable targets
+
+Fixed #951 summary tag is supposed to be clickable by default.
+
+canonical xml format for elements to be created
+
+feat(scrollable-hints): display hints for scrollable elements with di… (#968)
+
+* feat(scrollable-hints): display hints for scrollable elements with different color; add it's function to the the 'f' command and add another command ';fs' to trigger it; user mouse click could also switch the scrollable focus
+
+* remove scrollable hints from the 'f' command, due to performance consideration
+
+Fix 'yf' and ';pf': remove the domain name from the form key, so that the workflow could work across different sites.
+
+disable binding action in Insert mode when IME is opened
+
+Fixed #954 url detection should also work when there is no suggestion
+
+Fixed #952 Add doc for 'ab'
+
+## 0.9.44
+blacklist should work with interceptedErrors
+
+toggleMouseQuery needs to work with iframes
+
+improve vim-like marks
+
+Fix openLink for javascript:
+
+;q to toggle mouseSelectToQuery site-wise
+
+Shift-Enter in visual mode open link in new tab
+
+add settings.mouseSelectToQuery for whether to enable mouse selection to query.
+
+Add: PrevLink and NextLink Regex for douban.com (#930)
+
+douban.com names its paging buttons as '前页' and “后页", which were not considered by PrevLinkRegex and NextLinkRegex. Now they are added.
+
+fixed: isEditable: TypeError: element is null (#920)
+
+tweak: attempt to treat OmniBar input as URL (#940)
+
+if the user enters a string lacking a URI scheme, try to construct a URL
+by prepending 'https://', falling back to a query URL for the default
+search engine
+
+Update README.md (#938)
+
+I created a study deck for memorizing the default keyboard mappings.
+
+## 0.9.43
+Fixed #894 Firefox: Visual mode: Forward/backward document boundary moves viewscreen but not the cursor
+
+Fixed #899 Unrecognized key event: Meta-Meta in Firefox
+
+Add settings.caretViewport to limit hints generation on 'v' for entering visual mode
+
+Fixed #911 keep scroll position on finding completed
+
+Fixed #578 support Emacs keybindings in ACE editor
+
+Fixed #907 doesn't work well with TinyMCE editor
+
+Fixed #906 pass-through mode is undocumented
+
+* add settings.ignoredFrameHosts for excluding unwanted frames
+* g# to reload current page without hash fragment
+
+adds title to iframe to supress Lighthouse error: "iframe elements do not have a title" (#904)
+
+Fixed #887 map function should work for Omnibar/Find/Help/AceEditor
+
+Fixed #892 Front.showBanner ignores linger_time
 
 ## 0.9.42
 * replace 'qv' with 'cq' for word query with Hints.
@@ -61,11 +174,11 @@ Fixed #842 Fix search suggestions for Youtube
 
 Fixed #841 Add smartCase setting to Find mode
 
-## 0.9.39 
+## 0.9.39
 
 Fixed #837 Scrolling broken on sites using 'scroll-behavior: smooth'
 
-save history for inlineQuery 
+save history for inlineQuery
 
 enter Insert mode on CodeMirror editor
 
@@ -132,7 +245,7 @@ add command :userAgent to modify user agent
 
 Improve numeric Hints mode
 
-## 0.9.36 
+## 0.9.36
 Fixed #776 invalid request
 
 ## 0.9.35
@@ -152,9 +265,9 @@ improve nextFrame
 Fixed #772 omnibar css issue
 
 ## 0.9.34
-Fixed #767 omnibar css issue 
+Fixed #767 omnibar css issue
 
-Fixed issue of bubble in iframe 
+Fixed issue of bubble in iframe
 
 Improved placeHints
 
@@ -166,7 +279,7 @@ youtube omnibar alias closes #753 (#759)
 
 * Fixed #756 use window.location.origin for compatibility * upgrade mermaid to 8.0.0-rc.8
 
-## 0.9.32 
+## 0.9.32
 Fixed #744 Return/enter don't work in omnibar
 
 Fixed #740 could not use search engine when no item focused
