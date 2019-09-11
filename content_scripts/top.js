@@ -104,7 +104,17 @@ if (window === top) {
     };
 
     document.addEventListener('DOMContentLoaded', function (e) {
-        document.documentElement.appendChild(uiHost);
+        if (document.contentType === "application/pdf") {
+            // Appending child to document will break default pdf viewer from rendering.
+            // So we append child after default pdf viewer rendered.
+            document.body.querySelector("EMBED").addEventListener("load", function(evt) {
+                setTimeout(function() {
+                    document.documentElement.appendChild(uiHost);
+                }, 10);
+            });
+        } else {
+            document.documentElement.appendChild(uiHost);
+        }
 
         runtime.command({
             action: 'tabURLAccessed',

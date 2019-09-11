@@ -562,9 +562,10 @@ var ChromeService = (function() {
         });
     };
     self.getDisabled = function(message, sender, sendResponse) {
-        loadSettings('blacklist', function(data) {
+        loadSettings(['blacklist', 'noPdfViewer'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
+                    noPdfViewer: data.noPdfViewer,
                     disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
                 });
             }
