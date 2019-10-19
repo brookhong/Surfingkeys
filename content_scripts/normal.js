@@ -80,12 +80,29 @@ var Mode = (function() {
         return (-1 !== self.specialKeys[specialKey].indexOf(KeyboardUtils.decodeKeystroke(keyToCheck)));
     };
 
+    // Enable to stop propagation of the event whose keydown handler has been triggered
+    // Why we need this?
+    // For example, there is keyup event handler of `s` on some site to set focus on an input box,
+    // Now user presses `sg` to search with google, Surfingkeys got `s` and triggered its keydown handler.
+    // But keyup handler of the site also got triggered, then `g` was swallowed by the input box.
+    // This setting now is only turned on for Normal.
+    // For Hints, we could not turn on it, as keyup should be propagated to Normal
+    // to stop scrolling when holding a key.
+    var keysNeedKeyupSuppressed = [];
+    self.suppressKeyUp = function(keyCode) {
+        if (keysNeedKeyupSuppressed.indexOf(keyCode) === -1) {
+            keysNeedKeyupSuppressed.push(keyCode);
+        }
+    };
+
     function onAfterHandler(mode, event) {
         if (event.sk_stopPropagation) {
             event.stopImmediatePropagation();
             event.preventDefault();
             // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
-            mode.stopKeyupPropagation = (event.type === "keydown" && mode.enableKeyupMerging) ? event.keyCode : 0;
+            if (event.type === "keydown" && mode === Normal) {
+                self.suppressKeyUp(event.keyCode);
+            }
         }
     }
 
@@ -114,9 +131,10 @@ var Mode = (function() {
 
         window.addEventListener("keyup", function (event) {
             handleStack("keyup", event, function (m) {
-                if (m.stopKeyupPropagation === event.keyCode) {
+                var i = keysNeedKeyupSuppressed.indexOf(event.keyCode);
+                if (i !== -1) {
                     event.stopImmediatePropagation();
-                    m.stopKeyupPropagation = 0;
+                    keysNeedKeyupSuppressed.splice(i, 1);
                 }
             });
         }, true);
@@ -292,16 +310,6 @@ var PassThrough = (function() {
 
 var Normal = (function() {
     var self = new Mode("Normal");
-
-    // Enable to stop propagation of the event whose keydown handler has been triggered
-    // Why we need this?
-    // For example, there is keyup event handler of `s` on some site to set focus on an input box,
-    // Now user presses `sg` to search with google, Surfingkeys got `s` and triggered its keydown handler.
-    // But keyup handler of the site also got triggered, then `g` was swallowed by the input box.
-    // This setting now is only turned on for Normal.
-    // For Hints, we could not turn on it, as keyup should be propagated to Normal
-    // to stop scrolling when holding a key.
-    self.enableKeyupMerging = true;
 
     // let next focus event pass
     var _passFocus = false;

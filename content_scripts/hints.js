@@ -37,7 +37,7 @@ var Hints = (function() {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 if (prefix.length > 0) {
                     prefix = prefix.substr(0, prefix.length - 1);
-                    handleHint();
+                    handleHint(event);
                 } else if (textFilter.length > 0) {
                     textFilter = textFilter.substr(0, textFilter.length - 1);
                     refreshByTextFilter();
@@ -55,10 +55,10 @@ var Hints = (function() {
                             textFilter += key;
                             refreshByTextFilter();
                         }
-                        handleHint();
+                        handleHint(event);
                     } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key.toUpperCase();
-                        handleHint();
+                        handleHint(event);
                     } else {
                         if (self.scrollKeys.indexOf(key) === -1) {
                             // quit hints if user presses non-hint key and no keys for scrolling
@@ -107,7 +107,7 @@ var Hints = (function() {
         return z;
     }
 
-    function handleHint() {
+    function handleHint(evt) {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
@@ -118,6 +118,11 @@ var Hints = (function() {
                 refresh();
             } else {
                 hide();
+            }
+            if (evt) {
+                Mode.suppressKeyUp(evt.keyCode);
+                evt.stopImmediatePropagation();
+                evt.preventDefault();
             }
         } else if (matches.length === 0) {
             hide();
