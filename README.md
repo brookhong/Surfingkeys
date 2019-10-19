@@ -672,6 +672,7 @@ For example,
 | settings.aceKeybindings | "vim" | Set it "emacs" to use emacs keybindings in the ACE editor. |
 | settings.caretViewport | null | Set it in format `[top, left, bottom, right]` to limit hints generation on `v` for entering visual mode, such as `[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]` will make Surfingkeys generate Hints only for text that display on vertically middle of window. |
 | settings.mouseSelectToQuery | [] | All hosts that have enable feature -- mouse selection to query. |
+| settings.passThroughTimeout | 0 | Automatically quit PassThrough mode after specified milliseconds, to set it 0 will disable automatical quit. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

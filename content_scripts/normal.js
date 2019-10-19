@@ -293,6 +293,7 @@ var Disabled = (function() {
 
 var PassThrough = (function() {
     var self = new Mode("PassThrough", "pass through");
+    var _autoExit;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -300,10 +301,26 @@ var PassThrough = (function() {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.exit();
             event.sk_stopPropagation = true;
+        } else if (runtime.conf.passThroughTimeout > 0) {
+            if (_autoExit) {
+                clearTimeout(_autoExit);
+                _autoExit = undefined;
+            }
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, runtime.conf.passThroughTimeout);
         }
     }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
+
+    self.onEnter = function() {
+        if (runtime.conf.passThroughTimeout > 0) {
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, runtime.conf.passThroughTimeout);
+        }
+    };
 
     return self;
 })();

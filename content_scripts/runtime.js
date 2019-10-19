@@ -46,6 +46,7 @@ var runtime = window.runtime || (function() {
             caretViewport: null,
             mouseSelectToQuery: [],
             useLocalMarkdownAPI: true,
+            passThroughTimeout: 0,
         },
         runtime_handlers: {}
     }, actions = {};
