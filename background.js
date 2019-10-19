@@ -903,7 +903,11 @@ var ChromeService = (function() {
         chrome.sessions.restore();
     };
     self.duplicateTab = function(message, sender, sendResponse) {
-        chrome.tabs.duplicate(sender.tab.id);
+        chrome.tabs.duplicate(sender.tab.id, function() {
+            if (message.active === false) {
+                chrome.tabs.update(sender.tab.id, { active: true });
+            }
+        });
     };
     self.newWindow = function(message, sender, sendResponse) {
         chrome.tabs.query({}, function(tabs) {

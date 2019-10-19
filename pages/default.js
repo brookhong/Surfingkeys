@@ -429,6 +429,9 @@ mapkey('yd', "#7Copy current downloading URL", function() {
 mapkey('yt', '#3Duplicate current tab', function() {
     RUNTIME("duplicateTab");
 });
+mapkey('yT', '#3Duplicate current tab in background', function() {
+    RUNTIME("duplicateTab", {active: false});
+});
 mapkey('yy', "#7Copy current page's URL", function() {
     Clipboard.write(window.location.href);
 });
