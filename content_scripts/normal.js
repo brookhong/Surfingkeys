@@ -517,7 +517,7 @@ var Normal = (function() {
         if (!scrollNodes || scrollNodes.length === 0) {
             document.documentElement.style.overflow = "visible";
             document.body.style.overflow = "visible";
-            scrollNodes = getScrollableElements(100, 1.1);
+            scrollNodes = getScrollableElements();
             scrollIndex = 0;
         }
     }
@@ -581,7 +581,7 @@ var Normal = (function() {
         });
     }
     function changeScrollTarget(silent) {
-        scrollNodes = getScrollableElements(100, 1.1);
+        scrollNodes = getScrollableElements();
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
@@ -597,6 +597,11 @@ var Normal = (function() {
         var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
+            if (!document.documentElement.contains(scrollNode)) {
+                scrollNodes.splice(scrollIndex, 1);
+                scrollIndex = 0;
+                scrollNode = scrollNodes[scrollIndex];
+            }
         }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
@@ -658,6 +663,16 @@ var Normal = (function() {
     self.getScrollableElements = function() {
         initScrollIndex();
         return scrollNodes;
+    };
+
+    self.addScrollableElement = function(elm) {
+        initScrollIndex();
+        scrollIndex = scrollNodes.indexOf(elm);
+        if (scrollIndex === -1) {
+            scrollNodes.push(elm);
+            _highlightElement(elm);
+            scrollIndex = scrollNodes.length - 1;
+        }
     };
 
     self.rotateFrame = function() {
