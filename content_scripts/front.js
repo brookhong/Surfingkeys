@@ -516,6 +516,7 @@ var Front = (function() {
             for (var m of mutations) {
                 for (var n of m.addedNodes) {
                     if (!n.fromSurfingKeys) {
+                        n.newlyCreated = true;
                         addedNodes.push(n);
                     }
                 }
@@ -529,7 +530,7 @@ var Front = (function() {
                 pendingUpdater = setTimeout(function() {
                     var possibleModalElements = getVisibleElements(function(e, v) {
                         var br = e.getBoundingClientRect();
-                        if (br.width > 300 && br.height / window.innerHeight > 0.6) {
+                        if (br.width > 300 && br.height > 300) {
                             document.scrollingElement.scrollTop += 1;
                             var br1 = e.getBoundingClientRect();
                             if (br.top === br1.top && hasScroll(e, 'y', 16)) {

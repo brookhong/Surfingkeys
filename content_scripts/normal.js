@@ -361,8 +361,25 @@ var Normal = (function() {
                     if (event.sk_stopPropagation) {
                         realTarget.focus();
                     }
-                    // keep cursor where it is
-                    Insert.enter(realTarget, true);
+
+                    var stealFocus = false;
+                    if (runtime.conf.stealFocusOnLoad) {
+                        var n = realTarget;
+                        while (n !== document.documentElement && !n.newlyCreated) {
+                            n = n.parentElement;
+                        }
+                        stealFocus = n !== document.documentElement && n.newlyCreated;
+                    }
+                    if (stealFocus) {
+                        // steal focus from dynamically created input widget
+                        realTarget.blur();
+                        delete n.newlyCreated;
+                        Mode.handleMapKey.call(self, event);
+                    } else {
+                        // keep cursor where it is
+                        Insert.enter(realTarget, true);
+                    }
+
                 }
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
@@ -622,10 +639,13 @@ var Normal = (function() {
         var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
-            if (!document.documentElement.contains(scrollNode)) {
-                scrollNodes.splice(scrollIndex, 1);
-                scrollIndex = 0;
-                scrollNode = scrollNodes[scrollIndex];
+            if (scrollNode !== document.scrollingElement) {
+                var br = scrollNode.getBoundingClientRect();
+                if (br.width === 0 || br.height === 0) {
+                    scrollNodes.splice(scrollIndex, 1);
+                    scrollIndex = 0;
+                    scrollNode = scrollNodes[scrollIndex];
+                }
             }
         }
         if (!scrollNode.skScrollBy) {
