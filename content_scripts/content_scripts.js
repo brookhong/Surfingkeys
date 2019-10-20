@@ -269,15 +269,19 @@ function getFormData(form, format) {
     if (format === "json") {
         var obj = {};
 
-        formData.forEach(function(value, key) {
+        formData.forEach(function (value, key) {
             if (obj.hasOwnProperty(key)) {
-                var p = obj[key];
-                if (p.constructor.name === "Array") {
-                    p.push(value);
-                } else {
-                    obj[key] = [];
-                    obj[key].push(p);
-                    obj[key].push(value);
+                if (value.length) {
+                    var p = obj[key];
+                    if (p.constructor.name === "Array") {
+                        p.push(value);
+                    } else {
+                        obj[key] = [];
+                        if (p.length) {
+                            obj[key].push(p);
+                        }
+                        obj[key].push(value);
+                    }
                 }
             } else {
                 obj[key] = value;
