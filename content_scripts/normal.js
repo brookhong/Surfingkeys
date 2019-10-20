@@ -227,7 +227,9 @@ var Mode = (function() {
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings &&
             runtime.conf.digitForRepeat &&
-            (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9" &&
+            this.map_node.getWords().length > 0
+        ) {
             // reset only after target action executed or cancelled
             this.repeats += key;
             this.isTrustedEvent && Front.showKeystroke(key, this);
