@@ -362,7 +362,7 @@ var Front = (function() {
     };
 
     self.getFrameId = function () {
-        if (document.body.offsetWidth && document.body.offsetHeight && document.body.innerText
+        if (document.body.offsetWidth > 16 && document.body.offsetHeight > 16 && document.body.innerText
             && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
             && !window.frameId) {
             window.frameId = generateQuickGuid();
@@ -515,7 +515,7 @@ var Front = (function() {
             var addedNodes = [];
             for (var m of mutations) {
                 for (var n of m.addedNodes) {
-                    if (!n.fromSurfingKeys) {
+                    if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
                         n.newlyCreated = true;
                         addedNodes.push(n);
                     }

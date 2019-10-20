@@ -467,10 +467,13 @@ mapkey(';pf', '#7Fill form with data from yf', function() {
             var forms = JSON.parse(response.data.trim());
             if (forms.hasOwnProperty(formKey)) {
                 var fd = forms[formKey];
-                element.querySelectorAll('input').forEach(function(ip) {
+                element.querySelectorAll('input, textarea').forEach(function(ip) {
                     if (fd.hasOwnProperty(ip.name) && ip.type !== "hidden") {
-                        if (typeof(fd[ip.name]) === "string") {
-                            ip.value = fd[ip.name];
+                        if (ip.type === "radio") {
+                            var op = element.querySelector(`input[name='${ip.name}'][value='${fd[ip.name]}']`);
+                            if (op) {
+                                op.checked = true;
+                            }
                         } else if (Array.isArray(fd[ip.name])) {
                             element.querySelectorAll(`input[name='${ip.name}']`).forEach(function(ip) {
                                 ip.checked = false;
@@ -482,6 +485,8 @@ mapkey(';pf', '#7Fill form with data from yf', function() {
                                     op.checked = true;
                                 }
                             });
+                        } else if (typeof(fd[ip.name]) === "string") {
+                            ip.value = fd[ip.name];
                         }
                     }
                 });
