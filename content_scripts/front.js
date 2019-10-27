@@ -532,12 +532,13 @@ var Front = (function() {
                     var possibleModalElements = getVisibleElements(function(e, v) {
                         var br = e.getBoundingClientRect();
                         if (br.width > 300 && br.height > 300) {
+                            var originalTop = document.scrollingElement.scrollTop;
                             document.scrollingElement.scrollTop += 1;
                             var br1 = e.getBoundingClientRect();
                             if (br.top === br1.top && hasScroll(e, 'y', 16)) {
                                 v.push(e);
                             }
-                            document.scrollingElement.scrollTop -= 1;
+                            document.scrollingElement.scrollTop = originalTop;
                         }
                     });
 
