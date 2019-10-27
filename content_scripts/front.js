@@ -363,6 +363,7 @@ var Front = (function() {
 
     self.getFrameId = function () {
         if (document.body.offsetWidth > 16 && document.body.offsetHeight > 16 && document.body.innerText
+            && (!window.frameElement || getComputedStyle(window.frameElement).zIndex >= 0)
             && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
             && !window.frameId) {
             window.frameId = generateQuickGuid();

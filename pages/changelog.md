@@ -1,4 +1,15 @@
 # Changelog of Surfingkeys
+## 0.9.49
+* Skip some frames invisible to users.
+* Fixed issues of paste data from copied form.
+* Fixed #1002 unmapAllExcept does not unmap number keys
+* Fixed #1032 yT to duplicate the active tab as a background tab
+* Fixed #964 Automatically quit PassThrough mode after specified milliseconds, to set it 0 will disable automatical quit.
+* Fixed issue of Hint mode: prevent hint keys leak to site
+* also read text on mouse up
+* Treat element with role textbox as input widget
+* Find scrollable modal element and use it as scrollNode on DOM node inserted, remove it if current scrollNode is detached from document, so that we could scroll in modal dialog automatically, such as on reddit/zhihu.
+
 ## 0.9.47
 
 * Using port.sender is must, as calls to background service APIs may be made

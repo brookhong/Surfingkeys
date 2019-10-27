@@ -365,7 +365,7 @@ var Normal = (function() {
                     }
 
                     var stealFocus = false;
-                    if (runtime.conf.stealFocusOnLoad) {
+                    if (!isElementPartiallyInViewport(realTarget)) {
                         var n = realTarget;
                         while (n !== document.documentElement && !n.newlyCreated) {
                             n = n.parentElement;

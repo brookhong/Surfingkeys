@@ -1118,17 +1118,21 @@ var ChromeService = (function() {
                 return frameId;
             });
 
-            if (framesInTab.length > 1) {
-                if (!frameIndexes.hasOwnProperty(tid)) {
-                    frameIndexes[tid] = 0;
+            if (framesInTab.length > 0) {
+                var fid = framesInTab[0];
+                if (framesInTab.length > 1) {
+                    if (!frameIndexes.hasOwnProperty(tid)) {
+                        frameIndexes[tid] = 0;
+                    }
+                    frameIndexes[tid]++;
+                    frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
+                    fid = framesInTab[frameIndexes[tid]];
                 }
-                frameIndexes[tid] ++;
-                frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
 
                 chrome.tabs.sendMessage(tid, {
                     subject: "focusFrame",
                     target: 'content_runtime',
-                    frameId: framesInTab[frameIndexes[tid]]
+                    frameId: fid
                 });
             }
         });
