@@ -123,8 +123,10 @@ if (window === top) {
         }, function (resp) {
             if (resp.index > 0) {
                 var showTabIndexInTitle = function () {
-                    skipObserver = true;
-                    document.title = myTabIndex + " " + originalTitle;
+                    if (!originalTitle.startsWith(myTabIndex + " ")) {
+                      skipObserver = true;
+                      document.title = myTabIndex + " " + originalTitle;
+                    }
                 };
 
                 var myTabIndex = resp.index,
