@@ -474,6 +474,9 @@ function hasScroll(el, direction, barSize) {
         var originOffset = el[offset[0]];
         el[offset[0]] = el.getBoundingClientRect()[offset[1]];
         result = el[offset[0]];
+        if (result !== originOffset) {
+            Mode.suppressNextScrollEvent();
+        }
         el[offset[0]] = originOffset;
     }
     return result >= barSize;

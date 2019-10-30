@@ -122,8 +122,9 @@ var Mode = (function() {
     }
 
     var _listenedEvents = ["keydown", "keyup"];
+    var suppressScrollEvent = 0;
 
-    self.init = function() {
+    function init() {
         window.addEventListener("keydown", function (event) {
             event.sk_keyName = KeyboardUtils.getKeyChar(event);
             handleStack("keydown", event);
@@ -138,16 +139,27 @@ var Mode = (function() {
                 }
             });
         }, true);
+
+        window.addEventListener("scroll", function (event) {
+            if (suppressScrollEvent > 0) {
+                event.stopImmediatePropagation();
+                event.preventDefault();
+                suppressScrollEvent--;
+            }
+        }, true);
+    }
+    self.suppressNextScrollEvent = function() {
+        suppressScrollEvent++;
     };
 
-    // For blank page in frames, we defer Mode.init to page loaded
+    // For blank page in frames, we defer init to page loaded
     // as document.write will clear added eventListeners.
     if (window.location.href === "about:blank" && window.frameElement) {
         window.frameElement.addEventListener("load", function(evt) {
             try {
-                self.init();
+                init();
                 _listenedEvents.forEach(function(evt) {
-                    if (["keydown", "keyup"].indexOf(evt) === -1) {
+                    if (["keydown", "keyup", "scroll"].indexOf(evt) === -1) {
                         window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
                     }
                 });
@@ -156,7 +168,7 @@ var Mode = (function() {
             }
         });
     } else {
-        self.init();
+        init();
     }
 
 
@@ -717,7 +729,6 @@ var Normal = (function() {
         scrollIndex = scrollNodes.indexOf(elm);
         if (scrollIndex === -1) {
             scrollNodes.push(elm);
-            _highlightElement(elm);
             scrollIndex = scrollNodes.length - 1;
         }
     };

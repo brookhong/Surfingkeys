@@ -534,6 +534,10 @@ var Front = (function() {
                         if (br.width > 300 && br.height > 300) {
                             var originalTop = document.scrollingElement.scrollTop;
                             document.scrollingElement.scrollTop += 1;
+                            if (document.scrollingElement.scrollTop !== originalTop) {
+                                // we scroll here to detect modal element, firing scroll event is not expected
+                                Mode.suppressNextScrollEvent();
+                            }
                             var br1 = e.getBoundingClientRect();
                             if (br.top === br1.top && hasScroll(e, 'y', 16)) {
                                 v.push(e);
