@@ -236,8 +236,12 @@ var Front = (function() {
     _actions['executeCommand'] = function (message) {
         Commands.execute(message.cmdline);
     };
-    _actions['addCMap'] = function (message) {
-        _map(Omnibar, message.new_keystroke, message.old_keystroke);
+    _actions['addMapkey'] = function (message) {
+        if (message.old_keystroke in Mode.specialKeys) {
+            Mode.specialKeys[message.old_keystroke].push(message.new_keystroke);
+        } else if (window.hasOwnProperty(message.mode)) {
+            _map(window[message.mode], message.new_keystroke, message.old_keystroke);
+        }
     };
     _actions['addVimMap'] = function (message) {
         self.vimMappings.push([message.lhs, message.rhs, message.ctx]);
@@ -317,14 +321,15 @@ var Front = (function() {
     self.openFinder = _actions['openFinder'];
 
     self.showBanner = function (content, linger_time) {
-        banner.classList.remove("slideInBanner");
+        banner.style.cssText = "";
         banner.style.display = "";
         setInnerHTML(banner, htmlEncode(content));
         self.flush();
 
-        banner.classList.add("slideInBanner");
+        let timems = (linger_time || 1600) / 1000;
+        banner.style.cssText = `animation: ${timems}s ease-in-out 1 both slideInBanner;`;
         banner.one('animationend', function() {
-            banner.classList.remove("slideInBanner");
+            banner.style.cssText = "";
             banner.style.display = "none";
             self.flush();
         });
@@ -517,6 +522,43 @@ var Front = (function() {
             }
         }
     }, true);
+
+
+    function onResize() {
+        if (_bubble.style.display !== "none") {
+            Front.contentCommand({
+                action: 'updateInlineQuery'
+            });
+        }
+    }
+
+    // for mouseSelectToQuery
+    document.onmouseup = function(e) {
+        if (!_bubble.contains(e.target)) {
+            _bubble.style.display = "none";
+            Front.flush();
+            Front.visualCommand({
+                action: 'emptySelection'
+            });
+            window.removeEventListener("resize", onResize);
+        } else {
+            var sel = window.getSelection().toString().trim() || Visual.getWordUnderCursor();
+            if (sel && sel.length > 0) {
+                Front.contentCommand({
+                    action: 'updateInlineQuery',
+                    word: sel
+                }, function() {
+                    window.addEventListener("resize", onResize);
+                });
+            }
+        }
+    };
+
+    _bubble.querySelector("div.sk_bubble_content").addEventListener("mousewheel", function (evt) {
+        if (evt.deltaY > 0 && this.scrollTop + this.offsetHeight >= this.scrollHeight || evt.deltaY < 0 && this.scrollTop <= 0) {
+            evt.preventDefault();
+        }
+    }, { passive: false });
 
     return self;
 })();

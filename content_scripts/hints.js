@@ -37,7 +37,7 @@ var Hints = (function() {
             if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
                 if (prefix.length > 0) {
                     prefix = prefix.substr(0, prefix.length - 1);
-                    handleHint();
+                    handleHint(event);
                 } else if (textFilter.length > 0) {
                     textFilter = textFilter.substr(0, textFilter.length - 1);
                     refreshByTextFilter();
@@ -55,10 +55,10 @@ var Hints = (function() {
                             textFilter += key;
                             refreshByTextFilter();
                         }
-                        handleHint();
+                        handleHint(event);
                     } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + keyToDisplay(key);
-                        handleHint();
+                        handleHint(event);
                     } else {
                         if (self.scrollKeys.indexOf(key) === -1) {
                             // quit hints if user presses non-hint key and no keys for scrolling
@@ -95,7 +95,7 @@ var Hints = (function() {
 
     function isCapital(key) {
         return key === key.toUpperCase() &&
-               key !== key.toLowerCase(); // in case key is a symbol or special character
+            key !== key.toLowerCase(); // in case key is a symbol or special character
     }
 
     function keyToDisplay(key) {
@@ -115,7 +115,7 @@ var Hints = (function() {
         return z;
     }
 
-    function handleHint() {
+    function handleHint(evt) {
         var matches = refresh();
         if (matches.length === 1) {
             Normal.appendKeysForRepeat("Hints", prefix);
@@ -127,23 +127,14 @@ var Hints = (function() {
             } else {
                 hide();
             }
+            if (evt) {
+                Mode.suppressKeyUp(evt.keyCode);
+                evt.stopImmediatePropagation();
+                evt.preventDefault();
+            }
         } else if (matches.length === 0) {
             hide();
         }
-    }
-
-    function dispatchMouseEvent(element, events) {
-        events.forEach(function(eventName) {
-            var mouseButton = shiftKey ? 1 : 0;
-            var event = new MouseEvent(eventName, {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                button: mouseButton
-            });
-            element.dispatchEvent(event);
-        });
-        lastMouseTarget = element;
     }
 
     function refreshByTextFilter() {
@@ -233,16 +224,12 @@ var Hints = (function() {
         }
     }
 
-    var _origOverflow;
     self.onEnter = function() {
-        _origOverflow = document.body.style.overflowX;
-        document.body.style.overflowX = "hidden";
         document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.addEventListener("surfingkeys:scrollDone", resetHints);
     };
 
     self.onExit = function() {
-        document.body.style.overflowX = _origOverflow;
         document.removeEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.removeEventListener("surfingkeys:scrollDone", resetHints);
     };
@@ -296,7 +283,7 @@ var Hints = (function() {
         _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        var style = createElement(`<style>#sk_hints>div{${_styleForClick}}</style>`);
+        var style = createElement(`<style>#sk_hints>div.myHint{${_styleForClick}}</style>`);
         holder.prepend(style);
         var links = elements.map(function(elm, i) {
             var pos = elm.getClientRects()[0],
@@ -314,7 +301,8 @@ var Hints = (function() {
             } else if (left + 32 > window.pageXOffset + window.innerWidth) {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
-            var link = createElement(`<div>${hintLabels[i]}</div>`);
+            var link = createElement(`<div class="myHint">${hintLabels[i]}</div>`);
+            if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
             link.style.zIndex = z + 9999;
@@ -444,8 +432,15 @@ var Hints = (function() {
 
         elements = positions.map(function(e) {
             var pos = getTextNodePos(e[0], e[1]);
-            if (e[0].data.trim().length === 0 || pos.top < 0 || pos.top > window.innerHeight
-                || pos.left < 0 || pos.left > window.innerWidth) {
+            var caretViewport = [0, 0, window.innerHeight, window.innerWidth];
+            if (runtime.conf.caretViewport && runtime.conf.caretViewport.length === 4) {
+                caretViewport = runtime.conf.caretViewport;
+            }
+            if (e[0].data.trim().length === 0
+                || pos.top < caretViewport[0]
+                || pos.left < caretViewport[1]
+                || pos.top > caretViewport[2]
+                || pos.left > caretViewport[3]) {
                 return null;
             } else {
                 var z = getZIndex(e[0].parentNode);
@@ -614,13 +609,14 @@ var Hints = (function() {
                 });
             } else {
                 self.mouseoutLastElement();
-                dispatchMouseEvent(element, behaviours.mouseEvents);
+                dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
+                lastMouseTarget = element;
             }
         }
     };
     self.mouseoutLastElement = function() {
         if (lastMouseTarget) {
-            dispatchMouseEvent(lastMouseTarget, ['mouseout']);
+            dispatchMouseEvent(lastMouseTarget, ['mouseout'], false);
             lastMouseTarget = null;
         }
     };

@@ -140,7 +140,13 @@ var Visual = (function() {
         feature_group: 9,
         code: function() {
             document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
-            modifySelection();
+            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+                modifySelection();
+            } else {
+                self.hideCursor();
+                selection.setPosition(document.body.lastChild, 0);
+                self.showCursor();
+            }
             if (matches.length) {
                 currentOccurrence = matches.length - 1;
                 Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
@@ -159,7 +165,14 @@ var Visual = (function() {
             if (matches.length) {
                 Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
             }
-            modifySelection();
+
+            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+                modifySelection();
+            } else {
+                self.hideCursor();
+                selection.setPosition(document.body.firstChild, 0);
+                self.showCursor();
+            }
         }
     });
 
@@ -226,11 +239,22 @@ var Visual = (function() {
             self.star();
         }
     });
+    function clickLink(element, shiftKey) {
+        Hints.flashPressedLink(element);
+        dispatchMouseEvent(element, ['click'], shiftKey);
+    }
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Enter>"), {
         annotation: "Click on node under cursor.",
         feature_group: 9,
         code: function() {
-            Hints.dispatchMouseClick(selection.focusNode.parentNode);
+            clickLink(selection.focusNode.parentNode, false);
+        }
+    });
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Shift-Enter>"), {
+        annotation: "Click on node under cursor.",
+        feature_group: 9,
+        code: function() {
+            clickLink(selection.focusNode.parentNode, true);
         }
     });
     self.mappings.add("zz", {
@@ -535,6 +559,13 @@ var Visual = (function() {
         }
         if (matches.length) {
             currentOccurrence = 0;
+            for (var i = 0; i < matches.length; i++) {
+                var br = matches[i][2].getBoundingClientRect();
+                if (br.top > 0) {
+                    currentOccurrence = i;
+                    break;
+                }
+            }
             Front.showStatus(2, currentOccurrence + 1 + ' / ' + matches.length);
         }
     }
@@ -607,22 +638,15 @@ var Visual = (function() {
                             Clipboard.write(element[1] === 0 ? element[0].data.trim() : element[2].trim());
                         } else if (ex === "q") {
                             var word = element[2].trim().replace(/[^A-z].*$/, "");
-                            if (Front.isProvider()) {
-                                Front.contentCommand({
-                                    action: 'updateInlineQuery',
-                                    word: word
-                                });
-                            } else {
-                                var b = getTextNodePos(element[0], element[1], element[2].length);
-                                Front.performInlineQuery(word, function(queryResult) {
-                                    Front.showBubble({
-                                        top: b.top,
-                                        left: b.left,
-                                        height: b.height,
-                                        width: b.width
-                                    }, queryResult, false);
-                                });
-                            }
+                            var b = getTextNodePos(element[0], element[1], element[2].length);
+                            Front.performInlineQuery(word, function(queryResult) {
+                                Front.showBubble({
+                                    top: b.top,
+                                    left: b.left,
+                                    height: b.height,
+                                    width: b.width
+                                }, queryResult, false);
+                            });
                         } else {
                             setTimeout(function () {
                                 selection.setPosition(element[0], element[1]);

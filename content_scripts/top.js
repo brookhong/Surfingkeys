@@ -3,7 +3,7 @@ if (window === top) {
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
-    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" />`);
+    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" title="Surfingkeys" />`);
     uiHost.attachShadow({mode:'open'});
     var sk_style = document.createElement("style");
     setInnerHTML(sk_style, `@import url("${chrome.runtime.getURL("pages/shadow.css")}");`);
@@ -104,7 +104,17 @@ if (window === top) {
     };
 
     document.addEventListener('DOMContentLoaded', function (e) {
-        document.documentElement.appendChild(uiHost);
+        if (document.contentType === "application/pdf") {
+            // Appending child to document will break default pdf viewer from rendering.
+            // So we append child after default pdf viewer rendered.
+            document.body.querySelector("EMBED").addEventListener("load", function(evt) {
+                setTimeout(function() {
+                    document.documentElement.appendChild(uiHost);
+                }, 10);
+            });
+        } else {
+            document.documentElement.appendChild(uiHost);
+        }
 
         runtime.command({
             action: 'tabURLAccessed',
@@ -154,9 +164,7 @@ if (window === top) {
     }, {once: true});
 
     function _setScrollPos(x, y) {
-        document.addEventListener('DOMContentLoaded', function(e) {
-            document.scrollingElement.scrollLeft = x;
-            document.scrollingElement.scrollTop = y;
-        });
+        document.scrollingElement.scrollLeft = x;
+        document.scrollingElement.scrollTop = y;
     }
 }

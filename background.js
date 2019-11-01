@@ -286,29 +286,35 @@ var ChromeService = (function() {
     loadSettings(null, _applyProxySettings);
 
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
-        var tabId = details.tabId;
-        if (tabId !== -1 && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
-            if (!tabErrors.hasOwnProperty(tabId)) {
-                tabErrors[tabId] = [];
-            }
-            if (details.type === "main_frame") {
-                tabErrors[tabId] = [];
-                if (details.error !== "net::ERR_ABORTED") {
-                    chrome.tabs.update(tabId, {
-                        url: chrome.extension.getURL("pages/error.html")
-                    });
+        loadSettings('blacklist', function(data) {
+            var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID"];
+            var tabId = details.tabId;
+            var disabled = _getDisabled(data, new URL(details.url), null);
+            if (!disabled && tabId !== -1 &&
+                (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
+                if (!tabErrors.hasOwnProperty(tabId)) {
+                    tabErrors[tabId] = [];
                 }
+                if (details.type === "main_frame") {
+                    tabErrors[tabId] = [];
+                    if (excluded.indexOf(details.error) === -1) {
+                        chrome.tabs.update(tabId, {
+                            url: chrome.extension.getURL("pages/error.html")
+                        });
+                    }
+                }
+                tabErrors[tabId].push(details);
             }
-            tabErrors[tabId].push(details);
-        }
+        });
     }, {
         urls: ["<all_urls>"]
     });
 
     chrome.runtime.onConnect.addListener(function(port) {
-        var sender = port.sender;
         activePorts.push(port);
         port.onMessage.addListener(function(message, port) {
+            // using port.sender here is must, as call to these service APIs may be made from
+            // any inactive tab, such as API getDisabled.
             return handleMessage(message, port.sender, function(resp) {
                 try {
                     if (!port.isDisconnected) {
@@ -388,6 +394,7 @@ var ChromeService = (function() {
         historyTabAction = false;
         chromelikeNewTabPosition = 0;
 
+        _setScrollPos_bg(activeInfo.tabId);
         _updateTabIndices();
     });
     chrome.tabs.onDetached.addListener(function() {
@@ -396,6 +403,12 @@ var ChromeService = (function() {
     chrome.tabs.onAttached.addListener(function() {
         _updateTabIndices();
     });
+
+    function getActiveTab(cb) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            tabs.length > 0 && cb(tabs[0]);
+        });
+    }
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
             case 'restartext':
@@ -403,8 +416,7 @@ var ChromeService = (function() {
                 break;
             case 'previousTab':
             case 'nextTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    var tab = tabs[0];
+                getActiveTab(function(tab) {
                     var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
                     chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
                         index = ((index % tabs.length) + tabs.length) % tabs.length;
@@ -413,21 +425,18 @@ var ChromeService = (function() {
                 });
                 break;
             case 'closeTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    chrome.tabs.remove(tabs[0].id);
+                getActiveTab(function(tab) {
+                    chrome.tabs.remove(tab.id);
                 });
                 break;
             case 'proxyThis':
-                chrome.tabs.query({
-                    currentWindow: true,
-                    active: true
-                }, function(resp) {
-                    var host = new URL(resp[0].url).host;
+                getActiveTab(function(tab) {
+                    var host = new URL(tab.url).host;
                     updateProxy({
                         host: host,
                         operation: "toggle"
                     }, function() {
-                        chrome.tabs.reload(resp[0].id, {
+                        chrome.tabs.reload(tab.id, {
                             bypassCache: true
                         });
                     });
@@ -538,10 +547,25 @@ var ChromeService = (function() {
             });
         });
     };
+    self.toggleMouseQuery = function(message, sender, sendResponse) {
+        loadSettings('mouseSelectToQuery', function(data) {
+            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
+                var mouseSelectToQuery = data.mouseSelectToQuery || [];
+                var idx = mouseSelectToQuery.indexOf(message.origin);
+                if (idx === -1) {
+                    mouseSelectToQuery.push(message.origin);
+                } else {
+                    mouseSelectToQuery.splice(idx, 1);
+                }
+                _updateAndPostSettings({mouseSelectToQuery: mouseSelectToQuery});
+            }
+        });
+    };
     self.getDisabled = function(message, sender, sendResponse) {
-        loadSettings('blacklist', function(data) {
+        loadSettings(['blacklist', 'noPdfViewer'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
+                    noPdfViewer: data.noPdfViewer,
                     disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
                 });
             }
@@ -552,6 +576,41 @@ var ChromeService = (function() {
         loadSettings('marks', function(data) {
             extendObject(data.marks, message.mark);
             _updateAndPostSettings({marks: data.marks});
+        });
+    };
+    self.jumpVIMark = function(message, sender, sendResponse) {
+        loadSettings("marks", function(data) {
+            var marks = data.marks;
+            if (marks.hasOwnProperty(message.mark)) {
+                var markInfo = marks[message.mark];
+                chrome.tabs.query({}, function(tabs) {
+                    tabs = tabs.filter(function(t) {
+                        return t.url === markInfo.url;
+                    });
+
+                    if (tabs.length === 0) {
+                        markInfo.tab = {
+                            tabbed: true,
+                            active: true
+                        };
+                        self.openLink(markInfo, sender, sendResponse);
+                    } else {
+                        if (markInfo.scrollLeft || markInfo.scrollTop) {
+                            tabMessages[tabs[0].id] = {
+                                scrollLeft: markInfo.scrollLeft,
+                                scrollTop: markInfo.scrollTop
+                            };
+                        }
+                        if (tabs[0].id === sender.tab.id) {
+                            _setScrollPos_bg(tabs[0].id);
+                        } else {
+                            chrome.tabs.update(tabs[0].id, {
+                                active: true
+                            });
+                        }
+                    }
+                });
+            }
         });
     };
 
@@ -684,8 +743,7 @@ var ChromeService = (function() {
         });
     };
     self.togglePinTab = function(message, sender, sendResponse) {
-        chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-            var tab = tabs[0];
+        getActiveTab(function(tab) {
             return chrome.tabs.update(tab.id, {
                 pinned: !tab.pinned
             });
@@ -845,7 +903,11 @@ var ChromeService = (function() {
         chrome.sessions.restore();
     };
     self.duplicateTab = function(message, sender, sendResponse) {
-        chrome.tabs.duplicate(sender.tab.id);
+        chrome.tabs.duplicate(sender.tab.id, function() {
+            if (message.active === false) {
+                chrome.tabs.update(sender.tab.id, { active: true });
+            }
+        });
     };
     self.newWindow = function(message, sender, sendResponse) {
         chrome.tabs.query({}, function(tabs) {
@@ -934,55 +996,74 @@ var ChromeService = (function() {
         }
         return url;
     }
+
+    function openUrlInNewTab(currentTab, url, message) {
+        var newTabPosition;
+        if (currentTab) {
+            switch (conf.newTabPosition) {
+                case 'left':
+                    newTabPosition = currentTab.index;
+                    break;
+                case 'right':
+                    newTabPosition = currentTab.index + 1;
+                    break;
+                case 'first':
+                    newTabPosition = 0;
+                    break;
+                case 'last':
+                    break;
+                default:
+                    newTabPosition = currentTab.index + 1 + chromelikeNewTabPosition;
+                    chromelikeNewTabPosition++;
+                    break;
+            }
+        }
+        chrome.tabs.create({
+            url: url,
+            active: message.tab.active,
+            index: newTabPosition,
+            pinned: message.tab.pinned,
+            openerTabId: currentTab.id
+        }, function(tab) {
+            if (message.scrollLeft || message.scrollTop) {
+                tabMessages[tab.id] = {
+                    scrollLeft: message.scrollLeft,
+                    scrollTop: message.scrollTop
+                };
+            }
+        });
+    }
+
     self.openLink = function(message, sender, sendResponse) {
         var url = normalizeURL(message.url);
-        if (message.tab.tabbed) {
-            var newTabPosition;
-            if (sender.tab) {
-                switch (conf.newTabPosition) {
-                    case 'left':
-                        newTabPosition = sender.tab.index;
-                        break;
-                    case 'right':
-                        newTabPosition = sender.tab.index + 1;
-                        break;
-                    case 'first':
-                        newTabPosition = 0;
-                        break;
-                    case 'last':
-                        break;
-                    default:
-                        newTabPosition = sender.tab.index + 1 + chromelikeNewTabPosition;
-                        chromelikeNewTabPosition++;
-                        break;
-                }
-            }
-            chrome.tabs.create({
-                url: url,
-                active: message.tab.active,
-                index: newTabPosition,
-                pinned: message.tab.pinned,
-                openerTabId: sender.tab.id
-            }, function(tab) {
-                if (message.scrollLeft || message.scrollTop) {
-                    tabMessages[tab.id] = {
-                        scrollLeft: message.scrollLeft,
-                        scrollTop: message.scrollTop
-                    };
-                }
+        if (url.startsWith("javascript:")) {
+            chrome.tabs.executeScript(sender.tab.id, {
+                code: url.substr(11)
             });
         } else {
-            chrome.tabs.update({
-                url: url,
-                pinned: message.tab.pinned || sender.tab.pinned
-            }, function(tab) {
-                if (message.scrollLeft || message.scrollTop) {
-                    tabMessages[tab.id] = {
-                        scrollLeft: message.scrollLeft,
-                        scrollTop: message.scrollTop
-                    };
+            if (message.tab.tabbed) {
+                if (sender.frameId !== 0 && chrome.extension.getURL("pages/frontend.html") === sender.url) {
+                    // if current call was made from Omnibar, the sender.tab may be stale,
+                    // as sender was bound when port was created.
+                    getActiveTab(function(tab) {
+                        openUrlInNewTab(tab, url, message);
+                    });
+                } else {
+                    openUrlInNewTab(sender.tab, url, message);
                 }
-            });
+            } else {
+                chrome.tabs.update({
+                    url: url,
+                    pinned: message.tab.pinned || sender.tab.pinned
+                }, function(tab) {
+                    if (message.scrollLeft || message.scrollTop) {
+                        tabMessages[tab.id] = {
+                            scrollLeft: message.scrollLeft,
+                            scrollTop: message.scrollTop
+                        };
+                    }
+                });
+            }
         }
     };
     self.viewSource = function(message, sender, sendResponse) {
@@ -1037,17 +1118,21 @@ var ChromeService = (function() {
                 return frameId;
             });
 
-            if (framesInTab.length > 1) {
-                if (!frameIndexes.hasOwnProperty(tid)) {
-                    frameIndexes[tid] = 0;
+            if (framesInTab.length > 0) {
+                var fid = framesInTab[0];
+                if (framesInTab.length > 1) {
+                    if (!frameIndexes.hasOwnProperty(tid)) {
+                        frameIndexes[tid] = 0;
+                    }
+                    frameIndexes[tid]++;
+                    frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
+                    fid = framesInTab[frameIndexes[tid]];
                 }
-                frameIndexes[tid] ++;
-                frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
 
                 chrome.tabs.sendMessage(tid, {
                     subject: "focusFrame",
                     target: 'content_runtime',
-                    frameId: framesInTab[frameIndexes[tid]]
+                    frameId: fid
                 });
             }
         });

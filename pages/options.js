@@ -152,7 +152,7 @@ function renderProxySettings(rs) {
                     runtime.command({
                         action: 'updateProxy',
                         number: number,
-                        host: elm.querySelector("span").innerText,
+                        host: elm.querySelector("span:nth-child(2)").innerText,
                         operation: 'remove'
                     }, function() {
                         elm.remove();
@@ -479,7 +479,7 @@ var KeyPicker = (function() {
                     composed: event.composed,
                     key: event.key
                 }, null, 4);
-                reportIssue(`Unrecognized key event: {event.sk_keyName}`, keyStr);
+                reportIssue(`Unrecognized key event: ${event.sk_keyName}`, keyStr);
             } else {
                 _key += KeyboardUtils.decodeKeystroke(event.sk_keyName);
                 showKey();

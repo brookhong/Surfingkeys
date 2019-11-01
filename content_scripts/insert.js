@@ -150,7 +150,7 @@ var Insert = (function() {
         }
     });
 
-    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;"/>'),
+    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;" />'),
         _emojiList,
         _emojiPending = -1;
 
@@ -269,6 +269,10 @@ var Insert = (function() {
 
     var _suppressKeyup = false;
     self.addEventListener('keydown', function(event) {
+        if (event.key && event.key.charCodeAt(0) > 127) {
+            // IME is opened.
+            return;
+        }
         // prevent this event to be handled by Surfingkeys' other listeners
         var realTarget = getRealEdit(event);
         if (_emojiDiv.offsetHeight > 0) {

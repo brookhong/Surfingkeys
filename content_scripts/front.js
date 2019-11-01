@@ -60,20 +60,33 @@ var Front = (function() {
 
     var _actions = {};
 
-    self.registerAction = function(action, cb) {
-        _actions[action] = cb;
+    self.performInlineQueryOnSelection = function(word) {
+        var b = document.getSelection().getRangeAt(0).getClientRects()[0];
+        Front.performInlineQuery(word, function(queryResult) {
+            if (queryResult) {
+                Front.showBubble({
+                    top: b.top,
+                    left: b.left,
+                    height: b.height,
+                    width: b.width
+                }, queryResult, false);
+            }
+        });
+    };
+    self.querySelectedWord = function() {
+        var selection = document.getSelection();
+        var word = selection.toString().trim();
+        if (word && word.length && selection.type === "Range") {
+            self.performInlineQueryOnSelection(word);
+        }
     };
 
     _actions["updateInlineQuery"] = function (message) {
-        var b = document.getSelection().getRangeAt(0).getClientRects()[0];
-        Front.performInlineQuery(message.word, function(queryResult) {
-            Front.showBubble({
-                top: b.top,
-                left: b.left,
-                height: b.height,
-                width: b.width
-            }, queryResult, false);
-        });
+        if (message.word) {
+            self.performInlineQueryOnSelection(message.word);
+        } else {
+            self.querySelectedWord();
+        }
     };
 
     _actions["getSearchSuggestions"] = function (message) {
@@ -90,9 +103,10 @@ var Front = (function() {
             cmdline: cmd
         });
     };
-    self.addCMap = function (new_keystroke, old_keystroke) {
+    self.addMapkey = function (mode, new_keystroke, old_keystroke) {
         frontendCommand({
-            action: 'addCMap',
+            action: 'addMapkey',
+            mode: mode,
             new_keystroke: new_keystroke,
             old_keystroke: old_keystroke
         });
@@ -112,7 +126,8 @@ var Front = (function() {
         });
     };
 
-    var frameElement = createElement('<div id=sk_frame>');
+    var frameElement = createElement('<div id="sk_frame" />');
+    frameElement.fromSurfingKeys = true;
     self.highlightElement = function (sn) {
         document.body.append(frameElement);
         var rect = sn.rect;
@@ -228,6 +243,7 @@ var Front = (function() {
     var _showQueryResult;
     self.performInlineQuery = function (query, showQueryResult) {
         if (_inlineQuery) {
+            readText(query);
             query = query.toLocaleLowerCase();
             runtime.updateHistory('OmniQuery', query);
             httpRequest({
@@ -346,7 +362,9 @@ var Front = (function() {
     };
 
     self.getFrameId = function () {
-        if (document.body.offsetWidth && document.body.offsetHeight && document.body.innerText
+        if (document.body.offsetWidth > 16 && document.body.offsetHeight > 16 && document.body.innerText
+            && (!window.frameElement || getComputedStyle(window.frameElement).zIndex >= 0)
+            && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
             && !window.frameId) {
             window.frameId = generateQuickGuid();
         }
@@ -378,7 +396,6 @@ var Front = (function() {
     };
 
     _actions["omnibar_query_entered"] = function(response) {
-        readText(response.query);
         runtime.updateHistory('OmniQuery', response.query);
         self.performInlineQuery(response.query, function(queryResult) {
             if (queryResult.constructor.name !== "Array") {
@@ -452,6 +469,10 @@ var Front = (function() {
         Visual.visualEnter(message.query);
     };
 
+    _actions["emptySelection"] = function(message) {
+        document.getSelection().empty();
+    };
+
     var _active = false;
     _actions['deactivated'] = function(message) {
         _active = false;
@@ -489,6 +510,43 @@ var Front = (function() {
         if (window.location.href.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
             document.getElementById("proxyFrame").src = window.location.search.substr(3);
         }
+
+        var pendingUpdater = undefined;
+        new MutationObserver(function (mutations) {
+            var addedNodes = [];
+            for (var m of mutations) {
+                for (var n of m.addedNodes) {
+                    if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
+                        n.newlyCreated = true;
+                        addedNodes.push(n);
+                    }
+                }
+            }
+
+            if (addedNodes.length) {
+                if (pendingUpdater) {
+                    clearTimeout(pendingUpdater);
+                    pendingUpdater = undefined;
+                }
+                pendingUpdater = setTimeout(function() {
+                    var possibleModalElements = getVisibleElements(function(e, v) {
+                        var br = e.getBoundingClientRect();
+                        if (br.width > 300 && br.height > 300) {
+                            document.scrollingElement.scrollTop += 1;
+                            var br1 = e.getBoundingClientRect();
+                            if (br.top === br1.top && hasScroll(e, 'y', 16)) {
+                                v.push(e);
+                            }
+                            document.scrollingElement.scrollTop -= 1;
+                        }
+                    });
+
+                    if (possibleModalElements.length) {
+                        Normal.addScrollableElement(possibleModalElements[0]);
+                    }
+                }, 200);
+            }
+        }).observe(document.body, { childList: true, subtree:true });;
     });
 
     window.addEventListener('message', function (event) {

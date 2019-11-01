@@ -45,7 +45,7 @@ function isElementVisible(elm) {
 }
 
 function isElementClickable(e) {
-    var cssSelector = "a, button, select, input, textarea, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role]";
+    var cssSelector = "a, button, select, input, textarea, summary, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role=button], *[role=link], *[role=menuitem], *[role=option], *[role=switch], *[role=tab], *[role=checkbox], *[role=combobox], *[role=menuitemcheckbox], *[role=menuitemradio]";
     if (runtime.conf.clickableSelector.length) {
         cssSelector += ", " + runtime.conf.clickableSelector;
     }
@@ -54,6 +54,19 @@ function isElementClickable(e) {
         || getComputedStyle(e).cursor === "pointer"
         || getComputedStyle(e).cursor.substr(0, 4) === "url("
         || e.closest("a, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button") !== null;
+}
+
+function dispatchMouseEvent(element, events, shiftKey) {
+    events.forEach(function(eventName) {
+        var mouseButton = shiftKey ? 1 : 0;
+        var event = new MouseEvent(eventName, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            button: mouseButton
+        });
+        element.dispatchEvent(event);
+    });
 }
 
 function getRealEdit(event) {
@@ -69,6 +82,9 @@ function getRealEdit(event) {
             break;
         }
     }
+    if (rt === window) {
+        rt = document.body;
+    }
     return rt;
 }
 
@@ -82,7 +98,8 @@ function toggleQuote() {
 }
 
 function isEditable(element) {
-    return !element.disabled && (element.localName === 'textarea'
+    return element
+        && !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
@@ -118,12 +135,18 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
     }
 }
 
+function isElementDrawn(e, rect) {
+    var min = isEditable(e) ? 1 : 4;
+    rect = rect || e.getBoundingClientRect();
+    return rect.width > min && rect.height > min;
+}
+
 function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return (ignoreSize || (rect.width > 4 && rect.height > 4))
+    return (ignoreSize || isElementDrawn(el, rect))
         && (rect.top < windowHeight) && (rect.bottom > 0)
         && (rect.left < windowWidth) && (rect.right > 0);
 }
@@ -190,7 +213,7 @@ function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
         var be = e.getClientRects()[0];
-        if (e.disabled || e.readOnly || be.width <= 4) {
+        if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
             return false;
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
@@ -258,7 +281,7 @@ function getTextNodePos(node, offset, length) {
         left: -1,
         top: -1
     };
-    if (br.height > 0 && br.width > 0) {
+    if (br && br.height > 0 && br.width > 0) {
         pos.left = br.left;
         pos.top = br.top;
         pos.width = br.width;
@@ -328,6 +351,9 @@ function _map(mode, nks, oks) {
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
         mode.mappings.add(nks, meta);
+        if (!Front.isProvider()) {
+            Front.addMapkey(mode.name, nks, oks);
+        }
     }
     return old_map;
 }
@@ -415,8 +441,8 @@ function getElements(selectorString) {
 function getClickableElements(selectorString, pattern) {
     var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
         return n.offsetHeight && n.offsetWidth
-            && (n.matches(selectorString) || getComputedStyle(n).cursor === "pointer")
-            && (!pattern || pattern.test(n.textContent));
+            && getComputedStyle(n).cursor === "pointer"
+            && (n.matches(selectorString) || pattern.test(n.textContent));
     });
     return filterOverlapElements(nodes);
 }
@@ -460,7 +486,7 @@ function isEmptyObject(obj) {
     return true;
 }
 
-var _divForHtmlEncoder = createElement("<div>");
+var _divForHtmlEncoder = createElement("<div />");
 function htmlEncode(str) {
     _divForHtmlEncoder.innerText = str;
     return _divForHtmlEncoder.innerHTML;

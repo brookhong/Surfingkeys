@@ -33,7 +33,7 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * [前缀数字可多次重复相应操作](#前缀数字可多次重复相应操作)
 * [开关热键](#开关热键)
 * [代理设置](#代理设置)
-* [VIM编辑器](#vim编辑器)
+* [VIM编辑器或者Emacs编辑器](#vim编辑器或者emacs编辑器)
 * [点命令重复前一个操作](#点命令重复前一个操作)
 * [Markdown预览](#markdown预览)
 * [截屏](#截屏)
@@ -170,11 +170,9 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 按`Ctrl-Enter`查找完整的单词，就像输入`\bkeyword\b`一样。
 
-### 按键测试
+### PassThrough mode
 
-`spk`可以打开按键测试模式。
-
-在这个辅助模式下，你每按下一按键，Surfingkeys按显示出来，便于你确定mapkey的第一个参数。
+按`Alt-i`进入PassThrough模式可让你暂时放弃SurfingKeys，这时SurfingKeys所有按键不再有用，直到你按`Esc`退出PassThrough模式。在该模式下，你可以充分使用任何网站本身提供的快捷键。请参考[Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656)了解为什么引入这种模式以及它与`Alt-s`的区别。
 
 ## 搜索栏
 
@@ -201,7 +199,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 用`b`打开搜索栏时，
 
-`Ctrl - Shift - <any letter>` 创建相应的类似vim的全局标示。
+`Ctrl - Shift - <any letter>` 创建相应的类似vim标示。
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
@@ -209,6 +207,9 @@ Surfingkeys有三种模式：normal，visual和insert。
 
     cmap('<Ctrl-n>', '<Tab>');
     cmap('<Ctrl-p>', '<Shift-Tab>');
+
+### 添加书签
+`ab`可以把当前页加入书签。按`ab`后，搜索栏会弹出来让你选择放到哪个目录。如果你希望放到一个新建目录下面，可以输入新的目录名，**并以`/`结尾**，比如我选中了`/Bookmarks Bar/tool/`，然后在后面输入`abc/`，会把当前页加到`/Bookmarks Bar/tool/abc/`这个目录里。如果`abc`后面没有`/`，`abc`会被当作新建书签的标题保存。
 
 ## 搜索选中文本
 
@@ -222,13 +223,13 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 ## 类vim标示
 
-简单说，vim中的marks就是按`m`，然后跟一个字符（a-z为当前页内标示，其它的如0-9，A-Z为全局标示），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
+简单说，vim中的marks就是按`m`，然后跟一个字符（0-9 / a-z / A-Z），标示一下当前网址。之后，你随时按`'`跟上你定义的那个标示符，就会跳转到该网址。
 
 除了`m`键创建标示外，你还可以从收藏夹里按住Ctrl，加上标示符来创建。如下：
 
 1. 按下`b`打开收藏夹。
 1. 随便输点啥，定位到你要标示的网址。
-1. 按住Ctrl，加上你选中的标示符，比如`f`。
+1. 按住Ctrl + Shift，加上你选中的标示符，比如`f`。
 
 之后，按`'F`就可以直接打开该网址来。
 
@@ -381,13 +382,19 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
 * `spi`, `:proxyInfo`快捷键。
 
-## VIM编辑器
+## VIM编辑器或者Emacs编辑器
 
 Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 * 编辑网页上的各类文本输入框。
 * 编辑URL并在新标签页打开
 * 编辑设置
+
+你可以加上如下设置来使用Emacs按键：
+
+    settings.aceKeybindings = "emacs";
+
+使用Emacs按键时，用`C-x C-s`来保存你的输入。
 
 ### 编辑网页上的各类文本输入框
 
@@ -635,11 +642,16 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.stealFocusOnLoad | true | 是否阻止光标定位到输入框，默认为true，这样我们可以在页面加载结束之后直接使用Surfingkeys提供的各类按键，否则需要按Esc退出输入框。 |
 | settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
-| settings.caseSensitive | false | 网页内搜索是否大小写敏感。 |
+| settings.caseSensitive | false | 网页/搜索框内搜索是否大小写敏感。 |
 | settings.smartCase | true | 当搜索关键字里含有大写字符时，是否自动设为大小写敏感。 |
 | settings.cursorAtEndOfInput | true | 是否在进入输入框时把光标放在结尾，为false时，光标将放在上次离开输入框时的位置。 |
 | settings.digitForRepeat | true | 是否把数字输入当作重复次数，为false时，数字可作为普通按键。 |
 | settings.editableBodyCare | true | 当焦点定位到一个可编辑的元素时，Insert模式会自动激活，所以如果某个window/iframe里的document.body本身就是可编辑的（例如docs.google.com），Insert模式会一直处于激活状态，这样所有Normal模式下的按键都不可用了。当`editableBodyCare`为`true`时，Insert模式在这种情况下不会自动激活。|
+| settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | 当用`w`切换frame时，你可以用这个设置来过滤掉某些frame，比如那些做广告的frame。|
+| settings.aceKeybindings | "vim" | 改为"emacs"可以在ACE编辑器里使用Emacs按键。 |
+| settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
+| settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
+| settings.passThroughTimeout | 0 | 在指定时间（毫秒）之后自动退出PassThrough模式，设置为0可以禁止自动退出。 |
 
 ### settings.theme示例，修改状态栏字体
 

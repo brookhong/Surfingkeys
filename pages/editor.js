@@ -2,7 +2,6 @@ var AceEditor = (function() {
     var self = new Mode("AceEditor");
     document.getElementById("sk_editor").style.height = "30%";
     var _ace = ace.edit('sk_editor');
-    _ace.mode = "normal";
 
     var originValue;
     function isDirty() {
@@ -48,28 +47,33 @@ var AceEditor = (function() {
     self.addEventListener('keydown', function(event) {
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)
-            && _ace.mode === 'normal' // vim in normal mode
-            && (_ace.state.cm.state.vim.status === null || _ace.state.cm.state.vim.status === "") // and no pending normal operation
             && (!_ace.completer || !_ace.completer.activated) // and completion popup not opened
         ) {
-            if (isDirty()) {
-                dialog.open('<span style="font-family: monospace">Quit anyway? Y/n </span><input type="text"/>', function(q) {
-                    if (q.toLowerCase() === 'y') {
-                        self.onExit = _close;
-                        self.exit();
-                    }
-                }, {
-                    bottom: true,
-                    value: "Y",
-                    onKeyDown: function(e, q, close) {
-                        if (e.keyCode === KeyboardUtils.keyCodes.enter || e.keyCode === KeyboardUtils.keyCodes.ESC) {
-                            close();
-                        }
-                    }
-                });
-            } else {
+            if (runtime.conf.aceKeybindings === "emacs") {
                 self.onExit = _close;
                 self.exit();
+            } else if (_ace.state.cm.mode === 'normal' // vim in normal mode
+                && !_ace.state.cm.state.vim.status // and no pending normal operation
+            ){
+                if (isDirty()) {
+                    dialog.open('<span style="font-family: monospace">Quit anyway? Y/n </span><input type="text"/>', function(q) {
+                        if (q.toLowerCase() === 'y') {
+                            self.onExit = _close;
+                            self.exit();
+                        }
+                    }, {
+                        bottom: true,
+                        value: "Y",
+                        onKeyDown: function(e, q, close) {
+                            if (e.keyCode === KeyboardUtils.keyCodes.enter || e.keyCode === KeyboardUtils.keyCodes.ESC) {
+                                close();
+                            }
+                        }
+                    });
+                } else {
+                    self.onExit = _close;
+                    self.exit();
+                }
             }
         }
     });
@@ -184,102 +188,148 @@ var AceEditor = (function() {
         }
         return val;
     }
-    _ace.setTheme("ace/theme/chrome");
-    var vimDeferred = new Promise(function(resolve, reject) {
-        _ace.setKeyboardHandler('ace/keyboard/vim', function() {
-            var cm = _ace.state.cm;
-            cm.on('vim-mode-change', function(data) {
-                _ace.mode = data.mode;
+    function aceKeyboardVimLoaded() {
+        var cm = _ace.state.cm;
+        cm.mode = "normal";
+        cm.on('vim-mode-change', function(data) {
+            cm.mode = data.mode;
+        });
+        cm.on('0-register-set', function(data) {
+            var lf = document.activeElement;
+            Clipboard.write(data.text);
+            lf.focus();
+        });
+        var vim = cm.constructor.Vim;
+        vim.defineEx("write", "w", function(cm, input) {
+            Front.contentCommand({
+                action: 'ace_editor_saved',
+                data: _getValue()
             });
-            cm.on('0-register-set', function(data) {
-                var lf = document.activeElement;
-                Clipboard.write(data.text);
-                lf.focus();
+        });
+        vim.defineEx("wq", "wq", function(cm, input) {
+            self.onExit = _closeAndSave;
+            self.exit();
+            // tell vim editor that command is done
+            _ace.state.cm.signal('vim-command-done', '');
+        });
+        vim.map('<CR>', ':wq', 'normal');
+        vim.defineEx("bnext", "bn", function(cm, input) {
+            Front.contentCommand({
+                action: 'nextEdit',
+                backward: false
             });
-            var vim = cm.constructor.Vim;
-            resolve(vim);
-            vim.defineEx("write", "w", function(cm, input) {
-                Front.contentCommand({
-                    action: 'ace_editor_saved',
-                    data: _getValue()
-                });
+        });
+        vim.defineEx("bprevious", "bp", function(cm, input) {
+            Front.contentCommand({
+                action: 'nextEdit',
+                backward: true
             });
-            vim.defineEx("wq", "wq", function(cm, input) {
-                self.onExit = _closeAndSave;
-                self.exit();
-                // tell vim editor that command is done
-                _ace.state.cm.signal('vim-command-done', '');
-            });
-            vim.map('<CR>', ':wq', 'normal');
-            vim.defineEx("bnext", "bn", function(cm, input) {
-                Front.contentCommand({
-                    action: 'nextEdit',
-                    backward: false
-                });
-            });
-            vim.defineEx("bprevious", "bp", function(cm, input) {
-                Front.contentCommand({
-                    action: 'nextEdit',
-                    backward: true
-                });
-            });
-            vim.defineEx("quit", "q", function(cm, input) {
-                self.onExit = _close;
-                self.exit();
-                _ace.state.cm.signal('vim-command-done', '');
-            });
-            Front.vimMappings.forEach(function(a) {
-                vim.map.apply(vim, a);
-            });
-            var dk = _ace.getKeyboardHandler().defaultKeymap;
-            if (Front.vimKeyMap && Front.vimKeyMap.length) {
-                dk.unshift.apply(dk, Front.vimKeyMap);
+        });
+        vim.defineEx("quit", "q", function(cm, input) {
+            self.onExit = _close;
+            self.exit();
+            _ace.state.cm.signal('vim-command-done', '');
+        });
+        Front.vimMappings.forEach(function(a) {
+            vim.map.apply(vim, a);
+        });
+        var dk = _ace.getKeyboardHandler().defaultKeymap;
+        if (Front.vimKeyMap && Front.vimKeyMap.length) {
+            dk.unshift.apply(dk, Front.vimKeyMap);
+        }
+        return vim;
+    }
+    function aceKeyboardEmacsLoaded() {
+        _ace.$emacsModeHandler.addCommands({
+            closeAndSave: {
+                exec: function(editor) {
+                    self.onExit = _closeAndSave;
+                    self.exit();
+                },
+                readOnly: true
             }
+        });
+        _ace.$emacsModeHandler.bindKey("C-x C-s", "closeAndSave");
+        return _ace.$emacsModeHandler;
+    }
+    _ace.setTheme("ace/theme/chrome");
+    var keybindingsDeferred = new Promise(function(resolve, reject) {
+        var aceKeyboardLoaded = aceKeyboardVimLoaded;
+        if (runtime.conf.aceKeybindings === "emacs") {
+            aceKeyboardLoaded = aceKeyboardEmacsLoaded;
+        } else {
+            runtime.conf.aceKeybindings = "vim";
+        }
+        _ace.setKeyboardHandler('ace/keyboard/' + runtime.conf.aceKeybindings, function() {
+            resolve(aceKeyboardLoaded());
         });
     });
     _ace.container.style.background = "#f1f1f1";
     _ace.$blockScrolling = Infinity;
 
     self.show = function(message) {
-        vimDeferred.then(function(vim) {
+        keybindingsDeferred.then(function(vim) {
             _ace.setValue(message.content, -1);
             originValue = message.content;
             _ace.container.querySelector('textarea').focus();
             self.enter();
             _editorType = message.type;
             _ace.setFontSize(16);
-            vim.unmap('<CR>', 'insert');
-            vim.unmap('<C-CR>', 'insert');
-            if (message.type === 'url') {
-                vim.map('<CR>', ':wq', 'insert');
-                _ace.renderer.setOption('showLineNumbers', false);
-                _ace.language_tools.setCompleters([urlCompleter]);
-                _ace.container.style.height = "30%";
-            } else if (message.type === 'input') {
-                vim.map('<CR>', ':wq', 'insert');
-                _ace.renderer.setOption('showLineNumbers', false);
-                _ace.language_tools.setCompleters([pageWordCompleter]);
-                _ace.container.style.height = "";
+
+            if (vim.$id === "ace/keyboard/emacs") {
+                if (message.type === 'url') {
+                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.language_tools.setCompleters([urlCompleter]);
+                    _ace.container.style.height = "30%";
+                } else if (message.type === 'input') {
+                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.language_tools.setCompleters([pageWordCompleter]);
+                    _ace.container.style.height = "";
+                } else {
+                    _ace.renderer.setOption('showLineNumbers', true);
+                    _ace.language_tools.setCompleters([pageWordCompleter]);
+                    _ace.container.style.height = "30%";
+                }
+                _ace.setReadOnly(message.type === 'select');
+
+                // reset undo
+                setTimeout( function () {
+                    _ace.renderer.session.$undoManager.reset();
+                }, 1);
             } else {
-                vim.map('<C-CR>', ':wq', 'insert');
-                _ace.renderer.setOption('showLineNumbers', true);
-                _ace.language_tools.setCompleters([pageWordCompleter]);
-                _ace.container.style.height = "30%";
+                vim.unmap('<CR>', 'insert');
+                vim.unmap('<C-CR>', 'insert');
+                if (message.type === 'url') {
+                    vim.map('<CR>', ':wq', 'insert');
+                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.language_tools.setCompleters([urlCompleter]);
+                    _ace.container.style.height = "30%";
+                } else if (message.type === 'input') {
+                    vim.map('<CR>', ':wq', 'insert');
+                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.language_tools.setCompleters([pageWordCompleter]);
+                    _ace.container.style.height = "";
+                } else {
+                    vim.map('<C-CR>', ':wq', 'insert');
+                    _ace.renderer.setOption('showLineNumbers', true);
+                    _ace.language_tools.setCompleters([pageWordCompleter]);
+                    _ace.container.style.height = "30%";
+                }
+                _ace.setReadOnly(message.type === 'select');
+                vim.map('<C-d>', '<C-w>', 'insert');
+                vim.exitInsertMode(_ace.state.cm);
+
+                // set cursor at initial line
+                _ace.state.cm.setCursor(message.initial_line, 0);
+                _ace.state.cm.ace.renderer.scrollCursorIntoView();
+                // reset undo
+                setTimeout( function () {
+                    _ace.renderer.session.$undoManager.reset();
+                }, 1);
+
+                _ace.state.cm.ace.setOption('indentedSoftWrap', false);
+                _ace.state.cm.ace.setOption('wrap', true);
             }
-            _ace.setReadOnly(message.type === 'select');
-            vim.map('<C-d>', '<C-w>', 'insert');
-            vim.exitInsertMode(_ace.state.cm);
-
-            // set cursor at initial line
-            _ace.state.cm.setCursor(message.initial_line, 0);
-            _ace.state.cm.ace.renderer.scrollCursorIntoView();
-            // reset undo
-            setTimeout( function () {
-                _ace.renderer.session.$undoManager.reset();
-            }, 1);
-
-            _ace.state.cm.ace.setOption('indentedSoftWrap', false);
-            _ace.state.cm.ace.setOption('wrap', true);
         });
     };
 

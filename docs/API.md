@@ -26,7 +26,7 @@ Key bindings in Omnibar:
 
 -   In omnibar opened with `b:`
 
-`Ctrl - Shift - <any letter>` to create vim-like global mark
+`Ctrl - Shift - <any letter>` to create vim-like mark
 
 cmap could be used for Omnibar to change mappings, for example:
 

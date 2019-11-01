@@ -65,7 +65,7 @@ function _filterByTitleOrUrl(urls, query) {
  *
  *  * In omnibar opened with `b:`
  *
- * `Ctrl - Shift - <any letter>` to create vim-like global mark
+ * `Ctrl - Shift - <any letter>` to create vim-like mark
  *
  * cmap could be used for Omnibar to change mappings, for example:
  *
@@ -561,36 +561,27 @@ var Omnibar = (function() {
                 url = SearchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
             }
         }
-        if (/^javascript:/.test(url)) {
-            var code = url.replace(/^javascript:/,'');
+        var type = "", uid;
+        if (fi && fi.uid) {
+            uid = fi.uid;
+            type = uid[0], uid = uid.substr(1);
+        }
+        if (type === 'T') {
+            uid = uid.split(":");
             runtime.command({
-                action: "executeScript",
-                code: code
-            }, function(ret) {
+                action: 'focusTab',
+                window_id: parseInt(uid[0]),
+                tab_id: parseInt(uid[1])
             });
-        } else {
-            var type = "", uid;
-            if (fi && fi.uid) {
-                uid = fi.uid;
-                type = uid[0], uid = uid.substr(1);
-            }
-            if (type === 'T') {
-                uid = uid.split(":");
-                runtime.command({
-                    action: 'focusTab',
-                    window_id: parseInt(uid[0]),
-                    tab_id: parseInt(uid[1])
-                });
-            } else if (url && url.length) {
-                runtime.command({
-                    action: "openLink",
-                    tab: {
-                        tabbed: this.tabbed,
-                        active: this.activeTab
-                    },
-                    url: url
-                });
-            }
+        } else if (url && url.length) {
+            runtime.command({
+                action: "openLink",
+                tab: {
+                    tabbed: this.tabbed,
+                    active: this.activeTab
+                },
+                url: url
+            });
         }
         return this.activeTab;
     };
@@ -757,7 +748,6 @@ var OpenBookmarks = (function() {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
             if (fi) {
                 var mark_char = String.fromCharCode(event.keyCode);
-                // global marks always from here
                 Normal.addVIMark(mark_char, fi.url);
                 eaten = true;
             }
@@ -1145,13 +1135,30 @@ var SearchEngine = (function() {
         });
         return this.activeTab;
     };
+    function listSuggestions(suggestions) {
+        Omnibar.detectAndInsertURLItem(Omnibar.input.value, suggestions);
+        var rxp = _regexFromString(encodeURIComponent(Omnibar.input.value), true);
+        Omnibar.listResults(suggestions, function (w) {
+            if (w.hasOwnProperty('html')) {
+                return Omnibar.createItemFromRawHtml(w);
+            } else if (w.hasOwnProperty('url')) {
+                return Omnibar.createURLItem(w, rxp);
+            } else {
+                var li = createElement(`<li>⌕ ${w}</li>`);
+                li.query = w;
+                return li;
+            }
+        });
+    }
     self.onInput = function () {
         var canSuggest = self.suggestionURL;
         var showSuggestions = canSuggest && runtime.conf.omnibarSuggestion;
 
-        if (!showSuggestions) return false;
+        if (!showSuggestions) {
+            listSuggestions([]);
+            return;
+        }
 
-        var val = encodeURIComponent(Omnibar.input.value);
         clearPendingRequest();
         // Set a timeout before the request is dispatched so that it can be canceled if necessary.
         // This helps prevent rate-limits when typing a long query.
@@ -1160,7 +1167,7 @@ var SearchEngine = (function() {
             runtime.command({
                 action: 'request',
                 method: 'get',
-                url: formatURL(self.suggestionURL, val)
+                url: formatURL(self.suggestionURL, encodeURIComponent(Omnibar.input.value))
             }, function (resp) {
                 Front.contentCommand({
                     action: 'getSearchSuggestions',
@@ -1168,21 +1175,10 @@ var SearchEngine = (function() {
                     response: resp
                 }, function(resp) {
                     resp = resp.data;
-                    if (Array.isArray(resp)) {
-                        Omnibar.detectAndInsertURLItem(Omnibar.input.value, resp);
-                        var rxp = _regexFromString(val, true);
-                        Omnibar.listResults(resp, function (w) {
-                            if (w.hasOwnProperty('html')) {
-                                return Omnibar.createItemFromRawHtml(w);
-                            } else if (w.hasOwnProperty('url')) {
-                                return Omnibar.createURLItem(w, rxp);
-                            } else {
-                                var li = createElement(`<li>⌕ ${w}</li>`);
-                                li.query = w;
-                                return li;
-                            }
-                        });
+                    if (!Array.isArray(resp)) {
+                        resp = [];
                     }
+                    listSuggestions(resp);
                 });
             });
         }, runtime.conf.omnibarSuggestionTimeout);

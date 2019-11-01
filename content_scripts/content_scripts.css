@@ -30,6 +30,9 @@ div.surfingkeys_cursor:empty {
 #sk_hints[mode=text]>div {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
+#sk_hints>div.hint-scrollable {
+    background: rgba(170, 170, 255, 0.85);
+}
 #sk_hints[mode=text]>div.begin {
     color: #00f !important;
 }

@@ -68,6 +68,7 @@ function map(new_keystroke, old_keystroke, domain, new_annotation) {
         } else {
             if (!_map(Normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                 Mode.specialKeys[old_keystroke].push(new_keystroke);
+                Front.addMapkey("Mode", new_keystroke, old_keystroke);
             }
         }
     }
@@ -123,7 +124,7 @@ function iunmap(keystroke, domain) {
 
 function cmap(new_keystroke, old_keystroke, domain, new_annotation) {
     if (_isDomainApplicable(domain)) {
-        Front.addCMap(new_keystroke, old_keystroke);
+        Front.addMapkey("Omnibar", new_keystroke, old_keystroke);
     }
 }
 
@@ -213,8 +214,7 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = getClickableElements("a, button", runtime.conf.prevLinkRegex);
-    prevLinks = filterOverlapElements(prevLinks);
+    var prevLinks = getClickableElements("[rel=prev]", runtime.conf.prevLinkRegex);
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -224,8 +224,7 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = getClickableElements("a, button", runtime.conf.nextLinkRegex);
-    nextLinks = filterOverlapElements(nextLinks);
+    var nextLinks = getClickableElements("[rel=next]", runtime.conf.nextLinkRegex);
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
@@ -270,15 +269,19 @@ function getFormData(form, format) {
     if (format === "json") {
         var obj = {};
 
-        formData.forEach(function(value, key) {
+        formData.forEach(function (value, key) {
             if (obj.hasOwnProperty(key)) {
-                var p = obj[key];
-                if (p.constructor.name === "Array") {
-                    p.push(value);
-                } else {
-                    obj[key] = [];
-                    obj[key].push(p);
-                    obj[key].push(value);
+                if (value.length) {
+                    var p = obj[key];
+                    if (p.constructor.name === "Array") {
+                        p.push(value);
+                    } else {
+                        obj[key] = [];
+                        if (p.length) {
+                            obj[key].push(p);
+                        }
+                        obj[key].push(value);
+                    }
                 }
             } else {
                 obj[key] = value;
@@ -399,7 +402,7 @@ function _init() {
         }, function (resp) {
             if (resp.disabled) {
                 Disabled.enter(0, true);
-            } else {
+            } else if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
                 usePdfViewer();
             }
 
@@ -412,6 +415,15 @@ function _init() {
         });
 
         document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+        document.addEventListener("mouseup", event => {
+            if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
+                && !isElementClickable(event.target)
+                && !event.target.matches(".cm-matchhighlight")) {
+                // perform inline query after 1 ms
+                // to avoid calling on selection collapse
+                setTimeout(Front.querySelectedWord, 1);
+            }
+        });
     });
 }
 
