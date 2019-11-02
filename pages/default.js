@@ -20,6 +20,8 @@
 //
 // ************************* WARNING *************************
 
+function createDefaultMappings() {
+
 imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = getRealEdit();
@@ -691,4 +693,4 @@ addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=',
     });
 });
 
-document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
+}

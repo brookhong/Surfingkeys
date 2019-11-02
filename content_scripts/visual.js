@@ -1,4 +1,4 @@
-var Visual = (function() {
+function createVisual() {
     var self = new Mode("Visual");
 
     self.addEventListener('keydown', function(event) {
@@ -826,4 +826,4 @@ var Visual = (function() {
         mark_template.setAttribute('style', _style.marks || '');
     };
     return self;
-})();
+}

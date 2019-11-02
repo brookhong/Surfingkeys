@@ -68,7 +68,6 @@ gulp.task('copy-es-files', function() {
     return gulp.src([
         'content_scripts/front.js',
         'content_scripts/content_scripts.js',
-        'content_scripts/top.js',
         'pages/*.js'
     ], {base: "."})
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
@@ -117,8 +116,8 @@ gulp.task('build_background', function() {
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
-gulp.task('build_common_content_min_without_lib', function() {
-    var common_content = [
+gulp.task('build_modules', function() {
+    var modules = [
         "libs/trie.js",
         "content_scripts/keyboardUtils.js",
         "content_scripts/utils.js",
@@ -128,28 +127,29 @@ gulp.task('build_common_content_min_without_lib', function() {
         "content_scripts/visual.js",
         "content_scripts/hints.js",
         "content_scripts/clipboard.js",
+        "content_scripts/uiframe.js"
     ];
     if (buildTarget === "Firefox") {
-        common_content.push("content_scripts/firefox_fg.js");
+        modules.push("content_scripts/firefox_fg.js");
     } else {
-        common_content.push("content_scripts/chrome_fg.js");
+        modules.push("content_scripts/chrome_fg.js");
     }
-    return gulp.src(common_content)
+    return gulp.src(modules)
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
-        .pipe(gp_concat('common_content.min.js'))
+        .pipe(gp_concat('modules.min.js'))
         .pipe(babel({presets: ['es2015']}))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
 });
 
-gulp.task('build_common_content_min', gulp.series('build_common_content_min_without_lib', function(cb) {
+gulp.task('build_common_content_min', gulp.series('build_modules', function(cb) {
     if (buildTarget === "Firefox") {
-        return gulp.src([`dist/${buildTarget}-extension/content_scripts/common_content.min.js`,"libs/shadydom.min.js"])
-            .pipe(gp_concat('common_content.min.js'))
+        return gulp.src([`dist/${buildTarget}-extension/content_scripts/modules.min.js`,"libs/shadydom.min.js"])
+            .pipe(gp_concat('modules.min.js'))
             .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
     } else {
-        return gulp.src([`dist/${buildTarget}-extension/content_scripts/common_content.min.js`])
+        return gulp.src([`dist/${buildTarget}-extension/content_scripts/modules.min.js`])
             .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
     }
 }));

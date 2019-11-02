@@ -1,4 +1,4 @@
-var Clipboard = (function(mode) {
+function createClipboard() {
     var self = {};
 
     var holder = document.createElement('textarea');
@@ -43,4 +43,4 @@ var Clipboard = (function(mode) {
 
     return self;
 
-})();
+}

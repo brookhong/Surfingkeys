@@ -323,7 +323,7 @@ function applySettings(rs) {
     if ('findHistory' in rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
-    if ('snippets' in rs && rs.snippets && !Front.isProvider()) {
+    if ('snippets' in rs && rs.snippets && !isInUIFrame()) {
         var delta = runScript(rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
@@ -360,7 +360,65 @@ function applySettings(rs) {
     }
 }
 
-runtime.on('settingsUpdated', function(response) {
+function _initModules() {
+    window.KeyboardUtils = createKeyboardUtils();
+    window.Mode = createMode();
+    window.Normal = createNormal();
+    Normal.enter();
+    window.Disabled = createDisabled();
+    window.PassThrough = createPassThrough();
+    window.Insert = createInsert();
+    window.Visual = createVisual();
+    window.Hints = createHints();
+    window.Clipboard = createClipboard();
+    window.Front = createFront();
+    createDefaultMappings();
+}
+
+function _initObserver() {
+    var pendingUpdater = undefined;
+    new MutationObserver(function (mutations) {
+        var addedNodes = [];
+        for (var m of mutations) {
+            for (var n of m.addedNodes) {
+                if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
+                    n.newlyCreated = true;
+                    addedNodes.push(n);
+                }
+            }
+        }
+
+        if (addedNodes.length) {
+            if (pendingUpdater) {
+                clearTimeout(pendingUpdater);
+                pendingUpdater = undefined;
+            }
+            pendingUpdater = setTimeout(function() {
+                var possibleModalElements = getVisibleElements(function(e, v) {
+                    var br = e.getBoundingClientRect();
+                    if (br.width > 300 && br.height > 300
+                        && br.width <= window.innerWidth && br.height <= window.innerHeight
+                        && br.top >= 0 && br.left >= 0
+                    ) {
+                        var originalTop = document.scrollingElement.scrollTop;
+                        document.scrollingElement.scrollTop += 1;
+                        var br1 = e.getBoundingClientRect();
+                        if (br.top === br1.top && hasScroll(e, 'y', 16)) {
+                            v.push(e);
+                        }
+                        document.scrollingElement.scrollTop = originalTop;
+                    }
+                });
+
+                if (possibleModalElements.length) {
+                    Normal.addScrollableElement(possibleModalElements[0]);
+                }
+            }, 200);
+        }
+    }).observe(document.body, { childList: true, subtree:true });;
+}
+
+function _onSettingsUpdated(response) {
     var rs = response.settings;
     applySettings(rs);
     if (rs.hasOwnProperty('blacklist') || runtime.conf.blacklistPattern) {
@@ -384,9 +442,12 @@ runtime.on('settingsUpdated', function(response) {
             }
         });
     }
-});
+}
 
-function _init() {
+function _initContent() {
+    _initObserver();
+    window.frameId = generateQuickGuid();
+    runtime.on('settingsUpdated', _onSettingsUpdated);
     runtime.command({
         action: 'getSettings'
     }, function(response) {
@@ -394,7 +455,10 @@ function _init() {
 
         applySettings(rs);
 
-        Normal.enter();
+        if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
+            var elm = getRealEdit();
+            elm && elm.blur();
+        }
 
         runtime.command({
             action: 'getDisabled',
@@ -427,6 +491,83 @@ function _init() {
     });
 }
 
-document.addEventListener("surfingkeys:defaultSettingsLoaded", function (evt) {
-    _init();
-});
+function getFrameId() {
+    if (!window.frameId && window.innerWidth > 16 && window.innerHeight > 16
+        && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
+        && (!window.frameElement || parseInt("0" + getComputedStyle(window.frameElement).zIndex) >= 0)
+    ) {
+        _initModules();
+        _initContent();
+    }
+    return window.frameId;
+}
+
+if (window === top) {
+    _initModules();
+
+    document.addEventListener('DOMContentLoaded', function (e) {
+        _initContent();
+        if (document.contentType === "application/pdf") {
+            // Appending child to document will break default pdf viewer from rendering.
+            // So we append child after default pdf viewer rendered.
+            document.body.querySelector("EMBED").addEventListener("load", function(evt) {
+                setTimeout(function() {
+                    document.documentElement.appendChild(createUiHost());
+                }, 10);
+            });
+        } else {
+            document.documentElement.appendChild(createUiHost());
+        }
+        window._setScrollPos = function (x, y) {
+            document.scrollingElement.scrollLeft = x;
+            document.scrollingElement.scrollTop = y;
+        };
+
+        runtime.command({
+            action: 'tabURLAccessed',
+            title: document.title,
+            url: window.location.href
+        }, function (resp) {
+            if (resp.index > 0) {
+                var showTabIndexInTitle = function () {
+                    skipObserver = true;
+                    document.title = myTabIndex + " " + originalTitle;
+                };
+
+                var myTabIndex = resp.index,
+                    skipObserver = false,
+                    originalTitle = document.title;
+
+                new MutationObserver(function (mutationsList) {
+                    if (skipObserver) {
+                        skipObserver = false;
+                    } else {
+                        originalTitle = document.title;
+                        showTabIndexInTitle();
+                    }
+                }).observe(document.querySelector("title"), { childList: true });;
+
+                showTabIndexInTitle();
+
+                runtime.runtime_handlers['tabIndexChange'] = function(msg, sender, response) {
+                    if (msg.index !== myTabIndex) {
+                        myTabIndex = msg.index;
+                        showTabIndexInTitle();
+                    }
+                };
+            }
+        });
+
+        setTimeout(function () {
+            // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
+            for (var p in AutoCommands) {
+                var c = AutoCommands[p];
+                if (c.regex.test(window.location.href)) {
+                    c.code();
+                }
+            }
+        }, 0);
+
+        // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
+    }, {once: true});
+}

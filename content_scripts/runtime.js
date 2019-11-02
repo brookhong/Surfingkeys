@@ -1,4 +1,4 @@
-var runtime = window.runtime || (function() {
+var runtime = (function() {
     var self = {
         conf: {
             lastKeys: "",

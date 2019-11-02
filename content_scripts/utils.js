@@ -1,3 +1,7 @@
+function isInUIFrame() {
+    return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
+}
+
 function timeStampString(t) {
     var dt = new Date();
     dt.setTime(t);
@@ -351,7 +355,7 @@ function _map(mode, nks, oks) {
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
         mode.mappings.add(nks, meta);
-        if (!Front.isProvider()) {
+        if (!isInUIFrame()) {
             Front.addMapkey(mode.name, nks, oks);
         }
     }

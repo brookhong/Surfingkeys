@@ -1,4 +1,4 @@
-var Hints = (function() {
+function createHints() {
     var self = new Mode("Hints");
 
     self.addEventListener('keydown', function(event) {
@@ -630,4 +630,4 @@ var Hints = (function() {
     };
 
     return self;
-})();
+}

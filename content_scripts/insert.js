@@ -1,4 +1,4 @@
-var Insert = (function() {
+function createInsert() {
     var self = new Mode("Insert");
 
     function moveCusorEOL() {
@@ -420,4 +420,4 @@ var Insert = (function() {
     };
 
     return self;
-})();
+}

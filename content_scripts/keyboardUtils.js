@@ -1,4 +1,4 @@
-var KeyboardUtils = (function() {
+function createKeyboardUtils() {
     var self = {
         keyCodesMac: {
             Minus: ["-", "_"],
@@ -226,7 +226,7 @@ var KeyboardUtils = (function() {
     };
 
     return self;
-})();
+}
 
 
 /*

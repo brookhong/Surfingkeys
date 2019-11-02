@@ -317,13 +317,15 @@
 
         </div> <!-- outerContainer -->
         <div id="printContainer"></div>
-        <script src="../content_scripts/common_content.min.js"></script>
+        <script src="../content_scripts/modules.min.js"></script>
         <script src="../content_scripts/front.js"></script>
-        <script src="../content_scripts/content_scripts.js"></script>
-        <script src="../content_scripts/top.js"></script>
         <script src="default.js"></script>
+        <script src="../content_scripts/content_scripts.js"></script>
 
         <iframe id="proxyFrame" style=" display: none; "></iframe>
+        <script type="text/javascript">
+            document.getElementById("proxyFrame").src = window.location.search.substr(3);
+        </script>
         <script src="../libs/webfontloader.js"></script>
         <script src="pdf/pdf.js"></script>
         <script src="pdf/pdf_l10n.js"></script>

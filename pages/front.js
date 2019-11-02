@@ -1,10 +1,11 @@
 var Front = (function() {
+    window.KeyboardUtils = createKeyboardUtils();
+    window.Mode = createMode();
+    window.Normal = createNormal();
+    window.Visual = createVisual();
+    window.Hints = createHints();
+    window.Clipboard = createClipboard();
     var self = new Mode("Front");
-
-    // this object is implementation of UI, it's UI provider
-    self.isProvider = function() {
-        return true;
-    };
 
     var topOrigin,
         _actions = {},
@@ -83,13 +84,8 @@ var Front = (function() {
         }, topOrigin);
     };
     self.visualCommand = function(args) {
-        if (_usage.style.display !== "none") {
-            // visual mode in frontend.html
-            Visual[args.action](args.query);
-        } else {
-            // visual mode for all content windows
-            self.contentCommand(args);
-        }
+        // visual mode for all content windows
+        self.contentCommand(args);
     };
 
     self.omnibar = document.getElementById('sk_omnibar');

@@ -1112,7 +1112,7 @@ var ChromeService = (function() {
         var tid = sender.tab.id;
         chrome.tabs.executeScript(tid, {
             allFrames: true,
-            code: "Front && Front.getFrameId && Front.getFrameId()"
+            code: "typeof(getFrameId) === 'function' && getFrameId()"
         }, function(framesInTab) {
             framesInTab = framesInTab.filter(function(frameId) {
                 return frameId;

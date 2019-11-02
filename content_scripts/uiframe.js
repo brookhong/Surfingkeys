@@ -1,4 +1,4 @@
-if (window === top) {
+function createUiHost() {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
@@ -81,7 +81,7 @@ if (window === top) {
             uiHost.blur();
             ifr.blur();
             // test with https://docs.google.com/ and https://web.whatsapp.com/
-            if (lastStateOfPointerEvents !== response.pointerEvents) {
+            if (lastStateOfPointerEvents !== response.pointerEvents && activeContent) {
                 activeContent.window.postMessage({
                     action: 'getBackFocus',
                     commandToContent: true
@@ -103,68 +103,6 @@ if (window === top) {
         lastStateOfPointerEvents = response.pointerEvents;
     };
 
-    document.addEventListener('DOMContentLoaded', function (e) {
-        if (document.contentType === "application/pdf") {
-            // Appending child to document will break default pdf viewer from rendering.
-            // So we append child after default pdf viewer rendered.
-            document.body.querySelector("EMBED").addEventListener("load", function(evt) {
-                setTimeout(function() {
-                    document.documentElement.appendChild(uiHost);
-                }, 10);
-            });
-        } else {
-            document.documentElement.appendChild(uiHost);
-        }
-
-        runtime.command({
-            action: 'tabURLAccessed',
-            title: document.title,
-            url: window.location.href
-        }, function (resp) {
-            if (resp.index > 0) {
-                var showTabIndexInTitle = function () {
-                    skipObserver = true;
-                    document.title = myTabIndex + " " + originalTitle;
-                };
-
-                var myTabIndex = resp.index,
-                    skipObserver = false,
-                    originalTitle = document.title;
-
-                new MutationObserver(function (mutationsList) {
-                    if (skipObserver) {
-                        skipObserver = false;
-                    } else {
-                        originalTitle = document.title;
-                        showTabIndexInTitle();
-                    }
-                }).observe(document.querySelector("title"), { childList: true });;
-
-                showTabIndexInTitle();
-
-                runtime.runtime_handlers['tabIndexChange'] = function(msg, sender, response) {
-                    if (msg.index !== myTabIndex) {
-                        myTabIndex = msg.index;
-                        showTabIndexInTitle();
-                    }
-                };
-            }
-        });
-
-        setTimeout(function () {
-            // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
-            for (var p in AutoCommands) {
-                var c = AutoCommands[p];
-                if (c.regex.test(window.location.href)) {
-                    c.code();
-                }
-            }
-        }, 0);
-        // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
-    }, {once: true});
-
-    function _setScrollPos(x, y) {
-        document.scrollingElement.scrollLeft = x;
-        document.scrollingElement.scrollTop = y;
-    }
+    window.uiFrame = ifr;
+    return uiHost;
 }

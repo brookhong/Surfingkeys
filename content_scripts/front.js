@@ -1,13 +1,8 @@
-var Front = (function() {
+function createFront() {
     var self = {};
     // The agent is a front stub to talk with pages/frontend.html
     // that will live in all content window except the frontend.html
     // as there is no need to make this object live in frontend.html.
-
-    // this object is stub of UI, it's UI consumer
-    self.isProvider = function() {
-        return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
-    };
 
     var frontendPromise = new Promise(function (resolve, reject) {
         if (window === top) {
@@ -252,7 +247,7 @@ var Front = (function() {
             }, function(res) {
                 showQueryResult(_inlineQuery.parseResult(res));
             });
-        } else if (Front.isProvider()) {
+        } else if (isInUIFrame()) {
             _showQueryResult = showQueryResult;
             document.getElementById("proxyFrame").contentWindow.postMessage({
                 action: "performInlineQuery",
@@ -361,16 +356,6 @@ var Front = (function() {
         });
     };
 
-    self.getFrameId = function () {
-        if (document.body.offsetWidth > 16 && document.body.offsetHeight > 16 && document.body.innerText
-            && (!window.frameElement || getComputedStyle(window.frameElement).zIndex >= 0)
-            && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
-            && !window.frameId) {
-            window.frameId = generateQuickGuid();
-        }
-        return window.frameId;
-    };
-
     _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {
             onEditorSaved(response.data);
@@ -429,7 +414,7 @@ var Front = (function() {
 
     _actions["getBackFocus"] = function(response) {
         window.focus();
-        if (window === top && document.activeElement === ifr[0]) {
+        if (window === top && document.activeElement === window.uiFrame) {
             // fix for Firefox, blur from iframe for frontend after Omnibar closed.
             document.activeElement.blur();
         }
@@ -490,68 +475,17 @@ var Front = (function() {
                 block: 'center',
                 inline: 'center'
             });
-            var rc = document.body.getBoundingClientRect();
             self.highlightElement({
                 duration: 500,
                 rect: {
-                    top: rc.top,
-                    left: rc.left,
-                    width: rc.width,
-                    height: rc.height
+                    top: 0,
+                    left: 0,
+                    width: window.innerWidth,
+                    height: window.innerHeight
                 }
             });
-
-            Normal.exit();
-            Normal.enter();
         }
     };
-
-    document.addEventListener('DOMContentLoaded', function (e) {
-        if (window.location.href.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
-            document.getElementById("proxyFrame").src = window.location.search.substr(3);
-        }
-
-        var pendingUpdater = undefined;
-        new MutationObserver(function (mutations) {
-            var addedNodes = [];
-            for (var m of mutations) {
-                for (var n of m.addedNodes) {
-                    if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
-                        n.newlyCreated = true;
-                        addedNodes.push(n);
-                    }
-                }
-            }
-
-            if (addedNodes.length) {
-                if (pendingUpdater) {
-                    clearTimeout(pendingUpdater);
-                    pendingUpdater = undefined;
-                }
-                pendingUpdater = setTimeout(function() {
-                    var possibleModalElements = getVisibleElements(function(e, v) {
-                        var br = e.getBoundingClientRect();
-                        if (br.width > 300 && br.height > 300
-                            && br.width <= window.innerWidth && br.height <= window.innerHeight
-                            && br.top >= 0 && br.left >= 0
-                        ) {
-                            var originalTop = document.scrollingElement.scrollTop;
-                            document.scrollingElement.scrollTop += 1;
-                            var br1 = e.getBoundingClientRect();
-                            if (br.top === br1.top && hasScroll(e, 'y', 16)) {
-                                v.push(e);
-                            }
-                            document.scrollingElement.scrollTop = originalTop;
-                        }
-                    });
-
-                    if (possibleModalElements.length) {
-                        Normal.addScrollableElement(possibleModalElements[0]);
-                    }
-                }, 200);
-            }
-        }).observe(document.body, { childList: true, subtree:true });;
-    });
 
     window.addEventListener('message', function (event) {
         var _message = event.data;
@@ -588,4 +522,4 @@ var Front = (function() {
     }, true);
 
     return self;
-})();
+}

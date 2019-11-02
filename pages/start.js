@@ -26,7 +26,7 @@ runtime.command({
         });
     };
 
-    document.querySelector('#-show-full-list-of-surfingkeys->a').onclick = function() {
+    document.querySelector('#show-full-list-of-surfingkeys>a').onclick = function() {
         var cl = screen1.classList;
         cl.remove("fadeOut");
         cl.remove("fadeIn");
