@@ -258,6 +258,9 @@ mapkey('q', '#1Click on an Image or a button', function() {
 mapkey('<Alt-i>', '#0enter PassThrough mode to temporarily suppress SurfingKeys', function() {
     Normal.passThrough();
 });
+mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+    Normal.passThrough(1000);
+});
 mapkey('<Alt-p>', '#3pin/unpin current tab', function() {
     RUNTIME("togglePinTab");
 });

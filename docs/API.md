@@ -39,18 +39,18 @@ cmap('<Ctrl-p>', '<Shift-Tab>');
 
 **Parameters**
 
--   `mode` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
+-   `mode` **[Object][1]** 
 
-Returns **[Omnibar](#omnibar)** Omnibar instance
+Returns **[Omnibar][2]** Omnibar instance
 
 ### listURLs
 
-List URLs like {url: "<https://github.com">, title: "github.com"} beneath omnibar
+List URLs like {url: "[https://github.com"][3], title: "github.com"} beneath omnibar
 
 **Parameters**
 
--   `items` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)** Array of url items with title.
--   `showFolder` **[boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** True to show a item as folder if it has no property url.
+-   `items` **[Array][4]** Array of url items with title.
+-   `showFolder` **[boolean][5]** True to show a item as folder if it has no property url.
 
 **Examples**
 
@@ -58,13 +58,13 @@ List URLs like {url: "<https://github.com">, title: "github.com"} beneath omniba
 Omnibar.listURLs ([{url: 'http://google.com', title: 'Google'}], false)
 ```
 
-Returns **[undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined)** 
+Returns **[undefined][6]** 
 
 ### onOpen
 
 List commands when OmniBar opens
 
-Returns **[undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined)** 
+Returns **[undefined][6]** 
 
 ### onEnter
 
@@ -72,7 +72,7 @@ Execute command after pressing the return key.
 
 Displays any output if the command.
 
-Returns **[boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** 
+Returns **[boolean][5]** 
 
 ## StatusBar
 
@@ -80,12 +80,26 @@ The status bar displays the status of Surfingkeys current mode: Normal, visual, 
 
 **Parameters**
 
--   `ui` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** 
+-   `ui` **[Object][1]** 
 
-Returns **[StatusBar](#statusbar)** StatusBar instance
+Returns **[StatusBar][7]** StatusBar instance
 
 ### open
 
 Opens the status bar
 
-Returns **[undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined)** 
+Returns **[undefined][6]** 
+
+[1]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[2]: #omnibar
+
+[3]: https://github.com"
+
+[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
+
+[7]: #statusbar

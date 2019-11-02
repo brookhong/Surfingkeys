@@ -531,13 +531,12 @@ var Front = (function() {
                 pendingUpdater = setTimeout(function() {
                     var possibleModalElements = getVisibleElements(function(e, v) {
                         var br = e.getBoundingClientRect();
-                        if (br.width > 300 && br.height > 300) {
+                        if (br.width > 300 && br.height > 300
+                            && br.width <= window.innerWidth && br.height <= window.innerHeight
+                            && br.top >= 0 && br.left >= 0
+                        ) {
                             var originalTop = document.scrollingElement.scrollTop;
                             document.scrollingElement.scrollTop += 1;
-                            if (document.scrollingElement.scrollTop !== originalTop) {
-                                // we scroll here to detect modal element, firing scroll event is not expected
-                                Mode.suppressNextScrollEvent();
-                            }
                             var br1 = e.getBoundingClientRect();
                             if (br.top === br1.top && hasScroll(e, 'y', 16)) {
                                 v.push(e);

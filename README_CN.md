@@ -174,6 +174,12 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 按`Alt-i`进入PassThrough模式可让你暂时放弃SurfingKeys，这时SurfingKeys所有按键不再有用，直到你按`Esc`退出PassThrough模式。在该模式下，你可以充分使用任何网站本身提供的快捷键。请参考[Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656)了解为什么引入这种模式以及它与`Alt-s`的区别。
 
+按`p`进入一个短暂的PassThrough模式，它在一秒后会自动退出。如果默认设置的1秒超时不适合你的情况，可以在你的设置脚本里这样写改为1500毫秒：
+
+    mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+        Normal.passThrough(1500);
+    });
+
 ## 搜索栏
 
 一些需要用户输入的功能通过搜索栏提供，比如
@@ -651,7 +657,6 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.aceKeybindings | "vim" | 改为"emacs"可以在ACE编辑器里使用Emacs按键。 |
 | settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
 | settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
-| settings.passThroughTimeout | 0 | 在指定时间（毫秒）之后自动退出PassThrough模式，设置为0可以禁止自动退出。 |
 
 ### settings.theme示例，修改状态栏字体
 

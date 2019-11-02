@@ -172,6 +172,12 @@ Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\b
 
 To press `Alt-i` to enter PassThrough mode gives you a chance to temporarily suppress SurfingKeys, which means Surfingkeys will not care any key press until leaving this mode by pressing `Esc`. In this mode, you could use built-in shortcuts from any site itself. Please see [Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656) for why we brought this in and the difference between `Alt-i` and `Alt-s`.
 
+To press `p` to enter ephemeral PassThrough mode, which will automatically quit after 1 second. If the default timeout does fit your case, add below into your own settings script to make it 1500ms.
+
+    mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+        Normal.passThrough(1500);
+    });
+
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,
@@ -672,7 +678,6 @@ For example,
 | settings.aceKeybindings | "vim" | Set it "emacs" to use emacs keybindings in the ACE editor. |
 | settings.caretViewport | null | Set it in format `[top, left, bottom, right]` to limit hints generation on `v` for entering visual mode, such as `[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]` will make Surfingkeys generate Hints only for text that display on vertically middle of window. |
 | settings.mouseSelectToQuery | [] | All hosts that have enable feature -- mouse selection to query. |
-| settings.passThroughTimeout | 0 | Automatically quit PassThrough mode after specified milliseconds, to set it 0 will disable automatical quit. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

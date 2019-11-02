@@ -306,8 +306,8 @@ var Disabled = (function() {
 })();
 
 var PassThrough = (function() {
-    var self = new Mode("PassThrough", "pass through");
-    var _autoExit;
+    var self = new Mode("PassThrough");
+    var _autoExit, _timeout;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -315,25 +315,32 @@ var PassThrough = (function() {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.exit();
             event.sk_stopPropagation = true;
-        } else if (runtime.conf.passThroughTimeout > 0) {
+        } else if (_timeout > 0) {
             if (_autoExit) {
                 clearTimeout(_autoExit);
                 _autoExit = undefined;
             }
             _autoExit = setTimeout(function() {
                 self.exit();
-            }, runtime.conf.passThroughTimeout);
+            }, _timeout);
         }
     }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
 
     self.onEnter = function() {
-        if (runtime.conf.passThroughTimeout > 0) {
+        if (_timeout > 0) {
             _autoExit = setTimeout(function() {
                 self.exit();
-            }, runtime.conf.passThroughTimeout);
+            }, _timeout);
+            self.statusLine = `ephemeral(${_timeout}ms) pass through`;
+        } else {
+            self.statusLine = "pass through";
         }
+    };
+
+    self.setTimeout = function(timeout) {
+        _timeout = timeout;
     };
 
     return self;
@@ -471,7 +478,8 @@ var Normal = (function() {
         }
     };
 
-    self.passThrough = function() {
+    self.passThrough = function(timeout) {
+        PassThrough.setTimeout(timeout);
         PassThrough.enter();
     };
 
