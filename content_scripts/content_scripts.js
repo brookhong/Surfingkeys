@@ -399,11 +399,12 @@ function _initObserver() {
                     if (br.width > 300 && br.height > 300
                         && br.width <= window.innerWidth && br.height <= window.innerHeight
                         && br.top >= 0 && br.left >= 0
+                        && hasScroll(e, 'y', 16)
                     ) {
                         var originalTop = document.scrollingElement.scrollTop;
                         document.scrollingElement.scrollTop += 1;
                         var br1 = e.getBoundingClientRect();
-                        if (br.top === br1.top && hasScroll(e, 'y', 16)) {
+                        if (br.top === br1.top) {
                             v.push(e);
                         }
                         document.scrollingElement.scrollTop = originalTop;
@@ -475,6 +476,16 @@ function _initContent() {
                     action: 'setSurfingkeysIcon',
                     status: resp.disabled
                 });
+
+                if (!resp.disabled) {
+                    for (var p in AutoCommands) {
+                        var c = AutoCommands[p];
+                        if (c.regex.test(window.location.href)) {
+                            c.code();
+                        }
+                    }
+                }
+
             }
         });
 
@@ -558,16 +569,12 @@ if (window === top) {
             }
         });
 
-        setTimeout(function () {
-            // to avoid conflict with pdf extension: chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/
-            for (var p in AutoCommands) {
-                var c = AutoCommands[p];
-                if (c.regex.test(window.location.href)) {
-                    c.code();
-                }
-            }
-        }, 0);
-
         // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
     }, {once: true});
+} else {
+    setTimeout(function() {
+        document.addEventListener('click', function (e) {
+            getFrameId();
+        }, { once: true });
+    }, 1);
 }
