@@ -121,7 +121,7 @@ function createFront() {
         });
     };
 
-    var frameElement = createElement('<div id="sk_frame" />');
+    var frameElement = createElement('<div id="sk_frame">Hi, I\'m here now!</div>');
     frameElement.fromSurfingKeys = true;
     self.highlightElement = function (sn) {
         document.body.append(frameElement);

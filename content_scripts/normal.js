@@ -576,8 +576,6 @@ function createNormal() {
     // set scrollIndex to the highest node
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
-            document.documentElement.style.overflow = "visible";
-            document.body.style.overflow = "visible";
             scrollNodes = getScrollableElements();
             scrollIndex = 0;
         }
@@ -658,10 +656,10 @@ function createNormal() {
         var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
-            if (scrollNode !== document.scrollingElement) {
+            if (scrollNode !== document.scrollingElement && scrollNode !== document.body) {
                 var br = scrollNode.getBoundingClientRect();
                 if (br.width === 0 || br.height === 0 || !isElementPartiallyInViewport(scrollNode)
-                    || !hasScroll(scrollNode, 'y', 16)) {
+                    || !hasScroll(scrollNode, 'x', 16) && !hasScroll(scrollNode, 'y', 16)) {
                     scrollNodes.splice(scrollIndex, 1);
                     scrollIndex = 0;
                     scrollNode = scrollNodes[scrollIndex];

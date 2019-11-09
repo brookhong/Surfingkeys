@@ -76,4 +76,10 @@ div.surfingkeys_cursor:empty {
     box-sizing: border-box;
     z-index: 2147483000;
     background: rgba(202, 202, 202, 0.62);
+    color: blue;
+    font-size: 16pt;
+    font-weight: bold;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }
