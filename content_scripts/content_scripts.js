@@ -361,6 +361,7 @@ function applySettings(rs) {
 }
 
 function _initModules() {
+    runtime.init();
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
     window.Normal = createNormal();

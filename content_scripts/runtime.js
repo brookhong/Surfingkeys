@@ -49,23 +49,17 @@ var runtime = (function() {
         },
         runtime_handlers: {}
     }, actions = {};
-    if (!chrome.runtime.connect) {
-        return self;
-    }
 
-    var _port = chrome.runtime.connect({
-        name: 'main'
-    });
-    _port.onDisconnect.addListener(function(evt) {
+    var _port, getTopURLPromise, callbacks = {};
+    function onDisconnectHandler() {
         if (window === top) {
             console.log('reload triggered by runtime disconnection.');
             setTimeout(function() {
                 window.location.reload();
             }, 1000);
         }
-    });
-    var callbacks = {};
-    _port.onMessage.addListener(function(_message) {
+    }
+    function onMessageHandler(_message) {
         if (callbacks[_message.id]) {
             var f = callbacks[_message.id];
             // returns true to make callback stay for coming response.
@@ -86,7 +80,30 @@ var runtime = (function() {
         } else if (window === top) {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
-    });
+    }
+    self.init = function() {
+        _port = chrome.runtime.connect({
+            name: 'main'
+        });
+        _port.onDisconnect.addListener(onDisconnectHandler);
+        _port.onMessage.addListener(onMessageHandler);
+
+        getTopURLPromise = new Promise(function(resolve, reject) {
+            if (window === top) {
+                resolve(window.location.href);
+            } else {
+                self.command({
+                    action: "getTopURL"
+                }, function(rs) {
+                    resolve(rs.url);
+                });
+            }
+        });
+        window.addEventListener('unload', function() {
+            _port.onDisconnect.removeListener(onDisconnectHandler);
+            _port.onMessage.removeListener(onMessageHandler);
+        });
+    };
 
     self.on = function(message, cb) {
         if ( !(message in actions) ) {
@@ -104,6 +121,7 @@ var runtime = (function() {
         }
         _port.postMessage(args);
     };
+
     self.updateHistory = function(type, cmd) {
         var prop = type + 'History';
         runtime.command({
@@ -140,18 +158,6 @@ var runtime = (function() {
             if (self.runtime_handlers[msg.subject]) {
                 self.runtime_handlers[msg.subject](msg, sender, response);
             }
-        }
-    });
-
-    var getTopURLPromise = new Promise(function(resolve, reject) {
-        if (window === top) {
-            resolve(window.location.href);
-        } else {
-            self.command({
-                action: "getTopURL"
-            }, function(rs) {
-                resolve(rs.url);
-            });
         }
     });
 

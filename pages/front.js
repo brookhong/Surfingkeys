@@ -1,4 +1,5 @@
 var Front = (function() {
+    runtime.init();
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
     window.Normal = createNormal();

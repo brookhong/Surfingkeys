@@ -1,6 +1,7 @@
 var disableAll = document.getElementById('disableAll'),
     version = "Surfingkeys " + chrome.runtime.getManifest().version;
 
+runtime.init();
 function updateStatus(blacklist) {
     var disabled = blacklist.hasOwnProperty('.*');
     disableAll.textContent = (disabled ? 'Enable ' : 'Disable ') + version;

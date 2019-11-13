@@ -104,5 +104,8 @@ function createUiHost() {
     };
 
     window.uiFrame = ifr;
+    window.addEventListener('beforeunload', function () {
+        uiHost.remove();
+    });
     return uiHost;
 }

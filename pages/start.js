@@ -1,3 +1,4 @@
+runtime.init();
 runtime.command({
     action: "getTopSites"
 }, function(response) {
@@ -40,6 +41,7 @@ runtime.command({
 });
 
 document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
+    Normal.enter();
     Front.getUsage(function(usage) {
         var _usage = document.getElementById('sk_usage');
         setInnerHTML(_usage, usage);

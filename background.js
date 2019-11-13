@@ -173,7 +173,7 @@ var Gist = (function() {
 var ChromeService = (function() {
     var self = {};
 
-    var activePorts = [],
+    var activePorts = {},
         tabHistory = [],
         tabHistoryIndex = 0,
         chromelikeNewTabPosition = 0,
@@ -286,58 +286,72 @@ var ChromeService = (function() {
     loadSettings(null, _applyProxySettings);
 
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
-        loadSettings('blacklist', function(data) {
-            var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID"];
-            var tabId = details.tabId;
-            var disabled = _getDisabled(data, new URL(details.url), null);
-            if (!disabled && tabId !== -1 &&
-                (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
-                if (!tabErrors.hasOwnProperty(tabId)) {
-                    tabErrors[tabId] = [];
-                }
-                if (details.type === "main_frame") {
-                    tabErrors[tabId] = [];
-                    if (excluded.indexOf(details.error) === -1) {
-                        chrome.tabs.update(tabId, {
-                            url: chrome.extension.getURL("pages/error.html")
-                        });
+        var tabId = details.tabId;
+        if (tabActivated.hasOwnProperty(tabId)) {
+            loadSettings('blacklist', function(data) {
+                var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID"];
+                var disabled = _getDisabled(data, new URL(details.url), null);
+                if (!disabled && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
+                    if (!tabErrors.hasOwnProperty(tabId)) {
+                        tabErrors[tabId] = [];
                     }
+                    if (details.type === "main_frame") {
+                        tabErrors[tabId] = [];
+                        if (excluded.indexOf(details.error) === -1) {
+                            chrome.tabs.update(tabId, {
+                                url: chrome.extension.getURL("pages/error.html")
+                            });
+                        }
+                    }
+                    tabErrors[tabId].push(details);
                 }
-                tabErrors[tabId].push(details);
-            }
-        });
+            });
+        }
     }, {
         urls: ["<all_urls>"]
     });
 
-    chrome.runtime.onConnect.addListener(function(port) {
-        activePorts.push(port);
-        port.onMessage.addListener(function(message, port) {
+    function getPortId(port) {
+        return port.sender.tab ? (port.sender.tab.id + "." + port.sender.frameId) : port.sender.url;
+    }
+
+    function detachPort(port) {
+        port.onMessage.removeListener(port.onMessageHandler);
+        port.onDisconnect.removeListener(port.onDisconnectHandler);
+    }
+
+    chrome.runtime.onConnect.addListener(function (port) {
+        activePorts[getPortId(port)] = port;
+        port.onMessageHandler = function (message, port) {
             // using port.sender here is must, as call to these service APIs may be made from
             // any inactive tab, such as API getDisabled.
-            return handleMessage(message, port.sender, function(resp) {
+            return handleMessage(message, port.sender, function (resp) {
                 try {
-                    if (!port.isDisconnected) {
-                        port.postMessage(resp);
-                    }
+                    port.postMessage(resp);
                 } catch (e) {
                     console.log(message.action + ": " + e);
-                    console.log(port);
+                    detachPort(port);
+                    delete activePorts[getPortId(port)];
                 }
             }, port);
-        });
-        port.onDisconnect.addListener(function() {
-            port.isDisconnected = true;
-            for (var i = 0; i < activePorts.length; i++) {
-                if (activePorts[i] === port) {
-                    activePorts.splice(i, 1);
-                    break;
-                }
-            }
-        });
+        };
+        port.onMessage.addListener(port.onMessageHandler);
+        port.onDisconnectHandler = function () {
+            detachPort(port);
+            delete activePorts[getPortId(port)];
+        };
+        port.onDisconnect.addListener(port.onDisconnectHandler);
     });
 
     function removeTab(tabId) {
+        Object.keys(activePorts).filter(function (p) {
+            return p.startsWith(tabId + ".");
+        }).forEach(function (p) {
+            var port = activePorts[p];
+            detachPort(port);
+            port.disconnect();
+            delete activePorts[p];
+        });
         delete tabActivated[tabId];
         delete tabMessages[tabId];
         delete tabURLs[tabId];
@@ -365,8 +379,11 @@ var ChromeService = (function() {
             delete tabMessages[tabId];
         }
     }
-    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
+            if (changeInfo.url !== undefined && changeInfo.url !== chrome.extension.getURL("pages/error.html")) {
+                delete tabErrors[tabId];
+            }
             delete frameIndexes[tabId];
         }
         _setScrollPos_bg(tabId);
@@ -489,7 +506,7 @@ var ChromeService = (function() {
     }
 
     function _updateAndPostSettings(diffSettings, afterSet) {
-        activePorts.forEach(function(port) {
+        Object.values(activePorts).forEach(function(port) {
             port.postMessage({
                 action: 'settingsUpdated',
                 settings: diffSettings
@@ -632,7 +649,7 @@ var ChromeService = (function() {
                 settings: data
             });
 
-            activePorts.forEach(function(port) {
+            Object.values(activePorts).forEach(function(port) {
                 port.postMessage({
                     action: 'settingsUpdated',
                     settings: data
@@ -1406,7 +1423,7 @@ var ChromeService = (function() {
             });
             // broadcast the change also, such as lastKeys
             // we would set lastKeys in sync to avoid breaching chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE
-            activePorts.forEach(function(port) {
+            Object.values(activePorts).forEach(function(port) {
                 port.postMessage({
                     action: 'settingsUpdated',
                     settings: message.data
