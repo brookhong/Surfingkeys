@@ -605,8 +605,9 @@ function createNormal() {
             else if (a.contains(b)) return -1;
             return b.scrollHeight * b.scrollWidth - a.scrollHeight * a.scrollWidth;
         });
-        if (document.scrollingElement.scrollHeight > window.innerHeight
-            || document.scrollingElement.scrollWidth > window.innerWidth) {
+        // document.scrollingElement will be null when document.body.tagName === "FRAMESET", for example http://www.knoppix.org/
+        if (document.scrollingElement && (document.scrollingElement.scrollHeight > window.innerHeight
+            || document.scrollingElement.scrollWidth > window.innerWidth)) {
             nodes.unshift(document.scrollingElement);
         }
         nodes.forEach(function (n) {
@@ -665,6 +666,10 @@ function createNormal() {
                     scrollNode = scrollNodes[scrollIndex];
                 }
             }
+        }
+        if (!scrollNode) {
+            // scrollNode could be null on a page with frameset as its body.
+            return;
         }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
