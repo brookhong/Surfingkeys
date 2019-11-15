@@ -85,8 +85,13 @@ var Front = (function() {
         }, topOrigin);
     };
     self.visualCommand = function(args) {
-        // visual mode for all content windows
-        self.contentCommand(args);
+        if (_usage.style.display !== "none") {
+            // visual mode in frontend.html, such as help
+            Visual[args.action](args.query);
+        } else {
+            // visual mode for all content windows
+            self.contentCommand(args);
+        }
     };
 
     self.omnibar = document.getElementById('sk_omnibar');

@@ -489,6 +489,9 @@ function createFront() {
 
     window.addEventListener('message', function (event) {
         var _message = event.data;
+        if (_message === undefined) {
+            return;
+        }
         if (_message.action === "performInlineQuery") {
             self.performInlineQuery(_message.query, function (queryResult) {
                 event.source.postMessage({

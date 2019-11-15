@@ -19,6 +19,9 @@ function createUiHost() {
 
         window.addEventListener('message', function(event) {
             var _message = event.data;
+            if (_message === undefined) {
+                return;
+            }
             if (_message.commandToFrontend || _message.responseToFrontend) {
                 // forward message to frontend
                 ifr.contentWindow.postMessage(_message, frontEndURL);
