@@ -374,6 +374,52 @@ function _initModules() {
     window.Clipboard = createClipboard();
     window.Front = createFront();
     createDefaultMappings();
+    runtime.command({
+        action: 'getSettings'
+    }, function(response) {
+        var rs = response.settings;
+
+        applySettings(rs);
+
+        runtime.command({
+            action: 'getDisabled',
+            blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
+        }, function (resp) {
+            if (resp.disabled) {
+                Disabled.enter(0, true);
+            } else if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
+                usePdfViewer();
+            }
+
+            if (window === top) {
+                runtime.command({
+                    action: 'setSurfingkeysIcon',
+                    status: resp.disabled
+                });
+
+                if (!resp.disabled) {
+                    for (var p in AutoCommands) {
+                        var c = AutoCommands[p];
+                        if (c.regex.test(window.location.href)) {
+                            c.code();
+                        }
+                    }
+                }
+
+            }
+        });
+
+        document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+        document.addEventListener("mouseup", event => {
+            if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
+                && !isElementClickable(event.target)
+                && !event.target.matches(".cm-matchhighlight")) {
+                // perform inline query after 1 ms
+                // to avoid calling on selection collapse
+                setTimeout(Front.querySelectedWord, 1);
+            }
+        });
+    });
 }
 
 function _initObserver() {
@@ -455,57 +501,11 @@ function _initContent() {
     _initObserver();
     window.frameId = generateQuickGuid();
     runtime.on('settingsUpdated', _onSettingsUpdated);
-    runtime.command({
-        action: 'getSettings'
-    }, function(response) {
-        var rs = response.settings;
 
-        applySettings(rs);
-
-        if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
-            var elm = getRealEdit();
-            elm && elm.blur();
-        }
-
-        runtime.command({
-            action: 'getDisabled',
-            blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
-        }, function (resp) {
-            if (resp.disabled) {
-                Disabled.enter(0, true);
-            } else if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                usePdfViewer();
-            }
-
-            if (window === top) {
-                runtime.command({
-                    action: 'setSurfingkeysIcon',
-                    status: resp.disabled
-                });
-
-                if (!resp.disabled) {
-                    for (var p in AutoCommands) {
-                        var c = AutoCommands[p];
-                        if (c.regex.test(window.location.href)) {
-                            c.code();
-                        }
-                    }
-                }
-
-            }
-        });
-
-        document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
-        document.addEventListener("mouseup", event => {
-            if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
-                && !isElementClickable(event.target)
-                && !event.target.matches(".cm-matchhighlight")) {
-                // perform inline query after 1 ms
-                // to avoid calling on selection collapse
-                setTimeout(Front.querySelectedWord, 1);
-            }
-        });
-    });
+    if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
+        var elm = getRealEdit();
+        elm && elm.blur();
+    }
 }
 
 function getFrameId() {
