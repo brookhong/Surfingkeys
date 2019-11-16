@@ -1,5 +1,4 @@
 var Front = (function() {
-    runtime.init();
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
     window.Normal = createNormal();
@@ -162,9 +161,7 @@ var Front = (function() {
         });
     };
     _actions['chooseTab'] = function() {
-        runtime.command({
-            action: 'getTabs'
-        }, function(response) {
+        RUNTIME('getTabs', null, function(response) {
             if (response.tabs.length > runtime.conf.tabsThreshold) {
                 showPopup(self.omnibar, {type: 'Tabs'});
             } else if (response.tabs.length > 0) {

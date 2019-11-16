@@ -94,8 +94,7 @@ var Find = (function() {
             }
         };
         var findHistory = [];
-        runtime.command({
-            action: 'getSettings',
+        RUNTIME('getSettings', {
             key: 'findHistory'
         }, function(response) {
             findHistory = response.settings.findHistory;

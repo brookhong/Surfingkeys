@@ -362,7 +362,7 @@ function _map(mode, nks, oks) {
     return old_map;
 }
 
-function RUNTIME(action, args) {
+function RUNTIME(action, args, callback) {
     var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight', 'focusTabByIndex'];
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {
@@ -372,7 +372,8 @@ function RUNTIME(action, args) {
         RUNTIME.repeats = 1;
     }
     try {
-        chrome.runtime.sendMessage(args);
+        args.needResponse = callback !== undefined;
+        chrome.runtime.sendMessage(args, callback);
     } catch (e) {
         Front.showPopup('[runtime exception] ' + e);
     }

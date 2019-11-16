@@ -1,7 +1,4 @@
-runtime.init();
-runtime.command({
-    action: "getTopSites"
-}, function(response) {
+RUNTIME("getTopSites", null, function(response) {
     var urls = response.urls.map(function(u) {
         return `<li><a href="${u.url}"><i style="background:url('chrome://favicon/${u.url}') no-repeat"></i>${u.title}</a></li>`;
     });

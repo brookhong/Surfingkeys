@@ -1,6 +1,4 @@
-runtime.command({
-    action: 'getTabErrors'
-}, function(response) {
+RUNTIME('getTabErrors', null, function(response) {
     if (!response.tabError || response.tabError.length === 0) {
         window.location.href = chrome.extension.getURL("pages/options.html");
     } else {

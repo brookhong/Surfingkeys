@@ -13,8 +13,7 @@ function readText(text, options) {
         onEnd = options.onEnd;
     delete options.verbose;
     delete options.onEnd;
-    runtime.command({
-        action: 'read',
+    RUNTIME('read', {
         content: text,
         options: options
     }, function(res) {

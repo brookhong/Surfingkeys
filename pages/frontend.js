@@ -20,8 +20,7 @@ command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', fun
 });
 
 command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-    runtime.command({
-        action: "updateProxy",
+    RUNTIME("updateProxy", {
         mode: args[0]
     }, function(rs) {
         if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
@@ -35,9 +34,7 @@ command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', func
 });
 
 command('listVoices', 'list tts voices', function() {
-    runtime.command({
-        action: 'getVoices'
-    }, function(response) {
+    RUNTIME('getVoices', null, function(response) {
 
         var voices = response.voices.map(function(s) {
             return `<tr><td>${s.voiceName}</td><td>${s.lang}</td><td>${s.gender}</td><td>${s.remote}</td></tr>`;
@@ -48,9 +45,7 @@ command('listVoices', 'list tts voices', function() {
     });
 });
 command('testVoices', 'testVoices <locale> <text>', function(args) {
-    runtime.command({
-        action: 'getVoices'
-    }, function(response) {
+    RUNTIME('getVoices', null, function(response) {
 
         var voices = response.voices, i = 0;
         if (args.length > 0) {
@@ -98,8 +93,7 @@ command('listSession', 'list session', function() {
     if (Front.omnibar.style.display === "none") {
         Front.openOmnibar({ type: "Commands" });
     }
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: 'sessions'
     }, function(response) {
         Omnibar.listResults(Object.keys(response.settings.sessions), function(s) {
@@ -124,9 +118,7 @@ command('openSession', 'openSession [name]', function(args) {
     });
 });
 command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
-    runtime.command({
-        action: 'getQueueURLs'
-    }, function(response) {
+    RUNTIME('getQueueURLs', null, function(response) {
         Omnibar.listResults(response.queueURLs, function(s) {
             return createElement(`<li>${s}</li>`);
         });
@@ -138,8 +130,7 @@ command('timeStamp', 'print time stamp in human readable format', function(args)
 });
 command('userAgent', 'set user agent', function(args) {
     // 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
-    runtime.command({
-        action: 'setUserAgent',
+    RUNTIME('setUserAgent', {
         userAgent: args.join(' ')
     });
 });

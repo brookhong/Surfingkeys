@@ -149,8 +149,7 @@ function renderProxySettings(rs) {
             autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
                 ph.onclick = function() {
                     var elm = this.closest('aphost');
-                    runtime.command({
-                        action: 'updateProxy',
+                    RUNTIME('updateProxy', {
                         number: number,
                         host: elm.querySelector("span:nth-child(2)").innerText,
                         operation: 'remove'
@@ -194,8 +193,7 @@ function renderProxySettings(rs) {
 }
 
 function _updateProxy(data) {
-    data.action = 'updateProxy';
-    runtime.command(data, function(res) {
+    RUNTIME('updateProxy', data, function(res) {
         renderProxySettings(res);
     });
 }
@@ -247,9 +245,7 @@ runtime.on('settingsUpdated', function(resp) {
     }
 });
 
-runtime.command({
-    action: 'getSettings'
-}, function(response) {
+RUNTIME('getSettings', null, function(response) {
     mappingsEditor = createMappingEditor('mappings');
     renderSettings(response.settings);
     if ('error' in response.settings) {
@@ -270,9 +266,7 @@ document.getElementById('resetSettings').onclick = function() {
     if (this.innerText === "Reset") {
         this.innerText = "WARNING! This will clear all your settings. Click this again to continue.";
     } else {
-        runtime.command({
-            action: "resetSettings"
-        }, function(response) {
+        RUNTIME("resetSettings", null, function(response) {
             renderSettings(response.settings);
             renderKeyMappings(response.settings);
             Front.showBanner('Settings reset', 300);
@@ -319,8 +313,7 @@ function saveSettings() {
     var settingsCode = mappingsEditor.getValue();
     var localPath = getURIPath(localPathInput.value.trim());
     if (localPath.length && localPath !== localPathSaved) {
-        runtime.command({
-            action: 'loadSettingsFromUrl',
+        RUNTIME('loadSettingsFromUrl', {
             url: localPath
         }, function(res) {
             Front.showBanner(res.status + ' to load settings from ' + localPath, 300);

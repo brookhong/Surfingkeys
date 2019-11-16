@@ -101,8 +101,7 @@ var Omnibar = (function() {
         code: function () {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
             if (fi && fi.uid) {
-                runtime.command({
-                    action: "removeURL",
+                RUNTIME("removeURL", {
                     uid: fi.uid
                 }, function(ret) {
                     if (ret.response === "Done") {
@@ -199,8 +198,7 @@ var Omnibar = (function() {
                 return u;
             });
             if (uids.length) {
-                runtime.command({
-                    action: "removeURL",
+                RUNTIME("removeURL", {
                     uid: uids
                 }, function(ret) {
                     if (ret.response === "Done") {
@@ -568,14 +566,12 @@ var Omnibar = (function() {
         }
         if (type === 'T') {
             uid = uid.split(":");
-            runtime.command({
-                action: 'focusTab',
+            RUNTIME('focusTab', {
                 window_id: parseInt(uid[0]),
                 tab_id: parseInt(uid[1])
             });
         } else if (url && url.length) {
-            runtime.command({
-                action: "openLink",
+            RUNTIME("openLink", {
                 tab: {
                     tabbed: this.tabbed,
                     active: this.activeTab
@@ -629,9 +625,7 @@ var Omnibar = (function() {
     };
 
     self.listBookmarkFolders = function(cb) {
-        runtime.command({
-            action: 'getBookmarkFolders'
-        }, function(response) {
+        RUNTIME('getBookmarkFolders', null, function(response) {
             bookmarkFolders = {};
             response.folders.forEach(function(f) {
                 bookmarkFolders[f.id] = f;
@@ -657,15 +651,12 @@ var OpenBookmarks = (function() {
         var fl = self.inFolder.pop();
         if (fl.folderId) {
             currentFolderId = fl.folderId;
-            runtime.command({
-                action: 'getBookmarks',
+            RUNTIME('getBookmarks', {
                 parentId: currentFolderId
             }, self.onResponse);
         } else {
             currentFolderId = undefined;
-            runtime.command({
-                action: 'getBookmarks'
-            }, self.onResponse);
+            RUNTIME('getBookmarks', null, self.onResponse);
         }
         self.prompt = fl.prompt;
         setInnerHTML(Omnibar.promptSpan, self.prompt);
@@ -688,8 +679,7 @@ var OpenBookmarks = (function() {
             Omnibar.input.value = "";
             currentFolderId = folderId;
             lastFocused = 0;
-            runtime.command({
-                action: 'getBookmarks',
+            RUNTIME('getBookmarks', {
                 parentId: currentFolderId
             }, OpenBookmarks.onResponse);
         } else {
@@ -713,9 +703,7 @@ var OpenBookmarks = (function() {
                 self.inFolder = JSON.parse(lastBookmarkFolder);
                 onFolderUp();
             } else {
-                runtime.command({
-                    action: 'getBookmarks',
-                }, self.onResponse);
+                RUNTIME('getBookmarks', null, self.onResponse);
             }
             if (Omnibar.input.value !== "") {
                 self.onInput();
@@ -735,8 +723,7 @@ var OpenBookmarks = (function() {
             folderOnly = !folderOnly;
             self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
             setInnerHTML(Omnibar.promptSpan, self.prompt);
-            runtime.command({
-                action: 'getBookmarks',
+            RUNTIME('getBookmarks', {
                 parentId: currentFolderId,
                 query: Omnibar.input.value
             }, self.onResponse);
@@ -755,8 +742,7 @@ var OpenBookmarks = (function() {
         return eaten;
     };
     self.onInput = function() {
-        runtime.command({
-            action: 'getBookmarks',
+        RUNTIME('getBookmarks', {
             parentId: currentFolderId,
             query: Omnibar.input.value
         }, self.onResponse);
@@ -793,9 +779,7 @@ var AddBookmark = (function() {
             Omnibar.listResults(folders.slice(), function(f) {
                 return createElement(`<li folder="${f.id}">▷ ${f.title}</li>`);
             });
-            runtime.command({
-                action: "getBookmark"
-            }, function(resp) {
+            RUNTIME("getBookmark", null, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
                     setInnerHTML(Omnibar.promptSpan, `edit bookmark${separatorHtml}`);
@@ -862,8 +846,7 @@ var AddBookmark = (function() {
                 folderName = `${folders[0].title}${path.join("/")}`;
             }
         }
-        runtime.command({
-            action: 'createBookmark',
+        RUNTIME('createBookmark', {
             page: self.page
         }, function(response) {
             Front.showBanner("Bookmark created at {0}.".format(folderName), 3000);
@@ -902,8 +885,7 @@ var OpenHistory = (function() {
 
     self.getResults = function() {
         Omnibar.cachedPromise = new Promise(function(resolve, reject) {
-            runtime.command({
-                action: 'getHistory',
+            RUNTIME('getHistory', {
                 sortByMostUsed: runtime.conf.historyMUOrder
             }, function(response) {
                 resolve(response.history);
@@ -947,19 +929,14 @@ var OpenURLs = (function() {
     self.getResults = function() {
         if (self.action === "getAllSites") {
             Omnibar.cachedPromise = new Promise(function(resolve, reject) {
-                runtime.command({
-                    action: 'getTabs',
+                RUNTIME('getTabs', {
                     queryInfo: runtime.conf.omnibarTabsQuery
                 }, function(response) {
                     var cached = response.tabs;
-                    runtime.command({
-                        action: "getTopSites"
-                    }, function(response) {
+                    RUNTIME("getTopSites", null, function(response) {
                         cached = cached.concat(response.urls);
                         Omnibar.listBookmarkFolders(function() {
-                            runtime.command({
-                                action: 'getAllURLs'
-                            }, function(response) {
+                            RUNTIME('getAllURLs', null, function(response) {
                                 cached = cached.concat(response.urls);
                                 resolve(cached);
                             });
@@ -969,9 +946,7 @@ var OpenURLs = (function() {
             });
         } else {
             Omnibar.cachedPromise = new Promise(function(resolve, reject) {
-                runtime.command({
-                    action: self.action
-                }, function(response) {
+                RUNTIME(self.action, null, function(response) {
                     resolve(response.urls);
                 });
             });
@@ -1014,8 +989,7 @@ var OpenTabs = (function() {
 
     self.getResults = function () {
         Omnibar.cachedPromise = new Promise(function(resolve, reject) {
-            runtime.command({
-                action: 'getTabs',
+            RUNTIME('getTabs', {
                 query: ''
             }, function(response) {
                 resolve(response.tabs);
@@ -1045,8 +1019,7 @@ var OpenVIMarks = (function() {
     self.onOpen = function() {
         var query = Omnibar.input.value;
         var urls = [];
-        runtime.command({
-            action: 'getSettings',
+        RUNTIME('getSettings', {
             key: 'marks'
         }, function(response) {
             for (var m in response.settings.marks) {
@@ -1125,8 +1098,7 @@ var SearchEngine = (function() {
         } else {
             url = constructSearchURL(self.url, encodeURIComponent(Omnibar.input.value));
         }
-        runtime.command({
-            action: "openLink",
+        RUNTIME("openLink", {
             tab: {
                 tabbed: this.tabbed,
                 active: this.activeTab
@@ -1164,8 +1136,7 @@ var SearchEngine = (function() {
         // This helps prevent rate-limits when typing a long query.
         // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
         _pendingRequest = setTimeout(function() {
-            runtime.command({
-                action: 'request',
+            RUNTIME('request', {
                 method: 'get',
                 url: formatURL(self.suggestionURL, encodeURIComponent(Omnibar.input.value))
             }, function (resp) {
@@ -1205,8 +1176,7 @@ var Commands = (function() {
      */
     self.onOpen = function() {
         historyInc = -1;
-        runtime.command({
-            action: 'getSettings',
+        RUNTIME('getSettings', {
             key: 'cmdHistory'
         }, function(response) {
             var candidates = response.settings.cmdHistory;

@@ -79,9 +79,7 @@ var AceEditor = (function() {
     });
 
     var allVisitedURLs;
-    runtime.command({
-        action: 'getAllURLs'
-    }, function(response) {
+    RUNTIME('getAllURLs', null, function(response) {
         allVisitedURLs = response.urls.map(function(u) {
             var typedCount = 0, visitCount = 1;
             if (u.hasOwnProperty('typedCount')) {

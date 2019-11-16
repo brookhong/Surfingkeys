@@ -456,8 +456,7 @@ function createNormal() {
 
     self.toggleBlacklist = function() {
         if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
-            runtime.command({
-                action: 'toggleBlacklist',
+            RUNTIME('toggleBlacklist', {
                 blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
             }, function(resp) {
                 if (resp.disabled) {
@@ -812,10 +811,8 @@ function createNormal() {
     };
 
     self.jumpVIMark = function(mark) {
-        runtime.command({
-            action: 'jumpVIMark',
+        RUNTIME('jumpVIMark', {
             mark: mark
-        }, function(response) {
         });
     };
 
@@ -844,9 +841,7 @@ function createNormal() {
     };
 
     self.captureElement = function(elm) {
-        runtime.command({
-            action: 'getCaptureSize'
-        }, function(response) {
+        RUNTIME('getCaptureSize', null, function(response) {
             var scale = response.width / window.innerWidth;
 
             elm.scrollTop = 0;
@@ -918,9 +913,7 @@ function createNormal() {
                             dx = elm.scrollLeft * scale;
                         }
                         setTimeout(function() {
-                            runtime.command({
-                                action: 'captureVisibleTab'
-                            }, function(response) {
+                            RUNTIME('captureVisibleTab', null, function(response) {
                                 img.src = response.dataUrl;
                             });
                         }, 100);
@@ -935,9 +928,7 @@ function createNormal() {
                         dy = elm.scrollTop * scale;
                     }
                     setTimeout(function() {
-                        runtime.command({
-                            action: 'captureVisibleTab'
-                        }, function(response) {
+                        RUNTIME('captureVisibleTab', null, function(response) {
                             img.src = response.dataUrl;
                         });
                     }, 100);
@@ -946,9 +937,7 @@ function createNormal() {
 
             // wait 500 millisecond for keystrokes of Surfingkeys to hide
             setTimeout(function() {
-                runtime.command({
-                    action: 'captureVisibleTab'
-                }, function(response) {
+                RUNTIME('captureVisibleTab', null, function(response) {
                     img.src = response.dataUrl;
                 });
             }, 500);

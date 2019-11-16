@@ -43,8 +43,7 @@ mapkey('cp', '#13Toggle proxy for current site', function() {
     }
 });
 mapkey(';cp', '#13Copy proxy info', function() {
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: ['proxyMode', 'proxy', 'autoproxy_hosts']
     }, function(response) {
         Clipboard.write(JSON.stringify(response.settings, null, 4));
@@ -53,8 +52,7 @@ mapkey(';cp', '#13Copy proxy info', function() {
 mapkey(';ap', '#13Apply proxy info from clipboard', function() {
     Clipboard.read(function(response) {
         var proxyConf = JSON.parse(response.data);
-        runtime.command({
-            action: 'updateProxy',
+        RUNTIME('updateProxy', {
             operation: 'set',
             host: proxyConf.autoproxy_hosts,
             proxy: proxyConf.proxy,
@@ -77,9 +75,7 @@ vmapkey('gr', '#9Read selected text', function() {
     readText(window.getSelection().toString(), {verbose: true});
 });
 mapkey('sfr', '#13show failed web requests of current page', function() {
-    runtime.command({
-        action: 'getTabErrors'
-    }, function(response) {
+    RUNTIME('getTabErrors', null, function(response) {
         if (response.tabError && response.tabError.length) {
             var errors = response.tabError.map(function(e) {
                 var url = new URL(e.url);
@@ -219,7 +215,7 @@ mapkey('O', '#1Open detected links from text', function() {
 });
 
 mapkey(';q', 'Toggle mouseSelectToQuery', function() {
-    runtime.command({ action: 'toggleMouseQuery', origin: window.location.origin });
+    RUNTIME('toggleMouseQuery', { origin: window.location.origin });
 });
 
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
@@ -300,8 +296,7 @@ mapkey('go', '#8Open a URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false});
 });
 mapkey('oi', '#8Open incognito window', function() {
-    runtime.command({
-        action: 'openIncognito',
+    RUNTIME('openIncognito', {
         url: window.location.href
     });
 });
@@ -406,8 +401,7 @@ mapkey('ys', "#7Copy current page's source", function() {
     Clipboard.write(aa.outerHTML);
 });
 mapkey('yj', "#7Copy current settings", function() {
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: "RAW"
     }, function(response) {
         Clipboard.write(JSON.stringify(response.settings, null, 4));
@@ -421,8 +415,7 @@ mapkey(';pj', "#7Restore settings data from clipboard", function() {
     });
 });
 mapkey('yd', "#7Copy current downloading URL", function() {
-    runtime.command({
-        action: 'getDownloads',
+    RUNTIME('getDownloads', {
         query: {state: "in_progress"}
     }, function(response) {
         var items = response.downloads.map(function(o) {
@@ -448,8 +441,7 @@ mapkey('yl', "#7Copy current page's title", function() {
     Clipboard.write(document.title);
 });
 mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: 'OmniQueryHistory'
     }, function(response) {
         Clipboard.write(response.settings.OmniQueryHistory.join("\n"));
@@ -504,9 +496,7 @@ mapkey(';pf', '#7Fill form with data from yf', function() {
 mapkey('yg', '#7Capture current page', function() {
     Front.toggleStatus(false);
     setTimeout(function() {
-        runtime.command({
-            action: 'captureVisibleTab'
-        }, function(response) {
+        RUNTIME('captureVisibleTab', null, function(response) {
             Front.toggleStatus(true);
             Front.showPopup("<img src='{0}' />".format(response.dataUrl));
         });

@@ -173,8 +173,7 @@ var Gist = (function() {
 var ChromeService = (function() {
     var self = {};
 
-    var activePorts = {},
-        tabHistory = [],
+    var tabHistory = [],
         tabHistoryIndex = 0,
         chromelikeNewTabPosition = 0,
         historyTabAction = false;
@@ -230,26 +229,6 @@ var ChromeService = (function() {
             });
         }
     }
-
-    function handleMessage(_message, _sender, _sendResponse, _port) {
-        if (_message && _message.target !== 'content_runtime') {
-            if (self.hasOwnProperty(_message.action)) {
-                if (_message.repeats > conf.repeatThreshold) {
-                    _message.repeats = conf.repeatThreshold;
-                }
-                // runtime.command from popup.js has _sender.tab undefined.
-                try {
-                    self[_message.action](_message, _sender, _sendResponse);
-                } catch (e) {
-                    console.log(_message.action + ": " + e);
-                }
-            } else {
-                var type = _port ? "[unexpected port message] " : "[unexpected runtime message] ";
-                console.log(type + JSON.stringify(_message));
-            }
-        }
-    }
-
 
     function loadSettings(keys, cb) {
         var tmpSet = {
@@ -311,47 +290,7 @@ var ChromeService = (function() {
         urls: ["<all_urls>"]
     });
 
-    function getPortId(port) {
-        return port.sender.tab ? (port.sender.tab.id + "." + port.sender.frameId) : port.sender.url;
-    }
-
-    function detachPort(port) {
-        port.onMessage.removeListener(port.onMessageHandler);
-        port.onDisconnect.removeListener(port.onDisconnectHandler);
-    }
-
-    chrome.runtime.onConnect.addListener(function (port) {
-        activePorts[getPortId(port)] = port;
-        port.onMessageHandler = function (message, port) {
-            // using port.sender here is must, as call to these service APIs may be made from
-            // any inactive tab, such as API getDisabled.
-            return handleMessage(message, port.sender, function (resp) {
-                try {
-                    port.postMessage(resp);
-                } catch (e) {
-                    console.log(message.action + ": " + e);
-                    detachPort(port);
-                    delete activePorts[getPortId(port)];
-                }
-            }, port);
-        };
-        port.onMessage.addListener(port.onMessageHandler);
-        port.onDisconnectHandler = function () {
-            detachPort(port);
-            delete activePorts[getPortId(port)];
-        };
-        port.onDisconnect.addListener(port.onDisconnectHandler);
-    });
-
     function removeTab(tabId) {
-        Object.keys(activePorts).filter(function (p) {
-            return p.startsWith(tabId + ".");
-        }).forEach(function (p) {
-            var port = activePorts[p];
-            detachPort(port);
-            port.disconnect();
-            delete activePorts[p];
-        });
         delete tabActivated[tabId];
         delete tabMessages[tabId];
         delete tabURLs[tabId];
@@ -429,7 +368,12 @@ var ChromeService = (function() {
     chrome.commands.onCommand.addListener(function(command) {
         switch (command) {
             case 'restartext':
-                chrome.runtime.reload();
+                chrome.tabs.query({}, function(tabs) {
+                    tabs.forEach(function(tab) {
+                        chrome.tabs.reload(tab.id);
+                    });
+                    chrome.runtime.reload();
+                });
                 break;
             case 'previousTab':
             case 'nextTab':
@@ -463,33 +407,29 @@ var ChromeService = (function() {
                 break;
         }
     });
-    chrome.runtime.onMessage.addListener(handleMessage);
-    function _response(message, sendResponse, result) {
-        result.action = message.action;
-        result.id = message.id;
-        sendResponse(result);
-    }
+
+    chrome.runtime.onMessage.addListener(function (_message, _sender, _sendResponse) {
+        if (self.hasOwnProperty(_message.action)) {
+            if (_message.repeats > conf.repeatThreshold) {
+                _message.repeats = conf.repeatThreshold;
+            }
+            // runtime.command from popup.js has _sender.tab undefined.
+            try {
+                self[_message.action](_message, _sender, _sendResponse);
+                return _message.needResponse;
+            } catch (e) {
+                console.log(_message.action + ": " + e);
+            }
+        } else {
+            console.log("[unexpected runtime message] " + JSON.stringify(_message));
+        }
+    });
+
     self.getTabErrors = function(message, sender, sendResponse) {
-        _response(message, sendResponse, {
+        sendResponse({
             tabError: tabErrors[sender.tab.id]
         });
     };
-    self.clearTabErrors = function(message, sender, sendResponse) {
-        tabErrors[sender.tab.id] = [];
-    };
-    self.isTabActive = function(message, sender, sendResponse) {
-        chrome.tabs.query({
-            active: true
-        }, function(resp) {
-            var activeTabs = resp.map(function(t) {
-                return t.id;
-            });
-            _response(message, sendResponse, {
-                active: (activeTabs.indexOf(sender.tab.id) !== -1)
-            });
-        });
-    };
-
 
     function _updateSettings(diffSettings, afterSet) {
         diffSettings.savedAt = new Date().getTime();
@@ -505,13 +445,19 @@ var ChromeService = (function() {
         });
     }
 
-    function _updateAndPostSettings(diffSettings, afterSet) {
-        Object.values(activePorts).forEach(function(port) {
-            port.postMessage({
-                action: 'settingsUpdated',
-                settings: diffSettings
+    function _broadcastSettings(data) {
+        chrome.tabs.query({}, function(tabs) {
+            tabs.forEach(function(tab) {
+                chrome.tabs.sendMessage(tab.id, {
+                    subject: 'settingsUpdated',
+                    settings: data
+                });
             });
         });
+    }
+
+    function _updateAndPostSettings(diffSettings, afterSet) {
+        _broadcastSettings(diffSettings);
         _updateSettings(diffSettings, afterSet);
     }
 
@@ -521,7 +467,6 @@ var ChromeService = (function() {
                 tabs.forEach(function(tab) {
                     chrome.tabs.sendMessage(tab.id, {
                         subject: "tabIndexChange",
-                        target: 'content_runtime',
                         index: tab.index + 1
                     });
                 });
@@ -556,7 +501,7 @@ var ChromeService = (function() {
                 data.blacklist[origin] = 1;
             }
             _updateAndPostSettings({blacklist: data.blacklist}, function() {
-                _response(message, sendResponse, {
+                sendResponse({
                     disabled: _getDisabled(data, sender.tab ? new URL(sender.tab.url) : null, message.blacklistPattern),
                     blacklist: data.blacklist,
                     url: origin
@@ -581,7 +526,7 @@ var ChromeService = (function() {
     self.getDisabled = function(message, sender, sendResponse) {
         loadSettings(['blacklist', 'noPdfViewer'], function(data) {
             if (sender.tab) {
-                _response(message, sendResponse, {
+                sendResponse({
                     noPdfViewer: data.noPdfViewer,
                     disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
                 });
@@ -645,21 +590,15 @@ var ChromeService = (function() {
         chrome.storage.sync.clear();
         loadSettings(null, function(data) {
             _applyProxySettings(data);
-            _response(message, sendResponse, {
+            sendResponse({
                 settings: data
             });
-
-            Object.values(activePorts).forEach(function(port) {
-                port.postMessage({
-                    action: 'settingsUpdated',
-                    settings: data
-                });
-            });
+            _broadcastSettings(data);
         });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
         _loadSettingsFromUrl(message.url, function(status) {
-            _response(message, sendResponse, status);
+            sendResponse(status);
         });
     };
     function _filterByTitleOrUrl(tabs, query) {
@@ -682,7 +621,7 @@ var ChromeService = (function() {
                 }
             }
             tabs = _filterByTitleOrUrl(tabs, message.query);
-            _response(message, sendResponse, {
+            sendResponse({
                 urls: tabs
             });
         });
@@ -690,7 +629,7 @@ var ChromeService = (function() {
     self.getTopSites = function(message, sender, sendResponse) {
         chrome.topSites.get(function(urls) {
             urls = _filterByTitleOrUrl(urls, message.query);
-            _response(message, sendResponse, {
+            sendResponse({
                 urls: urls
             });
         });
@@ -714,7 +653,7 @@ var ChromeService = (function() {
             var urls = tree;
             _getHistory(function(tree) {
                 urls = urls.concat(tree);
-                _response(message, sendResponse, {
+                sendResponse({
                     urls: urls
                 });
             }, true);
@@ -754,7 +693,7 @@ var ChromeService = (function() {
                     return b - a;
                 });
             }
-            _response(message, sendResponse, {
+            sendResponse({
                 tabs: tabs
             });
         });
@@ -953,7 +892,7 @@ var ChromeService = (function() {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
             getFolders(tree[0], "");
-            _response(message, sendResponse, {
+            sendResponse({
                 folders: bookmarkFolders
             });
         });
@@ -961,7 +900,7 @@ var ChromeService = (function() {
     self.createBookmark = function(message, sender, sendResponse) {
         removeBookmark(message.page.url, function() {
             createBookmark(message.page, function(ret) {
-                _response(message, sendResponse, {
+                sendResponse({
                     bookmark: ret
                 });
             });
@@ -976,20 +915,20 @@ var ChromeService = (function() {
                         return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                     });
                 }
-                _response(message, sendResponse, {
+                sendResponse({
                     bookmarks: bookmarks
                 });
             });
         } else {
             if (message.query && message.query.length) {
                 chrome.bookmarks.search(message.query, function(tree) {
-                    _response(message, sendResponse, {
+                    sendResponse({
                         bookmarks: tree
                     });
                 });
             } else {
                 chrome.bookmarks.getTree(function(tree) {
-                    _response(message, sendResponse, {
+                    sendResponse({
                         bookmarks: tree[0].children
                     });
                 });
@@ -998,7 +937,7 @@ var ChromeService = (function() {
     };
     self.getHistory = function(message, sender, sendResponse) {
         _getHistory(function(tree) {
-            _response(message, sendResponse, {
+            sendResponse({
                 history: tree
             });
         }, message.sortByMostUsed);
@@ -1094,7 +1033,7 @@ var ChromeService = (function() {
             message.key = "";
         }
         pf(message.key, function(data) {
-            _response(message, sendResponse, {
+            sendResponse({
                 settings: data
             });
         });
@@ -1120,7 +1059,7 @@ var ChromeService = (function() {
     };
     self.request = function(message, sender, sendResponse) {
         request(message.url, function(res) {
-            _response(message, sendResponse, {
+            sendResponse({
                 text: res
             });
         }, message.headers, message.data);
@@ -1148,7 +1087,6 @@ var ChromeService = (function() {
 
                 chrome.tabs.sendMessage(tid, {
                     subject: "focusFrame",
-                    target: 'content_runtime',
                     frameId: fid
                 });
             }
@@ -1256,7 +1194,7 @@ var ChromeService = (function() {
     };
     self.getDownloads = function(message, sender, sendResponse) {
         chrome.downloads.search(message.query, function(items) {
-            _response(message, sendResponse, {
+            sendResponse({
                 downloads: items
             });
         });
@@ -1268,7 +1206,7 @@ var ChromeService = (function() {
             matchAboutBlank: true,
             file: message.file
         }, function(result) {
-            _response(message, sendResponse, {
+            sendResponse({
                 response: result
             });
         });
@@ -1280,7 +1218,7 @@ var ChromeService = (function() {
                 tabURLs[tabId] = {};
             }
             tabURLs[tabId][message.url] = message.title;
-            _response(message, sendResponse, {
+            sendResponse({
                 index: conf.showTabIndices ? sender.tab.index + 1 : 0
             });
         }
@@ -1293,12 +1231,12 @@ var ChromeService = (function() {
                 title: tabURL[u]
             };
         });
-        _response(message, sendResponse, {
+        sendResponse({
             urls: tabURL
         });
     };
     self.getTopURL = function(message, sender, sendResponse) {
-        _response(message, sendResponse, {
+        sendResponse({
             url: sender.tab ? sender.tab.url : ""
         });
     };
@@ -1360,7 +1298,7 @@ var ChromeService = (function() {
     }
     self.updateProxy = function(message, sender, sendResponse) {
         updateProxy(message, function(diffSet) {
-            _response(message, sendResponse, diffSet);
+            sendResponse(diffSet);
         });
     };
     self.setZoom = function(message, sender, sendResponse) {
@@ -1407,7 +1345,7 @@ var ChromeService = (function() {
         function _done() {
             removed ++;
             if (removed === totalToRemoved) {
-                _response(message, sendResponse, {
+                sendResponse({
                     response: "Done"
                 });
             }
@@ -1423,16 +1361,11 @@ var ChromeService = (function() {
             });
             // broadcast the change also, such as lastKeys
             // we would set lastKeys in sync to avoid breaching chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE
-            Object.values(activePorts).forEach(function(port) {
-                port.postMessage({
-                    action: 'settingsUpdated',
-                    settings: message.data
-                });
-            });
+            _broadcastSettings(message.data);
         } else {
             // string or array of string keys
             chrome.storage.local.get(message.data, function(data) {
-                _response(message, sendResponse, {
+                sendResponse({
                     data: data
                 });
             });
@@ -1440,7 +1373,7 @@ var ChromeService = (function() {
     };
     self.captureVisibleTab = function(message, sender, sendResponse) {
         chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
-            _response(message, sendResponse, {
+            sendResponse({
                 dataUrl: dataUrl
             });
         });
@@ -1448,7 +1381,7 @@ var ChromeService = (function() {
     self.getCaptureSize = function(message, sender, sendResponse) {
         var img = document.createElement( "img" );
         img.onload = function() {
-            _response(message, sendResponse, {
+            sendResponse({
                 width: img.width,
                 height: img.height
             });
@@ -1482,7 +1415,7 @@ var ChromeService = (function() {
         chrome.bookmarks.search({
             url: sender.tab.url
         }, function(bookmarks) {
-            _response(message, sendResponse, {
+            sendResponse({
                 bookmarks: bookmarks
             });
         });
@@ -1490,19 +1423,19 @@ var ChromeService = (function() {
 
     self.initGist = function(message, sender, sendResponse) {
         Gist.initGist(message.token, function(gist) {
-            _response(message, sendResponse, {
+            sendResponse({
                 gist: gist
             });
         });
     };
     self.readComment = function(message, sender, sendResponse) {
         Gist.readComment(message.index, function(resp) {
-            _response(message, sendResponse, resp);
+            sendResponse(resp);
         });
     };
     self.editComment = function(message, sender, sendResponse) {
         Gist.editComment(message.index, message.content, function(resp) {
-            _response(message, sendResponse, {gistResp: resp});
+            sendResponse({gistResp: resp});
         });
     };
 
@@ -1511,14 +1444,14 @@ var ChromeService = (function() {
         _queueURLs = _queueURLs.concat(message.urls);
     };
     self.getQueueURLs = function(message, sender, sendResponse) {
-        _response(message, sendResponse, {
+        sendResponse({
             queueURLs: _queueURLs
         });
     };
 
     self.getVoices = function(message, sender, sendResponse) {
         chrome.tts.getVoices(function(voices) {
-            _response(message, sendResponse, {
+            sendResponse({
                 voices: voices
             });
         });
@@ -1527,7 +1460,7 @@ var ChromeService = (function() {
     self.read = function(message, sender, sendResponse) {
         var options = message.options || {};
         options.onEvent = function(ttsEvent) {
-            _response(message, sendResponse, {
+            sendResponse({
                 ttsEvent: ttsEvent
             });
         };

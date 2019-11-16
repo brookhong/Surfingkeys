@@ -401,8 +401,7 @@ function createFront() {
     };
 
     _actions["executeScript"] = function(message) {
-        runtime.command({
-            action: 'executeScript',
+        RUNTIME('executeScript', {
             code: message.cmdline
         }, function (response) {
             frontendCommand({
@@ -467,7 +466,7 @@ function createFront() {
         _active = true;
     };
 
-    runtime.runtime_handlers['focusFrame'] = function(msg, sender, response) {
+    runtime.on('focusFrame', function(msg, sender, response) {
         if (msg.frameId === window.frameId) {
             window.focus();
             document.body.scrollIntoView({
@@ -485,7 +484,7 @@ function createFront() {
                 }
             });
         }
-    };
+    });
 
     window.addEventListener('message', function (event) {
         var _message = event.data;

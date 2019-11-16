@@ -295,9 +295,8 @@ function getFormData(form, format) {
 }
 
 function httpRequest(args, onSuccess) {
-    args.action = "request";
     args.method = "get";
-    runtime.command(args, onSuccess);
+    RUNTIME("request", args, onSuccess);
 }
 
 /*
@@ -343,8 +342,7 @@ function applySettings(rs) {
             }
             if (Object.keys(delta.settings).length > 0 && window === top) {
                 // left settings are for background, need not broadcast the update, neither persist into storage
-                runtime.command({
-                    action: 'updateSettings',
+                RUNTIME('updateSettings', {
                     scope: "snippets",
                     settings: delta.settings
                 });
@@ -361,7 +359,6 @@ function applySettings(rs) {
 }
 
 function _initModules() {
-    runtime.init();
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
     window.Normal = createNormal();
@@ -374,15 +371,12 @@ function _initModules() {
     window.Clipboard = createClipboard();
     window.Front = createFront();
     createDefaultMappings();
-    runtime.command({
-        action: 'getSettings'
-    }, function(response) {
+    RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
 
         applySettings(rs);
 
-        runtime.command({
-            action: 'getDisabled',
+        RUNTIME('getDisabled', {
             blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
         }, function (resp) {
             if (resp.disabled) {
@@ -392,8 +386,7 @@ function _initModules() {
             }
 
             if (window === top) {
-                runtime.command({
-                    action: 'setSurfingkeysIcon',
+                RUNTIME('setSurfingkeysIcon', {
                     status: resp.disabled
                 });
 
@@ -477,8 +470,7 @@ function _onSettingsUpdated(response) {
     if (rs.hasOwnProperty('blacklist') || runtime.conf.blacklistPattern) {
 
         // only toggle Disabled mode when blacklist is updated
-        runtime.command({
-            action: 'getDisabled',
+        RUNTIME('getDisabled', {
             blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
         }, function(resp) {
             if (resp.disabled) {
@@ -488,8 +480,7 @@ function _onSettingsUpdated(response) {
             }
 
             if (window === top) {
-                runtime.command({
-                    action: 'setSurfingkeysIcon',
+                RUNTIME('setSurfingkeysIcon', {
                     status: resp.disabled
                 });
             }
@@ -540,8 +531,7 @@ if (window === top) {
             document.scrollingElement.scrollTop = y;
         };
 
-        runtime.command({
-            action: 'tabURLAccessed',
+        RUNTIME('tabURLAccessed', {
             title: document.title,
             url: window.location.href
         }, function (resp) {
@@ -566,12 +556,12 @@ if (window === top) {
 
                 showTabIndexInTitle();
 
-                runtime.runtime_handlers['tabIndexChange'] = function(msg, sender, response) {
+                runtime.on('tabIndexChange', function(msg, sender, response) {
                     if (msg.index !== myTabIndex) {
                         myTabIndex = msg.index;
                         showTabIndexInTitle();
                     }
-                };
+                });
             }
         });
 
