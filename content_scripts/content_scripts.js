@@ -377,6 +377,16 @@ function _initModules() {
 }
 
 function _initObserver() {
+    function isElementPositionRelative(elm) {
+        while (elm !== document.body) {
+            if (getComputedStyle(elm).position === "relative") {
+                return true;
+            }
+            elm = elm.parentElement;
+        }
+        return false;
+    }
+
     var pendingUpdater = undefined;
     new MutationObserver(function (mutations) {
         var addedNodes = [];
@@ -401,14 +411,9 @@ function _initObserver() {
                         && br.width <= window.innerWidth && br.height <= window.innerHeight
                         && br.top >= 0 && br.left >= 0
                         && hasScroll(e, 'y', 16)
+                        && isElementPositionRelative(e)
                     ) {
-                        var originalTop = document.scrollingElement.scrollTop;
-                        document.scrollingElement.scrollTop += 1;
-                        var br1 = e.getBoundingClientRect();
-                        if (br.top === br1.top) {
-                            v.push(e);
-                        }
-                        document.scrollingElement.scrollTop = originalTop;
+                        v.push(e);
                     }
                 });
 

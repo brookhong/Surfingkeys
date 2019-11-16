@@ -479,6 +479,7 @@ function hasScroll(el, direction, barSize) {
         el[offset[0]] = el.getBoundingClientRect()[offset[1]];
         result = el[offset[0]];
         if (result !== originOffset) {
+            // this is valid for some site such as http://mail.live.com/
             Mode.suppressNextScrollEvent();
         }
         el[offset[0]] = originOffset;
