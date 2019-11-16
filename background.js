@@ -318,12 +318,28 @@ var ChromeService = (function() {
             delete tabMessages[tabId];
         }
     }
+    var _lastActiveTabId = null;
+    function _tabActivated(tabId) {
+        if (_lastActiveTabId !== null) {
+            chrome.tabs.sendMessage(_lastActiveTabId, {
+                subject: 'tabDeactivated'
+            });
+        }
+        chrome.tabs.sendMessage(tabId, {
+            subject: 'tabActivated'
+        });
+        _lastActiveTabId = tabId;
+    }
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
             if (changeInfo.url !== undefined && changeInfo.url !== chrome.extension.getURL("pages/error.html")) {
                 delete tabErrors[tabId];
             }
             delete frameIndexes[tabId];
+        } else if (changeInfo.status === "complete") {
+            if (tab.active) {
+                _tabActivated(tabId);
+            }
         }
         _setScrollPos_bg(tabId);
     });
@@ -347,6 +363,7 @@ var ChromeService = (function() {
             tabHistoryIndex = tabHistory.length - 1;
         }
         tabActivated[activeInfo.tabId] = new Date().getTime();
+        _tabActivated(activeInfo.tabId);
         historyTabAction = false;
         chromelikeNewTabPosition = 0;
 

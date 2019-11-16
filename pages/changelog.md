@@ -1,4 +1,34 @@
 # Changelog of Surfingkeys
+
+## 0.9.54
+* create ui frame only for active tab to reduce memory usage
+* remove long-live ports for message passing
+* apply user settings as soon as possible
+* Fixed #1074 Can't search in help
+* add isElementPositionRelative to detect modal elements
+* Fix issues on a page with frameset as its body
+* Fixed #1071 unexpected removal of scrollNode
+* Fixed #1072 disruptive issue of initScrollIndex
+* add label for flash frame
+* Fixed #1068 issue of autocmd
+* Fixed #1069 mitigate issue of unexpected scroll event
+* create components for frame when user clicks on it
+
+## 0.9.53
+* Performance improvement: create components for frames only when it is necessary.
+
+## 0.9.52
+* Fix issue of detecting modal element.
+* Remove settings.passThroughTimeout, add PassThrough.setTimeout, so that we could have both passThrough mode and ephemeral passThrough mode simultaneously.
+
+## 0.9.51
+* suppress next scroll event on following cases:
+    - call to check hasScroll
+    - when scroll to detect modal element, firing scroll event is not expected
+
+## 0.9.50
+* Fixed #1055 issue of detecting modal elements
+
 ## 0.9.49
 * Skip some frames invisible to users.
 * Fixed issues of paste data from copied form.

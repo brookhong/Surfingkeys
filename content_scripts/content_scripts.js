@@ -332,7 +332,7 @@ function applySettings(rs) {
             }
         }
         if (!isEmptyObject(delta.settings)) {
-            Front.applyUserSettings(JSON.parse(JSON.stringify(delta.settings)));
+            Front.setUserSettings(JSON.parse(JSON.stringify(delta.settings)));
             // overrides local settings from snippets
             for (var k in delta.settings) {
                 if (runtime.conf.hasOwnProperty(k)) {
@@ -515,17 +515,19 @@ if (window === top) {
 
     document.addEventListener('DOMContentLoaded', function (e) {
         _initContent();
-        if (document.contentType === "application/pdf") {
-            // Appending child to document will break default pdf viewer from rendering.
-            // So we append child after default pdf viewer rendered.
-            document.body.querySelector("EMBED").addEventListener("load", function(evt) {
-                setTimeout(function() {
-                    document.documentElement.appendChild(createUiHost());
-                }, 10);
-            });
-        } else {
-            document.documentElement.appendChild(createUiHost());
-        }
+        runtime.on('tabActivated', function() {
+            if (!window.uiHost) {
+                window.uiHost = createUiHost();
+                document.documentElement.appendChild(window.uiHost);
+            }
+        });
+        runtime.on('tabDeactivated', function() {
+            if (window.uiHost) {
+                window.uiHost.detach();
+                window.uiHost.remove();
+                delete window.uiHost;
+            }
+        });
         window._setScrollPos = function (x, y) {
             document.scrollingElement.scrollLeft = x;
             document.scrollingElement.scrollTop = y;

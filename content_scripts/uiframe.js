@@ -10,6 +10,53 @@ function createUiHost() {
     uiHost.shadowRoot.appendChild(sk_style);
     uiHost.shadowRoot.appendChild(ifr);
 
+    function _onWindowMessage(event) {
+        var _message = event.data;
+        if (_message === undefined) {
+            return;
+        }
+        if (_message.commandToFrontend || _message.responseToFrontend) {
+            // forward message to frontend
+            ifr.contentWindow.postMessage(_message, frontEndURL);
+            if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
+                if (!activeContent || activeContent.window !== event.source) {
+                    // reset active Content
+
+                    if (activeContent) {
+                        activeContent.window.postMessage({
+                            action: 'deactivated',
+                            direct: true,
+                            reason: `${_message.action}@${event.timeStamp}`,
+                            commandToContent: true
+                        }, activeContent.origin);
+                    }
+
+                    activeContent = {
+                        window: event.source,
+                        origin: _message.origin
+                    };
+
+                    activeContent.window.postMessage({
+                        action: 'activated',
+                        direct: true,
+                        reason: `${_message.action}@${event.timeStamp}`,
+                        commandToContent: true
+                    }, activeContent.origin);
+                }
+            }
+            if (_message.action === "visualUpdatedForFirefox") {
+                document.activeElement.blur();
+            }
+        } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
+            _actions[_message.action](_message);
+        } else if (_message.commandToContent || _message.responseToContent) {
+            // forward message to content
+            if (activeContent && !_message.direct && activeContent.window !== top) {
+                activeContent.window.postMessage(_message, activeContent.origin);
+            }
+        }
+    }
+
     ifr.addEventListener("load", function() {
         this.contentWindow.postMessage({
             action: 'initFrontend',
@@ -17,63 +64,18 @@ function createUiHost() {
             origin: getDocumentOrigin()
         }, frontEndURL);
 
-        window.addEventListener('message', function(event) {
-            var _message = event.data;
-            if (_message === undefined) {
-                return;
-            }
-            if (_message.commandToFrontend || _message.responseToFrontend) {
-                // forward message to frontend
-                ifr.contentWindow.postMessage(_message, frontEndURL);
-                if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
-                    if (!activeContent || activeContent.window !== event.source) {
-                        // reset active Content
-
-                        if (activeContent) {
-                            activeContent.window.postMessage({
-                                action: 'deactivated',
-                                direct: true,
-                                reason: `${_message.action}@${event.timeStamp}`,
-                                commandToContent: true
-                            }, activeContent.origin);
-                        }
-
-                        activeContent = {
-                            window: event.source,
-                            origin: _message.origin
-                        };
-
-                        activeContent.window.postMessage({
-                            action: 'activated',
-                            direct: true,
-                            reason: `${_message.action}@${event.timeStamp}`,
-                            commandToContent: true
-                        }, activeContent.origin);
-                    }
-                }
-                if (_message.action === "visualUpdatedForFirefox") {
-                    document.activeElement.blur();
-                }
-            } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
-                _actions[_message.action](_message);
-            } else if (_message.commandToContent || _message.responseToContent) {
-                // forward message to content
-                if (activeContent && !_message.direct && activeContent.window !== top) {
-                    activeContent.window.postMessage(_message, activeContent.origin);
-                }
-            }
-        }, true);
+        window.addEventListener('message', _onWindowMessage, true);
 
     }, false);
 
     var lastStateOfPointerEvents = "none", _origOverflowY;
-    var _actions = {}, activeContent = null, _initialized = false;
+    var _actions = {}, activeContent = null;
     _actions['initFrontendAck'] = function(response) {
-        if (!_initialized) {
-            _initialized = true;
+        if (Front.resolve) {
             Front.resolve(window.location.href);
             Front.resolve = null;
         }
+        Front.applyUserSettings();
     };
     _actions['setFrontFrame'] = function(response) {
         ifr.style.height = response.frameHeight;
@@ -106,9 +108,14 @@ function createUiHost() {
         lastStateOfPointerEvents = response.pointerEvents;
     };
 
-    window.uiFrame = ifr;
-    window.addEventListener('beforeunload', function () {
+    function _onBeforeunload() {
         uiHost.remove();
-    });
+    }
+    window.addEventListener('beforeunload', _onBeforeunload);
+
+    uiHost.detach = function() {
+        window.removeEventListener('message', _onWindowMessage, true);
+        window.removeEventListener('beforeunload', _onBeforeunload);
+    };
     return uiHost;
 }
