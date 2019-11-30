@@ -363,7 +363,6 @@ function _initModules() {
     window.Mode = createMode();
     window.Normal = createNormal();
     Normal.enter();
-    window.Disabled = createDisabled();
     window.PassThrough = createPassThrough();
     window.Insert = createInsert();
     window.Visual = createVisual();
@@ -380,7 +379,7 @@ function _initModules() {
             blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
         }, function (resp) {
             if (resp.disabled) {
-                Disabled.enter(0, true);
+                Normal.disable();
             } else if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
                 usePdfViewer();
             }
@@ -403,66 +402,9 @@ function _initModules() {
         });
 
         document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
-        document.addEventListener("mouseup", event => {
-            if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
-                && !isElementClickable(event.target)
-                && !event.target.matches(".cm-matchhighlight")) {
-                // perform inline query after 1 ms
-                // to avoid calling on selection collapse
-                setTimeout(Front.querySelectedWord, 1);
-            }
-        });
     });
 }
 
-function _initObserver() {
-    function isElementPositionRelative(elm) {
-        while (elm !== document.body) {
-            if (getComputedStyle(elm).position === "relative") {
-                return true;
-            }
-            elm = elm.parentElement;
-        }
-        return false;
-    }
-
-    var pendingUpdater = undefined;
-    new MutationObserver(function (mutations) {
-        var addedNodes = [];
-        for (var m of mutations) {
-            for (var n of m.addedNodes) {
-                if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
-                    n.newlyCreated = true;
-                    addedNodes.push(n);
-                }
-            }
-        }
-
-        if (addedNodes.length) {
-            if (pendingUpdater) {
-                clearTimeout(pendingUpdater);
-                pendingUpdater = undefined;
-            }
-            pendingUpdater = setTimeout(function() {
-                var possibleModalElements = getVisibleElements(function(e, v) {
-                    var br = e.getBoundingClientRect();
-                    if (br.width > 300 && br.height > 300
-                        && br.width <= window.innerWidth && br.height <= window.innerHeight
-                        && br.top >= 0 && br.left >= 0
-                        && hasScroll(e, 'y', 16)
-                        && isElementPositionRelative(e)
-                    ) {
-                        v.push(e);
-                    }
-                });
-
-                if (possibleModalElements.length) {
-                    Normal.addScrollableElement(possibleModalElements[0]);
-                }
-            }, 200);
-        }
-    }).observe(document.body, { childList: true, subtree:true });;
-}
 
 function _onSettingsUpdated(response) {
     var rs = response.settings;
@@ -474,9 +416,9 @@ function _onSettingsUpdated(response) {
             blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
         }, function(resp) {
             if (resp.disabled) {
-                Disabled.enter(0, true);
+                Normal.disable();
             } else {
-                Disabled.exit();
+                Normal.enable();
             }
 
             if (window === top) {
@@ -489,7 +431,6 @@ function _onSettingsUpdated(response) {
 }
 
 function _initContent() {
-    _initObserver();
     window.frameId = generateQuickGuid();
     runtime.on('settingsUpdated', _onSettingsUpdated);
 

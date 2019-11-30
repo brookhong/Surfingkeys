@@ -3,12 +3,14 @@ function createMode() {
         this.name = name;
         this.statusLine = statusLine;
         this.eventListeners = {};
-        this.addEventListener = function(evt, handler) {
-            this.eventListeners[evt] = handler;
+        this.addEventListener = function(evtName, handler) {
+            this.eventListeners[evtName] = handler;
 
-            if (_listenedEvents.indexOf(evt) === -1) {
-                _listenedEvents.push(evt);
-                window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
+            if (!_listenedEvents.hasOwnProperty(evtName)) {
+                _listenedEvents[evtName] = function(event) {
+                    handleStack(evtName, event);
+                };
+                window.addEventListener(evtName, _listenedEvents[evtName], true);
             }
 
             return this;
@@ -121,16 +123,12 @@ function createMode() {
         }
     }
 
-    var _listenedEvents = ["keydown", "keyup"];
-    var suppressScrollEvent = 0;
-
-    function init() {
-        window.addEventListener("keydown", function (event) {
+    var _listenedEvents = {
+        "keydown": function (event) {
             event.sk_keyName = KeyboardUtils.getKeyChar(event);
             handleStack("keydown", event);
-        }, true);
-
-        window.addEventListener("keyup", function (event) {
+        },
+        "keyup": function (event) {
             handleStack("keyup", event, function (m) {
                 var i = keysNeedKeyupSuppressed.indexOf(event.keyCode);
                 if (i !== -1) {
@@ -138,18 +136,29 @@ function createMode() {
                     keysNeedKeyupSuppressed.splice(i, 1);
                 }
             });
-        }, true);
-
-        window.addEventListener("scroll", function (event) {
+        },
+        "scroll": function (event) {
             if (suppressScrollEvent > 0) {
                 event.stopImmediatePropagation();
                 event.preventDefault();
                 suppressScrollEvent--;
             }
-        }, true);
+        }
+    };
+    var suppressScrollEvent = 0;
+
+    function init() {
+        for (var evtName in _listenedEvents) {
+            window.addEventListener(evtName, _listenedEvents[evtName], true);
+        }
     }
     self.suppressNextScrollEvent = function() {
         suppressScrollEvent++;
+    };
+    self.destroy = function() {
+        for (var evtName in _listenedEvents) {
+            window.removeEventListener(evtName, _listenedEvents[evtName], true);
+        }
     };
 
     // For blank page in frames, we defer init to page loaded
@@ -158,11 +167,6 @@ function createMode() {
         window.frameElement.addEventListener("load", function(evt) {
             try {
                 init();
-                _listenedEvents.forEach(function(evt) {
-                    if (["keydown", "keyup", "scroll"].indexOf(evt) === -1) {
-                        window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
-                    }
-                });
             } catch (e) {
                 console.log("Error on blank iframe loaded: " + e);
             }
@@ -493,6 +497,7 @@ function createNormal() {
         return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
     }
 
+    var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
             if (RUNTIME.repeats > 1) {
@@ -563,13 +568,14 @@ function createNormal() {
                         elm.style.scrollBehavior = '';
                         document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
                     } else {
-                        return window.requestAnimationFrame(step);
+                        window.requestAnimationFrame(step);
                     }
                 }
                 elm.style.scrollBehavior = 'auto';
-                return window.requestAnimationFrame(step);
+                window.requestAnimationFrame(step);
             }
         };
+        _nodesHasSKScroll.push(elm);
     }
 
     // set scrollIndex to the highest node
@@ -1127,6 +1133,113 @@ function createNormal() {
             RUNTIME("nextTab");
         }
     });
+
+    function isElementPositionRelative(elm) {
+        while (elm !== document.body) {
+            if (getComputedStyle(elm).position === "relative") {
+                return true;
+            }
+            elm = elm.parentElement;
+        }
+        return false;
+    }
+
+    var pendingUpdater = undefined,
+        DOMObserver = new MutationObserver(function (mutations) {
+        var addedNodes = [];
+        for (var m of mutations) {
+            for (var n of m.addedNodes) {
+                if (n.nodeType === Node.ELEMENT_NODE && !n.fromSurfingKeys) {
+                    n.newlyCreated = true;
+                    addedNodes.push(n);
+                }
+            }
+        }
+
+        if (addedNodes.length) {
+            if (pendingUpdater) {
+                clearTimeout(pendingUpdater);
+                pendingUpdater = undefined;
+            }
+            pendingUpdater = setTimeout(function() {
+                var possibleModalElements = getVisibleElements(function(e, v) {
+                    var br = e.getBoundingClientRect();
+                    if (br.width > 300 && br.height > 300
+                        && br.width <= window.innerWidth && br.height <= window.innerHeight
+                        && br.top >= 0 && br.left >= 0
+                        && hasScroll(e, 'y', 16)
+                        && isElementPositionRelative(e)
+                    ) {
+                        v.push(e);
+                    }
+                });
+
+                if (possibleModalElements.length) {
+                    self.addScrollableElement(possibleModalElements[0]);
+                }
+            }, 200);
+        }
+    });
+    DOMObserver.isConnected = false;
+
+    var getDocumentBody = new Promise(function(resolve, reject) {
+        if (document.body) {
+            resolve(document.body);
+        } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                resolve(document.body);
+            });
+        }
+    });
+
+    function _onMouseUp(event) {
+        if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
+            && !isElementClickable(event.target)
+            && !event.target.matches(".cm-matchhighlight")) {
+            // perform inline query after 1 ms
+            // to avoid calling on selection collapse
+            setTimeout(Front.querySelectedWord, 1);
+        }
+    }
+
+    var _disabled = null;
+    self.disable = function() {
+        if (!_disabled) {
+            _disabled = createDisabled();
+            _disabled.enter(0, true);
+        }
+        if (DOMObserver.isConnected) {
+            DOMObserver.disconnect();
+            DOMObserver.isConnected = false;
+        }
+        document.removeEventListener("mouseup", _onMouseUp);
+    };
+
+    self.enable = function() {
+        if (_disabled) {
+            _disabled.exit();
+            _disabled = null;
+        }
+        if (!DOMObserver.isConnected) {
+            getDocumentBody.then(function(body) {
+                DOMObserver.observe(body, { childList: true, subtree:true });
+                DOMObserver.isConnected = true;
+            });
+        }
+        document.addEventListener("mouseup", _onMouseUp);
+    };
+    self.enable();
+
+    self.onExit = function() {
+        if (DOMObserver.isConnected) {
+            DOMObserver.disconnect();
+            DOMObserver.isConnected = false;
+        }
+        _nodesHasSKScroll.forEach(function(n) {
+            delete n.skScrollBy;
+            delete n.smoothScrollBy;
+        });
+    };
 
     return self;
 }

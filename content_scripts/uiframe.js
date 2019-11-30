@@ -66,7 +66,7 @@ function createUiHost() {
 
         window.addEventListener('message', _onWindowMessage, true);
 
-    }, false);
+    }, {once: true});
 
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null;
