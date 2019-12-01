@@ -36,6 +36,6 @@ function _applyProxySettings(proxyConf) {
     }
 }
 
-browser.proxy.onProxyError.addListener(error => {
+browser.proxy.onError.addListener(error => {
     console.error(`Proxy error: ${error.message}`);
 });
