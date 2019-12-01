@@ -1,20 +1,3 @@
-var AutoCommands = {};
-function autocmd(domain, jscode) {
-    var dp = "",
-        po;
-    if (typeof(domain) === 'object' && domain.test !== undefined) {
-        dp = domain.toString();
-        po = domain;
-    } else {
-        dp = domain;
-        po = new RegExp(domain);
-    }
-    AutoCommands[dp] = {
-        code: jscode,
-        regex: po
-    };
-}
-
 function createKeyTarget(code, ag, repeatIgnore) {
     var keybound = {
         code: code
@@ -356,6 +339,27 @@ function applySettings(rs) {
             Front.showStatus(3, rs.proxyMode);
         }
     }
+
+    RUNTIME('getDisabled', {
+        blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
+    }, function (resp) {
+        if (resp.disabled) {
+            Normal.disable();
+        } else {
+            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
+                usePdfViewer();
+            } else {
+                Normal.enable();
+            }
+        }
+
+        if (window === top) {
+            RUNTIME('setSurfingkeysIcon', {
+                status: resp.disabled
+            });
+        }
+    });
+
 }
 
 function _initModules() {
@@ -372,35 +376,7 @@ function _initModules() {
     createDefaultMappings();
     RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
-
         applySettings(rs);
-
-        RUNTIME('getDisabled', {
-            blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
-        }, function (resp) {
-            if (resp.disabled) {
-                Normal.disable();
-            } else if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                usePdfViewer();
-            }
-
-            if (window === top) {
-                RUNTIME('setSurfingkeysIcon', {
-                    status: resp.disabled
-                });
-
-                if (!resp.disabled) {
-                    for (var p in AutoCommands) {
-                        var c = AutoCommands[p];
-                        if (c.regex.test(window.location.href)) {
-                            c.code();
-                        }
-                    }
-                }
-
-            }
-        });
-
         document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
     });
 }
@@ -409,25 +385,6 @@ function _initModules() {
 function _onSettingsUpdated(response) {
     var rs = response.settings;
     applySettings(rs);
-    if (rs.hasOwnProperty('blacklist') || runtime.conf.blacklistPattern) {
-
-        // only toggle Disabled mode when blacklist is updated
-        RUNTIME('getDisabled', {
-            blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
-        }, function(resp) {
-            if (resp.disabled) {
-                Normal.disable();
-            } else {
-                Normal.enable();
-            }
-
-            if (window === top) {
-                RUNTIME('setSurfingkeysIcon', {
-                    status: resp.disabled
-                });
-            }
-        });
-    }
 }
 
 function _initContent() {
@@ -478,6 +435,11 @@ if (window === top) {
             title: document.title,
             url: window.location.href
         }, function (resp) {
+            if (resp.active && !window.uiHost) {
+                window.uiHost = createUiHost();
+                document.documentElement.appendChild(window.uiHost);
+            }
+
             if (resp.index > 0) {
                 var showTabIndexInTitle = function () {
                     skipObserver = true;

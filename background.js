@@ -85,7 +85,7 @@ var Gist = (function() {
     var _token, _gist = "", _comments = [];
     self.initGist = function(token, onGistReady) {
         if (_token === token && _gist !== "") {
-            onGistReady && onGistReady(_gist);
+            return _gist;
         } else {
             _token = token;
             _initGist(_token, "cloudboard", function(gist) {
@@ -318,17 +318,27 @@ var ChromeService = (function() {
             delete tabMessages[tabId];
         }
     }
+
+    function sendTabMessage(tabId, frameId, message, cb) {
+        if (frameId === -1) {
+            chrome.tabs.sendMessage(tabId, message);
+        } else {
+            chrome.tabs.sendMessage(tabId, message, {frameId: frameId});
+        }
+    }
     var _lastActiveTabId = null;
     function _tabActivated(tabId) {
-        if (_lastActiveTabId !== null) {
-            chrome.tabs.sendMessage(_lastActiveTabId, {
-                subject: 'tabDeactivated'
+        if (_lastActiveTabId !== tabId) {
+            if (_lastActiveTabId !== null) {
+                sendTabMessage(_lastActiveTabId, 0, {
+                    subject: 'tabDeactivated'
+                });
+            }
+            sendTabMessage(tabId, 0, {
+                subject: 'tabActivated'
             });
+            _lastActiveTabId = tabId;
         }
-        chrome.tabs.sendMessage(tabId, {
-            subject: 'tabActivated'
-        });
-        _lastActiveTabId = tabId;
     }
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
@@ -425,6 +435,14 @@ var ChromeService = (function() {
         }
     });
 
+    self.pendingPorts = [];
+    function _response(message, sendResponse, result) {
+        var idx = self.pendingPorts.indexOf(message);
+        if (idx !== -1) {
+            self.pendingPorts.splice(idx, 1);
+        }
+        sendResponse(result);
+    }
     chrome.runtime.onMessage.addListener(function (_message, _sender, _sendResponse) {
         if (self.hasOwnProperty(_message.action)) {
             if (_message.repeats > conf.repeatThreshold) {
@@ -432,8 +450,17 @@ var ChromeService = (function() {
             }
             // runtime.command from popup.js has _sender.tab undefined.
             try {
-                self[_message.action](_message, _sender, _sendResponse);
-                return _message.needResponse;
+                var result = self[_message.action](_message, _sender, _sendResponse);
+                if (_message.needResponse) {
+                    if (result) {
+                        _sendResponse(result);
+                        _message.needResponse = false;
+                    } else {
+                        self.pendingPorts.push(_message);
+                        // An asynchronous response will be sent using sendResponse later.
+                    }
+                    return _message.needResponse;
+                }
             } catch (e) {
                 console.log(_message.action + ": " + e);
             }
@@ -443,9 +470,9 @@ var ChromeService = (function() {
     });
 
     self.getTabErrors = function(message, sender, sendResponse) {
-        sendResponse({
+        return {
             tabError: tabErrors[sender.tab.id]
-        });
+        };
     };
 
     function _updateSettings(diffSettings, afterSet) {
@@ -465,7 +492,7 @@ var ChromeService = (function() {
     function _broadcastSettings(data) {
         chrome.tabs.query({}, function(tabs) {
             tabs.forEach(function(tab) {
-                chrome.tabs.sendMessage(tab.id, {
+                sendTabMessage(tab.id, 0, {
                     subject: 'settingsUpdated',
                     settings: data
                 });
@@ -482,7 +509,7 @@ var ChromeService = (function() {
         if (conf.showTabIndices) {
             chrome.tabs.query({currentWindow: true}, function(tabs) {
                 tabs.forEach(function(tab) {
-                    chrome.tabs.sendMessage(tab.id, {
+                    sendTabMessage(tab.id, 0, {
                         subject: "tabIndexChange",
                         index: tab.index + 1
                     });
@@ -543,7 +570,7 @@ var ChromeService = (function() {
     self.getDisabled = function(message, sender, sendResponse) {
         loadSettings(['blacklist', 'noPdfViewer'], function(data) {
             if (sender.tab) {
-                sendResponse({
+                _response(message, sendResponse, {
                     noPdfViewer: data.noPdfViewer,
                     disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
                 });
@@ -607,7 +634,7 @@ var ChromeService = (function() {
         chrome.storage.sync.clear();
         loadSettings(null, function(data) {
             _applyProxySettings(data);
-            sendResponse({
+            _response(message, sendResponse, {
                 settings: data
             });
             _broadcastSettings(data);
@@ -615,7 +642,7 @@ var ChromeService = (function() {
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
         _loadSettingsFromUrl(message.url, function(status) {
-            sendResponse(status);
+            _response(message, sendResponse, status);
         });
     };
     function _filterByTitleOrUrl(tabs, query) {
@@ -638,7 +665,7 @@ var ChromeService = (function() {
                 }
             }
             tabs = _filterByTitleOrUrl(tabs, message.query);
-            sendResponse({
+            _response(message, sendResponse, {
                 urls: tabs
             });
         });
@@ -646,7 +673,7 @@ var ChromeService = (function() {
     self.getTopSites = function(message, sender, sendResponse) {
         chrome.topSites.get(function(urls) {
             urls = _filterByTitleOrUrl(urls, message.query);
-            sendResponse({
+            _response(message, sendResponse, {
                 urls: urls
             });
         });
@@ -670,7 +697,7 @@ var ChromeService = (function() {
             var urls = tree;
             _getHistory(function(tree) {
                 urls = urls.concat(tree);
-                sendResponse({
+                _response(message, sendResponse, {
                     urls: urls
                 });
             }, true);
@@ -710,7 +737,7 @@ var ChromeService = (function() {
                     return b - a;
                 });
             }
-            sendResponse({
+            _response(message, sendResponse, {
                 tabs: tabs
             });
         });
@@ -909,7 +936,7 @@ var ChromeService = (function() {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
             getFolders(tree[0], "");
-            sendResponse({
+            _response(message, sendResponse, {
                 folders: bookmarkFolders
             });
         });
@@ -917,7 +944,7 @@ var ChromeService = (function() {
     self.createBookmark = function(message, sender, sendResponse) {
         removeBookmark(message.page.url, function() {
             createBookmark(message.page, function(ret) {
-                sendResponse({
+                _response(message, sendResponse, {
                     bookmark: ret
                 });
             });
@@ -932,20 +959,20 @@ var ChromeService = (function() {
                         return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                     });
                 }
-                sendResponse({
+                _response(message, sendResponse, {
                     bookmarks: bookmarks
                 });
             });
         } else {
             if (message.query && message.query.length) {
                 chrome.bookmarks.search(message.query, function(tree) {
-                    sendResponse({
+                    _response(message, sendResponse, {
                         bookmarks: tree
                     });
                 });
             } else {
                 chrome.bookmarks.getTree(function(tree) {
-                    sendResponse({
+                    _response(message, sendResponse, {
                         bookmarks: tree[0].children
                     });
                 });
@@ -954,7 +981,7 @@ var ChromeService = (function() {
     };
     self.getHistory = function(message, sender, sendResponse) {
         _getHistory(function(tree) {
-            sendResponse({
+            _response(message, sendResponse, {
                 history: tree
             });
         }, message.sortByMostUsed);
@@ -1050,7 +1077,7 @@ var ChromeService = (function() {
             message.key = "";
         }
         pf(message.key, function(data) {
-            sendResponse({
+            _response(message, sendResponse, {
                 settings: data
             });
         });
@@ -1076,7 +1103,7 @@ var ChromeService = (function() {
     };
     self.request = function(message, sender, sendResponse) {
         request(message.url, function(res) {
-            sendResponse({
+            _response(message, sendResponse, {
                 text: res
             });
         }, message.headers, message.data);
@@ -1102,7 +1129,7 @@ var ChromeService = (function() {
                     fid = framesInTab[frameIndexes[tid]];
                 }
 
-                chrome.tabs.sendMessage(tid, {
+                sendTabMessage(tid, -1, {
                     subject: "focusFrame",
                     frameId: fid
                 });
@@ -1211,7 +1238,7 @@ var ChromeService = (function() {
     };
     self.getDownloads = function(message, sender, sendResponse) {
         chrome.downloads.search(message.query, function(items) {
-            sendResponse({
+            _response(message, sendResponse, {
                 downloads: items
             });
         });
@@ -1223,7 +1250,7 @@ var ChromeService = (function() {
             matchAboutBlank: true,
             file: message.file
         }, function(result) {
-            sendResponse({
+            _response(message, sendResponse, {
                 response: result
             });
         });
@@ -1235,9 +1262,12 @@ var ChromeService = (function() {
                 tabURLs[tabId] = {};
             }
             tabURLs[tabId][message.url] = message.title;
-            sendResponse({
+            return {
+                active: sender.tab.active,
                 index: conf.showTabIndices ? sender.tab.index + 1 : 0
-            });
+            };
+        } else {
+            return {};
         }
     };
     self.getTabURLs = function(message, sender, sendResponse) {
@@ -1248,14 +1278,14 @@ var ChromeService = (function() {
                 title: tabURL[u]
             };
         });
-        sendResponse({
+        return {
             urls: tabURL
-        });
+        };
     };
     self.getTopURL = function(message, sender, sendResponse) {
-        sendResponse({
+        return {
             url: sender.tab ? sender.tab.url : ""
-        });
+        };
     };
 
     function updateProxy(message, cb) {
@@ -1315,7 +1345,7 @@ var ChromeService = (function() {
     }
     self.updateProxy = function(message, sender, sendResponse) {
         updateProxy(message, function(diffSet) {
-            sendResponse(diffSet);
+            _response(message, sendResponse, diffSet);
         });
     };
     self.setZoom = function(message, sender, sendResponse) {
@@ -1362,7 +1392,7 @@ var ChromeService = (function() {
         function _done() {
             removed ++;
             if (removed === totalToRemoved) {
-                sendResponse({
+                _response(message, sendResponse, {
                     response: "Done"
                 });
             }
@@ -1382,7 +1412,7 @@ var ChromeService = (function() {
         } else {
             // string or array of string keys
             chrome.storage.local.get(message.data, function(data) {
-                sendResponse({
+                _response(message, sendResponse, {
                     data: data
                 });
             });
@@ -1390,7 +1420,7 @@ var ChromeService = (function() {
     };
     self.captureVisibleTab = function(message, sender, sendResponse) {
         chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
-            sendResponse({
+            _response(message, sendResponse, {
                 dataUrl: dataUrl
             });
         });
@@ -1398,7 +1428,7 @@ var ChromeService = (function() {
     self.getCaptureSize = function(message, sender, sendResponse) {
         var img = document.createElement( "img" );
         img.onload = function() {
-            sendResponse({
+            _response(message, sendResponse, {
                 width: img.width,
                 height: img.height
             });
@@ -1432,27 +1462,27 @@ var ChromeService = (function() {
         chrome.bookmarks.search({
             url: sender.tab.url
         }, function(bookmarks) {
-            sendResponse({
+            _response(message, sendResponse, {
                 bookmarks: bookmarks
             });
         });
     };
 
     self.initGist = function(message, sender, sendResponse) {
-        Gist.initGist(message.token, function(gist) {
-            sendResponse({
+        return Gist.initGist(message.token, function(gist) {
+            _response(message, sendResponse, {
                 gist: gist
             });
         });
     };
     self.readComment = function(message, sender, sendResponse) {
         Gist.readComment(message.index, function(resp) {
-            sendResponse(resp);
+            _response(message, sendResponse, resp);
         });
     };
     self.editComment = function(message, sender, sendResponse) {
         Gist.editComment(message.index, message.content, function(resp) {
-            sendResponse({gistResp: resp});
+            _response(message, sendResponse, {gistResp: resp});
         });
     };
 
@@ -1461,14 +1491,14 @@ var ChromeService = (function() {
         _queueURLs = _queueURLs.concat(message.urls);
     };
     self.getQueueURLs = function(message, sender, sendResponse) {
-        sendResponse({
+        return {
             queueURLs: _queueURLs
-        });
+        };
     };
 
     self.getVoices = function(message, sender, sendResponse) {
         chrome.tts.getVoices(function(voices) {
-            sendResponse({
+            _response(message, sendResponse, {
                 voices: voices
             });
         });
@@ -1477,7 +1507,7 @@ var ChromeService = (function() {
     self.read = function(message, sender, sendResponse) {
         var options = message.options || {};
         options.onEvent = function(ttsEvent) {
-            sendResponse({
+            _response(message, sendResponse, {
                 ttsEvent: ttsEvent
             });
         };

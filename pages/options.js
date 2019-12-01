@@ -234,17 +234,6 @@ function renderSettings(rs) {
     renderProxySettings(rs);
 }
 
-runtime.on('settingsUpdated', function(resp) {
-    if ('snippets' in resp.settings) {
-        renderKeyMappings(resp.settings);
-        if (resp.settings.snippets.length) {
-            mappingsEditor.setValue(resp.settings.snippets, -1);
-        } else {
-            mappingsEditor.setValue(sample, -1);
-        }
-    }
-});
-
 RUNTIME('getSettings', null, function(response) {
     mappingsEditor = createMappingEditor('mappings');
     renderSettings(response.settings);
@@ -317,9 +306,12 @@ function saveSettings() {
             url: localPath
         }, function(res) {
             Front.showBanner(res.status + ' to load settings from ' + localPath, 300);
+            renderKeyMappings(res);
             if (res.snippets && res.snippets.length) {
                 localPathSaved = localPath;
                 mappingsEditor.setValue(res.snippets, -1);
+            } else {
+                mappingsEditor.setValue(sample, -1);
             }
         });
     } else {

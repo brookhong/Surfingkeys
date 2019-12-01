@@ -761,7 +761,7 @@ function createNormal() {
     };
 
     self.setLastKeys = function(key) {
-        if (!this.map_node.meta.repeatIgnore) {
+        if (!this.map_node.meta.repeatIgnore && key.length > 1) {
             lastKeys = [key];
             saveLastKeys();
         }
