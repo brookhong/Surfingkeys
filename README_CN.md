@@ -1,5 +1,8 @@
 # Surfingkeys -- 用javascript和键盘扩展你的chrome
 
+
+[![Node CI](https://github.com/brookhong/Surfingkeys/workflows/Node%20CI/badge.svg?branch=master)](https://github.com/brookhong/Surfingkeys/actions?query=workflow%3A%22Node+CI%22+branch%3Amaster)
+
 Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用Chrome/Firefox浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
