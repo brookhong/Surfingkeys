@@ -631,6 +631,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
 | settings.clickableSelector | "" | 自定义CSS selector用于f键选择无法检测到的可点击元素，例如"\*.jfk-button, \*.goog-flat-menu-button"。 |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | 用于检测文字中可点击链接的正则表达式，你可以按`O`打开检测到的链接。|
+| settings.editableSelector | div.CodeMirror-scroll,div.ace_content | 额外CSS selector以自定义可编辑元素。|
 | settings.smoothScroll | true | 是否启用顺滑滚动。 |
 | settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |

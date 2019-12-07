@@ -450,7 +450,7 @@ function createNormal() {
         }
 
         var realTarget = getRealEdit(event);
-        if (isEditable(realTarget) || realTarget.matches("div.CodeMirror-scroll")) {
+        if (isEditable(realTarget)) {
             // keep cursor where it is
             Insert.enter(realTarget, true);
         } else {

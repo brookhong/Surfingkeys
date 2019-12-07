@@ -8,6 +8,7 @@ var runtime = (function() {
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
             clickableSelector: "",
+            editableSelector: "div.CodeMirror-scroll,div.ace_content",
             cursorAtEndOfInput: true,
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
