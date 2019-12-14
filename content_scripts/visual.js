@@ -591,10 +591,8 @@ function createVisual() {
         _incState();
     };
 
-    var _lastPos = null;
     self.onExit = function() {
         document.removeEventListener('surfingkeys:cursorHidden', onCursorHiden);
-        _lastPos = [selection.anchorNode, selection.anchorOffset];
     };
 
     function _onStateChange() {
@@ -607,8 +605,8 @@ function createVisual() {
         _onStateChange();
     }
     self.restore = function() {
-        if (_lastPos) {
-            selection.setPosition(_lastPos[0], _lastPos[1]);
+        if (selection && selection.anchorNode) {
+            selection.setPosition(selection.anchorNode, selection.anchorOffset);
             self.showCursor();
             self.enter();
         }
