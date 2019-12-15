@@ -278,15 +278,15 @@ function createHints() {
         var style = createElement(`<style>#sk_hints>div.myHint{${_styleForClick}}</style>`);
         holder.prepend(style);
         var links = elements.map(function(elm, i) {
-            var pos = elm.getClientRects()[0],
+            var r = getRealRect(elm),
                 z = getZIndex(elm);
-            var left, width = Math.min(pos.width, window.innerWidth);
+            var left, width = Math.min(r.width, window.innerWidth);
             if (runtime.conf.hintAlign === "right") {
-                left = window.pageXOffset + pos.left - bof.left + width;
+                left = window.pageXOffset + r.left - bof.left + width;
             } else if (runtime.conf.hintAlign === "left") {
-                left = window.pageXOffset + pos.left - bof.left;
+                left = window.pageXOffset + r.left - bof.left;
             } else {
-                left = window.pageXOffset + pos.left - bof.left + width / 2;
+                left = window.pageXOffset + r.left - bof.left + width / 2;
             }
             if (left < window.pageXOffset) {
                 left = window.pageXOffset;
@@ -295,7 +295,7 @@ function createHints() {
             }
             var link = createElement(`<div class="myHint">${hintLabels[i]}</div>`);
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
-            link.style.top = Math.max(pos.top + window.pageYOffset - bof.top, 0) + "px";
+            link.style.top = Math.max(r.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
             link.style.zIndex = z + 9999;
             link.zIndex = link.style.zIndex;
@@ -307,14 +307,14 @@ function createHints() {
             holder.appendChild(link);
         });
         var hints = holder.querySelectorAll('#sk_hints>div');
-        var bcr = hints[0].getBoundingClientRect();
+        var bcr = getRealRect(hints[0]);
         for (var i = 1; i < hints.length; i++) {
             var h = hints[i];
-            var tcr = h.getBoundingClientRect();
+            var tcr = getRealRect(h);
             if (tcr.top === bcr.top && Math.abs(tcr.left - bcr.left) < bcr.width) {
                 h.style.top = h.offsetTop + h.offsetHeight + "px";
             }
-            bcr = h.getBoundingClientRect();
+            bcr = getRealRect(h);
         }
         document.documentElement.prepend(holder);
     }
@@ -557,7 +557,7 @@ function createHints() {
     };
 
     self.flashPressedLink = function(link) {
-        var rect = link.getBoundingClientRect();
+        var rect = getRealRect(link);
         var flashElem = createElement('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>');
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';

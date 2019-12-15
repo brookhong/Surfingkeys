@@ -214,16 +214,25 @@ function filterAncestors(elements) {
     return tmp;
 }
 
+function getRealRect(elm) {
+    if (elm.childElementCount === 0) {
+        var r = elm.getClientRects();
+        return (r.length === 3) ? r[1] : elm.getBoundingClientRect();
+    } else {
+        return elm.getBoundingClientRect();
+    }
+}
+
 function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
-        var be = e.getClientRects()[0];
+        var be = getRealRect(e);
         if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
             return false;
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
         } else {
-            var el = document.elementFromPoint(be.left + be.width / 2, be.top + 3);
+            var el = document.elementFromPoint(be.left + 3, be.top + 3);
             return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
         }
     });
