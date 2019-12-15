@@ -18,7 +18,8 @@ function createUiHost() {
         if (_message.commandToFrontend || _message.responseToFrontend) {
             // forward message to frontend
             ifr.contentWindow.postMessage(_message, frontEndURL);
-            if (_message.commandToFrontend && event.source && _message.action === 'showStatus') {
+            if (_message.commandToFrontend && event.source
+                && ['showStatus', 'showEditor', 'openOmnibar'].indexOf(_message.action) !== -1) {
                 if (!activeContent || activeContent.window !== event.source) {
                     // reset active Content
 
