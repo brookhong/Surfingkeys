@@ -400,7 +400,8 @@ function _initContent() {
 function getFrameId() {
     if (!window.frameId && window.innerWidth > 16 && window.innerHeight > 16
         && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
-        && (!window.frameElement || parseInt("0" + getComputedStyle(window.frameElement).zIndex) >= 0)
+        && (!window.frameElement || (parseInt("0" + getComputedStyle(window.frameElement).zIndex) >= 0
+            && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
     ) {
         _initModules();
         _initContent();

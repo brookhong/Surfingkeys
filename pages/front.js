@@ -132,8 +132,7 @@ var Front = (function() {
     };
     self.hidePopup = _actions['hidePopup'];
 
-    function showPopup(td, args) {
-        self.enter(0, true);
+    function setDisplay(td, args) {
         if (_display && _display.style.display !== "none") {
             _display.style.display = "none";
             _display.onHide && _display.onHide();
@@ -141,6 +140,11 @@ var Front = (function() {
         _display = td;
         _display.style.display = "";
         _display.onShow && _display.onShow(args);
+    }
+
+    function showPopup(td, args) {
+        self.enter(0, true);
+        setDisplay(td, args);
         self.flush();
     }
 
@@ -381,8 +385,7 @@ var Front = (function() {
         }
         self.flush();
         if (!_bubble.noPointerEvents) {
-            _display = _bubble;
-            self.onShowBubble && self.onShowBubble(_bubble);
+            setDisplay(_bubble, {});
             self.enter(0, true);
         }
     };
