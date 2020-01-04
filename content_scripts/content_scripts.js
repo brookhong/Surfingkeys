@@ -296,7 +296,7 @@ function runScript(snippets) {
     return result;
 }
 
-function applySettings(rs) {
+function applySettings(rs, resolve) {
     for (var k in rs) {
         if (runtime.conf.hasOwnProperty(k)) {
             runtime.conf[k] = rs[k];
@@ -349,6 +349,7 @@ function applySettings(rs) {
             if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
                 usePdfViewer();
             } else {
+                resolve && resolve(window.location.href);
                 Normal.enable();
             }
         }
@@ -374,10 +375,12 @@ function _initModules() {
     window.Clipboard = createClipboard();
     window.Front = createFront();
     createDefaultMappings();
-    RUNTIME('getSettings', null, function(response) {
-        var rs = response.settings;
-        applySettings(rs);
-        document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+    window.pdfGuard = new Promise(function (resolve, reject) {
+        RUNTIME('getSettings', null, function(response) {
+            var rs = response.settings;
+            applySettings(rs, resolve);
+            document.dispatchEvent(new CustomEvent('surfingkeys:userSettingsLoaded', { 'detail': rs }));
+        });
     });
 }
 
@@ -438,7 +441,9 @@ if (window === top) {
         }, function (resp) {
             if (resp.active && !window.uiHost) {
                 window.uiHost = createUiHost();
-                document.documentElement.appendChild(window.uiHost);
+                window.pdfGuard.then(function() {
+                    document.documentElement.appendChild(window.uiHost);
+                });
             }
 
             if (resp.index > 0) {
