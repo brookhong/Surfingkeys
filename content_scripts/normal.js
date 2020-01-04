@@ -406,12 +406,6 @@ function createNormal() {
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event);
-            if (!DOMObserver.isConnected) {
-                getDocumentBody.then(function(body) {
-                    DOMObserver.observe(body, { childList: true, subtree:true });
-                    DOMObserver.isConnected = true;
-                });
-            }
         }
     });
     self.addEventListener('blur', function(event) {
@@ -734,6 +728,7 @@ function createNormal() {
             default:
                 break;
         }
+        self.turnOffDOMObserver();
     };
 
     self.refreshScrollableElements = function () {
@@ -1211,16 +1206,29 @@ function createNormal() {
         }
     }
 
+    self.turnOnDOMObserver = function() {
+        if (!DOMObserver.isConnected) {
+            getDocumentBody.then(function(body) {
+                DOMObserver.observe(body, { childList: true, subtree:true });
+                DOMObserver.isConnected = true;
+            });
+        }
+    };
+
+    self.turnOffDOMObserver = function() {
+        if (DOMObserver.isConnected) {
+            DOMObserver.disconnect();
+            DOMObserver.isConnected = false;
+        }
+    };
+
     var _disabled = null;
     self.disable = function() {
         if (!_disabled) {
             _disabled = createDisabled();
             _disabled.enter(0, true);
         }
-        if (DOMObserver.isConnected) {
-            DOMObserver.disconnect();
-            DOMObserver.isConnected = false;
-        }
+        self.turnOffDOMObserver();
         document.removeEventListener("mouseup", _onMouseUp);
     };
 
@@ -1234,10 +1242,7 @@ function createNormal() {
     self.enable();
 
     self.onExit = function() {
-        if (DOMObserver.isConnected) {
-            DOMObserver.disconnect();
-            DOMObserver.isConnected = false;
-        }
+        self.turnOffDOMObserver();
         _nodesHasSKScroll.forEach(function(n) {
             delete n.skScrollBy;
             delete n.smoothScrollBy;
