@@ -516,8 +516,11 @@ function createNormal() {
                 elm.smoothScrollBy(x, y, d);
             } else {
                 document.dispatchEvent(new CustomEvent('surfingkeys:scrollStarted'));
-                elm.scrollLeft = elm.scrollLeft + x;
-                elm.scrollTop = elm.scrollTop + y;
+                elm.scrollBy({
+                    'behavior': 'instant',
+                    'left': x,
+                    'top': y,
+                });
                 document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
             }
         };
