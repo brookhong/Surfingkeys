@@ -6,6 +6,7 @@
   "main": "background.js",
   "dependencies": {},
   "devDependencies": {
+    "parse-domain": "pvdlg/parse-domain#overwrite-tries",
     "babel-cli": "^6.24.1",
     "babel-eslint": "^8.0.1",
     "babel-plugin-transform-react-jsx": "^6.24.1",
