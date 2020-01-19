@@ -331,6 +331,9 @@ function createPassThrough() {
     }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
+    self.addEventListener('focus', function(event) {
+        event.sk_suppressed = true;
+    });
 
     self.onEnter = function() {
         if (_timeout > 0) {
