@@ -197,7 +197,7 @@ function walkPageUrl(step) {
 }
 
 function previousPage() {
-    var prevLinks = getClickableElements("[rel=prev]", runtime.conf.prevLinkRegex);
+    var prevLinks = uniqueLinks(getClickableElements("[rel=prev]", runtime.conf.prevLinkRegex));
     if (prevLinks.length) {
         clickOn(prevLinks);
         return true;
@@ -207,13 +207,24 @@ function previousPage() {
 }
 
 function nextPage() {
-    var nextLinks = getClickableElements("[rel=next]", runtime.conf.nextLinkRegex);
+    var nextLinks = uniqueLinks(getClickableElements("[rel=next]", runtime.conf.nextLinkRegex));
     if (nextLinks.length) {
         clickOn(nextLinks);
         return true;
     } else {
         return walkPageUrl(1);
     }
+}
+
+function uniqueLinks(links) {
+    let unique = {};
+    links.forEach(function(link) {
+        let href = link.getAttribute('href');
+        if (!unique[href]) {
+            unique[href] = link;
+        }
+    });
+    return Object.values(unique);
 }
 
 function searchSelectedWith(se, onlyThisSite, interactive, alias) {
