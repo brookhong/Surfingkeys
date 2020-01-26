@@ -371,6 +371,8 @@ function createInsert() {
         var realTarget = getRealEdit(event);
         if (!isEditable(realTarget)) {
             self.exit();
+        } else {
+            event.sk_suppressed = true;
         }
     });
 
