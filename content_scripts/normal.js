@@ -991,13 +991,13 @@ function createNormal() {
         }
     });
     self.mappings.add("e", {
-        annotation: "Scroll a page up",
+        annotation: "Scroll half page up",
         feature_group: 2,
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageUp")
     });
     self.mappings.add("d", {
-        annotation: "Scroll a page down",
+        annotation: "Scroll half page down",
         feature_group: 2,
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageDown")
