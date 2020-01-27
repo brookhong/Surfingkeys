@@ -864,6 +864,8 @@ var ChromeService = (function() {
             chrome.tabs.remove(tabIds, function() {
                 if ( conf.focusAfterClosed === "left" ) {
                     _nextTab(sender.tab, -1);
+                } else if ( conf.focusAfterClosed === "last" ) {
+                    self.historyTab({backward: true});
                 }
             });
         });

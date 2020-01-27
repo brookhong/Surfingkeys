@@ -661,7 +661,7 @@ For example,
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
-| settings.focusAfterClosed | "right" | Which side of tab will be focused after current tab closed. ["left", "right"] |
+| settings.focusAfterClosed | "right" | Which tab will be focused after the current tab is closed. ["left", "right", "last"] |
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
