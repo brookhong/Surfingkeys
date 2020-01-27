@@ -199,19 +199,31 @@ function actionWithSelectionPreserved(cb) {
     }
 }
 
+function last(array) {
+    return array[array.length - 1];
+}
+
+/**
+ * According to a discussion here: https://github.com/brookhong/Surfingkeys/pull/1136
+ * @param elements array of elements to filter passed in the order like:
+ * parent 1 > parent 0> child
+ */
 function filterAncestors(elements) {
-    var tmp = [];
-    if (elements.length > 0) {
-        // filter out element which has its children covered
-        tmp = [elements[elements.length - 1]];
-        for (var i = elements.length - 2; i >= 0; i--) {
-            if (!elements[i].contains(tmp[0])) {
-                tmp.unshift(elements[i]);
-            }
+    if (elements.length === 0) {
+        return elements;
+    }
+
+    // filter out element which has its children covered
+    let result = [last(elements)];
+    for (let i = elements.length - 2; i >= 0; i--) {
+        if (!elements[i].contains(last(result))
+            || isExplicitlyRequested(elements[i])) {
+            result.push(elements[i]);
         }
     }
 
-    return tmp;
+    // To restore original order of elements
+    return result.reverse();
 }
 
 function getRealRect(elm) {
@@ -221,6 +233,11 @@ function getRealRect(elm) {
     } else {
         return elm.getBoundingClientRect();
     }
+}
+
+function isExplicitlyRequested(element) {
+    return runtime.conf.clickableSelector &&
+        element.matches(runtime.conf.clickableSelector);
 }
 
 function filterOverlapElements(elements) {
