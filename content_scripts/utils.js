@@ -229,7 +229,17 @@ function filterAncestors(elements) {
 function getRealRect(elm) {
     if (elm.childElementCount === 0) {
         var r = elm.getClientRects();
-        return (r.length === 3) ? r[1] : elm.getBoundingClientRect();
+        if (r.length === 3) {
+            // for a clipped A tag
+            return r[1];
+        } else if (r.length === 2) {
+            // for a wrapped A tag
+            return r[0];
+        } else {
+            return elm.getBoundingClientRect();
+        }
+    } else if (elm.childElementCount === 1) {
+        return elm.firstElementChild.getBoundingClientRect();
     } else {
         return elm.getBoundingClientRect();
     }
