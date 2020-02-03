@@ -362,7 +362,7 @@ var ChromeService = (function() {
         _updateTabIndices();
     });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
-        if (tabURLs.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
+        if (!historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
             if (tabHistory.length > 10) {
                 tabHistory.shift();
             }
