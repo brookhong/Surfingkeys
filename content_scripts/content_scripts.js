@@ -433,12 +433,18 @@ if (window === top) {
                 window.uiHost = createUiHost();
                 document.documentElement.appendChild(window.uiHost);
             }
+            if (window.uiHostDetaching) {
+                clearTimeout(window.uiHostDetaching);
+                delete window.uiHostDetaching;
+            }
         });
         runtime.on('tabDeactivated', function() {
             if (window.uiHost) {
-                window.uiHost.detach();
-                window.uiHost.remove();
-                delete window.uiHost;
+                window.uiHostDetaching = setTimeout(function() {
+                    window.uiHost.detach();
+                    window.uiHost.remove();
+                    delete window.uiHost;
+                }, 30000);
             }
         });
         window._setScrollPos = function (x, y) {

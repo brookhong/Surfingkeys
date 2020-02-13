@@ -163,7 +163,7 @@ function createMode() {
 
     // For blank page in frames, we defer init to page loaded
     // as document.write will clear added eventListeners.
-    if (window.location.href === "about:blank" && window.frameElement) {
+    if (window.location.href === "about:blank" && window.frameElement && document.body.childElementCount === 0) {
         window.frameElement.addEventListener("load", function(evt) {
             try {
                 init();
