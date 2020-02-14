@@ -405,7 +405,7 @@ function _initContent() {
     window.frameId = generateQuickGuid();
     runtime.on('settingsUpdated', _onSettingsUpdated);
 
-    if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
+    if (runtime.conf.stealFocusOnLoad && !isInUIFrame() && document.body.childElementCount > 1) {
         var elm = getRealEdit();
         elm && elm.blur();
     }
@@ -413,6 +413,7 @@ function _initContent() {
 
 function getFrameId() {
     if (!window.frameId && window.innerWidth > 16 && window.innerHeight > 16
+        && document.body.childElementCount > 0
         && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
         && (!window.frameElement || (parseInt("0" + getComputedStyle(window.frameElement).zIndex) >= 0
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
