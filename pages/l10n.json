@@ -209,6 +209,7 @@
         "backward sentence": "后退一个句子",
         "backward word": "后退一个单词",
         "enter PassThrough mode to temporarily suppress SurfingKeys": "进入PassThrough模式，暂时放弃SurfingKeys",
+        "enter ephemeral PassThrough mode to temporarily suppress SurfingKeys": "进入PassThrough模式，暂时放弃SurfingKeys, 1秒后恢复",
         "forward character": "前进一个字符",
         "forward documentboundary": "跳到页面结尾",
         "forward line": "下一行",

@@ -643,9 +643,16 @@ mapkey(';pp', '#7Paste html on current page', function() {
 mapkey(';i', '#14Insert jquery library on current page', function() {
     Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js");
 });
-mapkey(';t', 'Translate selected text with google', function() {
-    searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
-});
+
+function openGoogleTranslate() {
+    if (window.getSelection().toString()) {
+        searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
+    } else {
+        tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
+    }
+}
+mapkey(';t', 'Translate selected text with google', openGoogleTranslate);
+vmapkey('t', '#9Translate selected text with google', openGoogleTranslate);
 mapkey(';dh', '#14Delete history older than 30 days', function() {
     RUNTIME('deleteHistoryOlderThan', {
         days: 30
