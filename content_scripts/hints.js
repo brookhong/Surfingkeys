@@ -210,7 +210,7 @@ function createHints() {
     function resetHints(evt) {
         var start = new Date().getTime();
         var found = createHints(_cssSelector, _lastCreateAttrs);
-        if (found > 1) {
+        if (found > 0) {
             self.statusLine += " - " + (new Date().getTime() - start) + "ms / " + found;
             Mode.showStatus();
         }
@@ -548,7 +548,7 @@ function createHints() {
 
         var start = new Date().getTime();
         var found = createHints(cssSelector, attrs);
-        if (found > 1) {
+        if (found > (runtime.conf.hintExplicit ? 0 : 1)) {
             self.statusLine += " - " + (new Date().getTime() - start) + "ms / " + found;
             self.enter();
         } else {
