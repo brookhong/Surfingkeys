@@ -130,8 +130,8 @@ mapkey('?', '#0Show usage', function() {
     Front.showUsage();
 });
 map('u', 'e');
-mapkey('af', '#1Open a link in new tab', function() {
-    Hints.create("", Hints.dispatchMouseClick, {tabbed: true});
+mapkey('af', '#1Open a link in active new tab', function() {
+    Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: true});
 });
 mapkey('gf', '#1Open a link in non-active new tab', function() {
     Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false});
