@@ -585,7 +585,10 @@ function createHints() {
                 active = false;
             }
 
-            if (shiftKey && window.navigator.userAgent.indexOf("Firefox") !== -1) {
+            if (shiftKey && runtime.conf.hintShiftNonActive) {
+                tabbed = true;
+                active = false;
+            } else if (shiftKey && window.navigator.userAgent.indexOf("Firefox") !== -1) {
                 // mouseButton does not work for firefox in mouse event.
                 tabbed = true;
                 active = true;
