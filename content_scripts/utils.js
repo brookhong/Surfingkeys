@@ -238,7 +238,7 @@ function getRealRect(elm) {
         } else {
             return elm.getBoundingClientRect();
         }
-    } else if (elm.childElementCount === 1) {
+    } else if (elm.childElementCount === 1 && elm.firstElementChild.textContent) {
         return elm.firstElementChild.getBoundingClientRect();
     } else {
         return elm.getBoundingClientRect();

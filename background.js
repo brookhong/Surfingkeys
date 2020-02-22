@@ -268,7 +268,7 @@ var ChromeService = (function() {
         var tabId = details.tabId;
         if (tabActivated.hasOwnProperty(tabId)) {
             loadSettings('blacklist', function(data) {
-                var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID"];
+                var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID", "net::ERR_CERT_COMMON_NAME_INVALID"];
                 var disabled = _getDisabled(data, new URL(details.url), null);
                 if (!disabled && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
                     if (!tabErrors.hasOwnProperty(tabId)) {
