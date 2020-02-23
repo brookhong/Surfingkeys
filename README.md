@@ -659,6 +659,8 @@ For example,
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indicate next page. |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indicate previous page. |
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
+| settings.hintExplicit | false | Whether to wait for explicit input when there is only a single hint available |
+| settings.hintShiftNonActive | false | Whether new tab is active after entering hint while holding shift |
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
 | settings.focusAfterClosed | "right" | Which tab will be focused after the current tab is closed. ["left", "right", "last"] |
