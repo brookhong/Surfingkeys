@@ -19,6 +19,7 @@ var runtime = (function() {
             focusOnSaved: true,
             hintAlign: "center",
             hintExplicit: false,
+            hintShiftNonActive: false,
             historyMUOrder: true,
             language: undefined,
             lastQuery: "",

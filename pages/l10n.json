@@ -122,7 +122,7 @@
         "Open a URL": "打开网页",
         "Open a URL in current tab": "在当前标签页打开网页",
         "Open a bookmark": "打开一个收藏",
-        "Open a link in new tab": "在新标签页打开链接",
+        "Open a link in active new tab": "在新标签页打开链接",
         "Open a link in non-active new tab": "在新标签页后台打开链接",
         "Open a link, press SHIFT to flip hints if they are overlapped.": "打开链接，如果拨号键有重叠按SHIFT",
         "Open commands": "打开命令",
