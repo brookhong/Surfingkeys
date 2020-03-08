@@ -354,24 +354,23 @@ function createHints() {
             behaviours[attr] = attrs[attr];
         }
         var elements;
-        if (behaviours.tabbed) {
-            elements = Array.from(getElements('a[href]:not([href^=javascript])'));
-            elements = filterInvisibleElements(elements);
+        if (behaviours.tabbed && cssSelector === "") {
+            cssSelector = 'a[href]:not([href^=javascript])' ;
+        }
+
+        if (cssSelector === "") {
+            elements = getVisibleElements(function(e, v) {
+                if (isElementClickable(e)) {
+                    v.push(e);
+                }
+            });
+            elements = filterOverlapElements(elements);
+        } else if (Array.isArray(cssSelector)) {
+            elements = filterInvisibleElements(cssSelector);
         } else {
-            if (cssSelector === "") {
-                elements = getVisibleElements(function(e, v) {
-                    if (isElementClickable(e)) {
-                        v.push(e);
-                    }
-                });
-                elements = filterOverlapElements(elements);
-            } else if (Array.isArray(cssSelector)) {
-                elements = filterInvisibleElements(cssSelector);
-            } else {
-                elements = Array.from(document.documentElement.querySelectorAll(cssSelector));
-                elements = filterInvisibleElements(elements);
-                elements = filterOverlapElements(elements);
-            }
+            elements = Array.from(document.documentElement.querySelectorAll(cssSelector));
+            elements = filterInvisibleElements(elements);
+            elements = filterOverlapElements(elements);
         }
 
         if (elements.length > 0) {
