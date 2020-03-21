@@ -325,7 +325,6 @@ var Omnibar = (function() {
         }
     }
 
-    self.input = ui.querySelector('input');
     self.promptSpan = ui.querySelector('#sk_omnibarSearchArea>span.prompt');
     var resultPageSpan = ui.querySelector('#sk_omnibarSearchArea>span.resultPage');
     self.resultsDiv = ui.querySelector('#sk_omnibarSearchResult');
@@ -353,17 +352,21 @@ var Omnibar = (function() {
             self.collapseAlias() && evt.preventDefault();
         }
     }
-    self.input.oninput = _onIput;
-    self.input.onkeydown = _onKeyDown;
-    self.input.addEventListener('compositionstart', function(evt) {
-        self.input.oninput = null;
-        self.input.onkeydown = null;
-    });
-    self.input.addEventListener('compositionend', function(evt) {
-        self.input.oninput = _onIput;
-        self.input.onkeydown = _onKeyDown;
-        _onIput();
-    });
+    function _createInput() {
+        var _input = document.createElement("input");
+        _input.oninput = _onIput;
+        _input.onkeydown = _onKeyDown;
+        _input.addEventListener('compositionstart', function(evt) {
+            _input.oninput = null;
+            _input.onkeydown = null;
+        });
+        _input.addEventListener('compositionend', function(evt) {
+            _input.oninput = _onIput;
+            _input.onkeydown = _onKeyDown;
+            _onIput();
+        });
+        return _input;
+    }
 
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Tab>"), {
         annotation: "Forward cycle through the candidates.",
@@ -504,6 +507,10 @@ var Omnibar = (function() {
 
     var _savedAargs;
     ui.onShow = function(args) {
+        if (!self.input) {
+            self.input = _createInput();
+            document.querySelector("#sk_omnibarSearchArea").insertBefore(self.input, resultPageSpan);
+        }
         _savedAargs = args;
         ui.classList.remove("sk_omnibar_middle");
         ui.classList.remove("sk_omnibar_bottom");
