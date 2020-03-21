@@ -377,6 +377,7 @@ function applySettings(rs, resolve) {
 function _initModules() {
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
+    window.Observer = createObserver();
     window.Normal = createNormal();
     Normal.enter();
     window.PassThrough = createPassThrough();

@@ -122,6 +122,7 @@ gulp.task('build_modules', function() {
         "content_scripts/keyboardUtils.js",
         "content_scripts/utils.js",
         "content_scripts/runtime.js",
+        "content_scripts/observer.js",
         "content_scripts/normal.js",
         "content_scripts/insert.js",
         "content_scripts/visual.js",

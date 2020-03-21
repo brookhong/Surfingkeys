@@ -605,7 +605,7 @@ function createHints() {
             } else {
                 self.mouseoutLastElement();
                 dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
-                Normal.turnOnDOMObserver();
+                window.Observer && window.Observer.turnOnDOMObserver();
                 lastMouseTarget = element;
             }
         }
