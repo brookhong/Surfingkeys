@@ -503,6 +503,13 @@ function createNormal() {
     var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
+            if (runtime.conf.smartPageBoundary && ((this === document.scrollingElement)
+                || scrollNodes.length === 1 && this === scrollNodes[0])) {
+                if (this.scrollTop === 0 && y <= 0 && previousPage()
+                    || this.scrollHeight - this.scrollTop <= this.clientHeight + 1 && y > 0 && nextPage()) {
+                    return;
+                }
+            }
             if (RUNTIME.repeats > 1) {
                 x = RUNTIME.repeats * x;
                 y = RUNTIME.repeats * y;
@@ -521,21 +528,6 @@ function createNormal() {
                 document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
             }
         };
-        if (elm === document.scrollingElement) {
-            var f = elm.skScrollBy;
-            elm.skScrollBy = function(x, y) {
-                if (runtime.conf.smartPageBoundary) {
-                    if (document.scrollingElement.scrollTop === 0 && y <= 0) {
-                        previousPage() && Front.showBanner("Top margin hit, jump to previous page");
-                    } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight + 1 && y > 0) {
-                        if (nextPage()) {
-                            Front.showBanner("Bottom margin hit, jump to next page");
-                        }
-                    }
-                }
-                f.call(elm, x, y);
-            };
-        }
         elm.smoothScrollBy = function(x, y, d) {
             if (!keyHeld) {
                 var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
