@@ -562,5 +562,11 @@ var Front = (function() {
         }
     }, { passive: false });
 
+    window.addEventListener('beforeunload', function() {
+        top.postMessage({
+            action: "frontendUnloaded"
+        }, topOrigin);
+    });
+
     return self;
 })();

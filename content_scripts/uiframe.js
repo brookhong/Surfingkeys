@@ -108,15 +108,13 @@ function createUiHost() {
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };
-
-    function _onBeforeunload() {
+    _actions['frontendUnloaded'] = function(response) {
+        window.removeEventListener('message', _onWindowMessage, true);
         uiHost.remove();
-    }
-    window.addEventListener('beforeunload', _onBeforeunload);
+    };
 
     uiHost.detach = function() {
-        window.removeEventListener('message', _onWindowMessage, true);
-        window.removeEventListener('beforeunload', _onBeforeunload);
+        ifr.src = chrome.runtime.getURL('');
     };
     return uiHost;
 }

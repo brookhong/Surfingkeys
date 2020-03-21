@@ -444,7 +444,6 @@ if (window === top) {
             if (window.uiHost) {
                 window.uiHostDetaching = setTimeout(function() {
                     window.uiHost.detach();
-                    window.uiHost.remove();
                     delete window.uiHost;
                 }, 30000);
             }
