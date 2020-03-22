@@ -368,7 +368,11 @@ function createHints() {
             } else if (Array.isArray(cssSelector)) {
                 elements = filterInvisibleElements(cssSelector);
             } else {
-                elements = Array.from(document.documentElement.querySelectorAll(cssSelector));
+                elements = getVisibleElements(function (e, v) {
+                    if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
+                        v.push(e);
+                    }
+                });
                 elements = filterInvisibleElements(elements);
                 elements = filterOverlapElements(elements);
             }
@@ -486,7 +490,7 @@ function createHints() {
 
         var elements = getVisibleElements(function(e, v) {
             if (e.matches(cssSelector) && !e.disabled && !e.readOnly
-                && (e.type === "text" || e.type === "password")) {
+                && (e.type === "text" || e.type === "search" || e.type === "password")) {
                 v.push(e);
             }
         });
