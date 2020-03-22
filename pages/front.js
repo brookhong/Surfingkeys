@@ -326,16 +326,16 @@ var Front = (function() {
     self.showBanner = function (content, linger_time) {
         banner.style.cssText = "";
         banner.style.display = "";
+        banner.style.top = "0px";
         setInnerHTML(banner, htmlEncode(content));
         self.flush();
 
-        let timems = (linger_time || 1600) / 1000;
-        banner.style.cssText = `animation: ${timems}s ease-in-out 1 both slideInBanner;`;
-        banner.one('animationend', function() {
+        let timems = linger_time || 1600;
+        setTimeout(function() {
             banner.style.cssText = "";
             banner.style.display = "none";
             self.flush();
-        });
+        }, timems);
     };
     _actions['showBanner'] = function(message) {
         self.showBanner(message.content, message.linger_time);
@@ -432,14 +432,10 @@ var Front = (function() {
 
     _actions['hideKeystroke'] = function() {
         if (keystroke.style.display !== "none") {
-            var outClass = keystroke.classList.contains("expandRichHints") ? "collapseRichHints" : "slideOutRight";
             keystroke.classList.remove("expandRichHints");
-            keystroke.classList.add(outClass);
-            keystroke.one('animationend', function() {
-                setInnerHTML(keystroke, "");
-                keystroke.style.display = "none";
-                self.flush();
-            });
+            setInnerHTML(keystroke, "");
+            keystroke.style.display = "none";
+            self.flush();
         }
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             clearPendingHint();
@@ -464,10 +460,7 @@ var Front = (function() {
             }).join("");
             if (words.length > 0 && _pendingHint) {
                 setInnerHTML(keystroke, words);
-                var cl = keystroke.classList;
-                cl.remove("expandRichHints");
-                cl.remove("simpleHint");
-                cl.add("expandRichHints");
+                keystroke.classList.add("expandRichHints");
                 self.flush();
             }
         });
@@ -481,13 +474,6 @@ var Front = (function() {
             self.flush();
             var keys = keystroke.innerHTML + htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
             setInnerHTML(keystroke, keys);
-
-            var cl = keystroke.classList;
-            cl.remove("slideInRight");
-            cl.remove("slideOutRight");
-            cl.remove("collapseRichHints");
-            cl.add("slideInRight");
-            cl.add("simpleHint");
 
             if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
                 _pendingHint = setTimeout(function() {
