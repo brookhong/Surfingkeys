@@ -271,6 +271,7 @@ function createInsert() {
     self.addEventListener('keydown', function(event) {
         if (event.key && event.key.charCodeAt(0) > 127) {
             // IME is opened.
+            event.sk_suppressed = true;
             return;
         }
         // prevent this event to be handled by Surfingkeys' other listeners
