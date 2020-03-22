@@ -445,7 +445,7 @@ if (window === top) {
                 window.uiHostDetaching = setTimeout(function() {
                     window.uiHost.detach();
                     delete window.uiHost;
-                }, 30000);
+                }, 3000);
             }
         });
         window._setScrollPos = function (x, y) {
@@ -497,6 +497,13 @@ if (window === top) {
         // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
     }, {once: true});
 } else {
+    // activate Modes in the frames on extension pages
+    runtime.getTopURL(function(u) {
+        if (u.indexOf(chrome.extension.getURL("")) === 0) {
+            _initModules();
+            _initContent();
+        }
+    });
     setTimeout(function() {
         document.addEventListener('click', function (e) {
             getFrameId();

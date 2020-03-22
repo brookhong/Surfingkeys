@@ -322,10 +322,7 @@
         <script src="default.js"></script>
         <script src="../content_scripts/content_scripts.js"></script>
 
-        <iframe id="proxyFrame" style=" display: none; "></iframe>
-        <script type="text/javascript">
-            document.getElementById("proxyFrame").src = window.location.search.substr(3);
-        </script>
+        <iframe id="proxyFrame" src="file:///" style=" display: none; "></iframe>
         <script src="../libs/webfontloader.js"></script>
         <script src="pdf/pdf.js"></script>
         <script src="pdf/pdf_l10n.js"></script>
