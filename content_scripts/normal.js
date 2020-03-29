@@ -235,11 +235,8 @@ function createMode() {
             var pf = this.pendingMap.bind(this);
             event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
                 || this.map_node.meta.stopPropagation(key));
-            setTimeout(function() {
-                pf(key);
-                self.finish(thisMode);
-                onAfterHandler(thisMode, event);
-            }, 0);
+            pf(key);
+            self.finish(thisMode);
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings &&
             runtime.conf.digitForRepeat &&
@@ -270,14 +267,11 @@ function createMode() {
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
                         event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
                             || this.map_node.meta.stopPropagation(key));
-                        setTimeout(function() {
-                            while(RUNTIME.repeats > 0) {
-                                code();
-                                RUNTIME.repeats--;
-                            }
-                            self.finish(thisMode);
-                            onAfterHandler(thisMode, event);
-                        }, 0);
+                        while(RUNTIME.repeats > 0) {
+                            code();
+                            RUNTIME.repeats--;
+                        }
+                        self.finish(thisMode);
                     }
                 } else {
                     this.isTrustedEvent && Front.showKeystroke(key, this);
