@@ -82,6 +82,91 @@ addProxyPair.onclick = function () {
     });
 };
 
+function renderAutoproxyHosts(rs, divProxyPair, number) {
+    var desc = "For below hosts, above proxy will be used, click ❌ to remove one.";
+    if (rs.proxyMode === "bypass") {
+        desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
+    }
+    setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
+
+    var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
+
+    var ih = autoproxyHostsInput.value;
+    autoproxyHostsInput.value = "";
+    var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
+        return `<aphost><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
+    }).join("");
+    setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
+
+    var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
+    autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
+        ph.onclick = function() {
+            var elm = this.closest('aphost');
+            RUNTIME('updateProxy', {
+                number: number,
+                host: elm.querySelector("span:nth-child(2)").innerText,
+                operation: 'remove'
+            }, function() {
+                elm.remove();
+            });
+        };
+    });
+
+    function addAutoProxyHost() {
+        _updateProxy({
+            number: number,
+            host: autoproxyHostsInput.value,
+            operation: 'add'
+        });
+    }
+
+    autoproxyHostsInput.onkeyup = function(e) {
+        if (e.keyCode === 13) {
+            addAutoProxyHost();
+        }
+    };
+
+    divProxyPair.querySelector('.autoproxy_hosts>button').onclick = addAutoProxyHost;
+
+    divProxyPair.querySelector('.deleteProxyPair').onclick = function() {
+        _updateProxy({
+            number: number,
+            operation: "deleteProxyPair"
+        });
+    };
+}
+
+function renderProxyPair(proxy, number) {
+    var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
+    if (divProxyPair === null) {
+        divProxyPair = createElement(document.getElementById("templateProxyPair").textContent.trim());
+        divProxyPair.setAttribute("number", number);
+        proxyGroup.insertBefore(divProxyPair, addProxyPair);
+    }
+
+    var proxySelect = divProxyPair.querySelector(".proxy>select");
+    var proxyInput = divProxyPair.querySelector(".proxy>input");
+
+    function __updateProxy(data) {
+        _updateProxy({
+            number: number,
+            proxy: proxySelect.value + " " + proxyInput.value
+        });
+    }
+
+    proxySelect.onchange = __updateProxy;
+    proxyInput.onblur = __updateProxy;
+
+    var p = proxy.split(/\s+/);
+    if (p.length > 0) {
+        proxySelect.value = p[0];
+        proxyInput.value = p[1];
+    } else {
+        proxySelect.value = "PROXY";
+    }
+    return divProxyPair;
+}
+
 function renderProxySettings(rs) {
     proxyModeSelect.value = rs.proxyMode;
     proxyModeSelect.onchange = function() {
@@ -93,96 +178,21 @@ function renderProxySettings(rs) {
         span.hide();
     });
     document.querySelector(`#proxyMode span[mode=${rs.proxyMode}]`).show();
-    if (rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
+    if (rs.proxyMode === "always" || rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
 
-        var proxyPairs = document.querySelectorAll('div.proxyPair');
-        if (proxyPairs.length > rs.proxy.length) {
-            proxyPairs.remove();
-        }
-        rs.proxy.forEach(function(proxy, number) {
-            var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
-            if (divProxyPair === null) {
-                divProxyPair = createElement(document.getElementById("templateProxyPair").textContent.trim());
-                divProxyPair.setAttribute("number", number);
-                proxyGroup.insertBefore(divProxyPair, addProxyPair);
-            }
-
-            var proxyDiv = divProxyPair.querySelector(".proxy");
-            var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
-
-            var proxySelect = divProxyPair.querySelector(".proxy>select");
-            var proxyInput = divProxyPair.querySelector(".proxy>input");
-
-            function __updateProxy(data) {
-                _updateProxy({
-                    number: number,
-                    proxy: proxySelect.value + " " + proxyInput.value
-                });
-            }
-
-            proxySelect.onchange = __updateProxy;
-            proxyInput.onblur = __updateProxy;
-
-            var p = proxy.split(/\s+/);
-            if (p.length > 0) {
-                proxySelect.value = p[0];
-                proxyInput.value = p[1];
-            } else {
-                proxySelect.value = "PROXY";
-            }
-
-            var desc = "For below hosts, above proxy will be used, click ❌ to remove one.";
-            if (rs.proxyMode === "bypass") {
-                desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
-            }
-            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
-
-            var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
-
-            var ih = autoproxyHostsInput.value;
-            autoproxyHostsInput.value = "";
-            var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
-                return `<aphost><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
-            }).join("");
-            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
-
-            autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
-                ph.onclick = function() {
-                    var elm = this.closest('aphost');
-                    RUNTIME('updateProxy', {
-                        number: number,
-                        host: elm.querySelector("span:nth-child(2)").innerText,
-                        operation: 'remove'
-                    }, function() {
-                        elm.remove();
-                    });
-                };
+        document.querySelectorAll('div.proxyPair').remove();
+        if (rs.proxyMode === "always") {
+            var pp = renderProxyPair(rs.proxy[0], 0);
+            pp.querySelector('.autoproxy_hosts').hide();
+            addProxyPair.hide();
+        } else {
+            rs.proxy.forEach(function(proxy, number) {
+                var pp = renderProxyPair(proxy, number);
+                pp.querySelector('.autoproxy_hosts').show();
+                renderAutoproxyHosts(rs, pp, number);
             });
-
-            function addAutoProxyHost() {
-                _updateProxy({
-                    number: number,
-                    host: autoproxyHostsInput.value,
-                    operation: 'add'
-                });
-            }
-
-            autoproxyHostsInput.onkeyup = function(e) {
-                if (e.keyCode === 13) {
-                    addAutoProxyHost();
-                }
-            };
-
-            divProxyPair.querySelector('.autoproxy_hosts>button').onclick = addAutoProxyHost;
-
-            divProxyPair.querySelector('.deleteProxyPair').onclick = function() {
-                _updateProxy({
-                    number: number,
-                    operation: "deleteProxyPair"
-                });
-            };
-
-        });
+            addProxyPair.show();
+        }
         var deleteProxyPairs = document.querySelectorAll('div.deleteProxyPair');
         if (deleteProxyPairs.length > 1) {
             deleteProxyPairs.show();
