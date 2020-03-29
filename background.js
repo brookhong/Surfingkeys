@@ -268,15 +268,17 @@ var ChromeService = (function() {
         var tabId = details.tabId;
         if (tabActivated.hasOwnProperty(tabId)) {
             loadSettings('blacklist', function(data) {
-                var excluded = ["net::ERR_ABORTED", "net::ERR_CERT_AUTHORITY_INVALID", "net::ERR_CERT_COMMON_NAME_INVALID"];
                 var disabled = _getDisabled(data, new URL(details.url), null);
-                if (!disabled && (conf.interceptedErrors.indexOf("*") !== -1 || conf.interceptedErrors.indexOf(details.error) !== -1)) {
+                if (!disabled) {
                     if (!tabErrors.hasOwnProperty(tabId)) {
                         tabErrors[tabId] = [];
                     }
                     if (details.type === "main_frame") {
                         tabErrors[tabId] = [];
-                        if (excluded.indexOf(details.error) === -1) {
+                        // https://cs.chromium.org/chromium/src/net/base/net_error_list.h
+                        if (conf.interceptedErrors.indexOf("*") !== -1
+                            || conf.interceptedErrors.indexOf(details.error) !== -1
+                            || details.error.startsWith("net::ERR_CONNECTION_")) {
                             chrome.tabs.update(tabId, {
                                 url: chrome.extension.getURL("pages/error.html")
                             });
@@ -448,21 +450,16 @@ var ChromeService = (function() {
             if (_message.repeats > conf.repeatThreshold) {
                 _message.repeats = conf.repeatThreshold;
             }
-            // runtime.command from popup.js has _sender.tab undefined.
-            try {
-                var result = self[_message.action](_message, _sender, _sendResponse);
-                if (_message.needResponse) {
-                    if (result) {
-                        _sendResponse(result);
-                        _message.needResponse = false;
-                    } else {
-                        self.pendingPorts.push(_message);
-                        // An asynchronous response will be sent using sendResponse later.
-                    }
-                    return _message.needResponse;
+            var result = self[_message.action](_message, _sender, _sendResponse);
+            if (_message.needResponse) {
+                if (result) {
+                    _sendResponse(result);
+                    _message.needResponse = false;
+                } else {
+                    self.pendingPorts.push(_message);
+                    // An asynchronous response will be sent using sendResponse later.
                 }
-            } catch (e) {
-                console.log(_message.action + ": " + e);
+                return _message.needResponse;
             }
         } else {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
