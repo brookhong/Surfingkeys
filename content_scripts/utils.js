@@ -49,6 +49,10 @@ function isElementVisible(elm) {
 }
 
 function isElementClickable(e) {
+    if (!e) {
+      return false;
+    }
+
     var cssSelector = "a, button, select, input, textarea, summary, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role=button], *[role=link], *[role=menuitem], *[role=option], *[role=switch], *[role=tab], *[role=checkbox], *[role=combobox], *[role=menuitemcheckbox], *[role=menuitemradio]";
     if (runtime.conf.clickableSelector.length) {
         cssSelector += ", " + runtime.conf.clickableSelector;
@@ -254,9 +258,9 @@ function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
         var be = getRealRect(e);
-        if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
+        if (e && (e.disabled || e.readOnly || !isElementDrawn(e, be))) {
             return false;
-        } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
+        } else if (e && (e.matches("input, textarea, select, form") || e.contentEditable === "true")) {
             return true;
         } else {
             var el = document.elementFromPoint(be.left + 3, be.top + 3);

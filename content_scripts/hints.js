@@ -369,7 +369,7 @@ function createHints() {
                 elements = filterInvisibleElements(cssSelector);
             } else {
                 elements = getVisibleElements(function (e, v) {
-                    if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
+                    if (e && e.matches(cssSelector) && !e.disabled && !e.readOnly) {
                         v.push(e);
                     }
                 });
@@ -489,7 +489,7 @@ function createHints() {
         var cssSelector = "input";
 
         var elements = getVisibleElements(function(e, v) {
-            if (e.matches(cssSelector) && !e.disabled && !e.readOnly
+            if (e && e.matches(cssSelector) && !e.disabled && !e.readOnly
                 && (e.type === "text" || e.type === "search" || e.type === "password")) {
                 v.push(e);
             }
@@ -498,7 +498,7 @@ function createHints() {
         if (elements.length === 0 && document.querySelector(cssSelector) !== null) {
             document.querySelector(cssSelector).scrollIntoView();
             elements = getVisibleElements(function(e, v) {
-                if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
+                if (e && e.matches(cssSelector) && !e.disabled && !e.readOnly) {
                     v.push(e);
                 }
             });
