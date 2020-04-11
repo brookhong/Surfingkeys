@@ -172,6 +172,7 @@ function getVisibleElements(filter) {
         if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
             && (rect.left <= window.innerWidth) && (rect.right >= 0)
             && rect.height > 0
+            && getComputedStyle(e).visibility !== 'hidden'
         ) {
             filter(e, visibleElements);
         }
