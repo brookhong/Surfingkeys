@@ -267,9 +267,9 @@ var ChromeService = (function() {
     chrome.webRequest.onErrorOccurred.addListener(function(details) {
         var tabId = details.tabId;
         if (tabActivated.hasOwnProperty(tabId)) {
-            loadSettings('blacklist', function(data) {
+            loadSettings(['blacklist', 'proxyMode'], function(data) {
                 var disabled = _getDisabled(data, new URL(details.url), null);
-                if (!disabled) {
+                if (!disabled && data.proxyMode === 'byhost') {
                     if (!tabErrors.hasOwnProperty(tabId)) {
                         tabErrors[tabId] = [];
                     }
@@ -278,6 +278,7 @@ var ChromeService = (function() {
                         // https://cs.chromium.org/chromium/src/net/base/net_error_list.h
                         if (conf.interceptedErrors.indexOf("*") !== -1
                             || conf.interceptedErrors.indexOf(details.error) !== -1
+                            || details.error === "net::ERR_TIMED_OUT"
                             || details.error.startsWith("net::ERR_CONNECTION_")) {
                             chrome.tabs.update(tabId, {
                                 url: chrome.extension.getURL("pages/error.html")
