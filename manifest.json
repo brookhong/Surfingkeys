@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Surfingkeys",
     "short_name": "Rich shortcuts in vim spirit for productivity with keyboard.",
-    "version": "0.9.60",
+    "version": "0.9.61",
     "description": "Rich shortcuts to click links/switch tabs/scroll pages or capture full page, use Chrome like vim for productivity.",
     "icons": {
         "16": "icons/16.png",

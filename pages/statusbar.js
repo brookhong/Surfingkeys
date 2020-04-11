@@ -62,6 +62,10 @@ var Find = (function() {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
+        if (event.target !== input) {
+            // user clicks on somewhere else
+            reset();
+        }
         event.sk_suppressed = true;
     });
 
