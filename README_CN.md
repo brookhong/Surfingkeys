@@ -16,7 +16,14 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * 代理设置
 * Markdown预览
 
-[配置参考](#配置参考).
+## 安装
+
+* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
+
+## 捐赠
+![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
 
 [演示](http://video.weibo.com/show?fid=1034:09ef299edbed112e9c0a66a18ffb3463)
 
@@ -679,13 +686,18 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 ## Credits
 
-* [jQuery](https://github.com/jquery/jquery)
-* [TRIE](https://github.com/mikedeboer/trie)
-* [ACE vim editor](https://github.com/ajaxorg/ace)
-* [markdown parser](https://github.com/chjj/marked)
-* [pdf.js](https://github.com/mozilla/pdf.js)
-* [vimium](https://github.com/philc/vimium)
-* [cVim](https://github.com/1995eaton/chromium-vim)
+* ~~[jQuery](https://github.com/jquery/jquery)~~, removed for less memory usage and better performance.
+* ~~[TRIE](https://github.com/mikedeboer/trie)~~, finally replaced by my own simple implementation for less memory usage and better performance.
+* [ACE vim editor](https://github.com/ajaxorg/ace), for vim editor.
+* [markdown parser](https://github.com/chjj/marked), for markdown parser.
+* [pdf.js](https://github.com/mozilla/pdf.js), for pdf viewer.
+* [vimium](https://github.com/philc/vimium), for the days without this extension.
+* [cVim](https://github.com/1995eaton/chromium-vim), for the days without this extension.
+
+## 捐赠
+Support me with [paypal](https://www.paypal.me/brookhong), or
+
+![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
 
 ## License
 
