@@ -244,7 +244,9 @@ function createFront() {
     var _showQueryResult;
     self.performInlineQuery = function (query, showQueryResult) {
         if (_inlineQuery) {
-            readText(query);
+            if (runtime.conf.autoSpeakOnInlineQuery) {
+                readText(query);
+            }
             query = query.toLocaleLowerCase();
             runtime.updateHistory('OmniQuery', query);
             httpRequest({

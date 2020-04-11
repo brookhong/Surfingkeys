@@ -214,10 +214,6 @@ mapkey('O', '#1Open detected links from text', function() {
     }, {statusLine: "Open detected links from text"});
 });
 
-mapkey(';q', 'Toggle mouseSelectToQuery', function() {
-    RUNTIME('toggleMouseQuery', { origin: window.location.origin });
-});
-
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
     var pdfUrl = window.location.href;
     if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
