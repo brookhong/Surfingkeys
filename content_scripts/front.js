@@ -77,7 +77,7 @@ function createFront() {
     self.querySelectedWord = function() {
         var selection = document.getSelection();
         var word = selection.toString().trim();
-        if (word && word.length && selection.type === "Range") {
+        if (word && !/[\W_]/.test(word) && word.length && selection.type === "Range") {
             self.performInlineQueryOnSelection(word);
         }
     };

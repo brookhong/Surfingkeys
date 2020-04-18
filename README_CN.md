@@ -22,11 +22,6 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
 * [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
 
-## 捐赠
-![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
-
-[演示](http://video.weibo.com/show?fid=1034:09ef299edbed112e9c0a66a18ffb3463)
-
 ### 目录
 
 * [功能特性](#功能特性)

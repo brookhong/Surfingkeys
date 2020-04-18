@@ -165,7 +165,7 @@ gulp.task('build_manifest', gulp.series('copy-non-js-files', 'copy-html-files', 
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");
-        json.background.persistent = false;
+        json.background.persistent = true;
         json.incognito = "split";
         json.options_page = "pages/options.html";
         json.sandbox = {

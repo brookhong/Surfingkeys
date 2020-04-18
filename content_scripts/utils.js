@@ -493,7 +493,8 @@ function getClickableElements(selectorString, pattern) {
 function filterInvisibleElements(nodes) {
     return nodes.filter(function(n) {
         return n.offsetHeight && n.offsetWidth
-            && !n.getAttribute('disabled') && isElementPartiallyInViewport(n);
+            && !n.getAttribute('disabled') && isElementPartiallyInViewport(n)
+            && getComputedStyle(n).visibility !== 'hidden';
     });
 }
 
