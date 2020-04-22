@@ -8,7 +8,7 @@
 
 ## Error details
 
-<--! **You can simply click dropdown menu from Surfingkeys' icon in toolbar, which will provide necessary info.**
+<!-- **You can simply click dropdown menu from Surfingkeys' icon in toolbar, which will provide necessary info.**
 ![image](https://user-images.githubusercontent.com/288207/39614555-6048977e-4fa3-11e8-8476-46203af7c4d6.png) -->
 
 SurfingKeys: <version>
