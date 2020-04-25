@@ -370,10 +370,10 @@ function createNormal() {
                         Mode.handleMapKey.call(self, event);
                     }
                 } else {
-                    Normal.passFocus(true);
                     event.sk_stopPropagation = (runtime.conf.editableBodyCare
                         && realTarget === document.body && event.key === "i");
                     if (event.sk_stopPropagation) {
+                        Normal.passFocus(true);
                         realTarget.focus();
                     }
 
