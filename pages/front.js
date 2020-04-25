@@ -2,6 +2,7 @@ var Front = (function() {
     window.KeyboardUtils = createKeyboardUtils();
     window.Mode = createMode();
     window.Normal = createNormal();
+    window.PassThrough = createPassThrough();
     window.Visual = createVisual();
     window.Hints = createHints();
     window.Clipboard = createClipboard();
