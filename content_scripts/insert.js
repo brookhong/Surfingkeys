@@ -20,7 +20,7 @@ function createInsert() {
                 if (node.nodeType === Node.TEXT_NODE) {
                     document.getSelection().setPosition(node, node.data.length);
                 } else {
-                    document.getSelection().setPosition(node, 0);
+                    document.getSelection().setPosition(node, node.childNodes.length);
                 }
                 // blink cursor to bring cursor into view
                 Visual.showCursor();
