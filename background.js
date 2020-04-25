@@ -264,35 +264,6 @@ var ChromeService = (function() {
 
     loadSettings(null, _applyProxySettings);
 
-    chrome.webRequest.onErrorOccurred.addListener(function(details) {
-        var tabId = details.tabId;
-        if (tabActivated.hasOwnProperty(tabId)) {
-            loadSettings(['blacklist', 'proxyMode'], function(data) {
-                var disabled = _getDisabled(data, new URL(details.url), null);
-                if (!disabled && data.proxyMode === 'byhost') {
-                    if (!tabErrors.hasOwnProperty(tabId)) {
-                        tabErrors[tabId] = [];
-                    }
-                    if (details.type === "main_frame") {
-                        tabErrors[tabId] = [];
-                        // https://cs.chromium.org/chromium/src/net/base/net_error_list.h
-                        if (conf.interceptedErrors.indexOf("*") !== -1
-                            || conf.interceptedErrors.indexOf(details.error) !== -1
-                            || details.error === "net::ERR_TIMED_OUT"
-                            || details.error.startsWith("net::ERR_CONNECTION_")) {
-                            chrome.tabs.update(tabId, {
-                                url: chrome.extension.getURL("pages/error.html")
-                            });
-                        }
-                    }
-                    tabErrors[tabId].push(details);
-                }
-            });
-        }
-    }, {
-        urls: ["<all_urls>"]
-    });
-
     function removeTab(tabId) {
         delete tabActivated[tabId];
         delete tabMessages[tabId];
@@ -422,7 +393,7 @@ var ChromeService = (function() {
                 break;
             case 'proxyThis':
                 getActiveTab(function(tab) {
-                    var host = new URL(tab.url).host;
+                    var host = new URL(tab.url || tab.pendingUrl).host;
                     updateProxy({
                         host: host,
                         operation: "toggle"
