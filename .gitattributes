@@ -1,0 +1,10 @@
+.gitattributes export-ignore
+.github export-ignore
+.gitignore export-ignore
+*.md export-ignore
+libs/mermaid.min.js export-ignore
+libs/webfontloader.js export-ignore
+pages/mermaid.* export-ignore
+pages/ga.js export-ignore
+pages/pdf export-ignore
+pages/pdf_viewer.html export-ignore
