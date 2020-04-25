@@ -149,14 +149,15 @@ var Front = (function() {
     }
 
     _tabs.onShow = function(tabs) {
-        setInnerHTML(_tabs, "");
+        setSanitizedContent(_tabs, "");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
-        var tabstr = "<div class=sk_tab style='width: 200px'>";
         tabs.forEach(function(t, i) {
-            var tab = createElement(tabstr);
+            var tab = document.createElement('div');
+            tab.setAttribute('class', 'sk_tab');
+            tab.style.width = '200px';
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            setInnerHTML(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
+            setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
             tab.url = t.url;
             _tabs.append(tab);
         });
@@ -219,7 +220,7 @@ var Front = (function() {
 
     _usage.onShow = function(message) {
         buildUsage(message.metas, function(usage) {
-            setInnerHTML(_usage, usage);
+            setSanitizedContent(_usage, usage);
         });
     };
 
@@ -233,7 +234,7 @@ var Front = (function() {
             }
         }
         if ('theme' in message.userSettings) {
-            setInnerHTML(document.getElementById("sk_theme"), message.userSettings.theme);
+            setSanitizedContent(document.getElementById("sk_theme"), message.userSettings.theme);
         }
     };
     _actions['executeCommand'] = function (message) {
@@ -282,7 +283,7 @@ var Front = (function() {
     };
 
     self.showPopup = function(content) {
-        setInnerHTML(_popup, content);
+        setSanitizedContent(_popup, content);
         showPopup(_popup);
     };
 
@@ -315,7 +316,7 @@ var Front = (function() {
     _actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
         var style = message.style || "";
-        setInnerHTML(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
+        setSanitizedContent(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
     };
     self.openOmnibar = _actions['openOmnibar'];
     _actions['openFinder'] = function() {
@@ -327,7 +328,7 @@ var Front = (function() {
         banner.style.cssText = "";
         banner.style.display = "";
         banner.style.top = "0px";
-        setInnerHTML(banner, htmlEncode(content));
+        setSanitizedContent(banner, htmlEncode(content));
         self.flush();
 
         let timems = linger_time || 1600;
@@ -347,7 +348,7 @@ var Front = (function() {
         // set position to (0, 0) to leave enough space for content.
         _bubble.style.top = "0px";
         _bubble.style.left = "0px";
-        setInnerHTML(sk_bubble_content, message.content);
+        setSanitizedContent(sk_bubble_content, message.content);
         sk_bubble_content.style.maxWidth = (pos.winWidth - 32) + "px";
         sk_bubble_content.scrollTop = 0;
         clearScrollerIndicator();
@@ -433,7 +434,7 @@ var Front = (function() {
     _actions['hideKeystroke'] = function() {
         if (keystroke.style.display !== "none") {
             keystroke.classList.remove("expandRichHints");
-            setInnerHTML(keystroke, "");
+            setSanitizedContent(keystroke, "");
             keystroke.style.display = "none";
             self.flush();
         }
@@ -459,7 +460,7 @@ var Front = (function() {
                 }
             }).join("");
             if (words.length > 0 && _pendingHint) {
-                setInnerHTML(keystroke, words);
+                setSanitizedContent(keystroke, words);
                 keystroke.classList.add("expandRichHints");
                 self.flush();
             }
@@ -473,7 +474,7 @@ var Front = (function() {
             keystroke.style.display = "";
             self.flush();
             var keys = keystroke.innerHTML + htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
-            setInnerHTML(keystroke, keys);
+            setSanitizedContent(keystroke, keys);
 
             if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
                 _pendingHint = setTimeout(function() {

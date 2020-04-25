@@ -41,12 +41,12 @@ span.tip {
     padding-left: 60px;
     color: #04ad23;
 }
-aphost {
+div.aphost {
     display: inline-block;
     width: 200px;
     color: blue;
 }
-aphost>span.remove {
+div.aphost>span.remove {
     cursor: pointer;
 }
 

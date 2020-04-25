@@ -146,11 +146,12 @@ gulp.task('build_modules', function() {
 
 gulp.task('build_common_content_min', gulp.series('build_modules', function(cb) {
     if (buildTarget === "Firefox") {
-        return gulp.src([`dist/${buildTarget}-extension/content_scripts/modules.min.js`,"libs/shadydom.min.js"])
+        return gulp.src(["libs/purify.min.js",`dist/${buildTarget}-extension/content_scripts/modules.min.js`,"libs/shadydom.min.js"])
             .pipe(gp_concat('modules.min.js'))
             .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
     } else {
-        return gulp.src([`dist/${buildTarget}-extension/content_scripts/modules.min.js`])
+        return gulp.src(["libs/purify.min.js",`dist/${buildTarget}-extension/content_scripts/modules.min.js`])
+            .pipe(gp_concat('modules.min.js'))
             .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
     }
 }));

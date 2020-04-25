@@ -268,9 +268,9 @@ var Omnibar = (function() {
             lastHandler = handler;
             handler = SearchEngine;
             Object.assign(SearchEngine, SearchEngine.aliases[alias]);
-            setInnerHTML(self.resultsDiv, "");
-            setInnerHTML(self.promptSpan, handler.prompt);
-            setInnerHTML(resultPageSpan, "");
+            setSanitizedContent(self.resultsDiv, "");
+            setSanitizedContent(self.promptSpan, handler.prompt);
+            setSanitizedContent(resultPageSpan, "");
             _items = null;
             self.collapsingPoint = val;
             self.input.value = val;
@@ -287,7 +287,7 @@ var Omnibar = (function() {
         if (lastHandler && handler !== lastHandler && (val === self.collapsingPoint || val === "")) {
             handler = lastHandler;
             lastHandler = null;
-            setInnerHTML(self.promptSpan, handler.prompt);
+            setSanitizedContent(self.promptSpan, handler.prompt);
             if (val.length) {
                 self.input.value = val.substr(0, val.length - 1);
             }
@@ -417,14 +417,15 @@ var Omnibar = (function() {
                 type = "🔥";
             }
         }
-        var li = createElement(`<li><div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div></li>`);
+        var li = createElementWithContent('li',
+            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div>`);
         li.uid = uid;
         li.url = b.url;
         return li;
     };
 
     self.createItemFromRawHtml = function({ html, props }) {
-        const li = createElement(html);
+        const li = createElementWithContent('li', html);
         if (typeof props === "object") {
             Object.assign(li, props);
         }
@@ -480,7 +481,7 @@ var Omnibar = (function() {
         var si = (_start - 1) * _pageSize,
             ei = si + _pageSize;
             ei = ei > _items.length ? _items.length : ei;
-        setInnerHTML(resultPageSpan, `${si + 1} - ${ei} / ${_items.length}`);
+        setSanitizedContent(resultPageSpan, `${si + 1} - ${ei} / ${_items.length}`);
         _page = _items.slice(si, ei);
         var query = self.input.value.trim();
         var rxp = null;
@@ -497,7 +498,7 @@ var Omnibar = (function() {
                 }
                 li = self.createURLItem(b, rxp);
             } else if (_showFolder) {
-                li = createElement(`<li><div class="title">▷ ${self.highlight(rxp, b.title)}</div></li>`);
+                li = createElementWithContent('li', `<div class="title">▷ ${self.highlight(rxp, b.title)}</div>`);
                 li.folder_name = b.title;
                 li.folderId = b.id;
             }
@@ -533,8 +534,8 @@ var Omnibar = (function() {
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
-        setInnerHTML(self.promptSpan, handler.prompt);
-        setInnerHTML(resultPageSpan, "");
+        setSanitizedContent(self.promptSpan, handler.prompt);
+        setSanitizedContent(resultPageSpan, "");
         ui.scrollTop = 0;
     };
 
@@ -548,7 +549,7 @@ var Omnibar = (function() {
 
         lastInput = "";
         self.input.value = "";
-        setInnerHTML(self.resultsDiv, "");
+        setSanitizedContent(self.resultsDiv, "");
         lastHandler = null;
         handler.onClose && handler.onClose();
         self.exit();
@@ -590,14 +591,14 @@ var Omnibar = (function() {
     };
 
     self.listResults = function (items, renderItem) {
-        setInnerHTML(self.resultsDiv, "");
+        setSanitizedContent(self.resultsDiv, "");
         if (!items || items.length === 0) {
             return;
         }
         if (runtime.conf.omnibarPosition === "bottom") {
             items.reverse();
         }
-        var ul = createElement("<ul/>");
+        var ul = document.createElement("ul");
         items.forEach(function(b) {
             var li = renderItem(b);
             if (li) {
@@ -617,14 +618,14 @@ var Omnibar = (function() {
 
     self.listWords = function(words) {
         self.listResults(words, function(w) {
-            var li = createElement(`<li>⌕ ${w}</li>`);
+            var li = createElementWithContent('li', `⌕ ${w}`);
             li.query = w;
             return li;
         });
     };
 
     self.html = function(content) {
-        setInnerHTML(self.resultsDiv, content);
+        setSanitizedContent(self.resultsDiv, content);
     };
 
     self.addHandler = function(name, hdl) {
@@ -666,7 +667,7 @@ var OpenBookmarks = (function() {
             RUNTIME('getBookmarks', null, self.onResponse);
         }
         self.prompt = fl.prompt;
-        setInnerHTML(Omnibar.promptSpan, self.prompt);
+        setSanitizedContent(Omnibar.promptSpan, self.prompt);
         lastFocused = fl.focused;
     }
 
@@ -682,7 +683,7 @@ var OpenBookmarks = (function() {
                 focused: items.indexOf(fi)
             });
             self.prompt = fi.folder_name + separator;
-            setInnerHTML(Omnibar.promptSpan, self.prompt);
+            setSanitizedContent(Omnibar.promptSpan, self.prompt);
             Omnibar.input.value = "";
             currentFolderId = folderId;
             lastFocused = 0;
@@ -729,7 +730,7 @@ var OpenBookmarks = (function() {
         if (event.keyCode === KeyboardUtils.keyCodes.comma) {
             folderOnly = !folderOnly;
             self.prompt = folderOnly ? `bookmark folder${separator}` : `bookmark${separator}`;
-            setInnerHTML(Omnibar.promptSpan, self.prompt);
+            setSanitizedContent(Omnibar.promptSpan, self.prompt);
             RUNTIME('getBookmarks', {
                 parentId: currentFolderId,
                 query: Omnibar.input.value
@@ -784,12 +785,12 @@ var AddBookmark = (function() {
         Omnibar.listBookmarkFolders(function(response) {
             folders = response.folders;
             Omnibar.listResults(folders.slice(), function(f) {
-                return createElement(`<li folder="${f.id}">▷ ${f.title}</li>`);
+                return createElementWithContent('li', `▷ ${f.title}`, {folder: f.id});
             });
             RUNTIME("getBookmark", null, function(resp) {
                 if (resp.bookmarks.length) {
                     var b = resp.bookmarks[0];
-                    setInnerHTML(Omnibar.promptSpan, `edit bookmark${separatorHtml}`);
+                    setSanitizedContent(Omnibar.promptSpan, `edit bookmark${separatorHtml}`);
                     Omnibar.resultsDiv.querySelector('li.focused').classList.remove('focused');
                     Omnibar.focusItem(`li[folder="${b.parentId}"]`);
                 }
@@ -872,7 +873,7 @@ var AddBookmark = (function() {
               return b.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
         Omnibar.listResults(matches, function(f) {
-            return createElement(`<li folder="${f.id}">▷ ${f.title}</li>`);
+            return createElementWithContent('li', `▷ ${f.title}`, {folder: f.id});
         });
     };
 
@@ -1123,7 +1124,7 @@ var SearchEngine = (function() {
             } else if (w.hasOwnProperty('url')) {
                 return Omnibar.createURLItem(w, rxp);
             } else {
-                var li = createElement(`<li>⌕ ${w}</li>`);
+                var li = createElementWithContent('li', `⌕ ${w}`);
                 li.query = w;
                 return li;
             }
@@ -1189,7 +1190,7 @@ var Commands = (function() {
             var candidates = response.settings.cmdHistory;
             if (candidates.length) {
                 Omnibar.listResults(candidates, function(c) {
-                    var li = createElement(`<li>${c}</li>`);
+                    var li = createElementWithContent('li', c);
                     li.cmd = c;
                     return li;
                 });
@@ -1206,7 +1207,7 @@ var Commands = (function() {
         });
         if (candidates.length) {
             Omnibar.listResults(candidates, function(c) {
-                var li = createElement(`<li>${c}<span class=annotation>${htmlEncode(self.items[c].annotation)}</span></li>`);
+                var li = createElementWithContent('li', `${c}<span class=annotation>${htmlEncode(self.items[c].annotation)}</span>`);
                 li.cmd = c;
                 return li;
             });
@@ -1309,7 +1310,7 @@ var OmniQuery = (function() {
         });
         if (candidates.length) {
             Omnibar.listResults(candidates, function(w) {
-                return createElement(`<li>${w}</li>`);
+                return createElementWithContent('li', w);
             });
         }
     };

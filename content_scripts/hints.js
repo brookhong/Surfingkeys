@@ -84,7 +84,7 @@ function createHints() {
         behaviours = {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click']
         },
-        holder = createElement('<div id="sk_hints" style="display: block; opacity: 1;"/>'),
+        holder = createElementWithContent('div', '', {id: "sk_hints", style: "display: block; opacity: 1;"}),
         shiftKey = false;
     self.characters = 'asdfgqwertzxcvb';
     self.scrollKeys = '0jkhlG$';
@@ -135,7 +135,7 @@ function createHints() {
         if (textFilter.length > 0) {
             hints = hints.filter(function(hint) {
                 hint.label = "";
-                setInnerHTML(hint, "");
+                setSanitizedContent(hint, "");
                 var e = hint.link;
                 var text = e.innerText;
                 if (text === undefined) {
@@ -147,7 +147,7 @@ function createHints() {
         var hintLabels = self.genLabels(hints.length);
         hints.forEach(function(e, i) {
             e.label = hintLabels[i];
-            setInnerHTML(e, hintLabels[i]);
+            setSanitizedContent(e, hintLabels[i]);
         });
     }
 
@@ -158,11 +158,11 @@ function createHints() {
             var label = hint.label;
             if (prefix.length === 0) {
                 hint.style.opacity = 1;
-                setInnerHTML(hint, label);
+                setSanitizedContent(hint, label);
                 matches.push(hint);
             } else if (label.indexOf(prefix) === 0) {
                 hint.style.opacity = 1;
-                setInnerHTML(hint, `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length));
+                setSanitizedContent(hint, `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length));
                 matches.push(hint);
             } else {
                 hint.style.opacity = 0;
@@ -179,7 +179,7 @@ function createHints() {
             mouseEvents: ['mouseover', 'mousedown', 'mouseup', 'click'],
             multipleHits: false
         };
-        setInnerHTML(holder, "");
+        setSanitizedContent(holder, "");
         holder.remove();
         prefix = "";
         textFilter = "";
@@ -202,7 +202,7 @@ function createHints() {
     }
 
     function onScrollStarted(evt) {
-        setInnerHTML(holder, "");
+        setSanitizedContent(holder, "");
         holder.remove();
         prefix = "";
     }
@@ -254,11 +254,11 @@ function createHints() {
 
     self.coordinate = function() {
         // a hack to get co-ordinate
-        var link = createElement('<div style="top: 0; left: 0;">A</div>');
+        var link = createElementWithContent('div', 'A', {style: "top: 0; left: 0;"});
         holder.prepend(link);
         document.documentElement.prepend(holder);
         var br = link.getBoundingClientRect();
-        setInnerHTML(holder, "");
+        setSanitizedContent(holder, "");
         return {
             top: br.top + window.pageYOffset - document.documentElement.clientTop,
             left: br.left + window.pageXOffset - document.documentElement.clientLeft
@@ -266,7 +266,7 @@ function createHints() {
     };
 
     function _initHolder(mode) {
-        setInnerHTML(holder, "");
+        setSanitizedContent(holder, "");
         holder.setAttribute('mode', mode);
         holder.style.display = "";
     }
@@ -275,7 +275,7 @@ function createHints() {
         _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        var style = createElement(`<style>#sk_hints>div.myHint{${_styleForClick}}</style>`);
+        var style = createElementWithContent("style", "#sk_hints div.myHint{" + _styleForClick + "}");
         holder.prepend(style);
         var links = elements.map(function(elm, i) {
             var r = getRealRect(elm),
@@ -293,7 +293,7 @@ function createHints() {
             } else if (left + 32 > window.pageXOffset + window.innerWidth) {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
-            var link = createElement(`<div class="myHint">${hintLabels[i]}</div>`);
+            var link = createElementWithContent('div', hintLabels[i], {class: "myHint"});
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             link.style.top = Math.max(r.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
@@ -440,7 +440,7 @@ function createHints() {
                 return null;
             } else {
                 var z = getZIndex(e[0].parentNode);
-                var link = createElement('<div/>');
+                var link = document.createElement('div');
                 if (e[1] === 0) {
                     link.className = "begin";
                 }
@@ -464,11 +464,11 @@ function createHints() {
             var hintLabels = self.genLabels(elements.length);
             elements.forEach(function(e, i) {
                 e.label = hintLabels[i];
-                setInnerHTML(e, hintLabels[i]);
+                setSanitizedContent(e, hintLabels[i]);
                 holder.append(e);
             });
 
-            var style = createElement(`<style>#sk_hints[mode='text']>div{${_styleForText}}</style>`);
+            var style = createElementWithContent('style', `#sk_hints[mode='text'] div{${_styleForText}}`);
             holder.prepend(style);
             document.documentElement.prepend(holder);
         }
@@ -511,7 +511,7 @@ function createHints() {
                 var be = e.getBoundingClientRect();
                 var z = getZIndex(e);
 
-                var mask = createElement('<div/>');
+                var mask = document.createElement('div');
                 mask.style.position = "fixed";
                 mask.style.top = be.top + "px";
                 mask.style.left = be.left + "px";
@@ -562,7 +562,7 @@ function createHints() {
 
     self.flashPressedLink = function(link) {
         var rect = getRealRect(link);
-        var flashElem = createElement('<div style="position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"/>');
+        var flashElem = createElementWithContent('div', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';
         flashElem.style.width = rect.width + 'px';

@@ -3,11 +3,20 @@ function createUiHost() {
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
-    var ifr = createElement(`<iframe allowtransparency="true" frameborder="0" scrolling="no" class="sk_ui" src="${frontEndURL}" title="Surfingkeys" />`);
-    uiHost.attachShadow({mode:'open'});
-    var sk_style = document.createElement("style");
-    setInnerHTML(sk_style, `@import url("${chrome.runtime.getURL("pages/shadow.css")}");`);
-    uiHost.shadowRoot.appendChild(sk_style);
+    var ifr = document.createElement("iframe");
+    ifr.setAttribute('allowtransparency', true);
+    ifr.setAttribute('frameborder', 0);
+    ifr.setAttribute('scrolling', "no");
+    ifr.setAttribute('class', "sk_ui");
+    ifr.setAttribute('src', frontEndURL);
+    ifr.setAttribute('title', "Surfingkeys");
+    ifr.style.position = "fixed";
+    ifr.style.left = 0;
+    ifr.style.bottom = 0;
+    ifr.style.width = "100%";
+    ifr.style.height = 0;
+    ifr.style.zIndex = 2147483647;
+    uiHost.attachShadow({ mode: 'open' });
     uiHost.shadowRoot.appendChild(ifr);
 
     function _onWindowMessage(event) {

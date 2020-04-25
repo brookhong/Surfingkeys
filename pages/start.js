@@ -2,9 +2,9 @@ RUNTIME("getTopSites", null, function(response) {
     var urls = response.urls.map(function(u) {
         return `<li><a href="${u.url}"><i style="background:url('chrome://favicon/${u.url}') no-repeat"></i>${u.title}</a></li>`;
     });
-    setInnerHTML(document.querySelector("#topSites>ul"), urls.join("\n"));
+    setSanitizedContent(document.querySelector("#topSites>ul"), urls.join("\n"));
     var source = document.getElementById('quickIntroSource').innerText;
-    setInnerHTML(document.querySelector('#quickIntro'), marked(source));
+    setSanitizedContent(document.querySelector('#quickIntro'), marked(source));
 
     var screen1 = document.querySelector("#screen1");
     screen1.show();
@@ -41,7 +41,7 @@ document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
     Normal.enter();
     Front.getUsage(function(usage) {
         var _usage = document.getElementById('sk_usage');
-        setInnerHTML(_usage, usage);
+        setSanitizedContent(_usage, usage);
         var keys = Array.from(_usage.querySelectorAll('div')).filter(function(d) {
             return d.firstElementChild.matches(".kbd-span");
         });
@@ -53,7 +53,7 @@ document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
             cl.remove("fadeIn");
             cl.add("fadeOut");
             randomTip.one('animationend', function() {
-                setInnerHTML(this, keys[i].innerHTML);
+                setSanitizedContent(this, keys[i].innerHTML);
                 this.classList.add("fadeIn");
             });
         }, 5000);

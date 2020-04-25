@@ -67,7 +67,7 @@ var mermaidDiv = document.querySelector("div.mermaid");
 function drawDiagram(code) {
     Front.source = code;
     mermaidDiv.removeAttribute("data-processed");
-    setInnerHTML(mermaidDiv, code);
+    setSanitizedContent(mermaidDiv, code);
     try {
         mermaid.init({noteMargin: 10}, ".mermaid");
     } catch (e) {

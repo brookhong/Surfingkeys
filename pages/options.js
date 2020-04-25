@@ -87,21 +87,21 @@ function renderAutoproxyHosts(rs, divProxyPair, number) {
     if (rs.proxyMode === "bypass") {
         desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
     }
-    setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
+    setSanitizedContent(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
 
     var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
 
     var ih = autoproxyHostsInput.value;
     autoproxyHostsInput.value = "";
     var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
-        return `<aphost><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
+        return `<div class='aphost'><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></div>`;
     }).join("");
-    setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
+    setSanitizedContent(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
 
     var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
-    autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
+    autoproxyHostsDiv.querySelectorAll('div.aphost>span.remove').forEach(function(ph) {
         ph.onclick = function() {
-            var elm = this.closest('aphost');
+            var elm = this.closest('div.aphost');
             RUNTIME('updateProxy', {
                 number: number,
                 host: elm.querySelector("span:nth-child(2)").innerText,
@@ -139,8 +139,8 @@ function renderAutoproxyHosts(rs, divProxyPair, number) {
 function renderProxyPair(proxy, number) {
     var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
     if (divProxyPair === null) {
-        divProxyPair = createElement(document.getElementById("templateProxyPair").textContent.trim());
-        divProxyPair.setAttribute("number", number);
+        divProxyPair = createElementWithContent('div',
+            document.getElementById("templateProxyPair").textContent.trim(), {"class": "proxyPair", "number": number});
         proxyGroup.insertBefore(divProxyPair, addProxyPair);
     }
 
@@ -387,7 +387,7 @@ function renderKeyMappings(rs) {
     </div>`;
             });
 
-            setInnerHTML(basicMappingsDiv, customization.join(""));
+            setSanitizedContent(basicMappingsDiv, customization.join(""));
             basicMappingsDiv.querySelectorAll("kbd").forEach(function(d) {
                 d.onclick = function () {
                     KeyPicker.enter(this);
@@ -409,7 +409,7 @@ var KeyPicker = (function() {
         if (!s) {
             s = "&nbsp;";
         }
-        setInnerHTML(document.getElementById("inputKey"), s);
+        setSanitizedContent(document.getElementById("inputKey"), s);
     }
 
     var _key = "";
@@ -426,7 +426,7 @@ var KeyPicker = (function() {
         } else if (event.keyCode === 13) {
             keyPickerDiv.hide();
             self.exit();
-            setInnerHTML(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
+            setSanitizedContent(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
             _elm.setAttribute('new', _key);
             var kbds = Array.from(basicMappingsDiv.querySelectorAll("kbd"));
             var originalKeys = kbds.map(function(m) {

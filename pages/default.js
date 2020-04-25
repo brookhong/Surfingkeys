@@ -632,12 +632,9 @@ mapkey(';pp', '#7Paste html on current page', function() {
     Clipboard.read(function(response) {
         document.documentElement.removeAttributes();
         document.body.removeAttributes();
-        setInnerHTML(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
-        setInnerHTML(document.body, response.data);
+        setSanitizedContent(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
+        setSanitizedContent(document.body, response.data);
     });
-});
-mapkey(';i', '#14Insert jquery library on current page', function() {
-    Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js");
 });
 
 function openGoogleTranslate() {

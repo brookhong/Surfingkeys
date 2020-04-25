@@ -97,7 +97,7 @@ command('listSession', 'list session', function() {
         key: 'sessions'
     }, function(response) {
         Omnibar.listResults(Object.keys(response.settings.sessions), function(s) {
-            return createElement(`<li>${s}</li>`);
+            return createElementWithContent('li', s);
         });
     });
 });
@@ -120,7 +120,7 @@ command('openSession', 'openSession [name]', function(args) {
 command('listQueueURLs', 'list URLs in queue waiting for open', function(args) {
     RUNTIME('getQueueURLs', null, function(response) {
         Omnibar.listResults(response.queueURLs, function(s) {
-            return createElement(`<li>${s}</li>`);
+            return createElementWithContent('li', s);
         });
     });
 });

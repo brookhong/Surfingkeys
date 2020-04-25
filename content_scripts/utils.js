@@ -498,15 +498,23 @@ function filterInvisibleElements(nodes) {
     });
 }
 
-function setInnerHTML(elm, str) {
-    elm.innerHTML = str;
+function setSanitizedContent(elm, str) {
+    elm.innerHTML = DOMPurify.sanitize(str);
 }
 
-function createElement(str) {
-    var div = document.createElement('div');
-    setInnerHTML(div, str);
+function createElementWithContent(tag, content, attributes) {
+    var elm = document.createElement(tag);
+    if (content) {
+        setSanitizedContent(elm, content);
+    }
 
-    return div.firstChild;
+    if (attributes) {
+        for (var attr in attributes) {
+            elm.setAttribute(attr, attributes[attr]);
+        }
+    }
+
+    return elm;
 }
 
 function hasScroll(el, direction, barSize) {
@@ -534,7 +542,7 @@ function isEmptyObject(obj) {
     return true;
 }
 
-var _divForHtmlEncoder = createElement("<div />");
+var _divForHtmlEncoder = document.createElement("div");
 function htmlEncode(str) {
     _divForHtmlEncoder.innerText = str;
     return _divForHtmlEncoder.innerHTML;

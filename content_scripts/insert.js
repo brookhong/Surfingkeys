@@ -150,7 +150,7 @@ function createInsert() {
         }
     });
 
-    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;" />'),
+    var _emojiDiv = createElementWithContent('div', '', {id: "sk_emoji", style: "display: block; opacity: 1;"}),
         _emojiList,
         _emojiPending = -1;
 
@@ -200,7 +200,7 @@ function createInsert() {
             if (emojiMatched === "") {
                 _emojiDiv.remove();
             } else {
-                setInnerHTML(_emojiDiv, emojiMatched);
+                setSanitizedContent(_emojiDiv, emojiMatched);
                 document.body.append(_emojiDiv);
                 _emojiDiv.style.display = "";
                 _emojiDiv.querySelector('#sk_emoji>div').classList.add("selected");
@@ -231,7 +231,7 @@ function createInsert() {
             span = document.createElement("span");
         mask.style.font = css.font;
         mask.style.position = "fixed";
-        setInnerHTML(mask, input.value);
+        setSanitizedContent(mask, input.value);
         mask.style.left = (input.clientLeft + br.left) + "px";
         mask.style.top = (input.clientTop + br.top) + "px";
         mask.style.color = "red";

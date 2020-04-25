@@ -819,7 +819,7 @@ function createNormal() {
         var s = document.createElement('script');
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
-            setInnerHTML(s, "(" + code.toString() + ")(window);");
+            setSanitizedContent(s, "(" + code.toString() + ")(window);");
             setTimeout(function() {
                 s.remove();
             }, 1);

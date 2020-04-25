@@ -59,26 +59,24 @@ settings.theme = `
 }`;
 // click `Save` button to make above settings to take effect.</script>
         <script id="templateProxyPair" type="text/template">
-            <div class="proxyPair">
-                <div class="deleteProxyPair">🗑️</div>
-                <div class="proxy">
-                    Proxy:
-                    <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
-                    Proxy Type:
-                    <select value="PROXY">
-                        <option value="PROXY" selected="selected">PROXY</option>
-                        <option value="SOCKS5">SOCKS5</option>
-                        <option value="HTTP">HTTP</option>
-                        <option value="HTTPS">HTTPS</option>
-                        <option value="SOCKS4">SOCKS4</option>
-                        <option value="SOCKS">SOCKS</option>
-                    </select>
-                </div>
-                <div class="autoproxy_hosts">
-                    <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
-                    <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
-                    <div></div>
-                </div>
+            <div class="deleteProxyPair">🗑️</div>
+            <div class="proxy">
+                Proxy:
+                <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
+                Proxy Type:
+                <select value="PROXY">
+                    <option value="PROXY" selected="selected">PROXY</option>
+                    <option value="SOCKS5">SOCKS5</option>
+                    <option value="HTTP">HTTP</option>
+                    <option value="HTTPS">HTTPS</option>
+                    <option value="SOCKS4">SOCKS4</option>
+                    <option value="SOCKS">SOCKS</option>
+                </select>
+            </div>
+            <div class="autoproxy_hosts">
+                <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
+                <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
+                <div></div>
             </div>
         </script>
         <div id="keyPicker" style="display: none;">

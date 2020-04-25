@@ -127,7 +127,7 @@ function createFront() {
         });
     };
 
-    var frameElement = createElement('<div id="sk_frame">Hi, I\'m here now!</div>');
+    var frameElement = createElementWithContent('div', 'Hi, I\'m here now!', {id: "sk_frame"});
     frameElement.fromSurfingKeys = true;
     self.highlightElement = function (sn) {
         document.documentElement.append(frameElement);

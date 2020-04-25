@@ -20,7 +20,7 @@ function createClipboard() {
     self.read = function(onReady) {
         clipboardActionWithSelectionPreserved(function() {
             holder.value = '';
-            setInnerHTML(holder, '');
+            setSanitizedContent(holder, '');
             holder.focus();
             document.execCommand("Paste");
         });

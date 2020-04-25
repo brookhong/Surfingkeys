@@ -577,7 +577,7 @@ function createVisual() {
             n.onscroll = null;
         });
         registeredScrollNodes = [];
-        setInnerHTML(holder, "");
+        setSanitizedContent(holder, "");
         holder.remove();
         Front.showStatus(2, '');
     };
