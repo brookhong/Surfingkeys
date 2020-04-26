@@ -44,45 +44,61 @@ var Front = (function() {
         }
     });
 
+    function State(pointerEvents, frameHeight, onEnter) {
+        this.enter = function() {
+            onEnter && onEnter();
+            top.postMessage({
+                action: 'setFrontFrame',
+                pointerEvents: pointerEvents,
+                frameHeight: frameHeight
+            }, topOrigin);
+        };
+        this.nextState = function () {
+            var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
+                return n.style.display !== "none";
+            });
+            var pointerEvents = visibleDivs.map(function(d) {
+                var id = d.id;
+                var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
+                if (divNoPointerEvents.indexOf(id) !== -1) {
+                    // no pointerEvents for bubble
+                    return false;
+                } else if (id === "sk_status") {
+                    // only pointerEvents when input in statusBar
+                    return self.statusBar.querySelector('input') !== null;
+                } else {
+                    // with pointerEvents for all other DIVs except that noPointerEvents is set.
+                    return !d.noPointerEvents;
+                }
+            });
+            // to make pointerEvents not empty
+            pointerEvents.push(false);
+            pointerEvents = pointerEvents.reduce(function(a, b) {
+                return a || b;
+            });
+
+            var ns;
+            if (pointerEvents) {
+                ns = stateInteractive;
+            } else if (visibleDivs.length > 0) {
+                ns = stateVisible;
+            } else {
+                ns = stateInvisible;
+            }
+            if (this !== ns) {
+                _state = ns;
+                _state.enter();
+            }
+        };
+    }
+    const stateInvisible = new State("none", "0px");
+    const stateVisible = new State("none", "100%");
+    const stateInteractive = new State("all", "100%", function() {
+        window.focus();
+    });
+    var _state = stateInvisible;
     self.flush = function() {
-        var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
-            return n.style.display !== "none";
-        });
-        var pointerEvents = visibleDivs.map(function(d) {
-            var id = d.id;
-            var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
-            if (divNoPointerEvents.indexOf(id) !== -1) {
-                // no pointerEvents for bubble
-                return false;
-            } else if (id === "sk_status") {
-                // only pointerEvents when input in statusBar
-                return self.statusBar.querySelector('input') !== null;
-            } else {
-                // with pointerEvents for all other DIVs except that noPointerEvents is set.
-                return !d.noPointerEvents;
-            }
-        });
-        // to make pointerEvents not empty
-        pointerEvents.push(false);
-        pointerEvents = pointerEvents.reduce(function(a, b) {
-            return a || b;
-        });
-        if (pointerEvents) {
-            window.focus();
-            if (visibleDivs[0] === self.omnibar) {
-                self.omnibar.querySelector("input").focus();
-            } else if (visibleDivs[0] === _editor) {
-                var input = (_editor.querySelector("div.ace_dialog-bottom>input") || _editor.querySelector("textarea"));
-                input && input.focus();
-            } else {
-                visibleDivs[0].focus();
-            }
-        }
-        top.postMessage({
-            action: 'setFrontFrame',
-            pointerEvents: pointerEvents ? "all" : "none",
-            frameHeight: visibleDivs.length > 0 ? "100%" : "0px"
-        }, topOrigin);
+        _state.nextState();
     };
     self.visualCommand = function(args) {
         if (_usage.style.display !== "none") {
