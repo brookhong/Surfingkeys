@@ -163,9 +163,9 @@ function createInsert() {
         code: function() {
             var element = getRealEdit();
             if (element.selectionStart !== undefined) {
-                _emojiPending = element.selectionStart;
+                _emojiPending = element.selectionStart + 1;
             } else {
-                _emojiPending = document.getSelection().focusOffset;
+                _emojiPending = document.getSelection().focusOffset + 1;
             }
             fetch(chrome.extension.getURL("pages/emoji.tsv"))
                 .then(res => Promise.all([res.text()]))
@@ -379,7 +379,8 @@ function createInsert() {
 
     function nextNonWord(str, dir, cur) {
         var nonWord = /\W/;
-        for ( cur = cur + dir; ; ) {
+        cur = dir > 0 ? cur : cur + dir;
+        for ( ; ; ) {
             if (cur < 0) {
                 cur = 0;
                 break;
@@ -399,11 +400,13 @@ function createInsert() {
         var pos = nextNonWord(str, dir, cur);
         var s = str;
         if (pos > cur) {
-            s = str.substr(0, cur) + str.substr(pos + 1);
+            s = str.substr(0, cur) + str.substr(pos);
         } else if (pos < cur) {
-            s = str.substr(0, pos + 1) + str.substr(cur);
+            s = str.substr(0, pos) + str.substr(cur);
+        } else {
+            s = str.substr(0, pos) + str.substr(pos + 1);
         }
-        return [s, pos];
+        return [s, dir > 0 ? cur: pos];
     }
 
     var _element;
