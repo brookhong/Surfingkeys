@@ -198,7 +198,7 @@ mapkey('yq', '#7Copy pre text', function() {
     });
 });
 mapkey('i', '#1Go to edit box', function() {
-    Hints.create("input, textarea, *[contenteditable=true], *[role=textbox], select", Hints.dispatchMouseClick);
+    Hints.create("input, textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor", Hints.dispatchMouseClick);
 });
 mapkey('gi', '#1Go to the first edit box', function() {
     Hints.createInputLayer();

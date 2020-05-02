@@ -276,15 +276,15 @@ var AceEditor = (function() {
 
             if (vim.$id === "ace/keyboard/emacs") {
                 if (message.type === 'url') {
-                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([urlCompleter]);
                     _ace.container.style.height = "30%";
                 } else if (message.type === 'input') {
-                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "";
                 } else {
-                    _ace.renderer.setOption('showLineNumbers', true);
+                    _ace.setOption('showLineNumbers', true);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "30%";
                 }
@@ -299,17 +299,17 @@ var AceEditor = (function() {
                 vim.unmap('<C-CR>', 'insert');
                 if (message.type === 'url') {
                     vim.map('<CR>', ':wq', 'insert');
-                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([urlCompleter]);
                     _ace.container.style.height = "30%";
                 } else if (message.type === 'input') {
                     vim.map('<CR>', ':wq', 'insert');
-                    _ace.renderer.setOption('showLineNumbers', false);
+                    _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "";
                 } else {
                     vim.map('<C-CR>', ':wq', 'insert');
-                    _ace.renderer.setOption('showLineNumbers', true);
+                    _ace.setOption('showLineNumbers', true);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "30%";
                 }
