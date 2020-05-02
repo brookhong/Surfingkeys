@@ -240,7 +240,11 @@ function getRealRect(elm) {
             return elm.getBoundingClientRect();
         }
     } else if (elm.childElementCount === 1 && elm.firstElementChild.textContent) {
-        return elm.firstElementChild.getBoundingClientRect();
+        var r = elm.firstElementChild.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) {
+            r = elm.getBoundingClientRect();
+        }
+        return r;
     } else {
         return elm.getBoundingClientRect();
     }
