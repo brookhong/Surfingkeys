@@ -305,12 +305,6 @@ function createInsert() {
             }
         } else if (!isEditable(realTarget)) {
             self.exit();
-        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && realTarget.localName === "input") {
-            // leave time 300ms for origin event handler of the input widget
-            setTimeout(function() {
-                realTarget.blur();
-                self.exit();
-            }, 300);
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event, function(last) {
                 // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
