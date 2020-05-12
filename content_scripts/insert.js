@@ -370,7 +370,9 @@ function createInsert() {
     });
     self.addEventListener('focus', function(event) {
         var realTarget = getRealEdit(event);
-        if (!isEditable(realTarget)) {
+        // We get a focus event with target = window when the browser window looses focus.
+        // Ignore this event.
+        if (event.target != window && !isEditable(realTarget)) {
             self.exit();
         } else {
             event.sk_suppressed = true;
