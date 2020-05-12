@@ -251,7 +251,9 @@ var Front = (function() {
             }
         }
         if ('theme' in message.userSettings) {
-            setSanitizedContent(document.getElementById("sk_theme"), message.userSettings.theme);
+            // userSettings.theme is CSS, not HTML. DOMPurify mangles css, and
+            // user settings is trusted, so set it as is.
+            document.getElementById("sk_theme").innerHTML = message.userSettings.theme;
         }
     };
     _actions['executeCommand'] = function (message) {
