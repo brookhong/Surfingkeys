@@ -516,23 +516,18 @@ function createVisual() {
 
     var holder = document.createElement("div");
     function createMatchMark(node1, offset1, node2, offset2) {
-        // document.body can be offset via a margin, and while absolute
-        // position is relative to body, getBoundingClientRect is relative to
-        // the viewport. Calculate the position at zero scroll to compensate.
-        const bodyOffsetX = document.body.getBoundingClientRect().left + document.scrollingElement.scrollLeft;
-        const bodyOffsetY = document.body.getBoundingClientRect().top + document.scrollingElement.scrollTop;
         var r = getTextRect(node1, offset1, node2, offset2);
         if (r.width > 0 && r.height > 0) {
             var mark = mark_template.cloneNode(false);
             mark.style.position = "absolute";
             mark.style.zIndex = 2147483298;
-            mark.style.left = document.scrollingElement.scrollLeft + r.left - bodyOffsetX + 'px';
-            mark.style.top = document.scrollingElement.scrollTop + r.top - bodyOffsetY + 'px';
+            mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+            mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
             mark.style.width = r.width + 'px';
             mark.style.height = r.height + 'px';
             holder.appendChild(mark);
-            if (!document.body.contains(holder)) {
-                document.body.appendChild(holder);
+            if (!document.documentElement.contains(holder)) {
+                document.documentElement.prepend(holder);
             }
 
             matches.push([node1, offset1, mark]);
