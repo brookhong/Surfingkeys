@@ -562,7 +562,7 @@ function createHints() {
 
     self.flashPressedLink = function(link) {
         var rect = getRealRect(link);
-        var flashElem = createElementWithContent('div', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
+        var flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
         flashElem.style.left = rect.left + 'px';
         flashElem.style.top = rect.top + 'px';
         flashElem.style.width = rect.width + 'px';
