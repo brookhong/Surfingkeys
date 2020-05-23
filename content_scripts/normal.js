@@ -582,16 +582,15 @@ function createNormal() {
         var n = e.currentTarget;
         if (!n.contains(e.target)) return;
         var index = scrollNodes.lastIndexOf(e.target);
-        if (index === -1) {
-            for (var i = scrollNodes.length - 1; i >= 0; i--) {
-                if (scrollNodes[i].contains(e.target)) {
-                    index = i;break;
-                }
+        for (var i = scrollNodes.length - 1; i >= 0 && index === -1; i--) {
+            if (scrollNodes[i] !== document.body && scrollNodes[i].contains(e.target)) {
+                index = i;
             }
-            if (index === -1) console.warn('cannot find scrollable', e.target);
         }
-        scrollIndex = index;
-    };
+        if (index !== -1) {
+            scrollIndex = index;
+        }
+    }
 
     function getScrollableElements() {
         var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
