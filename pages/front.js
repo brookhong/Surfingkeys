@@ -179,7 +179,7 @@ var Front = (function() {
             _tabs.append(tab);
         });
         _tabs.querySelectorAll('div.sk_tab').forEach(function(tab) {
-            tab.append(createElement(`<div class=sk_tab_url>${tab.url}</div>`));
+            tab.append(createElementWithContent('div', tab.url, {class: "sk_tab_url"}));
         });
     };
     _actions['chooseTab'] = function() {
