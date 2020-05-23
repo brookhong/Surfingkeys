@@ -669,6 +669,9 @@ addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://sugges
     var res = response.text.match(/,s:\[("[^\]]+")]}/);
     return res ? res[1].replace(/"/g, '').split(",") : [];
 });
+addSearchAliasX('e', 'wikipedia', 'https://en.wikipedia.org/wiki/', 's', 'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=40&search=', function(response) {
+    return JSON.parse(response.text)[1];
+});
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
     var res = JSON.parse(response.text);
     return res[1];
