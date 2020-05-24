@@ -51,12 +51,12 @@ Trie.prototype = {
             var i = ancestor.length - 1,
                 node = ancestor[i];
             delete node[found.stem];
-            found = node;
-            while (found !== this && Object.keys(found).length === 1) {
+            var parent = node;
+            while (parent !== this && Object.keys(parent).length === 1) {
                 // remove the node if it has only one property -- which should be stem
                 node = ancestor[--i];
-                delete node[found.stem];
-                found = node;
+                delete node[parent.stem];
+                parent = node;
             }
         }
         return found;

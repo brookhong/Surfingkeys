@@ -22,7 +22,18 @@ function _mapkey(mode, keys, annotation, jscode, options) {
     options = options || {};
     if (_isDomainApplicable(options.domain)) {
         keys = KeyboardUtils.encodeKeystroke(keys);
-        mode.mappings.remove(keys);
+        var old = mode.mappings.remove(keys);
+        if (old) {
+            var warning;
+            if (old.meta) {
+                warning = `${old.meta.word} for [${old.meta.annotation}] is overridden by [${annotation}].`;
+            } else {
+                warning = old.getMetas(function() { return true;}).map(function(meta) {
+                    return `${meta.word} for [${meta.annotation}] is overridden by [${annotation}].`;
+                });
+            }
+            console.warn(warning);
+        }
         var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
     }
