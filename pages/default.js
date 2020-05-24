@@ -74,19 +74,6 @@ mapkey('gr', '#14Read selected text or text from clipboard', function() {
 vmapkey('gr', '#9Read selected text', function() {
     readText(window.getSelection().toString(), {verbose: true});
 });
-mapkey('sfr', '#13show failed web requests of current page', function() {
-    RUNTIME('getTabErrors', null, function(response) {
-        if (response.tabError && response.tabError.length) {
-            var errors = response.tabError.map(function(e) {
-                var url = new URL(e.url);
-                return "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>".format(e.error, e.type, url.host);
-            });
-            Front.showPopup("<table style='width:100%'>{0}</table>".format(errors.join('')));
-        } else {
-            Front.showPopup("No errors from webRequest.");
-        }
-    });
-});
 map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
 map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
 mapkey('zr', '#3zoom reset', function() {

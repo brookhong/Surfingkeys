@@ -182,8 +182,7 @@ var ChromeService = (function() {
     var tabActivated = {},
         tabMessages = {},
         frameIndexes = {},
-        tabURLs = {},
-        tabErrors = {};
+        tabURLs = {};
 
     var newTabUrl = "chrome://newtab/";
 
@@ -268,7 +267,6 @@ var ChromeService = (function() {
         delete tabActivated[tabId];
         delete tabMessages[tabId];
         delete tabURLs[tabId];
-        delete tabErrors[tabId];
         delete frameIndexes[tabId];
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
@@ -316,9 +314,6 @@ var ChromeService = (function() {
     }
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.status === "loading") {
-            if (changeInfo.url !== undefined && changeInfo.url !== chrome.extension.getURL("pages/error.html")) {
-                delete tabErrors[tabId];
-            }
             delete frameIndexes[tabId];
         } else if (changeInfo.status === "complete") {
             if (tab.active) {
@@ -437,12 +432,6 @@ var ChromeService = (function() {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
     });
-
-    self.getTabErrors = function(message, sender, sendResponse) {
-        return {
-            tabError: tabErrors[sender.tab.id]
-        };
-    };
 
     function _updateSettings(diffSettings, afterSet) {
         diffSettings.savedAt = new Date().getTime();
