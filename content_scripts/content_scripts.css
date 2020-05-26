@@ -30,6 +30,12 @@ div.surfingkeys_cursor:empty {
 #sk_hints[mode=text]>div {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaa), color-stop(100%,#fff));
 }
+#sk_hints>div.hint-scrollable {
+    background: rgba(170, 170, 255, 0.85);
+}
+#sk_hints[mode=text]>div.begin {
+    color: #00f !important;
+}
 #sk_hints[mode=input]>div {
     background: rgba(255, 217, 0, 0.25);
 }
@@ -66,9 +72,14 @@ div.surfingkeys_cursor:empty {
 }
 #sk_frame {
     position: fixed;
-    border: 4px solid #3CF30F;
+    border: 4px solid #434343;
     box-sizing: border-box;
     z-index: 2147483000;
-    background: rgba(129, 120, 222, 0.62);
-    box-shadow: 0px 0px 10px rgba(218, 60, 13, 0.8);
+    background: rgba(202, 202, 202, 0.62);
+    color: blue;
+    font-size: 16pt;
+    font-weight: bold;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }

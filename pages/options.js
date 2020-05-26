@@ -82,6 +82,91 @@ addProxyPair.onclick = function () {
     });
 };
 
+function renderAutoproxyHosts(rs, divProxyPair, number) {
+    var desc = "For below hosts, above proxy will be used, click ❌ to remove one.";
+    if (rs.proxyMode === "bypass") {
+        desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
+    }
+    setSanitizedContent(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
+
+    var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
+
+    var ih = autoproxyHostsInput.value;
+    autoproxyHostsInput.value = "";
+    var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
+        return `<div class='aphost'><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></div>`;
+    }).join("");
+    setSanitizedContent(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
+
+    var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
+    autoproxyHostsDiv.querySelectorAll('div.aphost>span.remove').forEach(function(ph) {
+        ph.onclick = function() {
+            var elm = this.closest('div.aphost');
+            RUNTIME('updateProxy', {
+                number: number,
+                host: elm.querySelector("span:nth-child(2)").innerText,
+                operation: 'remove'
+            }, function() {
+                elm.remove();
+            });
+        };
+    });
+
+    function addAutoProxyHost() {
+        _updateProxy({
+            number: number,
+            host: autoproxyHostsInput.value,
+            operation: 'add'
+        });
+    }
+
+    autoproxyHostsInput.onkeyup = function(e) {
+        if (e.keyCode === 13) {
+            addAutoProxyHost();
+        }
+    };
+
+    divProxyPair.querySelector('.autoproxy_hosts>button').onclick = addAutoProxyHost;
+
+    divProxyPair.querySelector('.deleteProxyPair').onclick = function() {
+        _updateProxy({
+            number: number,
+            operation: "deleteProxyPair"
+        });
+    };
+}
+
+function renderProxyPair(proxy, number) {
+    var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
+    if (divProxyPair === null) {
+        divProxyPair = createElementWithContent('div',
+            document.getElementById("templateProxyPair").textContent.trim(), {"class": "proxyPair", "number": number});
+        proxyGroup.insertBefore(divProxyPair, addProxyPair);
+    }
+
+    var proxySelect = divProxyPair.querySelector(".proxy>select");
+    var proxyInput = divProxyPair.querySelector(".proxy>input");
+
+    function __updateProxy(data) {
+        _updateProxy({
+            number: number,
+            proxy: proxySelect.value + " " + proxyInput.value
+        });
+    }
+
+    proxySelect.onchange = __updateProxy;
+    proxyInput.onblur = __updateProxy;
+
+    var p = proxy.split(/\s+/);
+    if (p.length > 0) {
+        proxySelect.value = p[0];
+        proxyInput.value = p[1];
+    } else {
+        proxySelect.value = "PROXY";
+    }
+    return divProxyPair;
+}
+
 function renderProxySettings(rs) {
     proxyModeSelect.value = rs.proxyMode;
     proxyModeSelect.onchange = function() {
@@ -93,97 +178,21 @@ function renderProxySettings(rs) {
         span.hide();
     });
     document.querySelector(`#proxyMode span[mode=${rs.proxyMode}]`).show();
-    if (rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
+    if (rs.proxyMode === "always" || rs.proxyMode === "byhost" || rs.proxyMode === "bypass") {
 
-        var proxyPairs = document.querySelectorAll('div.proxyPair');
-        if (proxyPairs.length > rs.proxy.length) {
-            proxyPairs.remove();
-        }
-        rs.proxy.forEach(function(proxy, number) {
-            var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
-            if (divProxyPair === null) {
-                divProxyPair = createElement(document.getElementById("templateProxyPair").textContent.trim());
-                divProxyPair.setAttribute("number", number);
-                proxyGroup.insertBefore(divProxyPair, addProxyPair);
-            }
-
-            var proxyDiv = divProxyPair.querySelector(".proxy");
-            var autoproxyHostsDiv = divProxyPair.querySelector(".autoproxy_hosts");
-
-            var proxySelect = divProxyPair.querySelector(".proxy>select");
-            var proxyInput = divProxyPair.querySelector(".proxy>input");
-
-            function __updateProxy(data) {
-                _updateProxy({
-                    number: number,
-                    proxy: proxySelect.value + " " + proxyInput.value
-                });
-            }
-
-            proxySelect.onchange = __updateProxy;
-            proxyInput.onblur = __updateProxy;
-
-            var p = proxy.split(/\s+/);
-            if (p.length > 0) {
-                proxySelect.value = p[0];
-                proxyInput.value = p[1];
-            } else {
-                proxySelect.value = "PROXY";
-            }
-
-            var desc = "For below hosts, above proxy will be used, click ❌ to remove one.";
-            if (rs.proxyMode === "bypass") {
-                desc = "For below hosts, <b>NO</b> proxy will be used, click ❌ to remove one.";
-            }
-            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>h3'), desc);
-
-            var autoproxyHostsInput = divProxyPair.querySelector(".autoproxy_hosts>input");
-
-            var ih = autoproxyHostsInput.value;
-            autoproxyHostsInput.value = "";
-            var autoproxy_hosts = rs.autoproxy_hosts[number].sort().map(function(h) {
-                return `<aphost><span class='remove'>❌</span><span class="${h === ih ? 'highlight' : ''}">${h}</span></aphost>`;
-            }).join("");
-            setInnerHTML(divProxyPair.querySelector('.autoproxy_hosts>div'), autoproxy_hosts);
-
-            autoproxyHostsDiv.querySelectorAll('aphost>span.remove').forEach(function(ph) {
-                ph.onclick = function() {
-                    var elm = this.closest('aphost');
-                    runtime.command({
-                        action: 'updateProxy',
-                        number: number,
-                        host: elm.querySelector("span").innerText,
-                        operation: 'remove'
-                    }, function() {
-                        elm.remove();
-                    });
-                };
+        document.querySelectorAll('div.proxyPair').remove();
+        if (rs.proxyMode === "always") {
+            var pp = renderProxyPair(rs.proxy[0], 0);
+            pp.querySelector('.autoproxy_hosts').hide();
+            addProxyPair.hide();
+        } else {
+            rs.proxy.forEach(function(proxy, number) {
+                var pp = renderProxyPair(proxy, number);
+                pp.querySelector('.autoproxy_hosts').show();
+                renderAutoproxyHosts(rs, pp, number);
             });
-
-            function addAutoProxyHost() {
-                _updateProxy({
-                    number: number,
-                    host: autoproxyHostsInput.value,
-                    operation: 'add'
-                });
-            }
-
-            autoproxyHostsInput.onkeyup = function(e) {
-                if (e.keyCode === 13) {
-                    addAutoProxyHost();
-                }
-            };
-
-            divProxyPair.querySelector('.autoproxy_hosts>button').onclick = addAutoProxyHost;
-
-            divProxyPair.querySelector('.deleteProxyPair').onclick = function() {
-                _updateProxy({
-                    number: number,
-                    operation: "deleteProxyPair"
-                });
-            };
-
-        });
+            addProxyPair.show();
+        }
         var deleteProxyPairs = document.querySelectorAll('div.deleteProxyPair');
         if (deleteProxyPairs.length > 1) {
             deleteProxyPairs.show();
@@ -194,8 +203,7 @@ function renderProxySettings(rs) {
 }
 
 function _updateProxy(data) {
-    data.action = 'updateProxy';
-    runtime.command(data, function(res) {
+    RUNTIME('updateProxy', data, function(res) {
         renderProxySettings(res);
     });
 }
@@ -220,8 +228,10 @@ var localPathInput = document.getElementById("localPath");
 var sample = document.getElementById("sample").innerHTML;
 function renderSettings(rs) {
     showAdvanced(rs.showAdvanced);
-    localPathInput.value = rs.localPath;
-    localPathSaved = rs.localPath;
+    if (rs.localPath) {
+        localPathInput.value = rs.localPath;
+        localPathSaved = rs.localPath;
+    }
     var h = window.innerHeight / 2;
     mappingsEditor.container.style.height = h + "px";
     defaultMappingsEditor.container.style.height = h + "px";
@@ -234,20 +244,7 @@ function renderSettings(rs) {
     renderProxySettings(rs);
 }
 
-runtime.on('settingsUpdated', function(resp) {
-    if ('snippets' in resp.settings) {
-        renderKeyMappings(resp.settings);
-        if (resp.settings.snippets.length) {
-            mappingsEditor.setValue(resp.settings.snippets, -1);
-        } else {
-            mappingsEditor.setValue(sample, -1);
-        }
-    }
-});
-
-runtime.command({
-    action: 'getSettings'
-}, function(response) {
+RUNTIME('getSettings', null, function(response) {
     mappingsEditor = createMappingEditor('mappings');
     renderSettings(response.settings);
     if ('error' in response.settings) {
@@ -268,9 +265,7 @@ document.getElementById('resetSettings').onclick = function() {
     if (this.innerText === "Reset") {
         this.innerText = "WARNING! This will clear all your settings. Click this again to continue.";
     } else {
-        runtime.command({
-            action: "resetSettings"
-        }, function(response) {
+        RUNTIME("resetSettings", null, function(response) {
             renderSettings(response.settings);
             renderKeyMappings(response.settings);
             Front.showBanner('Settings reset', 300);
@@ -317,10 +312,18 @@ function saveSettings() {
     var settingsCode = mappingsEditor.getValue();
     var localPath = getURIPath(localPathInput.value.trim());
     if (localPath.length && localPath !== localPathSaved) {
-        RUNTIME("loadSettingsFromUrl", {
+        RUNTIME('loadSettingsFromUrl', {
             url: localPath
+        }, function(res) {
+            Front.showBanner(res.status + ' to load settings from ' + localPath, 300);
+            renderKeyMappings(res);
+            if (res.snippets && res.snippets.length) {
+                localPathSaved = localPath;
+                mappingsEditor.setValue(res.snippets, -1);
+            } else {
+                mappingsEditor.setValue(sample, -1);
+            }
         });
-        Front.showBanner('Loading settings from ' + localPath, 300);
     } else {
         RUNTIME('updateSettings', {
             settings: {
@@ -334,7 +337,7 @@ function saveSettings() {
 }
 document.getElementById('save_button').onclick = saveSettings;
 
-var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'q', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
+var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k', 'S', 'C', 'on', 'G', 'v', 'i', 'se', 'og', 'g0', 't', '<Ctrl-6>', 'yy', 'g$', 'D', 'ob', 'X', 'sm', 'sg', 'cf', 'yv', 'yt', 'N', 'l', 'cc', '$', 'yf', 'w', '0', 'yg', 'ow', 'cs', 'b', 'om', 'ya', 'h', 'gU', 'W', 'B', 'F', ';j'];
 
 basicMappings = basicMappings.map(function(w, i) {
     return {
@@ -384,7 +387,7 @@ function renderKeyMappings(rs) {
     </div>`;
             });
 
-            setInnerHTML(basicMappingsDiv, customization.join(""));
+            setSanitizedContent(basicMappingsDiv, customization.join(""));
             basicMappingsDiv.querySelectorAll("kbd").forEach(function(d) {
                 d.onclick = function () {
                     KeyPicker.enter(this);
@@ -406,7 +409,7 @@ var KeyPicker = (function() {
         if (!s) {
             s = "&nbsp;";
         }
-        setInnerHTML(document.getElementById("inputKey"), s);
+        setSanitizedContent(document.getElementById("inputKey"), s);
     }
 
     var _key = "";
@@ -423,7 +426,7 @@ var KeyPicker = (function() {
         } else if (event.keyCode === 13) {
             keyPickerDiv.hide();
             self.exit();
-            setInnerHTML(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
+            setSanitizedContent(_elm, (_key !== "") ? htmlEncode(_key) : "🚫");
             _elm.setAttribute('new', _key);
             var kbds = Array.from(basicMappingsDiv.querySelectorAll("kbd"));
             var originalKeys = kbds.map(function(m) {
@@ -471,7 +474,7 @@ var KeyPicker = (function() {
                     composed: event.composed,
                     key: event.key
                 }, null, 4);
-                reportIssue(`Unrecognized key event: {event.sk_keyName}`, keyStr);
+                reportIssue(`Unrecognized key event: ${event.sk_keyName}`, keyStr);
             } else {
                 _key += KeyboardUtils.decodeKeystroke(event.sk_keyName);
                 showKey();

@@ -48,10 +48,10 @@ settings.theme = `
 .sk_theme .omnibar_visitcount {
     color: #98c379;
 }
-.sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
+.sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) {
     background: #303030;
 }
-.sk_theme #sk_omnibarSearchResult>ul>li.focused {
+.sk_theme #sk_omnibarSearchResult ul li.focused {
     background: #3e4452;
 }
 #sk_status, #sk_find {
@@ -59,26 +59,24 @@ settings.theme = `
 }`;
 // click `Save` button to make above settings to take effect.</script>
         <script id="templateProxyPair" type="text/template">
-            <div class="proxyPair">
-                <div class="deleteProxyPair">🗑️</div>
-                <div class="proxy">
-                    Proxy:
-                    <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
-                    Proxy Type:
-                    <select value="PROXY">
-                        <option value="PROXY" selected="selected">PROXY</option>
-                        <option value="SOCKS5">SOCKS5</option>
-                        <option value="HTTP">HTTP</option>
-                        <option value="HTTPS">HTTPS</option>
-                        <option value="SOCKS4">SOCKS4</option>
-                        <option value="SOCKS">SOCKS</option>
-                    </select>
-                </div>
-                <div class="autoproxy_hosts">
-                    <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
-                    <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
-                    <div></div>
-                </div>
+            <div class="deleteProxyPair">🗑️</div>
+            <div class="proxy">
+                Proxy:
+                <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
+                Proxy Type:
+                <select value="PROXY">
+                    <option value="PROXY" selected="selected">PROXY</option>
+                    <option value="SOCKS5">SOCKS5</option>
+                    <option value="HTTP">HTTP</option>
+                    <option value="HTTPS">HTTPS</option>
+                    <option value="SOCKS4">SOCKS4</option>
+                    <option value="SOCKS">SOCKS</option>
+                </select>
+            </div>
+            <div class="autoproxy_hosts">
+                <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
+                <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
+                <div></div>
             </div>
         </script>
         <div id="keyPicker" style="display: none;">
@@ -133,12 +131,13 @@ settings.theme = `
             <button id="addProxyPair">Add proxy pair</button>
         </div>
         <h3 id="resetSettings">Reset</h3>
+        <h3>Thank you for donation! Support me with <a href="https://www.paypal.me/brookhong">paypal</a>, or</h3>
+        <img class="avatar" src="./donation.png" style="width: 60%; display: block;margin-left: auto;margin-right: auto;" />
         <iframe id="sandbox" allowtransparency="true" frameborder="0" scrolling="no" style="height: 0" src="/pages/sandbox.html"></iframe>
-        <script src="../content_scripts/common_content.min.js"></script>
+        <script src="../content_scripts/modules.min.js"></script>
         <script src="../content_scripts/front.js"></script>
-        <script src="../content_scripts/content_scripts.js"></script>
-        <script src="../content_scripts/top.js"></script>
         <script src="default.js"></script>
+        <script src="../content_scripts/content_scripts.js"></script>
         <script src="options.js"></script>
         <script src="ga.js"></script>
         <script async src='https://www.google-analytics.com/analytics.js'></script>

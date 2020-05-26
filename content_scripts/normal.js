@@ -1,14 +1,16 @@
-var Mode = (function() {
+function createMode() {
     var self = function(name, statusLine) {
         this.name = name;
         this.statusLine = statusLine;
         this.eventListeners = {};
-        this.addEventListener = function(evt, handler) {
-            this.eventListeners[evt] = handler;
+        this.addEventListener = function(evtName, handler) {
+            this.eventListeners[evtName] = handler;
 
-            if (_listenedEvents.indexOf(evt) === -1) {
-                _listenedEvents.push(evt);
-                window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
+            if (!_listenedEvents.hasOwnProperty(evtName)) {
+                _listenedEvents[evtName] = function(event) {
+                    handleStack(evtName, event);
+                };
+                window.addEventListener(evtName, _listenedEvents[evtName], true);
             }
 
             return this;
@@ -42,9 +44,9 @@ var Mode = (function() {
             // }).join('->');
             // console.log('enter {0}, {1}'.format(this.name, modes));
 
-            self.showStatus();
-
             this.onEnter && this.onEnter();
+
+            self.showStatus();
             return pos;
         };
 
@@ -80,12 +82,29 @@ var Mode = (function() {
         return (-1 !== self.specialKeys[specialKey].indexOf(KeyboardUtils.decodeKeystroke(keyToCheck)));
     };
 
+    // Enable to stop propagation of the event whose keydown handler has been triggered
+    // Why we need this?
+    // For example, there is keyup event handler of `s` on some site to set focus on an input box,
+    // Now user presses `sg` to search with google, Surfingkeys got `s` and triggered its keydown handler.
+    // But keyup handler of the site also got triggered, then `g` was swallowed by the input box.
+    // This setting now is only turned on for Normal.
+    // For Hints, we could not turn on it, as keyup should be propagated to Normal
+    // to stop scrolling when holding a key.
+    var keysNeedKeyupSuppressed = [];
+    self.suppressKeyUp = function(keyCode) {
+        if (keysNeedKeyupSuppressed.indexOf(keyCode) === -1) {
+            keysNeedKeyupSuppressed.push(keyCode);
+        }
+    };
+
     function onAfterHandler(mode, event) {
         if (event.sk_stopPropagation) {
             event.stopImmediatePropagation();
             event.preventDefault();
             // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
-            mode.stopKeyupPropagation = (event.type === "keydown" && mode.enableKeyupMerging) ? event.keyCode : 0;
+            if (event.type === "keydown" && mode === Normal) {
+                self.suppressKeyUp(event.keyCode);
+            }
         }
     }
 
@@ -104,37 +123,56 @@ var Mode = (function() {
         }
     }
 
-    var _listenedEvents = ["keydown", "keyup"];
-
-    self.init = function() {
-        window.addEventListener("keydown", function (event) {
+    var _listenedEvents = {
+        "keydown": function (event) {
             event.sk_keyName = KeyboardUtils.getKeyChar(event);
             handleStack("keydown", event);
-        }, true);
-
-        window.addEventListener("keyup", function (event) {
+        },
+        "keyup": function (event) {
             handleStack("keyup", event, function (m) {
-                if (m.stopKeyupPropagation === event.keyCode) {
+                var i = keysNeedKeyupSuppressed.indexOf(event.keyCode);
+                if (i !== -1) {
                     event.stopImmediatePropagation();
-                    m.stopKeyupPropagation = 0;
+                    keysNeedKeyupSuppressed.splice(i, 1);
                 }
             });
-        }, true);
+        },
+        "scroll": function (event) {
+            if (suppressScrollEvent > 0) {
+                event.stopImmediatePropagation();
+                event.preventDefault();
+                suppressScrollEvent--;
+            }
+        }
+    };
+    var suppressScrollEvent = 0;
+
+    function init() {
+        for (var evtName in _listenedEvents) {
+            window.addEventListener(evtName, _listenedEvents[evtName], true);
+        }
+    }
+    self.suppressNextScrollEvent = function() {
+        suppressScrollEvent++;
+    };
+    self.destroy = function() {
+        for (var evtName in _listenedEvents) {
+            window.removeEventListener(evtName, _listenedEvents[evtName], true);
+        }
     };
 
-    // For blank page in frames, we defer Mode.init to page loaded
+    // For blank page in frames, we defer init to page loaded
     // as document.write will clear added eventListeners.
-    if (window.location.href === "about:blank" && window.frameElement) {
+    if (window.location.href === "about:blank" && window.frameElement && document.body.childElementCount === 0) {
         window.frameElement.addEventListener("load", function(evt) {
-            self.init();
-            _listenedEvents.forEach(function(evt) {
-                if (["keydown", "keyup"].indexOf(evt) === -1) {
-                    window.addEventListener(evt, handleStack.bind(handleStack, evt), true);
-                }
-            });
+            try {
+                init();
+            } catch (e) {
+                console.log("Error on blank iframe loaded: " + e);
+            }
         });
     } else {
-        self.init();
+        init();
     }
 
 
@@ -157,7 +195,7 @@ var Mode = (function() {
                     }
                 }
             }
-            Front.showStatus(0, sl);
+            typeof(Front) === "object" && Front.showStatus(0, sl);
         }
     };
 
@@ -165,7 +203,7 @@ var Mode = (function() {
         return mode_stack;
     };
 
-    function _finish(mode) {
+    self.finish = function (mode) {
         var ret = false;
         if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
             mode.map_node = mode.mappings;
@@ -184,22 +222,27 @@ var Mode = (function() {
             key = event.sk_keyName;
         this.isTrustedEvent = event.isTrusted;
 
-        if (Mode.isSpecialKeyOf("<Esc>", key) && _finish(this)) {
+        var isEscKey = Mode.isSpecialKeyOf("<Esc>", key);
+        if (isEscKey) {
+            key = KeyboardUtils.encodeKeystroke("<Esc>");
+        }
+
+        if (isEscKey && self.finish(this)) {
             event.sk_stopPropagation = true;
             event.sk_suppressed = true;
         } else if (this.pendingMap) {
             this.setLastKeys && this.setLastKeys(this.map_node.meta.word + key);
             var pf = this.pendingMap.bind(this);
-            event.sk_stopPropagation = !this.map_node.meta.keepPropagation;
-            setTimeout(function() {
-                pf(key);
-                _finish(thisMode);
-                onAfterHandler(thisMode, event);
-            }, 0);
+            event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
+                || this.map_node.meta.stopPropagation(key));
+            pf(key);
+            self.finish(thisMode);
         } else if (this.repeats !== undefined &&
             this.map_node === this.mappings &&
             runtime.conf.digitForRepeat &&
-            (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9") {
+            (key >= "1" || (this.repeats !== "" && key >= "0")) && key <= "9" &&
+            this.map_node.getWords().length > 0
+        ) {
             // reset only after target action executed or cancelled
             this.repeats += key;
             this.isTrustedEvent && Front.showKeystroke(key, this);
@@ -210,7 +253,7 @@ var Mode = (function() {
             if (!this.map_node) {
                 onNoMatched && onNoMatched(last);
                 event.sk_suppressed = (last !== this.mappings);
-                _finish(this);
+                self.finish(this);
             } else {
                 if (this.map_node.meta) {
                     var code = this.map_node.meta.code;
@@ -222,16 +265,13 @@ var Mode = (function() {
                     } else {
                         this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                         RUNTIME.repeats = parseInt(this.repeats) || 1;
-                        event.sk_stopPropagation = (!this.map_node.meta.keepPropagation
-                            || (this === Insert && key.charCodeAt(0) < 256));
-                        setTimeout(function() {
-                            while(RUNTIME.repeats > 0) {
-                                code();
-                                RUNTIME.repeats--;
-                            }
-                            _finish(thisMode);
-                            onAfterHandler(thisMode, event);
-                        }, 0);
+                        event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
+                            || this.map_node.meta.stopPropagation(key));
+                        while(RUNTIME.repeats > 0) {
+                            code();
+                            RUNTIME.repeats--;
+                        }
+                        self.finish(thisMode);
                     }
                 } else {
                     this.isTrustedEvent && Front.showKeystroke(key, this);
@@ -242,9 +282,9 @@ var Mode = (function() {
     };
 
     return self;
-})();
+}
 
-var Disabled = (function() {
+function createDisabled() {
     var self = new Mode("Disabled");
 
     // Disabled has higher priority than others.
@@ -261,10 +301,11 @@ var Disabled = (function() {
     });
 
     return self;
-})();
+}
 
-var PassThrough = (function() {
-    var self = new Mode("PassThrough", "pass through");
+function createPassThrough() {
+    var self = new Mode("PassThrough");
+    var _autoExit, _timeout;
 
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
@@ -272,26 +313,42 @@ var PassThrough = (function() {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.exit();
             event.sk_stopPropagation = true;
+        } else if (_timeout > 0) {
+            if (_autoExit) {
+                clearTimeout(_autoExit);
+                _autoExit = undefined;
+            }
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, _timeout);
         }
     }).addEventListener('mousedown', function(event) {
         event.sk_suppressed = true;
     });
+    self.addEventListener('focus', function(event) {
+        event.sk_suppressed = true;
+    });
+
+    self.onEnter = function() {
+        if (_timeout > 0) {
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, _timeout);
+            self.statusLine = `ephemeral(${_timeout}ms) pass through`;
+        } else {
+            self.statusLine = "pass through";
+        }
+    };
+
+    self.setTimeout = function(timeout) {
+        _timeout = timeout;
+    };
 
     return self;
-})();
+}
 
-var Normal = (function() {
+function createNormal() {
     var self = new Mode("Normal");
-
-    // Enable to stop propagation of the event whose keydown handler has been triggered
-    // Why we need this?
-    // For example, there is keyup event handler of `s` on some site to set focus on an input box,
-    // Now user presses `sg` to search with google, Surfingkeys got `s` and triggered its keydown handler.
-    // But keyup handler of the site also got triggered, then `g` was swallowed by the input box.
-    // This setting now is only turned on for Normal.
-    // For Hints, we could not turn on it, as keyup should be propagated to Normal
-    // to stop scrolling when holding a key.
-    self.enableKeyupMerging = true;
 
     // let next focus event pass
     var _passFocus = false;
@@ -299,26 +356,50 @@ var Normal = (function() {
         _passFocus = pf;
     };
 
-    self.onEnter = function() {
-        if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
-            var elm = getRealEdit();
-            elm && elm.blur();
-        }
-    };
-
     self.addEventListener('keydown', function(event) {
         var realTarget = getRealEdit(event);
-        if (isEditable(realTarget)) {
+        if (isEditable(realTarget) && event.isTrusted) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 realTarget.blur();
                 Insert.exit();
-            } else if (event.key === "Tab"){
-                // enable Tab key to focus next input
-                Normal.passFocus(true);
-                Insert.enter(realTarget);
+            } else {
+                if (runtime.conf.editableBodyCare && realTarget === document.body && event.key !== "i") {
+                    self.statusLine = "Press i to enter Insert mode";
+                    runtime.conf.showModeStatus = true;
+                    if (event.sk_keyName.length) {
+                        Mode.handleMapKey.call(self, event);
+                    }
+                } else {
+                    event.sk_stopPropagation = (runtime.conf.editableBodyCare
+                        && realTarget === document.body && event.key === "i");
+                    if (event.sk_stopPropagation) {
+                        Normal.passFocus(true);
+                        realTarget.focus();
+                    }
+
+                    var stealFocus = false;
+                    if (!isElementPartiallyInViewport(realTarget)) {
+                        var n = realTarget;
+                        while (n !== document.documentElement && !n.newlyCreated) {
+                            n = n.parentElement;
+                        }
+                        stealFocus = n !== document.documentElement && n.newlyCreated;
+                    }
+                    if (stealFocus) {
+                        // steal focus from dynamically created input widget
+                        realTarget.blur();
+                        delete n.newlyCreated;
+                        Mode.handleMapKey.call(self, event);
+                    } else {
+                        // keep cursor where it is
+                        Insert.enter(realTarget, true);
+                    }
+
+                }
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlacklist();
+            Mode.finish(self);
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event);
@@ -329,7 +410,7 @@ var Normal = (function() {
     });
     self.addEventListener('focus', function(event) {
         Mode.showStatus();
-        if (runtime.conf.stealFocusOnLoad && !Front.isProvider()) {
+        if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
             var elm = getRealEdit(event);
             if (isEditable(elm)) {
                 if (_passFocus || elm.enableAutoFocus) {
@@ -350,6 +431,10 @@ var Normal = (function() {
         }, 0);
     });
     self.addEventListener('mousedown', function(event) {
+        // Insert mode will never be created in frontend frame.
+        if (typeof(Insert) === "undefined") {
+            return;
+        }
         // The isTrusted read-only property of the Event interface is a boolean
         // that is true when the event was generated by a user action, and false
         // when the event was created or modified by a script or dispatched via dispatchEvent.
@@ -362,8 +447,9 @@ var Normal = (function() {
         }
 
         var realTarget = getRealEdit(event);
-        if (isEditable(realTarget) || realTarget.matches("div.CodeMirror-scroll")) {
-            Insert.enter(realTarget);
+        if (isEditable(realTarget)) {
+            // keep cursor where it is
+            Insert.enter(realTarget, true);
         } else {
             Insert.exit();
         }
@@ -371,8 +457,7 @@ var Normal = (function() {
 
     self.toggleBlacklist = function() {
         if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
-            runtime.command({
-                action: 'toggleBlacklist',
+            RUNTIME('toggleBlacklist', {
                 blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
             }, function(resp) {
                 if (resp.disabled) {
@@ -390,7 +475,8 @@ var Normal = (function() {
         }
     };
 
-    self.passThrough = function() {
+    self.passThrough = function(timeout) {
+        PassThrough.setTimeout(timeout);
         PassThrough.enter();
     };
 
@@ -408,8 +494,16 @@ var Normal = (function() {
         return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
     }
 
+    var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
+            if (runtime.conf.smartPageBoundary && ((this === document.scrollingElement)
+                || scrollNodes.length === 1 && this === scrollNodes[0])) {
+                if (this.scrollTop === 0 && y <= 0 && previousPage()
+                    || this.scrollHeight - this.scrollTop <= this.clientHeight + 1 && y > 0 && nextPage()) {
+                    return;
+                }
+            }
             if (RUNTIME.repeats > 1) {
                 x = RUNTIME.repeats * x;
                 y = RUNTIME.repeats * y;
@@ -420,26 +514,14 @@ var Normal = (function() {
                 elm.smoothScrollBy(x, y, d);
             } else {
                 document.dispatchEvent(new CustomEvent('surfingkeys:scrollStarted'));
-                elm.scrollLeft = elm.scrollLeft + x;
-                elm.scrollTop = elm.scrollTop + y;
+                elm.scrollBy({
+                    'behavior': 'instant',
+                    'left': x,
+                    'top': y,
+                });
                 document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
             }
         };
-        if (elm === document.scrollingElement) {
-            var f = elm.skScrollBy;
-            elm.skScrollBy = function(x, y) {
-                if (runtime.conf.smartPageBoundary) {
-                    if (document.scrollingElement.scrollTop === 0 && y <= 0) {
-                        previousPage() && Front.showBanner("Top margin hit, jump to previous page");
-                    } else if (document.scrollingElement.scrollHeight - document.scrollingElement.scrollTop <= window.innerHeight + 1 && y > 0) {
-                        if (nextPage()) {
-                            Front.showBanner("Bottom margin hit, jump to next page");
-                        }
-                    }
-                }
-                f.call(elm, x, y);
-            };
-        }
         elm.smoothScrollBy = function(x, y, d) {
             if (!keyHeld) {
                 var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
@@ -478,22 +560,35 @@ var Normal = (function() {
                         elm.style.scrollBehavior = '';
                         document.dispatchEvent(new CustomEvent('surfingkeys:scrollDone'));
                     } else {
-                        return window.requestAnimationFrame(step);
+                        window.requestAnimationFrame(step);
                     }
                 }
                 elm.style.scrollBehavior = 'auto';
-                return window.requestAnimationFrame(step);
+                window.requestAnimationFrame(step);
             }
         };
+        _nodesHasSKScroll.push(elm);
     }
 
     // set scrollIndex to the highest node
     function initScrollIndex() {
         if (!scrollNodes || scrollNodes.length === 0) {
-            document.documentElement.style.overflow = "visible";
-            document.body.style.overflow = "visible";
-            scrollNodes = getScrollableElements(100, 1.1);
+            scrollNodes = getScrollableElements();
             scrollIndex = 0;
+        }
+    }
+
+    function scrollableMousedownHandler(e) {
+        var n = e.currentTarget;
+        if (!n.contains(e.target)) return;
+        var index = scrollNodes.lastIndexOf(e.target);
+        for (var i = scrollNodes.length - 1; i >= 0 && index === -1; i--) {
+            if (scrollNodes[i] !== document.body && scrollNodes[i].contains(e.target)) {
+                index = i;
+            }
+        }
+        if (index !== -1) {
+            scrollIndex = index;
         }
     }
 
@@ -502,12 +597,20 @@ var Normal = (function() {
             return (hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (hasScroll(n, 'x', 16) && n.scrollWidth > 200);
         });
         nodes.sort(function(a, b) {
+            if (b.contains(a)) return 1;
+            else if (a.contains(b)) return -1;
             return b.scrollHeight * b.scrollWidth - a.scrollHeight * a.scrollWidth;
         });
-        if (document.scrollingElement.scrollHeight > window.innerHeight
-            || document.scrollingElement.scrollWidth > window.innerWidth) {
+        // document.scrollingElement will be null when document.body.tagName === "FRAMESET", for example http://www.knoppix.org/
+        if (document.scrollingElement && (document.scrollingElement.scrollHeight > window.innerHeight
+            || document.scrollingElement.scrollWidth > window.innerWidth)) {
             nodes.unshift(document.scrollingElement);
         }
+        nodes.forEach(function (n) {
+            n.removeEventListener('mousedown', scrollableMousedownHandler);
+            n.addEventListener('mousedown', scrollableMousedownHandler);
+            n.dataset.hint_scrollable = true;
+        });
         return nodes;
     }
 
@@ -534,7 +637,7 @@ var Normal = (function() {
         });
     }
     function changeScrollTarget(silent) {
-        scrollNodes = getScrollableElements(100, 1.1);
+        scrollNodes = getScrollableElements();
         if (scrollNodes.length > 0) {
             scrollIndex = (scrollIndex + 1) % scrollNodes.length;
             var sn = scrollNodes[scrollIndex];
@@ -550,6 +653,19 @@ var Normal = (function() {
         var scrollNode = document.scrollingElement;
         if (scrollNodes.length > 0) {
             scrollNode = scrollNodes[scrollIndex];
+            if (scrollNode !== document.scrollingElement && scrollNode !== document.body) {
+                var br = scrollNode.getBoundingClientRect();
+                if (br.width === 0 || br.height === 0 || !isElementPartiallyInViewport(scrollNode)
+                    || !hasScroll(scrollNode, 'x', 16) && !hasScroll(scrollNode, 'y', 16)) {
+                    scrollNodes.splice(scrollIndex, 1);
+                    scrollIndex = 0;
+                    scrollNode = scrollNodes[scrollIndex];
+                }
+            }
+        }
+        if (!scrollNode) {
+            // scrollNode could be null on a page with frameset as its body.
+            return;
         }
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
@@ -600,11 +716,26 @@ var Normal = (function() {
             default:
                 break;
         }
+        window.Observer && window.Observer.turnOffDOMObserver();
+    };
+
+    self.refreshScrollableElements = function () {
+        scrollNodes = null;
+        initScrollIndex();
+        return scrollNodes;
     };
 
     self.getScrollableElements = function() {
         initScrollIndex();
         return scrollNodes;
+    };
+
+    self.addScrollableElement = function(elm) {
+        if (!scrollNodes || !elm.contains(scrollNodes[scrollIndex]) && scrollNodes.indexOf(elm) === -1) {
+            initScrollIndex();
+            scrollNodes.push(elm);
+            scrollIndex = scrollNodes.length - 1;
+        }
     };
 
     self.rotateFrame = function() {
@@ -622,7 +753,7 @@ var Normal = (function() {
     };
 
     self.setLastKeys = function(key) {
-        if (!this.map_node.meta.repeatIgnore) {
+        if (!this.map_node.meta.repeatIgnore && key.length > 1) {
             lastKeys = [key];
             saveLastKeys();
         }
@@ -665,65 +796,29 @@ var Normal = (function() {
         }
     };
 
-    var localMarks = {};
     self.addVIMark = function(mark, url) {
-        if (/^[a-z]$/.test(mark)) {
-            // local mark
-            localMarks[mark] = {
-                scrollLeft: document.scrollingElement.scrollLeft,
-                scrollTop: document.scrollingElement.scrollTop
-            };
-        } else {
-            // global mark
-            url = url || window.location.href;
-            var mo = {};
-            mo[mark] = {
-                url: url,
-                scrollLeft: document.scrollingElement.scrollLeft,
-                scrollTop: document.scrollingElement.scrollTop
-            };
-            RUNTIME('addVIMark', {mark: mo});
-            Front.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
-        }
+        url = url || window.location.href;
+        var mo = {};
+        mo[mark] = {
+            url: url,
+            scrollLeft: document.scrollingElement.scrollLeft,
+            scrollTop: document.scrollingElement.scrollTop
+        };
+        RUNTIME('addVIMark', {mark: mo});
+        Front.showBanner("Mark '{0}' added for: {1}.".format(mark, url));
     };
 
-    self.jumpVIMark = function(mark, newTab) {
-        if (localMarks.hasOwnProperty(mark)) {
-            var markInfo = localMarks[mark];
-            document.scrollingElement.scrollLeft = markInfo.scrollLeft;
-            document.scrollingElement.scrollTop = markInfo.scrollTop;
-        } else {
-            runtime.command({
-                action: 'getSettings',
-                key: 'marks'
-            }, function(response) {
-                var marks = response.settings.marks;
-                if (marks.hasOwnProperty(mark)) {
-                    var markInfo = marks[mark];
-                    if (typeof(markInfo) === "string") {
-                        markInfo = {
-                            url: markInfo,
-                            scrollLeft: 0,
-                            scrollTop: 0
-                        };
-                    }
-                    markInfo.tab = {
-                        tabbed: newTab,
-                        active: true
-                    };
-                    RUNTIME("openLink", markInfo);
-                } else {
-                    Front.showBanner("No mark '{0}' defined.".format(mark));
-                }
-            });
-        }
+    self.jumpVIMark = function(mark) {
+        RUNTIME('jumpVIMark', {
+            mark: mark
+        });
     };
 
     self.insertJS = function(code, onload) {
         var s = document.createElement('script');
         s.type = 'text/javascript';
         if (typeof(code) === 'function') {
-            setInnerHTML(s, "(" + code.toString() + ")(window);");
+            setSanitizedContent(s, "(" + code.toString() + ")(window);");
             setTimeout(function() {
                 s.remove();
             }, 1);
@@ -744,9 +839,7 @@ var Normal = (function() {
     };
 
     self.captureElement = function(elm) {
-        runtime.command({
-            action: 'getCaptureSize'
-        }, function(response) {
+        RUNTIME('getCaptureSize', null, function(response) {
             var scale = response.width / window.innerWidth;
 
             elm.scrollTop = 0;
@@ -818,9 +911,7 @@ var Normal = (function() {
                             dx = elm.scrollLeft * scale;
                         }
                         setTimeout(function() {
-                            runtime.command({
-                                action: 'captureVisibleTab'
-                            }, function(response) {
+                            RUNTIME('captureVisibleTab', null, function(response) {
                                 img.src = response.dataUrl;
                             });
                         }, 100);
@@ -835,9 +926,7 @@ var Normal = (function() {
                         dy = elm.scrollTop * scale;
                     }
                     setTimeout(function() {
-                        runtime.command({
-                            action: 'captureVisibleTab'
-                        }, function(response) {
+                        RUNTIME('captureVisibleTab', null, function(response) {
                             img.src = response.dataUrl;
                         });
                     }, 100);
@@ -846,9 +935,7 @@ var Normal = (function() {
 
             // wait 500 millisecond for keystrokes of Surfingkeys to hide
             setTimeout(function() {
-                runtime.command({
-                    action: 'captureVisibleTab'
-                }, function(response) {
+                RUNTIME('captureVisibleTab', null, function(response) {
                     img.src = response.dataUrl;
                 });
             }, 500);
@@ -889,13 +976,13 @@ var Normal = (function() {
         }
     });
     self.mappings.add("e", {
-        annotation: "Scroll a page up",
+        annotation: "Scroll half page up",
         feature_group: 2,
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageUp")
     });
     self.mappings.add("d", {
-        annotation: "Scroll a page down",
+        annotation: "Scroll half page down",
         feature_group: 2,
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageDown")
@@ -964,11 +1051,20 @@ var Normal = (function() {
     });
 
     self.mappings.add("f", {
-        annotation: "Open a link, press SHIFT to flip hints if they are overlapped.",
+        annotation: "Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints",
         feature_group: 1,
         repeatIgnore: true,
         code: function() {
             Hints.create("", Hints.dispatchMouseClick);
+        }
+    });
+
+    self.mappings.add(";fs", {
+        annotation: "Display hints to focus scrollable elements",
+        feature_group: 1,
+        repeatIgnore: true,
+        code: function() {
+            Hints.create(Normal.refreshScrollableElements(), Hints.dispatchMouseClick);
         }
     });
 
@@ -978,6 +1074,14 @@ var Normal = (function() {
         repeatIgnore: true,
         code: function() {
             Visual.toggle();
+        }
+    });
+    self.mappings.add("cq", {
+        annotation: "Query word with Hints",
+        feature_group: 7,
+        repeatIgnore: true,
+        code: function() {
+            Visual.toggle("q");
         }
     });
     self.mappings.add("/", {
@@ -1022,5 +1126,42 @@ var Normal = (function() {
         }
     });
 
+    function _onMouseUp(event) {
+        if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
+            && !isElementClickable(event.target)
+            && !event.target.matches(".cm-matchhighlight")) {
+            // perform inline query after 1 ms
+            // to avoid calling on selection collapse
+            setTimeout(Front.querySelectedWord, 1);
+        }
+    }
+
+    var _disabled = null;
+    self.disable = function() {
+        if (!_disabled) {
+            _disabled = createDisabled();
+            _disabled.enter(0, true);
+        }
+        window.Observer && window.Observer.turnOffDOMObserver();
+        document.removeEventListener("mouseup", _onMouseUp);
+    };
+
+    self.enable = function() {
+        if (_disabled) {
+            _disabled.exit();
+            _disabled = null;
+        }
+        document.addEventListener("mouseup", _onMouseUp);
+    };
+    self.enable();
+
+    self.onExit = function() {
+        window.Observer && window.Observer.turnOffDOMObserver();
+        _nodesHasSKScroll.forEach(function(n) {
+            delete n.skScrollBy;
+            delete n.smoothScrollBy;
+        });
+    };
+
     return self;
-})();
+}

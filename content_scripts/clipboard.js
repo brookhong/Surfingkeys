@@ -1,4 +1,4 @@
-var Clipboard = (function(mode) {
+function createClipboard() {
     var self = {};
 
     var holder = document.createElement('textarea');
@@ -8,7 +8,8 @@ var Clipboard = (function(mode) {
 
     function clipboardActionWithSelectionPreserved(cb) {
         actionWithSelectionPreserved(function(selection) {
-            document.body.appendChild(holder);
+            // avoid editable body
+            document.documentElement.appendChild(holder);
 
             cb(selection);
 
@@ -19,7 +20,7 @@ var Clipboard = (function(mode) {
     self.read = function(onReady) {
         clipboardActionWithSelectionPreserved(function() {
             holder.value = '';
-            setInnerHTML(holder, '');
+            setSanitizedContent(holder, '');
             holder.focus();
             document.execCommand("Paste");
         });
@@ -42,4 +43,4 @@ var Clipboard = (function(mode) {
 
     return self;
 
-})();
+}

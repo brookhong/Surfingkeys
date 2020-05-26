@@ -1,3 +1,12 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 ## Prelude
 * Could you find answer in below documents?
 
@@ -8,14 +17,14 @@
 
 ## Error details
 
+<!-- **You can simply click dropdown menu from Surfingkeys' icon in toolbar, which will provide necessary info.**
+![image](https://user-images.githubusercontent.com/288207/39614555-6048977e-4fa3-11e8-8476-46203af7c4d6.png) -->
+
 SurfingKeys: <version>
 
 Browser: <version><os version>
 
 URL: <The_URL_Where_You_Find_The_Issue>
-
-**You could simply click dropdown menu from Surfingkeys' icon in toolbar, which will provide necessary info.**
-![image](https://user-images.githubusercontent.com/288207/39614555-6048977e-4fa3-11e8-8476-46203af7c4d6.png)
 
 ## Context
 

@@ -1,3 +1,7 @@
+function isInUIFrame() {
+    return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
+}
+
 function timeStampString(t) {
     var dt = new Date();
     dt.setTime(t);
@@ -45,7 +49,7 @@ function isElementVisible(elm) {
 }
 
 function isElementClickable(e) {
-    var cssSelector = "a, button, select, input, textarea, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role]";
+    var cssSelector = "a, button, select, input, textarea, summary, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button, *[role=button], *[role=link], *[role=menuitem], *[role=option], *[role=switch], *[role=tab], *[role=checkbox], *[role=combobox], *[role=menuitemcheckbox], *[role=menuitemradio]";
     if (runtime.conf.clickableSelector.length) {
         cssSelector += ", " + runtime.conf.clickableSelector;
     }
@@ -54,6 +58,19 @@ function isElementClickable(e) {
         || getComputedStyle(e).cursor === "pointer"
         || getComputedStyle(e).cursor.substr(0, 4) === "url("
         || e.closest("a, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button") !== null;
+}
+
+function dispatchMouseEvent(element, events, shiftKey) {
+    events.forEach(function(eventName) {
+        var mouseButton = shiftKey ? 1 : 0;
+        var event = new MouseEvent(eventName, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            button: mouseButton
+        });
+        element.dispatchEvent(event);
+    });
 }
 
 function getRealEdit(event) {
@@ -69,6 +86,9 @@ function getRealEdit(event) {
             break;
         }
     }
+    if (rt === window) {
+        rt = document.body;
+    }
     return rt;
 }
 
@@ -82,9 +102,11 @@ function toggleQuote() {
 }
 
 function isEditable(element) {
-    return !element.disabled && (element.localName === 'textarea'
+    return element
+        && !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
+        || element.matches(runtime.conf.editableSelector)
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
 }
 
@@ -118,12 +140,18 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
     }
 }
 
+function isElementDrawn(e, rect) {
+    var min = isEditable(e) ? 1 : 4;
+    rect = rect || e.getBoundingClientRect();
+    return rect.width > min && rect.height > min;
+}
+
 function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
     var windowWidth = (window.innerWidth || document.documentElement.clientWidth);
 
-    return (ignoreSize || (rect.width > 4 && rect.height > 4))
+    return (ignoreSize || isElementDrawn(el, rect))
         && (rect.top < windowHeight) && (rect.bottom > 0)
         && (rect.left < windowWidth) && (rect.right > 0);
 }
@@ -143,7 +171,8 @@ function getVisibleElements(filter) {
         var rect = e.getBoundingClientRect();
         if ( (rect.top <= window.innerHeight) && (rect.bottom >= 0)
             && (rect.left <= window.innerWidth) && (rect.right >= 0)
-            && rect.height < window.innerHeight && rect.height > 0
+            && rect.height > 0
+            && getComputedStyle(e).visibility !== 'hidden'
         ) {
             filter(e, visibleElements);
         }
@@ -171,31 +200,71 @@ function actionWithSelectionPreserved(cb) {
     }
 }
 
+function last(array) {
+    return array[array.length - 1];
+}
+
+/**
+ * According to a discussion here: https://github.com/brookhong/Surfingkeys/pull/1136
+ * @param elements array of elements to filter passed in the order like:
+ * parent 1 > parent 0> child
+ */
 function filterAncestors(elements) {
-    var tmp = [];
-    if (elements.length > 0) {
-        // filter out element which has its children covered
-        tmp = [elements[elements.length - 1]];
-        for (var i = elements.length - 2; i >= 0; i--) {
-            if (!elements[i].contains(tmp[0])) {
-                tmp.unshift(elements[i]);
-            }
+    if (elements.length === 0) {
+        return elements;
+    }
+
+    // filter out element which has its children covered
+    let result = [last(elements)];
+    for (let i = elements.length - 2; i >= 0; i--) {
+        if (!elements[i].contains(last(result))
+            || isExplicitlyRequested(elements[i])) {
+            result.push(elements[i]);
         }
     }
 
-    return tmp;
+    // To restore original order of elements
+    return result.reverse();
+}
+
+function getRealRect(elm) {
+    if (elm.childElementCount === 0) {
+        var r = elm.getClientRects();
+        if (r.length === 3) {
+            // for a clipped A tag
+            return r[1];
+        } else if (r.length === 2) {
+            // for a wrapped A tag
+            return r[0];
+        } else {
+            return elm.getBoundingClientRect();
+        }
+    } else if (elm.childElementCount === 1 && elm.firstElementChild.textContent) {
+        var r = elm.firstElementChild.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) {
+            r = elm.getBoundingClientRect();
+        }
+        return r;
+    } else {
+        return elm.getBoundingClientRect();
+    }
+}
+
+function isExplicitlyRequested(element) {
+    return runtime.conf.clickableSelector &&
+        element.matches(runtime.conf.clickableSelector);
 }
 
 function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
-        var be = e.getClientRects()[0];
-        if (e.disabled || e.readOnly || be.width <= 4) {
+        var be = getRealRect(e);
+        if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
             return false;
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
         } else {
-            var el = document.elementFromPoint(be.left + be.width / 2, be.top + 3);
+            var el = document.elementFromPoint(be.left + 3, be.top + 3);
             return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
         }
     });
@@ -250,6 +319,23 @@ function getTextNodes(root, pattern, flag) {
     return nodes;
 }
 
+function getTextNodePos(node, offset, length) {
+    var selection = document.getSelection();
+    selection.setBaseAndExtent(node, offset, node, length ? (offset + length) : node.data.length);
+    var br = selection.getRangeAt(0).getClientRects()[0];
+    var pos = {
+        left: -1,
+        top: -1
+    };
+    if (br && br.height > 0 && br.width > 0) {
+        pos.left = br.left;
+        pos.top = br.top;
+        pos.width = br.width;
+        pos.height = br.height;
+    }
+    return pos;
+}
+
 function initL10n(cb) {
     var lang = runtime.conf.language || window.navigator.language;
     if (lang === "en-US") {
@@ -287,6 +373,12 @@ RegExp.prototype.toJSON = function() {
     return {source: this.source, flags: this.flags};
 };
 
+if (!Array.prototype.flatMap) {
+    Array.prototype.flatMap = function(lambda) {
+        return Array.prototype.concat.apply([], this.map(lambda));
+    };
+}
+
 function _parseAnnotation(ag) {
     var annotations = ag.annotation.match(/#(\d+)(.*)/);
     if (annotations !== null) {
@@ -305,11 +397,14 @@ function _map(mode, nks, oks) {
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
         mode.mappings.add(nks, meta);
+        if (!isInUIFrame()) {
+            Front.addMapkey(mode.name, nks, oks);
+        }
     }
     return old_map;
 }
 
-function RUNTIME(action, args) {
+function RUNTIME(action, args, callback) {
     var actionsRepeatBackground = ['closeTab', 'nextTab', 'previousTab', 'moveTab', 'reloadTab', 'setZoom', 'closeTabLeft','closeTabRight', 'focusTabByIndex'];
     (args = args || {}).action = action;
     if (actionsRepeatBackground.indexOf(action) !== -1) {
@@ -319,7 +414,8 @@ function RUNTIME(action, args) {
         RUNTIME.repeats = 1;
     }
     try {
-        chrome.runtime.sendMessage(args);
+        args.needResponse = callback !== undefined;
+        chrome.runtime.sendMessage(args, callback);
     } catch (e) {
         Front.showPopup('[runtime exception] ' + e);
     }
@@ -392,8 +488,8 @@ function getElements(selectorString) {
 function getClickableElements(selectorString, pattern) {
     var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
         return n.offsetHeight && n.offsetWidth
-            && (n.matches(selectorString) || getComputedStyle(n).cursor === "pointer")
-            && (!pattern || pattern.test(n.textContent));
+            && getComputedStyle(n).cursor === "pointer"
+            && (n.matches(selectorString) || pattern.test(n.textContent));
     });
     return filterOverlapElements(nodes);
 }
@@ -401,19 +497,28 @@ function getClickableElements(selectorString, pattern) {
 function filterInvisibleElements(nodes) {
     return nodes.filter(function(n) {
         return n.offsetHeight && n.offsetWidth
-            && !n.getAttribute('disabled') && isElementPartiallyInViewport(n);
+            && !n.getAttribute('disabled') && isElementPartiallyInViewport(n)
+            && getComputedStyle(n).visibility !== 'hidden';
     });
 }
 
-function setInnerHTML(elm, str) {
-    elm.innerHTML = str;
+function setSanitizedContent(elm, str) {
+    elm.innerHTML = DOMPurify.sanitize(str);
 }
 
-function createElement(str) {
-    var div = document.createElement('div');
-    setInnerHTML(div, str);
+function createElementWithContent(tag, content, attributes) {
+    var elm = document.createElement(tag);
+    if (content) {
+        setSanitizedContent(elm, content);
+    }
 
-    return div.firstChild;
+    if (attributes) {
+        for (var attr in attributes) {
+            elm.setAttribute(attr, attributes[attr]);
+        }
+    }
+
+    return elm;
 }
 
 function hasScroll(el, direction, barSize) {
@@ -425,6 +530,10 @@ function hasScroll(el, direction, barSize) {
         var originOffset = el[offset[0]];
         el[offset[0]] = el.getBoundingClientRect()[offset[1]];
         result = el[offset[0]];
+        if (result !== originOffset) {
+            // this is valid for some site such as http://mail.live.com/
+            Mode.suppressNextScrollEvent();
+        }
         el[offset[0]] = originOffset;
     }
     return result >= barSize;
@@ -437,7 +546,7 @@ function isEmptyObject(obj) {
     return true;
 }
 
-var _divForHtmlEncoder = createElement("<div>");
+var _divForHtmlEncoder = document.createElement("div");
 function htmlEncode(str) {
     _divForHtmlEncoder.innerText = str;
     return _divForHtmlEncoder.innerHTML;

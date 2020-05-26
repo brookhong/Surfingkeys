@@ -20,6 +20,8 @@
 //
 // ************************* WARNING *************************
 
+function createDefaultMappings() {
+
 imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
 imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
     var element = getRealEdit();
@@ -41,8 +43,7 @@ mapkey('cp', '#13Toggle proxy for current site', function() {
     }
 });
 mapkey(';cp', '#13Copy proxy info', function() {
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: ['proxyMode', 'proxy', 'autoproxy_hosts']
     }, function(response) {
         Clipboard.write(JSON.stringify(response.settings, null, 4));
@@ -51,8 +52,7 @@ mapkey(';cp', '#13Copy proxy info', function() {
 mapkey(';ap', '#13Apply proxy info from clipboard', function() {
     Clipboard.read(function(response) {
         var proxyConf = JSON.parse(response.data);
-        runtime.command({
-            action: 'updateProxy',
+        RUNTIME('updateProxy', {
             operation: 'set',
             host: proxyConf.autoproxy_hosts,
             proxy: proxyConf.proxy,
@@ -73,21 +73,6 @@ mapkey('gr', '#14Read selected text or text from clipboard', function() {
 });
 vmapkey('gr', '#9Read selected text', function() {
     readText(window.getSelection().toString(), {verbose: true});
-});
-mapkey('sfr', '#13show failed web requests of current page', function() {
-    runtime.command({
-        action: 'getTabErrors'
-    }, function(response) {
-        if (response.tabError && response.tabError.length) {
-            var errors = response.tabError.map(function(e) {
-                var url = new URL(e.url);
-                return "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>".format(e.error, e.type, url.host);
-            });
-            Front.showPopup("<table style='width:100%'>{0}</table>".format(errors.join('')));
-        } else {
-            Front.showPopup("No errors from webRequest.");
-        }
-    });
 });
 map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
 map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
@@ -132,8 +117,8 @@ mapkey('?', '#0Show usage', function() {
     Front.showUsage();
 });
 map('u', 'e');
-mapkey('af', '#1Open a link in new tab', function() {
-    Hints.create("", Hints.dispatchMouseClick, {tabbed: true});
+mapkey('af', '#1Open a link in active new tab', function() {
+    Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: true});
 });
 mapkey('gf', '#1Open a link in non-active new tab', function() {
     Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false});
@@ -200,7 +185,7 @@ mapkey('yq', '#7Copy pre text', function() {
     });
 });
 mapkey('i', '#1Go to edit box', function() {
-    Hints.create("input, textarea, *[contenteditable=true], select", Hints.dispatchMouseClick);
+    Hints.create("input, textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor", Hints.dispatchMouseClick);
 });
 mapkey('gi', '#1Go to the first edit box', function() {
     Hints.createInputLayer();
@@ -212,9 +197,10 @@ mapkey('I', '#1Go to edit box with vim editor', function() {
 });
 mapkey('O', '#1Open detected links from text', function() {
     Hints.create(runtime.conf.clickablePat, function(element) {
-        createElement(`<a href=${element[2]}>`).click();
+        window.location.assign(element[2]);
     }, {statusLine: "Open detected links from text"});
 });
+
 mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
     var pdfUrl = window.location.href;
     if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
@@ -253,6 +239,9 @@ mapkey('q', '#1Click on an Image or a button', function() {
 mapkey('<Alt-i>', '#0enter PassThrough mode to temporarily suppress SurfingKeys', function() {
     Normal.passThrough();
 });
+mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+    Normal.passThrough(1000);
+});
 mapkey('<Alt-p>', '#3pin/unpin current tab', function() {
     RUNTIME("togglePinTab");
 });
@@ -290,8 +279,7 @@ mapkey('go', '#8Open a URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getAllSites", tabbed: false});
 });
 mapkey('oi', '#8Open incognito window', function() {
-    runtime.command({
-        action: 'openIncognito',
+    RUNTIME('openIncognito', {
         url: window.location.href
     });
 });
@@ -362,7 +350,7 @@ mapkey('W', '#3New window with current tab',  function() {
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
 mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
-    Normal.jumpVIMark(mark, true);
+    Normal.jumpVIMark(mark);
 });
 mapkey('<<', '#3Move current tab to left', function() {
     RUNTIME('moveTab', {
@@ -396,8 +384,7 @@ mapkey('ys', "#7Copy current page's source", function() {
     Clipboard.write(aa.outerHTML);
 });
 mapkey('yj', "#7Copy current settings", function() {
-    runtime.command({
-        action: 'getSettings',
+    RUNTIME('getSettings', {
         key: "RAW"
     }, function(response) {
         Clipboard.write(JSON.stringify(response.settings, null, 4));
@@ -411,8 +398,7 @@ mapkey(';pj', "#7Restore settings data from clipboard", function() {
     });
 });
 mapkey('yd', "#7Copy current downloading URL", function() {
-    runtime.command({
-        action: 'getDownloads',
+    RUNTIME('getDownloads', {
         query: {state: "in_progress"}
     }, function(response) {
         var items = response.downloads.map(function(o) {
@@ -424,6 +410,9 @@ mapkey('yd', "#7Copy current downloading URL", function() {
 mapkey('yt', '#3Duplicate current tab', function() {
     RUNTIME("duplicateTab");
 });
+mapkey('yT', '#3Duplicate current tab in background', function() {
+    RUNTIME("duplicateTab", {active: false});
+});
 mapkey('yy', "#7Copy current page's URL", function() {
     Clipboard.write(window.location.href);
 });
@@ -434,23 +423,51 @@ mapkey('yh', "#7Copy current page's host", function() {
 mapkey('yl', "#7Copy current page's title", function() {
     Clipboard.write(document.title);
 });
+mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
+    RUNTIME('getSettings', {
+        key: 'OmniQueryHistory'
+    }, function(response) {
+        Clipboard.write(response.settings.OmniQueryHistory.join("\n"));
+    });
+});
+function generateFormKey(form) {
+    return (form.method || "get") + "::" + new URL(form.action).pathname;
+}
 mapkey('yf', '#7Copy form data in JSON on current page', function() {
     var fd = {};
     document.querySelectorAll('form').forEach(function(form) {
-        fd[(form.method || "get") + "::" + form.action] = getFormData(form, "json");
+        fd[generateFormKey(form)] = getFormData(form, "json");
     });
     Clipboard.write(JSON.stringify(fd, null, 4));
 });
 mapkey(';pf', '#7Fill form with data from yf', function() {
     Hints.create('form', function(element, event) {
-        var formKey = (element.method || "get") + "::" + element.action;
+        var formKey = generateFormKey(element);
         Clipboard.read(function(response) {
             var forms = JSON.parse(response.data.trim());
             if (forms.hasOwnProperty(formKey)) {
                 var fd = forms[formKey];
-                element.querySelectorAll('input[type=text]').forEach(function(ip) {
-                    if (fd.hasOwnProperty(ip.name)) {
-                        ip.value = fd[ip.name];
+                element.querySelectorAll('input, textarea').forEach(function(ip) {
+                    if (fd.hasOwnProperty(ip.name) && ip.type !== "hidden") {
+                        if (ip.type === "radio") {
+                            var op = element.querySelector(`input[name='${ip.name}'][value='${fd[ip.name]}']`);
+                            if (op) {
+                                op.checked = true;
+                            }
+                        } else if (Array.isArray(fd[ip.name])) {
+                            element.querySelectorAll(`input[name='${ip.name}']`).forEach(function(ip) {
+                                ip.checked = false;
+                            });
+                            var vals = fd[ip.name];
+                            vals.forEach(function(v) {
+                                var op = element.querySelector(`input[name='${ip.name}'][value='${v}']`);
+                                if (op) {
+                                    op.checked = true;
+                                }
+                            });
+                        } else if (typeof(fd[ip.name]) === "string") {
+                            ip.value = fd[ip.name];
+                        }
                     }
                 });
             } else {
@@ -462,9 +479,7 @@ mapkey(';pf', '#7Fill form with data from yf', function() {
 mapkey('yg', '#7Capture current page', function() {
     Front.toggleStatus(false);
     setTimeout(function() {
-        runtime.command({
-            action: 'captureVisibleTab'
-        }, function(response) {
+        RUNTIME('captureVisibleTab', null, function(response) {
             Front.toggleStatus(true);
             Front.showPopup("<img src='{0}' />".format(response.dataUrl));
         });
@@ -495,11 +510,11 @@ mapkey('oy', '#8Open Search with alias y', function() {
     Front.openOmnibar({type: "SearchEngine", extra: "y"});
 });
 if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-    mapkey('on', '#3Open Firefox newtab', function() {
+    mapkey('on', '#3Open newtab', function() {
         tabOpenLink("about:blank");
     });
 } else {
-    mapkey('on', '#3Open Chrome newtab', function() {
+    mapkey('on', '#3Open newtab', function() {
         tabOpenLink("chrome://newtab/");
     });
     mapkey('ga', '#12Open Chrome About', function() {
@@ -557,6 +572,9 @@ mapkey('gu', '#4Go up one path in the URL', function() {
 mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
     window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
 });
+mapkey('g#', '#4Reload current page without hash fragment', function() {
+    window.location.href = window.location.href.replace(/\#[^\#]*$/, '');
+});
 mapkey('gU', '#4Go to root of current URL hierarchy', function() {
     window.location.href = window.location.origin;
 });
@@ -601,16 +619,20 @@ mapkey(';pp', '#7Paste html on current page', function() {
     Clipboard.read(function(response) {
         document.documentElement.removeAttributes();
         document.body.removeAttributes();
-        setInnerHTML(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
-        setInnerHTML(document.body, response.data);
+        setSanitizedContent(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
+        setSanitizedContent(document.body, response.data);
     });
 });
-mapkey(';q', '#14Insert jquery library on current page', function() {
-    Normal.insertJS("//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js");
-});
-mapkey(';t', 'Translate selected text with google', function() {
-    searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
-});
+
+function openGoogleTranslate() {
+    if (window.getSelection().toString()) {
+        searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
+    } else {
+        tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
+    }
+}
+mapkey(';t', 'Translate selected text with google', openGoogleTranslate);
+vmapkey('t', '#9Translate selected text with google', openGoogleTranslate);
 mapkey(';dh', '#14Delete history older than 30 days', function() {
     RUNTIME('deleteHistoryOlderThan', {
         days: 30
@@ -634,6 +656,9 @@ addSearchAliasX('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://sugges
     var res = response.text.match(/,s:\[("[^\]]+")]}/);
     return res ? res[1].replace(/"/g, '').split(",") : [];
 });
+addSearchAliasX('e', 'wikipedia', 'https://en.wikipedia.org/wiki/', 's', 'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=40&search=', function(response) {
+    return JSON.parse(response.text)[1];
+});
 addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
     var res = JSON.parse(response.text);
     return res[1];
@@ -648,4 +673,4 @@ addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=',
     });
 });
 
-document.dispatchEvent(new CustomEvent('surfingkeys:defaultSettingsLoaded'));
+}

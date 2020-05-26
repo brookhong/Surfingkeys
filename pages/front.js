@@ -1,10 +1,12 @@
 var Front = (function() {
+    window.KeyboardUtils = createKeyboardUtils();
+    window.Mode = createMode();
+    window.Normal = createNormal();
+    window.PassThrough = createPassThrough();
+    window.Visual = createVisual();
+    window.Hints = createHints();
+    window.Clipboard = createClipboard();
     var self = new Mode("Front");
-
-    // this object is implementation of UI, it's UI provider
-    self.isProvider = function() {
-        return true;
-    };
 
     var topOrigin,
         _actions = {},
@@ -42,46 +44,65 @@ var Front = (function() {
         }
     });
 
+    function State(pointerEvents, frameHeight, onEnter) {
+        this.enter = function() {
+            onEnter && onEnter();
+            top.postMessage({
+                action: 'setFrontFrame',
+                pointerEvents: pointerEvents,
+                frameHeight: frameHeight
+            }, topOrigin);
+        };
+        this.nextState = function () {
+            var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
+                return n.style.display !== "none";
+            });
+            var pointerEvents = visibleDivs.map(function(d) {
+                var id = d.id;
+                var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
+                if (divNoPointerEvents.indexOf(id) !== -1) {
+                    // no pointerEvents for bubble
+                    return false;
+                } else if (id === "sk_status") {
+                    // only pointerEvents when input in statusBar
+                    return self.statusBar.querySelector('input') !== null;
+                } else {
+                    // with pointerEvents for all other DIVs except that noPointerEvents is set.
+                    return !d.noPointerEvents;
+                }
+            });
+            // to make pointerEvents not empty
+            pointerEvents.push(false);
+            pointerEvents = pointerEvents.reduce(function(a, b) {
+                return a || b;
+            });
+
+            var ns;
+            if (pointerEvents) {
+                ns = stateInteractive;
+            } else if (visibleDivs.length > 0) {
+                ns = stateVisible;
+            } else {
+                ns = stateInvisible;
+            }
+            if (this !== ns) {
+                _state = ns;
+                _state.enter();
+            }
+        };
+    }
+    const stateInvisible = new State("none", "0px");
+    const stateVisible = new State("none", "100%");
+    const stateInteractive = new State("all", "100%", function() {
+        window.focus();
+    });
+    var _state = stateInvisible;
     self.flush = function() {
-        var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
-            return n.style.display !== "none";
-        });
-        var pointerEvents = visibleDivs.map(function(d) {
-            var id = d.id;
-            var divNoPointerEvents = ["sk_keystroke", "sk_banner"];
-            if (divNoPointerEvents.indexOf(id) !== -1) {
-                // no pointerEvents for bubble
-                return false;
-            } else if (id === "sk_status") {
-                // only pointerEvents when input in statusBar
-                return self.statusBar.querySelector('input') !== null;
-            } else {
-                // with pointerEvents for all other DIVs except that noPointerEvents is set.
-                return !d.noPointerEvents;
-            }
-        });
-        // to make pointerEvents not empty
-        pointerEvents.push(false);
-        pointerEvents = pointerEvents.reduce(function(a, b) {
-            return a || b;
-        });
-        if (pointerEvents) {
-            window.focus();
-            if (visibleDivs[0] === self.omnibar) {
-                self.omnibar.querySelector("input").focus();
-            } else {
-                visibleDivs[0].focus();
-            }
-        }
-        top.postMessage({
-            action: 'setFrontFrame',
-            pointerEvents: pointerEvents ? "all" : "none",
-            frameHeight: visibleDivs.length > 0 ? "100%" : "0px"
-        }, topOrigin);
+        _state.nextState();
     };
     self.visualCommand = function(args) {
         if (_usage.style.display !== "none") {
-            // visual mode in frontend.html
+            // visual mode in frontend.html, such as help
             Visual[args.action](args.query);
         } else {
             // visual mode for all content windows
@@ -128,8 +149,7 @@ var Front = (function() {
     };
     self.hidePopup = _actions['hidePopup'];
 
-    function showPopup(td, args) {
-        self.enter(0, true);
+    function setDisplay(td, args) {
         if (_display && _display.style.display !== "none") {
             _display.style.display = "none";
             _display.onHide && _display.onHide();
@@ -137,29 +157,33 @@ var Front = (function() {
         _display = td;
         _display.style.display = "";
         _display.onShow && _display.onShow(args);
+    }
+
+    function showPopup(td, args) {
+        self.enter(0, true);
+        setDisplay(td, args);
         self.flush();
     }
 
     _tabs.onShow = function(tabs) {
-        setInnerHTML(_tabs, "");
+        setSanitizedContent(_tabs, "");
         _tabs.trie = new Trie();
         var hintLabels = Hints.genLabels(tabs.length);
-        var tabstr = "<div class=sk_tab style='width: 200px'>";
         tabs.forEach(function(t, i) {
-            var tab = createElement(tabstr);
+            var tab = document.createElement('div');
+            tab.setAttribute('class', 'sk_tab');
+            tab.style.width = '200px';
             _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            setInnerHTML(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
+            setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
             tab.url = t.url;
             _tabs.append(tab);
         });
         _tabs.querySelectorAll('div.sk_tab').forEach(function(tab) {
-            tab.append(createElement(`<div class=sk_tab_url>${tab.url}</div>`));
+            tab.append(createElementWithContent('div', tab.url, {class: "sk_tab_url"}));
         });
     };
     _actions['chooseTab'] = function() {
-        runtime.command({
-            action: 'getTabs'
-        }, function(response) {
+        RUNTIME('getTabs', null, function(response) {
             if (response.tabs.length > runtime.conf.tabsThreshold) {
                 showPopup(self.omnibar, {type: 'Tabs'});
             } else if (response.tabs.length > 0) {
@@ -213,7 +237,7 @@ var Front = (function() {
 
     _usage.onShow = function(message) {
         buildUsage(message.metas, function(usage) {
-            setInnerHTML(_usage, usage);
+            setSanitizedContent(_usage, usage);
         });
     };
 
@@ -227,14 +251,18 @@ var Front = (function() {
             }
         }
         if ('theme' in message.userSettings) {
-            setInnerHTML(document.getElementById("sk_theme"), message.userSettings.theme);
+            setSanitizedContent(document.getElementById("sk_theme"), message.userSettings.theme);
         }
     };
     _actions['executeCommand'] = function (message) {
         Commands.execute(message.cmdline);
     };
-    _actions['addCMap'] = function (message) {
-        _map(Omnibar, message.new_keystroke, message.old_keystroke);
+    _actions['addMapkey'] = function (message) {
+        if (message.old_keystroke in Mode.specialKeys) {
+            Mode.specialKeys[message.old_keystroke].push(message.new_keystroke);
+        } else if (window.hasOwnProperty(message.mode)) {
+            _map(window[message.mode], message.new_keystroke, message.old_keystroke);
+        }
     };
     _actions['addVimMap'] = function (message) {
         self.vimMappings.push([message.lhs, message.rhs, message.ctx]);
@@ -272,7 +300,7 @@ var Front = (function() {
     };
 
     self.showPopup = function(content) {
-        setInnerHTML(_popup, content);
+        setSanitizedContent(_popup, content);
         showPopup(_popup);
     };
 
@@ -305,7 +333,7 @@ var Front = (function() {
     _actions['openOmnibar'] = function(message) {
         showPopup(self.omnibar, message);
         var style = message.style || "";
-        setInnerHTML(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
+        setSanitizedContent(self.omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
     };
     self.openOmnibar = _actions['openOmnibar'];
     _actions['openFinder'] = function() {
@@ -314,17 +342,18 @@ var Front = (function() {
     self.openFinder = _actions['openFinder'];
 
     self.showBanner = function (content, linger_time) {
-        banner.classList.remove("slideInBanner");
+        banner.style.cssText = "";
         banner.style.display = "";
-        setInnerHTML(banner, htmlEncode(content));
+        banner.style.top = "0px";
+        setSanitizedContent(banner, htmlEncode(content));
         self.flush();
 
-        banner.classList.add("slideInBanner");
-        banner.one('animationend', function() {
-            banner.classList.remove("slideInBanner");
+        let timems = linger_time || 1600;
+        setTimeout(function() {
+            banner.style.cssText = "";
             banner.style.display = "none";
             self.flush();
-        });
+        }, timems);
     };
     _actions['showBanner'] = function(message) {
         self.showBanner(message.content, message.linger_time);
@@ -336,7 +365,7 @@ var Front = (function() {
         // set position to (0, 0) to leave enough space for content.
         _bubble.style.top = "0px";
         _bubble.style.left = "0px";
-        setInnerHTML(sk_bubble_content, message.content);
+        setSanitizedContent(sk_bubble_content, message.content);
         sk_bubble_content.style.maxWidth = (pos.winWidth - 32) + "px";
         sk_bubble_content.scrollTop = 0;
         clearScrollerIndicator();
@@ -374,8 +403,7 @@ var Front = (function() {
         }
         self.flush();
         if (!_bubble.noPointerEvents) {
-            _display = _bubble;
-            self.onShowBubble && self.onShowBubble(_bubble);
+            setDisplay(_bubble, {});
             self.enter(0, true);
         }
     };
@@ -422,14 +450,10 @@ var Front = (function() {
 
     _actions['hideKeystroke'] = function() {
         if (keystroke.style.display !== "none") {
-            var outClass = keystroke.classList.contains("expandRichHints") ? "collapseRichHints" : "slideOutRight";
             keystroke.classList.remove("expandRichHints");
-            keystroke.classList.add(outClass);
-            keystroke.one('animationend', function() {
-                setInnerHTML(keystroke, "");
-                keystroke.style.display = "none";
-                self.flush();
-            });
+            setSanitizedContent(keystroke, "");
+            keystroke.style.display = "none";
+            self.flush();
         }
         if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
             clearPendingHint();
@@ -453,11 +477,8 @@ var Front = (function() {
                 }
             }).join("");
             if (words.length > 0 && _pendingHint) {
-                setInnerHTML(keystroke, words);
-                var cl = keystroke.classList;
-                cl.remove("expandRichHints");
-                cl.remove("simpleHint");
-                cl.add("expandRichHints");
+                setSanitizedContent(keystroke, words);
+                keystroke.classList.add("expandRichHints");
                 self.flush();
             }
         });
@@ -470,14 +491,7 @@ var Front = (function() {
             keystroke.style.display = "";
             self.flush();
             var keys = keystroke.innerHTML + htmlEncode(KeyboardUtils.decodeKeystroke(message.keyHints.key));
-            setInnerHTML(keystroke, keys);
-
-            var cl = keystroke.classList;
-            cl.remove("slideInRight");
-            cl.remove("slideOutRight");
-            cl.remove("collapseRichHints");
-            cl.add("slideInRight");
-            cl.add("simpleHint");
+            setSanitizedContent(keystroke, keys);
 
             if (runtime.conf.richHintsForKeystroke > 0 && runtime.conf.richHintsForKeystroke < 10000) {
                 _pendingHint = setTimeout(function() {
@@ -514,6 +528,49 @@ var Front = (function() {
             }
         }
     }, true);
+
+
+    function onResize() {
+        if (_bubble.style.display !== "none") {
+            Front.contentCommand({
+                action: 'updateInlineQuery'
+            });
+        }
+    }
+
+    // for mouseSelectToQuery
+    document.onmouseup = function(e) {
+        if (!_bubble.contains(e.target)) {
+            _bubble.style.display = "none";
+            Front.flush();
+            Front.visualCommand({
+                action: 'emptySelection'
+            });
+            window.removeEventListener("resize", onResize);
+        } else {
+            var sel = window.getSelection().toString().trim() || Visual.getWordUnderCursor();
+            if (sel && sel.length > 0) {
+                Front.contentCommand({
+                    action: 'updateInlineQuery',
+                    word: sel
+                }, function() {
+                    window.addEventListener("resize", onResize);
+                });
+            }
+        }
+    };
+
+    _bubble.querySelector("div.sk_bubble_content").addEventListener("mousewheel", function (evt) {
+        if (evt.deltaY > 0 && this.scrollTop + this.offsetHeight >= this.scrollHeight || evt.deltaY < 0 && this.scrollTop <= 0) {
+            evt.preventDefault();
+        }
+    }, { passive: false });
+
+    window.addEventListener('beforeunload', function() {
+        top.postMessage({
+            action: "frontendUnloaded"
+        }, topOrigin);
+    });
 
     return self;
 })();

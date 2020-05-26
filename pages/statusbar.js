@@ -23,10 +23,10 @@ var StatusBar = (function() {
         var span = ui.querySelectorAll('span');
         if (n < 0) {
             span.forEach(function(s) {
-                setInnerHTML(s, "");
+                setSanitizedContent(s, "");
             });
         } else {
-            setInnerHTML(span[n], content);
+            setSanitizedContent(span[n], content);
         }
         var lastSpan = -1;
         for (var i = 0; i < span.length; i++) {
@@ -62,6 +62,10 @@ var Find = (function() {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
+        if (event.target !== input) {
+            // user clicks on somewhere else
+            reset();
+        }
         event.sk_suppressed = true;
     });
 
@@ -86,14 +90,15 @@ var Find = (function() {
         StatusBar.show(1, '<input id="sk_find" class="sk_theme"/>');
         input = Front.statusBar.querySelector("input");
         input.oninput = function() {
-            Front.visualCommand({
-                action: 'visualUpdate',
-                query: input.value
-            });
+            if (input.value.length && input.value !== ".") {
+                Front.visualCommand({
+                    action: 'visualUpdate',
+                    query: input.value
+                });
+            }
         };
         var findHistory = [];
-        runtime.command({
-            action: 'getSettings',
+        RUNTIME('getSettings', {
             key: 'findHistory'
         }, function(response) {
             findHistory = response.settings.findHistory;
@@ -106,7 +111,7 @@ var Find = (function() {
                 });
             } else if (event.keyCode === KeyboardUtils.keyCodes.enter) {
                 var query = input.value;
-                if (query.length > 0) {
+                if (query.length && query !== ".") {
                     if (event.ctrlKey) {
                         query = '\\b' + query + '\\b';
                     }
@@ -127,6 +132,7 @@ var Find = (function() {
                         action: 'visualUpdate',
                         query: query
                     });
+                    event.preventDefault();
                 }
             }
         };

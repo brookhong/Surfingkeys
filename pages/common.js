@@ -33,7 +33,7 @@ Front.renderHeaderDescription = function() {
         desc.remove();
     }
     content = document.querySelector('div.content');
-    desc = createElement(`<div class="description">${words.join("")}</div>`);
+    desc = createElementWithContent('div', words.join(""), {class: "description"});
     document.body.insertBefore(desc, content);
     content.style.height = (window.innerHeight - desc.offsetHeight) + "px";
 };

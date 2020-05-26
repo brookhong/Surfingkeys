@@ -1,5 +1,7 @@
 # Surfingkeys - Expand your browser with javascript and keyboard.
 
+[![Node CI](https://github.com/brookhong/Surfingkeys/workflows/Node%20CI/badge.svg?branch=master)](https://github.com/brookhong/Surfingkeys/actions?query=workflow%3A%22Node+CI%22+branch%3Amaster)
+
 Surfingkeys is another Chrome/Firefox extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
@@ -14,8 +16,11 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * Proxy settings
 * Markdown preview
 
+## Installation
 
-[Reference for editing your own settings](#edit-your-own-settings).
+* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
 
 ### TABLE OF CONTENTS
 
@@ -33,7 +38,7 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * [Repeats action by pressing number before mapkey](#repeats-action-by-pressing-number-before-mapkey)
 * [Hotkey to toggle Surfingkeys](#hotkey-to-toggle-surfingkeys)
 * [Proxy settings](#proxy-settings)
-* [VIM editor](#vim-editor)
+* [VIM editor and Emacs editor](#vim-editor-and-emacs-editor)
 * [Dot to repeat previous action](#dot-to-repeat-previous-action)
 * [Markdown preview](#markdown-preview)
 * [Capture page](#capture-page)
@@ -68,7 +73,7 @@ After you install the extension from [Chrome Web Store](https://chrome.google.co
 Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
 
 * `?` to show help
-![help](https://cloud.githubusercontent.com/assets/288207/16181995/1417ca44-36d4-11e6-96c9-9e84b33f0916.png)
+![help](https://user-images.githubusercontent.com/288207/72702854-0a74a480-3b8f-11ea-9be3-69745c280c3f.png)
 * `t` to search bookmarks/history
 ![urls](https://cloud.githubusercontent.com/assets/288207/16182031/58e15ec4-36d4-11e6-9cc5-ff35970df25f.png)
 * `/` to find in current page
@@ -168,6 +173,16 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
 Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\bkeyword\b`.
 
+### PassThrough mode
+
+To press `Alt-i` to enter PassThrough mode gives you a chance to temporarily suppress SurfingKeys, which means Surfingkeys will not care any key press until leaving this mode by pressing `Esc`. In this mode, you could use built-in shortcuts from any site itself. Please see [Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656) for why we brought this in and the difference between `Alt-i` and `Alt-s`.
+
+To press `p` to enter ephemeral PassThrough mode, which will automatically quit after 1 second. If the default timeout does fit your case, add below into your own settings script to make it 1500ms.
+
+    mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+        Normal.passThrough(1500);
+    });
+
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,
@@ -193,7 +208,7 @@ In omnibar opened with `t`:
 
 In omnibar opened with `b`:
 
-`Ctrl - Shift - <any letter>` to create vim-like global mark
+`Ctrl - Shift - <any letter>` to create vim-like mark
 
 ![search_engine](https://cloud.githubusercontent.com/assets/288207/17644214/759ef1d4-61b3-11e6-9bd9-70c38c8b80e0.gif)
 
@@ -201,6 +216,9 @@ In omnibar opened with `b`:
 
     cmap('<Ctrl-n>', '<Tab>');
     cmap('<Ctrl-p>', '<Shift-Tab>');
+
+### Add bookmark
+`ab` is a shortcut to bookmark current page. An Omnibar is displayed for you to choose a folder to place the new bookmark after you pressed `ab`. If you want to place the new bookmark into a new folder, you could input folder name -- **which must be ended with `/`** in Omnibar. For example, I choose folder `/Bookmarks Bar/tool/`, and append `abc/`, then current page will be bookmarked into `/Bookmarks Bar/tool/abc/`. If there is no `/` behind `abc`, `abc` will be used as title of the new bookmark.
 
 ## Search selected with
 
@@ -214,13 +232,13 @@ The search_leader_key `s` plus capital alias `G` will search selected with googl
 
 ## Vim-like marks
 
-You can create vim-like marks by pressing `m`, followed by a word character(a-z for local marks, others like 0-9 / A-Z for global marks), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
+You can create vim-like marks by pressing `m`, followed by a word character(0-9 / a-z / A-Z), used as mark name. For example, if you press `ma` on this page, you'll create a mark named `a` which points to this page. Then pressing `'a` anywhere, you'll jump to this page.
 
 In this way, the created mark always points to current URL. You can also create vim-like marks from the bookmarks. Try following steps:
 
 1. press `b` to open bookmarks.
 1. type something to locate the URL you'd like to create vim-like mark for.
-1. press Ctrl, plus a mark name, such as `f`.
+1. Hold Ctrl + Shift, press a mark name, such as `f`.
 
 Then afterwards `'F` will open that URL directly.
 
@@ -373,13 +391,19 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `spi`, shortcut for `:proxyInfo`
 
-## VIM editor
+## VIM editor and Emacs editor
 
 Thanks ACE for the vim editor, Surfingkeys integrates ACE for the vim editor. The vim editor is used:
 
 * to edit any input on html page
 * to edit URL to open in new tab
 * to edit settings
+
+You could change to Emacs keybindings for the editor by adding below settings:
+
+    settings.aceKeybindings = "emacs";
+
+With Emacs keybindings, use `C-x C-s` to save your input.
 
 ### Edit any input on html page
 
@@ -630,6 +654,7 @@ For example,
 | settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
 | settings.clickableSelector | "" | Extra CSS selector to pick elements for hints mode, such as "\*.jfk-button, \*.goog-flat-menu-button". |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | A regex to detect clickable links from text, you could use `O` to open them. |
+| settings.editableSelector | div.CodeMirror-scroll,div.ace_content | CSS selector for additional editable elements. |
 | settings.smoothScroll | true | Whether to use smooth scrolling when pressing keys like `j`/`k`/`e`/`d` to scroll page or elements. |
 | settings.modeAfterYank | "" | Which mode to fall back after yanking text in visual mode. Value could be one of ["", "Caret", "Normal"], default is "", which means no action after yank.|
 | settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
@@ -637,9 +662,11 @@ For example,
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indicate next page. |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indicate previous page. |
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
+| settings.hintExplicit | false | Whether to wait for explicit input when there is only a single hint available |
+| settings.hintShiftNonActive | false | Whether new tab is active after entering hint while holding shift |
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blacklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
-| settings.focusAfterClosed | "right" | Which side of tab will be focused after current tab closed. ["left", "right"] |
+| settings.focusAfterClosed | "right" | Which tab will be focused after the current tab is closed. ["left", "right", "last"] |
 | settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
@@ -650,10 +677,16 @@ For example,
 | settings.stealFocusOnLoad | true | Whether to prevent focus on input on page loaded, set to true by default so that we could use Surfingkeys directly after page loaded, otherwise we need press `Esc` to quit input. |
 | settings.enableAutoFocus | true | Whether to enable auto focus after mouse click on some widget. This is different with `stealFocusOnLoad`, which is only for the time of page loaded. For example, there is a hidden input box on a page, it is turned to visible after user clicks on some other link. If you don't like the input to be focused when it's turned to visible, you could set this to false. |
 | settings.theme | undefined | To change css of the Surfingkeys UI elements. |
-| settings.caseSensitive | false | Whether finding in page is case sensitive. |
+| settings.caseSensitive | false | Whether finding in page/Omnibar is case sensitive. |
 | settings.smartCase | true | Whether to make caseSensitive true if the search pattern contains upper case characters. |
 | settings.cursorAtEndOfInput | true | Whether to put cursor at end of input when entering an input box, by false to put the cursor where it was when focus was removed from the input. |
 | settings.digitForRepeat | true | Whether digits are reserved for repeats, by false to enable mapping of numeric keys. |
+| settings.editableBodyCare | true | Insert mode is activated automatically when an editable element is focused, so if document.body is editable for some window/iframe (such as docs.google.com), Insert mode is always activated on the window/iframe, which means all shortcuts from Normal mode will not be available. With `editableBodyCare` as `true`, Insert mode will not be activated automatically in this case. |
+| settings.ignoredFrameHosts | ["https://tpc.googlesyndication.com"] | When using `w` to loop through frames, you could use this settings to exclude some of them, such as those for advertisements. |
+| settings.aceKeybindings | "vim" | Set it "emacs" to use emacs keybindings in the ACE editor. |
+| settings.caretViewport | null | Set it in format `[top, left, bottom, right]` to limit hints generation on `v` for entering visual mode, such as `[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]` will make Surfingkeys generate Hints only for text that display on vertically middle of window. |
+| settings.mouseSelectToQuery | [] | All hosts that have enable feature -- mouse selection to query. |
+| settings.autoSpeakOnInlineQuery | false | Whether to automatically speak the query string with TTS on inline query. |
 
 ### Example of settings.theme, below is to set font size of status bar
 
@@ -670,6 +703,10 @@ For example,
 * [Markdown](docs/API.md)
 * [HTML](http://brookhong.github.io/Surfingkeys)
 
+## Other
+
+* [Anki Study Deck](https://ankiweb.net/shared/info/1195173768), Anki Study Deck (helpful for memorizing keyboard mappings) 
+
 ## Credits
 
 * ~~[jQuery](https://github.com/jquery/jquery)~~, removed for less memory usage and better performance.
@@ -679,6 +716,11 @@ For example,
 * [pdf.js](https://github.com/mozilla/pdf.js), for pdf viewer.
 * [vimium](https://github.com/philc/vimium), for the days without this extension.
 * [cVim](https://github.com/1995eaton/chromium-vim), for the days without this extension.
+
+## Donate
+Support me with [paypal](https://www.paypal.me/brookhong), or
+
+![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
 
 ## License
 

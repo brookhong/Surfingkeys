@@ -1,4 +1,4 @@
-var Insert = (function() {
+function createInsert() {
     var self = new Mode("Insert");
 
     function moveCusorEOL() {
@@ -20,7 +20,7 @@ var Insert = (function() {
                 if (node.nodeType === Node.TEXT_NODE) {
                     document.getSelection().setPosition(node, node.data.length);
                 } else {
-                    document.getSelection().setPosition(node, 0);
+                    document.getSelection().setPosition(node, node.childNodes.length);
                 }
                 // blink cursor to bring cursor into view
                 Visual.showCursor();
@@ -139,27 +139,33 @@ var Insert = (function() {
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
         annotation: "Exit insert mode",
         feature_group: 15,
-        keepPropagation: true,
+        stopPropagation: function(key) {
+            // return true only if bind key is not an ASCII key
+            // so that imap(',,', "<Esc>") won't leave a comma in input
+            return key.charCodeAt(0) < 256;
+        },
         code: function() {
             getRealEdit().blur();
             self.exit();
         }
     });
 
-    var _emojiDiv = createElement('<div id="sk_emoji" style="display: block; opacity: 1;"/>'),
+    var _emojiDiv = createElementWithContent('div', '', {id: "sk_emoji", style: "display: block; opacity: 1;"}),
         _emojiList,
         _emojiPending = -1;
 
     self.mappings.add(":", {
         annotation: "Input emoji",
         feature_group: 15,
-        keepPropagation: true,
+        stopPropagation: function() {
+            return false;
+        },
         code: function() {
             var element = getRealEdit();
             if (element.selectionStart !== undefined) {
-                _emojiPending = element.selectionStart;
+                _emojiPending = element.selectionStart + 1;
             } else {
-                _emojiPending = document.getSelection().focusOffset;
+                _emojiPending = document.getSelection().focusOffset + 1;
             }
             fetch(chrome.extension.getURL("pages/emoji.tsv"))
                 .then(res => Promise.all([res.text()]))
@@ -194,7 +200,7 @@ var Insert = (function() {
             if (emojiMatched === "") {
                 _emojiDiv.remove();
             } else {
-                setInnerHTML(_emojiDiv, emojiMatched);
+                setSanitizedContent(_emojiDiv, emojiMatched);
                 document.body.append(_emojiDiv);
                 _emojiDiv.style.display = "";
                 _emojiDiv.querySelector('#sk_emoji>div').classList.add("selected");
@@ -225,7 +231,7 @@ var Insert = (function() {
             span = document.createElement("span");
         mask.style.font = css.font;
         mask.style.position = "fixed";
-        setInnerHTML(mask, input.value);
+        setSanitizedContent(mask, input.value);
         mask.style.left = (input.clientLeft + br.left) + "px";
         mask.style.top = (input.clientTop + br.top) + "px";
         mask.style.color = "red";
@@ -263,8 +269,12 @@ var Insert = (function() {
 
     var _suppressKeyup = false;
     self.addEventListener('keydown', function(event) {
+        if (event.key && event.key.charCodeAt(0) > 127) {
+            // IME is opened.
+            event.sk_suppressed = true;
+            return;
+        }
         // prevent this event to be handled by Surfingkeys' other listeners
-        event.sk_suppressed = true;
         var realTarget = getRealEdit(event);
         if (_emojiDiv.offsetHeight > 0) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
@@ -295,12 +305,6 @@ var Insert = (function() {
             }
         } else if (!isEditable(realTarget)) {
             self.exit();
-        } else if (KeyboardUtils.keyCodes.enter === event.keyCode && realTarget.localName === "input") {
-            // leave time 300ms for origin event handler of the input widget
-            setTimeout(function() {
-                realTarget.blur();
-                self.exit();
-            }, 300);
         } else if (event.sk_keyName.length) {
             Mode.handleMapKey.call(self, event, function(last) {
                 // for insert mode to insert unmapped chars with preceding chars same as some mapkeys
@@ -335,6 +339,7 @@ var Insert = (function() {
                 }
             });
         }
+        event.sk_suppressed = true;
     });
     self.addEventListener('keyup', function(event) {
         var realTarget = getRealEdit(event);
@@ -359,14 +364,19 @@ var Insert = (function() {
     });
     self.addEventListener('focus', function(event) {
         var realTarget = getRealEdit(event);
-        if (!isEditable(realTarget)) {
+        // We get a focus event with target = window when the browser window looses focus.
+        // Ignore this event.
+        if (event.target != window && !isEditable(realTarget)) {
             self.exit();
+        } else {
+            event.sk_suppressed = true;
         }
     });
 
     function nextNonWord(str, dir, cur) {
         var nonWord = /\W/;
-        for ( cur = cur + dir; ; ) {
+        cur = dir > 0 ? cur : cur + dir;
+        for ( ; ; ) {
             if (cur < 0) {
                 cur = 0;
                 break;
@@ -386,25 +396,30 @@ var Insert = (function() {
         var pos = nextNonWord(str, dir, cur);
         var s = str;
         if (pos > cur) {
-            s = str.substr(0, cur) + str.substr(pos + 1);
+            s = str.substr(0, cur) + str.substr(pos);
         } else if (pos < cur) {
-            s = str.substr(0, pos + 1) + str.substr(cur);
+            s = str.substr(0, pos) + str.substr(cur);
+        } else {
+            s = str.substr(0, pos) + str.substr(pos + 1);
         }
-        return [s, pos];
+        return [s, dir > 0 ? cur: pos];
     }
 
     var _element;
     var _enter = self.enter;
-    self.enter = function(elm) {
+    self.enter = function(elm, keepCursor) {
+        if (elm === document.body) {
+            runtime.conf.showModeStatus = false;
+        }
         var changed = (_enter.call(self) === -1);
         if (_element !== elm) {
             _element = elm;
             changed = true;
         }
-        if (changed && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
+        if (changed && !keepCursor && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
             moveCusorEOL();
         }
     };
 
     return self;
-})();
+}
