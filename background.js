@@ -450,7 +450,7 @@ var ChromeService = (function() {
     function _broadcastSettings(data) {
         chrome.tabs.query({}, function(tabs) {
             tabs.forEach(function(tab) {
-                sendTabMessage(tab.id, 0, {
+                sendTabMessage(tab.id, -1, {
                     subject: 'settingsUpdated',
                     settings: data
                 });
@@ -494,8 +494,8 @@ var ChromeService = (function() {
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             var origin = ".*";
-            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
-                origin = new URL(sender.tab.url).origin;
+            if (chrome.extension.getURL("").indexOf(sender.origin) !== 0) {
+                origin = sender.origin;
             }
             if (data.blacklist.hasOwnProperty(origin)) {
                 delete data.blacklist[origin];
@@ -504,7 +504,7 @@ var ChromeService = (function() {
             }
             _updateAndPostSettings({blacklist: data.blacklist}, function() {
                 sendResponse({
-                    disabled: _getDisabled(data, sender.tab ? new URL(sender.tab.url) : null, message.blacklistPattern),
+                    disabled: _getDisabled(data, sender.tab ? new URL(sender.url) : null, message.blacklistPattern),
                     blacklist: data.blacklist,
                     url: origin
                 });
@@ -530,7 +530,7 @@ var ChromeService = (function() {
             if (sender.tab) {
                 _response(message, sendResponse, {
                     noPdfViewer: data.noPdfViewer,
-                    disabled: _getDisabled(data, new URL(sender.tab.url), message.blacklistPattern)
+                    disabled: _getDisabled(data, new URL(sender.url), message.blacklistPattern)
                 });
             }
         });
