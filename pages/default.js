@@ -61,11 +61,11 @@ mapkey(';ap', '#13Apply proxy info from clipboard', function() {
     });
 });
 // create shortcuts for the command with different parameters
-map('spa', ':setProxyMode always', 0, '#13set proxy mode `always`');
-map('spb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
-map('spd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
-map('sps', ':setProxyMode system', 0, '#13set proxy mode `system`');
-map('spc', ':setProxyMode clear', 0, '#13set proxy mode `clear`');
+map(';pa', ':setProxyMode always', 0, '#13set proxy mode `always`');
+map(';pb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
+map(';pd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
+map(';ps', ':setProxyMode system', 0, '#13set proxy mode `system`');
+map(';pc', ':setProxyMode clear', 0, '#13set proxy mode `clear`');
 mapkey('gr', '#14Read selected text or text from clipboard', function() {
     Clipboard.read(function(response) {
         readText(window.getSelection().toString() || response.data, {verbose: true});
@@ -94,7 +94,7 @@ mapkey('zo', '#3zoom out', function() {
 
 map('ZQ', ':quit');
 mapkey(".", '#0Repeat last action', Normal.repeatLast, {repeatIgnore: true});
-mapkey("sql", '#0Show last action', function() {
+mapkey(";ql", '#0Show last action', function() {
     Front.showPopup(htmlEncode(runtime.conf.lastKeys.map(function(k) {
         return KeyboardUtils.decodeKeystroke(k);
     }).join(' → ')));
@@ -541,7 +541,7 @@ if (window.navigator.userAgent.indexOf("Firefox") > 0) {
     mapkey('gn', '#12Open Chrome net-internals', function() {
         tabOpenLink("chrome://net-internals/#proxy");
     });
-    mapkey('si', '#12Open Chrome Inspect', function() {
+    mapkey(';i', '#12Open Chrome Inspect', function() {
         tabOpenLink("chrome://inspect/#devices");
     });
     mapkey('<Ctrl-Alt-d>', '#11Mermaid diagram generator', function() {
@@ -593,18 +593,18 @@ mapkey('gx$', '#3Close all tabs on right', function() {
 mapkey('gxx', '#3Close all tabs except current one', function() {
     RUNTIME("tabOnly");
 });
-mapkey('se', '#11Edit Settings', function() {
+mapkey(';e', '#11Edit Settings', function() {
     tabOpenLink("/pages/options.html");
 });
-mapkey('sm', '#11Preview markdown', function() {
+mapkey(';pm', '#11Preview markdown', function() {
     tabOpenLink("/pages/markdown.html");
 });
-mapkey('su', '#4Edit current URL with vim editor, and open in new tab', function() {
+mapkey(';u', '#4Edit current URL with vim editor, and open in new tab', function() {
     Front.showEditor(window.location.href, function(data) {
         tabOpenLink(data);
     }, 'url');
 });
-mapkey('sU', '#4Edit current URL with vim editor, and reload', function() {
+mapkey(';U', '#4Edit current URL with vim editor, and reload', function() {
     Front.showEditor(window.location.href, function(data) {
         window.location.href = data;
     }, 'url');
@@ -664,7 +664,15 @@ addSearchAliasX('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang
     return res[1];
 });
 addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-addSearchAliasX('h', 'github', 'https://github.com/search?type=Code&utf8=%E2%9C%93&q=');
+addSearchAliasX('h', 'github', 'https://github.com/search?q=', 's', 'https://api.github.com/search/repositories?order=desc&q=', function(response) {
+    var res = JSON.parse(response.text)['items'];
+    return res ? res.map(function(r){
+        return {
+            title: r.description,
+            url: r.html_url
+        };
+    }) : [];
+});
 addSearchAliasX('y', 'youtube', 'https://www.youtube.com/results?search_query=', 's',
 'https://clients1.google.com/complete/search?client=youtube&ds=yt&callback=cb&q=', function(response) {
     var res = JSON.parse(response.text.substr(9, response.text.length-10));

@@ -61,7 +61,7 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * 前缀数字可多次重复相应操作
 * 使用VIM编辑页面上各种输入框
 * 点命令重复前一个操作
-* `sm`预览markdown
+* `;pm`预览markdown
 * `<Ctrl-Alt-d>`打开图形生成器
 * 插入模式下的表情下拉选项
 * 按键实时提示
@@ -74,7 +74,7 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
-试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`se`打开设置。
+试试帮助信息里的那些按键，比如，`e`向上翻页，`d`向下翻页，`;e`打开设置。
 
 * `?` 显示帮助
 ![help](https://cloud.githubusercontent.com/assets/288207/16181995/1417ca44-36d4-11e6-96c9-9e84b33f0916.png)
@@ -275,9 +275,9 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。
 
     // 映射不同的按键到该命令，但采用不同的参数。
-    map('spa', ':setProxyMode always');
-    map('spb', ':setProxyMode byhost');
-    map('spd', ':setProxyMode direct');
+    map(';pa', ':setProxyMode always');
+    map(';pb', ':setProxyMode byhost');
+    map(';pd', ':setProxyMode direct');
 
 除了命令，你还可以执行各类简单js代码。
 
@@ -381,17 +381,16 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 
 * `cp`, 切换当前站点的代理设置，即是否使用代理访问当前站点。
 
-* `spa`, `:setProxyMode always`快捷键。
+* `;pa`, `:setProxyMode always`快捷键。
 
-* `spb`, `:setProxyMode byhost`快捷键。
+* `;pb`, `:setProxyMode byhost`快捷键。
 
-* `spc`, `:setProxyMode clear`快捷键。
+* `;pc`, `:setProxyMode clear`快捷键。
 
-* `spd`, `:setProxyMode direct`快捷键。
+* `;pd`, `:setProxyMode direct`快捷键。
 
-* `sps`, `:setProxyMode system`快捷键。
+* `;ps`, `:setProxyMode system`快捷键。
 
-* `spi`, `:proxyInfo`快捷键。
 
 ## VIM编辑器或者Emacs编辑器
 
@@ -433,7 +432,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 ### 编辑URL并在新标签页打开
 
-`su`可以打开一个VIM编辑器来编辑当前URL，然后按`Enter`或者`:w`就会打开编辑后的URL，就像一个地址栏一样，但这是一个支持vim按键的地址栏。
+`;u`可以打开一个VIM编辑器来编辑当前URL，然后按`Enter`或者`:w`就会打开编辑后的URL，就像一个地址栏一样，但这是一个支持vim按键的地址栏。
 
 `Tab`键可以从书签和访问历史中搜索匹配的URL，然后按空格键补齐。
 
@@ -441,7 +440,7 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 ### 编辑设置
 
-`se`打开设置编辑器, `:w`保存设置。
+`;e`打开设置编辑器, `:w`保存设置。
 
 ## 点命令重复前一个操作
 
@@ -458,8 +457,8 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 ## Markdown预览
 
 1. 复制markdown代码到系统剪贴板。
-1. `sm`预览剪贴板里的markdown。
-1. 在预览页，再按`sm`会打开vim编辑器编辑markdown。
+1. `;pm`预览剪贴板里的markdown。
+1. 在预览页，再按`;pm`会打开vim编辑器编辑markdown。
 1. `:wq`刷新预览。
 1. `r`可以从系统剪贴板里重新加载markdown.
 

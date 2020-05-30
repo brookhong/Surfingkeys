@@ -60,7 +60,7 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * Count prefixes to repeat actions
 * Use vim editor to edit input on page
 * Dot to repeat previous action
-* `sm` to preview markdown
+* `;pm` to preview markdown
 * `<Ctrl-Alt-d>` to open diagram tool
 * Emoji completion in insert mode
 * Rich hints for keystroke
@@ -70,7 +70,7 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 
 After you install the extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/), open a site you'd like. Then press `?` or `u` to take a quick look on the default mappings first. Press `Esc` to hide the usage popover.
 
-Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `se` to open settings page.
+Try some mappings described in the usage popover. For example, press `e` to scroll a page up, `d` to scroll a page down, `;e` to open settings page.
 
 * `?` to show help
 ![help](https://user-images.githubusercontent.com/288207/72702854-0a74a480-3b8f-11ea-9be3-69745c280c3f.png)
@@ -273,9 +273,9 @@ The tabs are displayed in MRU order by default, either in omnibar or overlay. If
 `:` to open omnibar for commands, then you can execute any pre-defined there. The result will be displayed below the omnibar.
 
     // create shortcuts for the command with different parameters
-    map('spa', ':setProxyMode always');
-    map('spb', ':setProxyMode byhost');
-    map('spd', ':setProxyMode direct');
+    map(';pa', ':setProxyMode always');
+    map(';pb', ':setProxyMode byhost');
+    map(';pd', ':setProxyMode direct');
 
 Besides commands, you can also run javascript code.
 
@@ -379,17 +379,15 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 
 * `cp`, toggle proxy for current site.
 
-* `spa`, shortcut for `:setProxyMode always`
+* `;pa`, shortcut for `:setProxyMode always`
 
-* `spb`, shortcut for `:setProxyMode byhost`
+* `;pb`, shortcut for `:setProxyMode byhost`
 
-* `spc`, shortcut for `:setProxyMode clear`
+* `;pc`, shortcut for `:setProxyMode clear`
 
-* `spd`, shortcut for `:setProxyMode direct`
+* `;pd`, shortcut for `:setProxyMode direct`
 
-* `sps`, shortcut for `:setProxyMode system`
-
-* `spi`, shortcut for `:proxyInfo`
+* `;ps`, shortcut for `:setProxyMode system`
 
 ## VIM editor and Emacs editor
 
@@ -431,7 +429,7 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 ### Edit URL to open in new tab
 
-`su` to open vim editor to edit current URL, then `Enter` or `:w` to open the input URL, which works just like address bar with vim-binding keys.
+`;u` to open vim editor to edit current URL, then `Enter` or `:w` to open the input URL, which works just like address bar with vim-binding keys.
 
 `Tab` completion works with all URLs from bookmark/history, `Space` to choose a match from popup.
 
@@ -439,7 +437,7 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 ### Edit settings
 
-`se` to open settings editor, `:w` to save settings.
+`;e` to open settings editor, `:w` to save settings.
 
 ## Dot to repeat previous action
 
@@ -456,8 +454,8 @@ Then `.` will not repeat action to page up, even `e` is just pressed.
 ## Markdown preview
 
 1. copy your markdown source into clipboard.
-1. `sm` to open markdown preview, which will preview markdown from clipboard.
-1. Then on the preview page, another `sm` will open vim editor to edit markdown source.
+1. `;pm` to open markdown preview, which will preview markdown from clipboard.
+1. Then on the preview page, another `;pm` will open vim editor to edit markdown source.
 1. `:wq` to refresh preview.
 1. `r` to reload markdown source from clipboard.
 
