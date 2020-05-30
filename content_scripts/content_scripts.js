@@ -33,6 +33,16 @@ function _mapkey(mode, keys, annotation, jscode, options) {
                 });
             }
             console.warn(warning);
+        } else if (keys.length > 1) {
+            var p = keys.substr(0, keys.length - 1);
+            while (p.length > 0) {
+                old = mode.mappings.find(p);
+                if (old && old.meta) {
+                    console.warn(`${old.meta.word} for [${old.meta.annotation}] precedes ${keys}.`);
+                    return;
+                }
+                p = p.substr(0, p.length - 1);
+            }
         }
         var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === Visual) ? 9 :14)}, options.repeatIgnore);
         mode.mappings.add(keys, keybound);
