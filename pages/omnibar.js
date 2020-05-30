@@ -607,7 +607,7 @@ var Omnibar = (function() {
         });
         self.resultsDiv.append(ul);
         items = self.resultsDiv.querySelectorAll("#sk_omnibarSearchResult>ul>li");
-        if (runtime.conf.focusFirstCandidate) {
+        if (runtime.conf.focusFirstCandidate || handler.focusFirstCandidate) {
             var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
             items[fi].classList.add('focused');
         }
@@ -774,14 +774,12 @@ Omnibar.addHandler('Bookmarks', OpenBookmarks);
 
 var AddBookmark = (function() {
     var self = {
+        focusFirstCandidate: true,
         prompt: `add bookmark${separatorHtml}`
     }, folders, origFFC;
 
     self.onOpen = function(arg) {
         self.page = arg;
-        // always focus first candidate for AddBookmark.
-        origFFC = runtime.conf.focusFirstCandidate;
-        runtime.conf.focusFirstCandidate = true;
         Omnibar.listBookmarkFolders(function(response) {
             folders = response.folders;
             Omnibar.listResults(folders.slice(), function(f) {
@@ -809,10 +807,6 @@ var AddBookmark = (function() {
                 }
             });
         });
-    };
-
-    self.onClose = function() {
-        runtime.conf.focusFirstCandidate = origFFC;
     };
 
     self.onTabKey = function() {
@@ -992,6 +986,7 @@ Omnibar.addHandler('URLs', OpenURLs);
 
 var OpenTabs = (function() {
     var self = {
+        focusFirstCandidate: true,
         prompt: `tabs${separatorHtml}`
     };
 
@@ -1021,6 +1016,7 @@ Omnibar.addHandler('Tabs', OpenTabs);
 
 var OpenVIMarks = (function() {
     var self = {
+        focusFirstCandidate: true,
         prompt: `VIMarks${separatorHtml}`
     };
 
@@ -1168,6 +1164,7 @@ Omnibar.addHandler('SearchEngine', SearchEngine);
 
 var Commands = (function() {
     var self = {
+        focusFirstCandidate: true,
         prompt: ':',
         items: {}
     };
@@ -1329,3 +1326,35 @@ var OmniQuery = (function() {
     return self;
 })();
 Omnibar.addHandler('OmniQuery', OmniQuery);
+
+var OpenUserURLs = (function() {
+    var self = {
+        focusFirstCandidate: true,
+        prompt: `UserURLs${separatorHtml}`
+    };
+
+    var _items;
+    self.onOpen = function(args) {
+        _items = args;
+        self.onInput();
+    };
+
+    self.onInput = function() {
+        var query = Omnibar.input.value;
+        var urls = [];
+
+        for (var m of _items) {
+            if (query === "" || m.title.indexOf(query) !== -1 || m.url.indexOf(query) !== -1) {
+                urls.push({
+                    title: m.title,
+                    type: '♡',
+                    url: m.url
+                });
+            }
+        }
+        Omnibar.listURLs(urls, false);
+    };
+    self.onEnter = Omnibar.openFocused.bind(self);
+    return self;
+})();
+Omnibar.addHandler('UserURLs', OpenUserURLs);
