@@ -657,8 +657,8 @@ function createNormal() {
                 var br = scrollNode.getBoundingClientRect();
                 if (br.width === 0 || br.height === 0 || !isElementPartiallyInViewport(scrollNode)
                     || !hasScroll(scrollNode, 'x', 16) && !hasScroll(scrollNode, 'y', 16)) {
-                    scrollNodes.splice(scrollIndex, 1);
-                    scrollIndex = 0;
+                    // Recompute scrollable elements, the webpage has changed.
+                    self.refreshScrollableElements();
                     scrollNode = scrollNodes[scrollIndex];
                 }
             }
