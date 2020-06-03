@@ -1,5 +1,106 @@
 # Changelog of Surfingkeys
 
+## 0.9.65
+* compute scrollable elements automatically when invalidated (#1248)
+* fixed some default mappings started with s, for example, `se` is replaced with `;e`.
+* show warning about mapping preceded in console
+* OpenUserURLs in Omnibar to open urls from user script
+* Fixed #1244 enable toggleBlacklist in iframes
+* show warning about mapping override in console
+* remove unused code for web request errors
+* Fixed #1241 merge wikipedia search alias
+* Fixed #1238 T for choose tab doesn't work properly
+* Fix bug of scroll on duckduckgo.com's search result page
+* Fix bug of Hints.flashPressedLink
+* Fix search highlights by placing them in document.documentElement (#1234)
+* Fix dark theme with dompurify changes (#1231)
+* Prevent browser window focus from exiting insert mode (#1230)
+
+## 0.9.64
+* Fixed #1180 don't blur on enter key in Input
+* Fixed some issues of ACE editor
+* Fixed #1207 issue of getRealRect
+* Fixed #915 Alt-w delete the space between words
+* introduce State for Front mode to avoid unnecessary entrance
+* Add header to bug issue template (#1225)
+* Update issue template to newer style (#1223)
+* Fix search marks being offset on some pages (#1220)
+* Fix EOL in insert mode with contenteditable (#1217)
+* Fix enableAutoFocus blurring when entering insert mode dynamically (#1218)
+
+## 0.9.63
+* Fix error of ACE editor on Escape
+* Upgrade dependency ace 1.4.11
+* Upgrade dependencies: marked 1.0.0, mermaid 8.5.0
+* add .gitattributes to exclude files not for Firefox from archive
+* Remove Firefox dependency on shadydom since Element.attachShadow is supported since verson 63
+* use DOMPurify to sanitize raw HTML
+* Remove permissions of webRequest
+* Correct commenting out of readme comment (#1215)
+
+## 0.9.62
+* Remove brand from description for different marketplaces
+
+## 0.9.61
+* Fixed #1187 quit Find Mode on clicking on other places than input box.
+* default settings.autoSpeakOnInlineQuery false to disable automatical speaking
+* Fixed #1197 display no hint label for hidden elments
+* Add QR code for donation.
+* Fixed #1191 intercept network errors only when proxy mode is set to byhost
+* gulpfile.js: Fix a typo in the 'build_manifest' task (#1184)
+
+## 0.9.60
+* enable proxy edit for ALWAYS mode on option page
+* let exceptions threw on background
+* Fixed #425 BUG: in normal mode, keystrokes are leaking to the site
+* remove animations of keystroke hint
+* make InlineQuery work in pdf viewer and markdown previewer
+* Fixed #1167 input overlay does not support search input
+* Fixed #1173 IME not works properly in iframe
+* handshake of frontend detachment
+* isolate DOM observer from Normal as there is no need for it in frontend
+* create input in frontend on demand to mitigate a memory leak issue -- https://bugs.chromium.org/p/chromium/issues/detail?id=1058367
+* Fix issue of smartPageBoundary when the only scrolling element is not document.scrollingElement.
+* Added setting to open hints in background when holding shift (#1159)
+* Added hintExplicit option to disable automatic hint selection (#1157)
+
+## 0.9.59
+* Fixed issue of getRealRect when an element contains only one child element.
+
+## 0.9.58
+* Fixed #1147 won't blur from input if it is the only element in an iFrame
+* t to translate selected text with google in Visual mode
+* Fix init issue of iframes with src as about:blank
+* Fix tabHistory not being updated for new tabs (#1145)
+* Fixed #1124 document error on half page up/down
+* Fixed #1130 correct position of a wrapped A tag
+* Add setting to switch to last focused tab on stack on tab close (#1143)
+* Mitigation for #1134. Don't filter out parent elements explicitly requested in configuration. (#1136)
+* Disable autoFocus blurring when in insert or passthrough mode (#1137)
+* Hide large image in GH Issue Template in submitted issue (#1125)
+* 翻页快捷键支持根据目标链接地址去重 (#1127)
+
+## 0.9.57
+* enable auto detect of modal elements only after clicking on some element and disable it on starting to scroll
+* Fixed #1119 uiHost must be appended after pdf document ready.
+* Fix scrolling with smooth scrolling disabled with site overrides (#1114)
+
+## 0.9.56
+* bug fix of showBubble
+* ignore tiny frames
+* get really visible rect of an element with getClientRects
+* set active content window on showEditor or openOmnibar
+* V to enter visual mode with current selection node
+* add settings.editableSelector for additional editable elements
+* Add build badge to README (#1097)
+* Add Github Actions npm build (#1090)
+
+## 0.9.55
+* Fixed #1076 Replace deprecated API proxy.onProxyError
+* only hang on runtime.onMessage when an asynchronous response is necessary.
+* remove autocmd
+* remove some event listeners on enter Disabled mode.
+
 ## 0.9.54
 * create ui frame only for active tab to reduce memory usage
 * remove long-live ports for message passing
