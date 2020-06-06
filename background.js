@@ -1419,6 +1419,14 @@ var ChromeService = (function() {
     self.removeBookmark = function(message, sender, sendResponse) {
         removeBookmark(sender.tab.url);
     };
+    self.removeBookmarkByUrl = function(message, sender, sendResponse) {
+        var url = message.url;
+        removeBookmark(url, function(something) {
+            _response(message, sendResponse, {
+                response: "Done"
+            });
+        });
+    };
     self.getBookmark = function(message, sender, sendResponse) {
         chrome.bookmarks.search({
             url: sender.tab.url

@@ -108,6 +108,14 @@ var Omnibar = (function() {
                         fi.remove();
                     }
                 });
+            } else if (fi && fi.url) {
+                RUNTIME("removeBookmarkByUrl", {
+                    url: fi.url
+                }, function(ret) {
+                    if (ret.response === "Done") {
+                        fi.remove();
+                    }
+                });
             }
         }
     });
