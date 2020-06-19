@@ -1147,7 +1147,8 @@ var SearchEngine = (function() {
                 Front.contentCommand({
                     action: 'getSearchSuggestions',
                     url: self.suggestionURL,
-                    response: resp
+                    response: resp,
+                    input: Omnibar.input.value
                 }, function(resp) {
                     resp = resp.data;
                     if (!Array.isArray(resp)) {
