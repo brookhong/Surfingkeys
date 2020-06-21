@@ -322,6 +322,12 @@ var ChromeService = (function() {
         }
         _setScrollPos_bg(tabId);
     });
+    chrome.windows.onFocusChanged.addListener(function(w) {
+        getActiveTab(function(tab) {
+            _tabActivated(tab.id);
+        });
+    });
+
     chrome.tabs.onCreated.addListener(function(tab) {
         _setScrollPos_bg(tab.id);
 
