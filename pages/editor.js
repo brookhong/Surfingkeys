@@ -306,7 +306,7 @@ var AceEditor = (function() {
                     vim.map('<CR>', ':wq', 'insert');
                     _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
-                    _ace.container.style.height = "";
+                    _ace.container.style.height = "16px";
                 } else {
                     vim.map('<C-CR>', ':wq', 'insert');
                     _ace.setOption('showLineNumbers', true);
