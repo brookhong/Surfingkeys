@@ -11,7 +11,7 @@
     },
     "commands": {
         "restartext": {
-            "description": "Restart this extenstion."
+            "description": "Restart this extension."
         },
         "previousTab": {
             "description": "Go to the previous tab."
