@@ -611,8 +611,10 @@ var ChromeService = (function() {
         });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
-        _loadSettingsFromUrl(message.url, function(status) {
-            _response(message, sendResponse, status);
+        _loadSettingsFromUrl(message.url, function(result) {
+            if (!(result && result.status === "Failed")) {
+                _response(message, sendResponse, status);
+            }
         });
     };
     function _filterByTitleOrUrl(tabs, query) {
