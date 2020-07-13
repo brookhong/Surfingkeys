@@ -8,7 +8,13 @@ function request(url, onReady, headers, data, onException) {
             xhr.setRequestHeader(h, headers[h]);
         }
         xhr.onload = function() {
-            acc(xhr.responseText);
+            if (xhr.readyState === xhr.DONE) {
+                if (xhr.status === 200) {
+                    acc(xhr.responseText);
+                } else {
+                    rej(xhr.status);
+                }
+            }
         };
         xhr.onerror = rej.bind(null, xhr);
         xhr.send(data);
