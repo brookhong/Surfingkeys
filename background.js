@@ -258,8 +258,7 @@ var ChromeService = (function() {
                     cb(set);
                 }, undefined, undefined, function (po) {
                     // failed to read snippets from localPath
-                    set.error = "Failed to read snippets from " + set.localPath;
-                    cb(set);
+                    console.error("Failed to read snippets from " + set.localPath);
                 });
             } else {
                 cb(set);
