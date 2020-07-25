@@ -72,6 +72,9 @@ function createMappingEditor(elmId) {
     return self;
 }
 
+if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+    document.querySelector("#proxySettings").style.display = "none";
+}
 var proxyModeSelect = document.querySelector("#proxyMode>select");
 var proxyGroup = document.getElementById("proxyMode").parentElement;
 var addProxyPair = document.getElementById('addProxyPair');
