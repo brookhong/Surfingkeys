@@ -226,27 +226,27 @@ function createHints() {
         document.removeEventListener("surfingkeys:scrollDone", resetHints);
     };
 
-    self.genLabels = function(M) {
-        if (M <= self.characters.length) {
-            return self.characters.slice(0, M).toUpperCase().split('');
+    self.genLabels = function(total) {
+        if (total <= self.characters.length) {
+            return self.characters.slice(0, total).toUpperCase().split('');
         }
         var codes = [];
-        var genCodeWord = function(N, length) {
+        var genCodeWord = function(idx, length) {
             for (var i = 0, word = ''; i < length; i++) {
-                word += self.characters.charAt(N % self.characters.length).toUpperCase();
-                N = ~~(N / self.characters.length);
+                word += self.characters.charAt(idx % self.characters.length).toUpperCase();
+                idx = ~~(idx / self.characters.length);
             }
             codes.push(word.split('').reverse().join(''));
         };
 
-        var b = Math.ceil(Math.log(M) / Math.log(self.characters.length));
-        var cutoff = Math.pow(self.characters.length, b) - M;
+        var b = Math.ceil(Math.log(total) / Math.log(self.characters.length));
+        var cutoff = Math.pow(self.characters.length, b) - total;
         var cutoffR = ~~(cutoff / (self.characters.length - 1));
 
         for (var i = 0; i < cutoffR; i++) {
             genCodeWord(i, b - 1);
         }
-        for (var j = cutoffR; j < M; j++) {
+        for (var j = cutoffR; j < total; j++) {
             genCodeWord(j + cutoff, b);
         }
         return codes;

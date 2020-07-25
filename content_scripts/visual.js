@@ -604,6 +604,22 @@ function createVisual() {
         state = (state + 1) % 3;
         _onStateChange();
     }
+
+    function getSentence(textNode, offset) {
+        var sentence = "";
+
+        actionWithSelectionPreserved(function(sel) {
+            sel.setPosition(textNode, offset);
+            sel.modify("extend", "backward", "sentence");
+            sel.collapseToStart();
+            sel.modify("extend", "forward", "sentence");
+
+            sentence = sel.toString();
+        });
+
+        return sentence.replace(/\n/g, '');
+    }
+
     self.restore = function() {
         if (selection && selection.anchorNode) {
             selection.setPosition(selection.anchorNode, selection.anchorOffset);
@@ -637,14 +653,24 @@ function createVisual() {
                         } else if (ex === "q") {
                             var word = element[2].trim().replace(/[^A-z].*$/, "");
                             var b = getTextNodePos(element[0], element[1], element[2].length);
-                            Front.performInlineQuery(word, function(queryResult) {
-                                Front.showBubble({
-                                    top: b.top,
-                                    left: b.left,
-                                    height: b.height,
-                                    width: b.width
-                                }, queryResult, false);
-                            });
+                            if (document.dictEnabled !== undefined) {
+                                window.postMessage({
+                                    type: "OpenDictoriumQuery",
+                                    word: word,
+                                    sentence: getSentence(element[0], element[1]),
+                                    pos: b,
+                                    source: window.location.href
+                                });
+                            } else {
+                                Front.performInlineQuery(word, function (queryResult) {
+                                    Front.showBubble({
+                                        top: b.top,
+                                        left: b.left,
+                                        height: b.height,
+                                        width: b.width
+                                    }, queryResult, false);
+                                });
+                            }
                         } else {
                             setTimeout(function () {
                                 selection.setPosition(element[0], element[1]);

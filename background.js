@@ -783,19 +783,25 @@ var ChromeService = (function() {
         return base;
     }
     function _nextTab(tab, step) {
-        chrome.tabs.query({
-            windowId: tab.windowId
-        }, function(tabs) {
-            if (tab.index == 0 && step == -1) {
-                step = tabs.length -1 ;
-            } else if (tab.index == tabs.length -1 && step == 1 ) {
-                step = 1 - tabs.length ;
-            }
-            var to = _fixTo(tab.index + step, tabs.length - 1);
-            chrome.tabs.update(tabs[to].id, {
-                active: true
+        if (tab) {
+            chrome.tabs.query({
+                windowId: tab.windowId
+            }, function(tabs) {
+                if (tab.index == 0 && step == -1) {
+                    step = tabs.length -1 ;
+                } else if (tab.index == tabs.length -1 && step == 1 ) {
+                    step = 1 - tabs.length ;
+                }
+                var to = _fixTo(tab.index + step, tabs.length - 1);
+                chrome.tabs.update(tabs[to].id, {
+                    active: true
+                });
             });
-        });
+        } else {
+            getActiveTab(function(t) {
+                _nextTab(t, step);
+            });
+        }
     }
     self.nextTab = function(message, sender, sendResponse) {
         _nextTab(sender.tab, message.repeats);
@@ -804,16 +810,22 @@ var ChromeService = (function() {
         _nextTab(sender.tab, -message.repeats);
     };
     function _roundRepeatTabs(tab, repeats, operation) {
-        chrome.tabs.query({
-            windowId: tab.windowId
-        }, function(tabs) {
-            var tabIds = tabs.map(function(e) {
-                return e.id;
+        if (tab) {
+            chrome.tabs.query({
+                windowId: tab.windowId
+            }, function(tabs) {
+                var tabIds = tabs.map(function(e) {
+                    return e.id;
+                });
+                repeats = _fixTo(repeats, tabs.length);
+                var base = _roundBase(tab.index, repeats, tabs.length);
+                operation(tabIds.slice(base, base + repeats));
             });
-            repeats = _fixTo(repeats, tabs.length);
-            var base = _roundBase(tab.index, repeats, tabs.length);
-            operation(tabIds.slice(base, base + repeats));
-        });
+        } else {
+            getActiveTab(function(t) {
+                _roundRepeatTabs(t, repeats, operation);
+            });
+        }
     }
     self.reloadTab = function(message, sender, sendResponse) {
         _roundRepeatTabs(sender.tab, message.repeats, function(tabIds) {
@@ -1009,7 +1021,8 @@ var ChromeService = (function() {
             });
         } else {
             if (message.tab.tabbed) {
-                if (sender.frameId !== 0 && chrome.extension.getURL("pages/frontend.html") === sender.url) {
+                if (sender.frameId !== 0 && chrome.extension.getURL("pages/frontend.html") === sender.url
+                    || !sender.tab) {
                     // if current call was made from Omnibar, the sender.tab may be stale,
                     // as sender was bound when port was created.
                     getActiveTab(function(tab) {
