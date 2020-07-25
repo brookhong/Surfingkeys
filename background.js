@@ -500,8 +500,9 @@ var ChromeService = (function() {
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             var origin = ".*";
-            if (chrome.extension.getURL("").indexOf(sender.origin) !== 0) {
-                origin = sender.origin;
+            var senderOrigin = sender.origin || new URL(sender.url).origin;
+            if (chrome.extension.getURL("").indexOf(senderOrigin) !== 0) {
+                origin = senderOrigin;
             }
             if (data.blacklist.hasOwnProperty(origin)) {
                 delete data.blacklist[origin];
