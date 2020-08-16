@@ -32,13 +32,22 @@ function createClipboard() {
     };
 
     self.write = function(text) {
-        clipboardActionWithSelectionPreserved(function() {
-            holder.value = text;
-            holder.select();
-            document.execCommand('copy');
-            holder.value = '';
+        Normal.insertJS(function() {
+            window.oncopy = document.oncopy;
+            document.oncopy = null;
+        }, function() {
+            clipboardActionWithSelectionPreserved(function() {
+                holder.value = text;
+                holder.select();
+                document.execCommand('copy');
+                holder.value = '';
+            });
+            Normal.insertJS(function() {
+                document.oncopy = window.oncopy;
+                delete window.oncopy;
+            });
+            Front.showBanner("Copied: " + text);
         });
-        Front.showBanner("Copied: " + text);
     };
 
     return self;

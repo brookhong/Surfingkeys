@@ -820,12 +820,13 @@ function createNormal() {
         if (typeof(code) === 'function') {
             setSanitizedContent(s, "(" + code.toString() + ")(window);");
             setTimeout(function() {
+                onload && onload();
                 s.remove();
             }, 1);
         } else {
             s.src = code;
             s.onload = function() {
-                onload();
+                onload && onload();
                 s.remove();
             };
         }
