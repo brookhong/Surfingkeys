@@ -369,6 +369,10 @@ String.prototype.format = function() {
     return formatted;
 };
 
+String.prototype.reverse = function() {
+    return this.split("").reverse().join("");
+};
+
 RegExp.prototype.toJSON = function() {
     return {source: this.source, flags: this.flags};
 };

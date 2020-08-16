@@ -227,29 +227,20 @@ function createHints() {
     };
 
     self.genLabels = function(total) {
-        if (total <= self.characters.length) {
-            return self.characters.slice(0, total).toUpperCase().split('');
-        }
-        var codes = [];
-        var genCodeWord = function(idx, length) {
-            for (var i = 0, word = ''; i < length; i++) {
-                word += self.characters.charAt(idx % self.characters.length).toUpperCase();
-                idx = ~~(idx / self.characters.length);
+        var ch, hint, hints, i, len, offset;
+        hints = [""];
+        offset = 0;
+        while (hints.length - offset < total || hints.length === 1) {
+            hint = hints[offset++];
+            for (i = 0, len = self.characters.length; i < len; i++) {
+                ch = self.characters[i];
+                hints.push(ch + hint);
             }
-            codes.push(word.split('').reverse().join(''));
-        };
-
-        var b = Math.ceil(Math.log(total) / Math.log(self.characters.length));
-        var cutoff = Math.pow(self.characters.length, b) - total;
-        var cutoffR = ~~(cutoff / (self.characters.length - 1));
-
-        for (var i = 0; i < cutoffR; i++) {
-            genCodeWord(i, b - 1);
         }
-        for (var j = cutoffR; j < total; j++) {
-            genCodeWord(j + cutoff, b);
-        }
-        return codes;
+        hints = hints.slice(offset, offset + total);
+        return hints.map(function(str) {
+            return str.reverse().toUpperCase();
+        });
     };
 
     self.coordinate = function() {
