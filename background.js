@@ -482,6 +482,10 @@ var ChromeService = (function() {
         }
     }
 
+    function getSenderUrl(sender) {
+        // use the tab's url if sender is a frame with blank url.
+        return (sender.frameId !== 0 && sender.url === "about:blank") ? sender.tab.url : sender.url;
+    }
     function _getDisabled(set, url, regex) {
         if (set.blacklist['.*']) {
             return true;
@@ -500,7 +504,7 @@ var ChromeService = (function() {
     self.toggleBlacklist = function(message, sender, sendResponse) {
         loadSettings('blacklist', function(data) {
             var origin = ".*";
-            var senderOrigin = sender.origin || new URL(sender.url).origin;
+            var senderOrigin = sender.origin || new URL(getSenderUrl(sender)).origin;
             if (chrome.extension.getURL("").indexOf(senderOrigin) !== 0) {
                 origin = senderOrigin;
             }
@@ -511,7 +515,7 @@ var ChromeService = (function() {
             }
             _updateAndPostSettings({blacklist: data.blacklist}, function() {
                 sendResponse({
-                    disabled: _getDisabled(data, sender.tab ? new URL(sender.url) : null, message.blacklistPattern),
+                    disabled: _getDisabled(data, sender.tab ? new URL(getSenderUrl(sender)) : null, message.blacklistPattern),
                     blacklist: data.blacklist,
                     url: origin
                 });
@@ -537,7 +541,7 @@ var ChromeService = (function() {
             if (sender.tab) {
                 _response(message, sendResponse, {
                     noPdfViewer: data.noPdfViewer,
-                    disabled: _getDisabled(data, new URL(sender.url), message.blacklistPattern)
+                    disabled: _getDisabled(data, new URL(getSenderUrl(sender)), message.blacklistPattern)
                 });
             }
         });
