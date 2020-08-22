@@ -264,7 +264,7 @@ function filterOverlapElements(elements) {
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
         } else {
-            var el = document.elementFromPoint(be.left + 3, be.top + 3);
+            var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
             return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
         }
     });
