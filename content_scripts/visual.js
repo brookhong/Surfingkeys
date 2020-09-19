@@ -333,14 +333,14 @@ function createVisual() {
         code: function() {
             var w = Visual.getWordUnderCursor();
             readText(w);
-            Front.performInlineQuery(w, function(queryResult) {
-                var br = cursor.getBoundingClientRect();
-                Front.showBubble({
-                    left: br.left,
-                    top: br.top,
-                    height: br.height,
-                    width: br.width
-                }, queryResult, true);
+            var b = cursor.getBoundingClientRect();
+            Front.performInlineQuery(w, {
+                top: b.top,
+                left: b.left,
+                height: b.height,
+                width: b.width
+            }, function(pos, queryResult) {
+                Front.showBubble(pos, queryResult, true);
             });
         }
     });
@@ -410,55 +410,12 @@ function createVisual() {
         return node;
     }
 
-    function getNearestWord(text, offset) {
-        var ret = text;
-        var nonWord = /\W/;
-        if (offset < 0) {
-            offset = 0;
-        } else if (offset >= text.length) {
-            offset = text.length - 1;
-        }
-        var found = true;
-        if (nonWord.test(text[offset])) {
-            var delta = 0;
-            found = false;
-            while (!found && (offset > delta || (offset + delta) < text.length)) {
-                delta++;
-                found = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) || ((offset + delta) < text.length && !nonWord.test(text[offset + delta]));
-            }
-            offset = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) ? (offset - delta) : (offset + delta);
-        }
-        if (found) {
-            var start = offset,
-                end = offset;
-            while (start >= 0 && !nonWord.test(text[start])) {
-                start--;
-            }
-            while (end < text.length && !nonWord.test(text[end])) {
-                end++;
-            }
-            ret = text.substr(start + 1, end - start - 1);
-        }
-        return ret;
-    }
-
     self.hideCursor = function () {
         if (document.body.contains(cursor)) {
             cursor.remove();
             document.dispatchEvent(new CustomEvent('surfingkeys:cursorHidden'));
         }
     };
-
-    var _focusedRange = document.createRange();
-    function getTextRect() {
-        _focusedRange.setStart(arguments[0], arguments[1]);
-        if (arguments.length > 3) {
-            _focusedRange.setEnd(arguments[2], arguments[3]);
-        } else {
-            _focusedRange.setEnd(arguments[0], arguments[1]);
-        }
-        return _focusedRange.getBoundingClientRect();
-    }
 
     self.showCursor = function () {
         if (selection.focusNode && (selection.focusNode.offsetHeight > 0 || selection.focusNode.parentNode.offsetHeight > 0)) {
@@ -662,13 +619,13 @@ function createVisual() {
                                     source: window.location.href
                                 });
                             } else {
-                                Front.performInlineQuery(word, function (queryResult) {
-                                    Front.showBubble({
-                                        top: b.top,
-                                        left: b.left,
-                                        height: b.height,
-                                        width: b.width
-                                    }, queryResult, false);
+                                Front.performInlineQuery(word, {
+                                    top: b.top,
+                                    left: b.left,
+                                    height: b.height,
+                                    width: b.width
+                                }, function (pos, queryResult) {
+                                    Front.showBubble(pos, queryResult, false);
                                 });
                             }
                         } else {
@@ -707,7 +664,8 @@ function createVisual() {
         var word = selection.toString();
         if (word.length === 0 && selection.focusNode) {
             var pe = selection.focusNode;
-            word = getNearestWord(pe.textContent, selection.focusOffset);
+            var r = getNearestWord(pe.textContent, selection.focusOffset);
+            word = pe.textContent.substr(r[0], r[1]);
         }
         return word;
     };

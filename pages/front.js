@@ -548,7 +548,7 @@ var Front = (function() {
             });
             window.removeEventListener("resize", onResize);
         } else {
-            var sel = window.getSelection().toString().trim() || Visual.getWordUnderCursor();
+            var sel = window.getSelection().toString().trim() || Normal.getWordUnderCursor();
             if (sel && sel.length > 0) {
                 Front.contentCommand({
                     action: 'updateInlineQuery',

@@ -430,7 +430,9 @@ function createNormal() {
             keyHeld = 0;
         }, 0);
     });
+    var _clickPos = null;
     self.addEventListener('mousedown', function(event) {
+        _clickPos = [event.clientX, event.clientY];
         // Insert mode will never be created in frontend frame.
         if (typeof(Insert) === "undefined") {
             return;
@@ -454,6 +456,18 @@ function createNormal() {
             Insert.exit();
         }
     });
+    self.getWordUnderCursor = function() {
+        var selection = document.getSelection();
+        if (selection.focusNode && selection.focusNode.textContent) {
+            var range = getNearestWord(selection.focusNode.textContent, selection.focusOffset);
+            var selRect = getTextRect(selection.focusNode, range[0], range[0] + range[1]);
+            var word = selection.focusNode.textContent.substr(range[0], range[1]);
+            if (selRect && selRect.has(_clickPos[0], _clickPos[1], 0, 0) && word) {
+                return word.trim();
+            }
+        }
+        return null;
+    };
 
     self.toggleBlacklist = function() {
         if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {

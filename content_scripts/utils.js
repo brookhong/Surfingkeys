@@ -336,6 +336,61 @@ function getTextNodePos(node, offset, length) {
     return pos;
 }
 
+var _focusedRange = document.createRange();
+function getTextRect() {
+    try {
+        _focusedRange.setStart(arguments[0], arguments[1]);
+        if (arguments.length > 3) {
+            _focusedRange.setEnd(arguments[2], arguments[3]);
+        } else if (arguments.length > 2) {
+            _focusedRange.setEnd(arguments[0], arguments[2]);
+        } else {
+            _focusedRange.setEnd(arguments[0], arguments[1]);
+        }
+    } catch (e) {
+        return null;
+    }
+    return _focusedRange.getBoundingClientRect();
+}
+
+function getNearestWord(text, offset) {
+    var ret = [0, text.length];
+    var nonWord = /\W/;
+    if (offset < 0) {
+        offset = 0;
+    } else if (offset >= text.length) {
+        offset = text.length - 1;
+    }
+    var found = true;
+    if (nonWord.test(text[offset])) {
+        var delta = 0;
+        found = false;
+        while (!found && (offset > delta || (offset + delta) < text.length)) {
+            delta++;
+            found = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) || ((offset + delta) < text.length && !nonWord.test(text[offset + delta]));
+        }
+        offset = ((offset - delta) >= 0 && !nonWord.test(text[offset - delta])) ? (offset - delta) : (offset + delta);
+    }
+    if (found) {
+        var start = offset,
+            end = offset;
+        while (start >= 0 && !nonWord.test(text[start])) {
+            start--;
+        }
+        while (end < text.length && !nonWord.test(text[end])) {
+            end++;
+        }
+        ret = [start + 1, end - start - 1];
+    }
+    return ret;
+}
+
+DOMRect.prototype.has = function (x, y, ex, ey) {
+    // allow some errors of x and y as ex and ey respectively.
+    return (y > this.top - ey && y < this.bottom + ey
+        && x > this.left - ex && x < this.right + ex);
+};
+
 function initL10n(cb) {
     var lang = runtime.conf.language || window.navigator.language;
     if (lang === "en-US") {

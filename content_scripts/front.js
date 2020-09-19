@@ -63,13 +63,13 @@ function createFront() {
 
     self.performInlineQueryOnSelection = function(word) {
         var b = document.getSelection().getRangeAt(0).getClientRects()[0];
-        Front.performInlineQuery(word, function(queryResult) {
+        Front.performInlineQuery(word, b, function(pos, queryResult) {
             if (queryResult) {
                 Front.showBubble({
-                    top: b.top,
-                    left: b.left,
-                    height: b.height,
-                    width: b.width
+                    top: pos.top,
+                    left: pos.left,
+                    height: pos.height,
+                    width: pos.width
                 }, queryResult, false);
             }
         });
@@ -242,8 +242,17 @@ function createFront() {
 
     var _inlineQuery;
     var _showQueryResult;
-    self.performInlineQuery = function (query, showQueryResult) {
-        if (_inlineQuery) {
+    self.performInlineQuery = function (query, pos, showQueryResult) {
+        if (document.dictEnabled !== undefined) {
+            window.postMessage({
+                type: "OpenDictoriumQuery",
+                word: query,
+                sentence: "",
+                pos: pos,
+                source: window.location.href
+            });
+            self.hidePopup();
+        } else if (_inlineQuery) {
             if (runtime.conf.autoSpeakOnInlineQuery) {
                 readText(query);
             }
@@ -253,12 +262,15 @@ function createFront() {
                 url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
                 headers: _inlineQuery.headers
             }, function(res) {
-                showQueryResult(_inlineQuery.parseResult(res));
+                showQueryResult(pos, _inlineQuery.parseResult(res));
             });
         } else if (isInUIFrame()) {
-            _showQueryResult = showQueryResult;
+            _showQueryResult = function(result) {
+                showQueryResult(pos, result);
+            };
             document.getElementById("proxyFrame").contentWindow.postMessage({
                 action: "performInlineQuery",
+                pos: pos,
                 query: query
             }, "*");
         } else {
@@ -390,7 +402,12 @@ function createFront() {
 
     _actions["omnibar_query_entered"] = function(response) {
         runtime.updateHistory('OmniQuery', response.query);
-        self.performInlineQuery(response.query, function(queryResult) {
+        self.performInlineQuery(response.query, {
+            top: 0,
+            left: 80,
+            height: 0,
+            width: 100
+        },function(pos, queryResult) {
             if (queryResult.constructor.name !== "Array") {
                 queryResult = [queryResult];
             }
@@ -500,14 +517,15 @@ function createFront() {
             return;
         }
         if (_message.action === "performInlineQuery") {
-            self.performInlineQuery(_message.query, function (queryResult) {
+            self.performInlineQuery(_message.query, _message.pos, function (pos, queryResult) {
                 event.source.postMessage({
                     action: "performInlineQueryResult",
+                    pos: pos,
                     result: queryResult
                 }, event.origin);
             });
         } else if (_message.action === "performInlineQueryResult") {
-            _showQueryResult(_message.result);
+            _showQueryResult(_message.pos, _message.result);
         } else if (_active) {
             if (_message.responseToContent && _callbacks[_message.id]) {
                 var f = _callbacks[_message.id];

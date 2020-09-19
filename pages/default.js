@@ -290,7 +290,7 @@ mapkey('H', '#8Open opened URL in current tab', function() {
     Front.openOmnibar({type: "URLs", extra: "getTabURLs"});
 });
 mapkey('Q', '#8Open omnibar for word translation', function() {
-    Front.openOmniquery({query: Visual.getWordUnderCursor(), style: "opacity: 0.8;"});
+    Front.openOmniquery({query: Normal.getWordUnderCursor(), style: "opacity: 0.8;"});
 });
 mapkey('b', '#8Open a bookmark', function() {
     Front.openOmnibar(({type: "Bookmarks"}));

@@ -427,7 +427,8 @@ function _initContent() {
     window.frameId = generateQuickGuid();
     runtime.on('settingsUpdated', _onSettingsUpdated);
 
-    if (runtime.conf.stealFocusOnLoad && !isInUIFrame() && document.body.childElementCount > 1) {
+    if (runtime.conf.stealFocusOnLoad && !isInUIFrame()
+        && document.body && document.body.childElementCount > 1) {
         var elm = getRealEdit();
         elm && elm.blur();
     }
@@ -435,7 +436,7 @@ function _initContent() {
 
 function getFrameId() {
     if (!window.frameId && window.innerWidth > 16 && window.innerHeight > 16
-        && document.body.childElementCount > 0
+        && document.body && document.body.childElementCount > 0
         && runtime.conf.ignoredFrameHosts.indexOf(window.origin) === -1
         && (!window.frameElement || (parseInt("0" + getComputedStyle(window.frameElement).zIndex) >= 0
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
@@ -525,9 +526,14 @@ if (window === top) {
             _initContent();
         }
     });
-    setTimeout(function() {
-        document.addEventListener('click', function (e) {
-            getFrameId();
-        }, { once: true });
-    }, 1);
+    if (window.location.protocol === "dictorium:") {
+        _initModules();
+        _initContent();
+    } else {
+        setTimeout(function () {
+            document.addEventListener('click', function (e) {
+                getFrameId();
+            }, { once: true });
+        }, 1);
+    }
 }
