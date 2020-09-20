@@ -244,13 +244,21 @@ function createFront() {
     var _showQueryResult;
     self.performInlineQuery = function (query, pos, showQueryResult) {
         if (document.dictEnabled !== undefined) {
-            window.postMessage({
-                type: "OpenDictoriumQuery",
-                word: query,
-                sentence: "",
-                pos: pos,
-                source: window.location.href
-            });
+            if (window.location.protocol === "dictorium:") {
+                if (window === top) {
+                    window.location.href = query;
+                } else {
+                    window.postMessage({ type: 'DictoriumReload', word: query });
+                }
+            } else {
+                window.postMessage({
+                    type: "OpenDictoriumQuery",
+                    word: query,
+                    sentence: "",
+                    pos: pos,
+                    source: window.location.href
+                });
+            }
             self.hidePopup();
         } else if (_inlineQuery) {
             if (runtime.conf.autoSpeakOnInlineQuery) {
@@ -545,6 +553,9 @@ function createFront() {
                 }
             }
         } else if (_message.action === "activated") {
+            _actions['activated'](_message);
+        } else if (_message.type === "DictoriumViewReady") {
+            // make inline query also work on dictorium frame continuously
             _actions['activated'](_message);
         }
     }, true);
