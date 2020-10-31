@@ -399,23 +399,22 @@ var Omnibar = (function() {
 
     self.createURLItem = function(b, rxp) {
         b.title = (b.title && b.title !== "") ? b.title : b.url;
-        var type = b.type, additional = "", uid = b.uid;
-        if (!type) {
-            if (b.hasOwnProperty('lastVisitTime')) {
-                type = "🕜";
-                additional = `<span class=omnibar_timestamp># ${timeStampString(b.lastVisitTime)}</span>`;
-                additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
-                uid = "H" + b.url;
-            } else if(b.hasOwnProperty('dateAdded')) {
-                type = "⭐";
-                additional = `<span class=omnibar_folder>@ ${bookmarkFolders[b.parentId].title || ""}</span> <span class=omnibar_timestamp># ${timeStampString(b.dateAdded)}</span>`;
-                uid = "B" + b.id;
-            } else if(b.hasOwnProperty('width')) {
-                type = "🔖";
-                uid = "T" + b.windowId + ":" + b.id;
-            } else {
-                type = "🔥";
-            }
+        var type = "🔥", additional = "", uid = b.uid;
+        if (b.hasOwnProperty('lastVisitTime')) {
+            type = "🕜";
+            additional = `<span class=omnibar_timestamp># ${timeStampString(b.lastVisitTime)}</span>`;
+            additional += `<span class=omnibar_visitcount> (${b.visitCount})</span>`;
+            uid = "H" + b.url;
+        } else if(b.hasOwnProperty('dateAdded')) {
+            type = "⭐";
+            additional = `<span class=omnibar_folder>@ ${bookmarkFolders[b.parentId].title || ""}</span> <span class=omnibar_timestamp># ${timeStampString(b.dateAdded)}</span>`;
+            uid = "B" + b.id;
+        } else if(b.hasOwnProperty('width')) {
+            type = "🔖";
+            uid = "T" + b.windowId + ":" + b.id;
+        // } else if(b.type && /^\p{Emoji}$/u.test(b.type)) {
+        } else if(b.type && b.type.length === 2 && b.type.charCodeAt(0) > 255) {
+            type = b.type;
         }
         var li = createElementWithContent('li',
             `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div>`);
@@ -1038,7 +1037,7 @@ var OpenVIMarks = (function() {
                 if (query === "" || markInfo.url.indexOf(query) !== -1) {
                     urls.push({
                         title: m,
-                        type: '♡',
+                        type: '🔗',
                         uid: 'M' + m,
                         url: markInfo.url
                     });
@@ -1347,7 +1346,7 @@ var OpenUserURLs = (function() {
             if (query === "" || m.title.indexOf(query) !== -1 || m.url.indexOf(query) !== -1) {
                 urls.push({
                     title: m.title,
-                    type: '♡',
+                    type: '🍆',
                     url: m.url
                 });
             }

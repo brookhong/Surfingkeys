@@ -71,7 +71,7 @@ gulp.task('copy-es-files', function() {
         'pages/*.js'
     ], {base: "."})
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
-        .pipe(babel({presets: ['es2015']}))
+        .pipe(babel({presets: ['@babel/preset-env']}))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
@@ -110,7 +110,7 @@ gulp.task('build_background', function() {
     return gulp.src(background)
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('background.js'))
-        .pipe(babel({presets: ['es2015']}))
+        .pipe(babel({presets: ['@babel/preset-env']}))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
@@ -138,7 +138,7 @@ gulp.task('build_modules', function() {
     return gulp.src(modules)
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(gp_concat('modules.min.js'))
-        .pipe(babel({presets: ['es2015']}))
+        .pipe(babel({presets: ['@babel/preset-env']}))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
         .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
         .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));

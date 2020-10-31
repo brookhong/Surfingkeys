@@ -4,7 +4,7 @@
 
 According to a discussion here: [https://github.com/brookhong/Surfingkeys/pull/1136][1]
 
-**Parameters**
+### Parameters
 
 -   `elements`  array of elements to filter passed in the order like:
     parent 1 > parent 0> child
@@ -46,7 +46,7 @@ cmap('<Ctrl-p>', '<Shift-Tab>');
 
 * * *
 
-**Parameters**
+### Parameters
 
 -   `mode` **[Object][2]** 
 
@@ -56,12 +56,12 @@ Returns **[Omnibar][3]** Omnibar instance
 
 List URLs like {url: "[https://github.com"][4], title: "github.com"} beneath omnibar
 
-**Parameters**
+#### Parameters
 
 -   `items` **[Array][5]** Array of url items with title.
 -   `showFolder` **[boolean][6]** True to show a item as folder if it has no property url.
 
-**Examples**
+#### Examples
 
 ```javascript
 Omnibar.listURLs ([{url: 'http://google.com', title: 'Google'}], false)
@@ -87,7 +87,7 @@ Returns **[boolean][6]**
 
 The status bar displays the status of Surfingkeys current mode: Normal, visual, etc.
 
-**Parameters**
+### Parameters
 
 -   `ui` **[Object][2]** 
 
