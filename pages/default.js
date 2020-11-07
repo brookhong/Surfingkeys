@@ -612,6 +612,13 @@ mapkey(';U', '#4Edit current URL with vim editor, and reload', function() {
 mapkey(';m', '#1mouse out last element', function() {
     Hints.mouseoutLastElement();
 });
+mapkey(';di', '#1Download image', function() {
+    Hints.create('img', function(element) {
+        RUNTIME('download', {
+            url: element.src
+        });
+    });
+});
 mapkey(';j', '#12Close Downloads Shelf', function() {
     RUNTIME("closeDownloadsShelf", {clearHistory: true});
 });

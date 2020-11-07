@@ -1229,6 +1229,9 @@ var ChromeService = (function() {
             });
         });
     };
+    self.download = function(message, sender, sendResponse) {
+        chrome.downloads.download({ url: message.url })
+    };
     self.executeScript = function(message, sender, sendResponse) {
         chrome.tabs.executeScript(sender.tab.id, {
             frameId: sender.frameId,
