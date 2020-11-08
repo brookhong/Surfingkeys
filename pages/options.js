@@ -441,7 +441,7 @@ var KeyPicker = (function() {
                 var c = [];
                 if (n === "") {
                     c.push(`unmap("${o}");`);
-                } else if (n !== o) {
+                } else if (n && n !== o) {
                     var j = originalKeys.indexOf(n);
                     if (j !== -1 && i < j) {
                         // if the new key that user choosed was in default mappings
@@ -490,7 +490,12 @@ var KeyPicker = (function() {
     var _enter = self.enter;
     self.enter = function(elm) {
         _enter.call(self);
-        _key = elm.getAttribute("new");
+
+        _key = elm.innerText;
+        if (_key === "🚫") {
+            _key = "";
+        }
+
         showKey();
         keyPickerDiv.show();
         _elm = elm;
