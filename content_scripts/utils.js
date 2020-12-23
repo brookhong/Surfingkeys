@@ -94,8 +94,8 @@ function getRealEdit(event) {
 
 function toggleQuote() {
     var elm = getRealEdit(), val = elm.value;
-    if (val[0] === '"') {
-        elm.value = val.substr(1, val.length - 2);
+    if (val.match(/^"|"$/)) {
+        elm.value = val.replace(/^"?(.*?)"?$/, '$1');
     } else {
         elm.value = '"' + val + '"';
     }
