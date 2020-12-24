@@ -123,8 +123,8 @@ mapkey('af', '#1Open a link in active new tab', function() {
 mapkey('gf', '#1Open a link in non-active new tab', function() {
     Hints.create("", Hints.dispatchMouseClick, {tabbed: true, active: false});
 });
-mapkey('cf', '#1Open multiple links in a new tab', function() {
-    Hints.create("", Hints.dispatchMouseClick, {multipleHits: true});
+mapkey('cf', '#1Open multiple links in new tabs', function() {
+    Hints.create("", Hints.dispatchMouseClick, {tabbed: true, multipleHits: true});
 });
 map('C', 'gf');
 mapkey('<Ctrl-h>', '#1Mouse over elements.', function() {
