@@ -112,19 +112,39 @@ var Omnibar = (function() {
         }
     });
 
+    function reopen(handler) {
+        Front.hidePopup();
+        setTimeout(handler, 100);
+    }
+
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-i>"), {
         annotation: "Edit selected URL with vim editor, then open",
         feature_group: 8,
         code: function () {
             var fi = Omnibar.resultsDiv.querySelector('li.focused');
             if (fi && fi.url) {
-                Front.showEditor({
-                    initial_line: 1,
-                    type: "url",
-                    content: fi.url,
-                    onEditorSaved: function(data) {
-                        data && tabOpenLink(data);
-                    }
+                reopen(function () {
+                    Front.showEditor({
+                        initial_line: 1,
+                        type: "url",
+                        content: fi.url,
+                        onEditorSaved: function(data) {
+                            data && tabOpenLink(data);
+                        }
+                    });
+                });
+            } else if (handler === SearchEngine) {
+                var query = Omnibar.input.value;
+                var url = SearchEngine.url;
+                reopen(function () {
+                    Front.showEditor({
+                        initial_line: 1,
+                        type: "url",
+                        content: query,
+                        onEditorSaved: function(data) {
+                            tabOpenLink(constructSearchURL(url, encodeURIComponent(data)));
+                        }
+                    });
                 });
             }
         }
@@ -139,11 +159,10 @@ var Omnibar = (function() {
             } else {
                 runtime.conf.omnibarPosition = "bottom";
             }
-            setTimeout(function() {
+            reopen(function() {
                 _savedAargs.pref = self.input.value;
-                Front.hidePopup();
                 Front.openOmnibar(_savedAargs);
-            }, 1);
+            });
         }
     });
 
