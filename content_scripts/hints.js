@@ -344,6 +344,9 @@ function createHints() {
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
+        if (behaviours.multipleHits) {
+            behaviours.tabbed = true;
+        }
         var elements;
         if (behaviours.tabbed) {
             elements = Array.from(getElements('a[href]:not([href^=javascript])'));
