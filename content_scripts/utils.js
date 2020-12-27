@@ -214,17 +214,26 @@ function filterAncestors(elements) {
         return elements;
     }
 
-    // filter out element which has its children covered
-    let result = [last(elements)];
-    for (let i = elements.length - 2; i >= 0; i--) {
-        if (!elements[i].contains(last(result))
-            || isExplicitlyRequested(elements[i])) {
-            result.push(elements[i]);
+ // filter out element which has its children covered
+    var result = [];
+    elements.forEach(function(e, i) {
+        if (isExplicitlyRequested(e)) {
+            result.push(e);
+        } else {
+            for (var j = 0; j < result.length; j++) {
+                if (result[j].contains(e)) {
+                    result[j] = e;
+                    return;
+                } else if (e.contains(result[j])) {
+                    console.log("skip: ", e, result[j]);
+                    return;
+                }
+            }
+            result.push(e);
         }
-    }
+    });
 
-    // To restore original order of elements
-    return result.reverse();
+    return result;
 }
 
 function getRealRect(elm) {
@@ -267,19 +276,6 @@ function filterOverlapElements(elements) {
             var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
             return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
         }
-    });
-
-    // if an element has href, all its children will be filtered out.
-    var elementWithHref = null;
-    elements = elements.filter(function(e) {
-        var flag = true;
-        if (e.href) {
-            elementWithHref = e;
-        }
-        if (elementWithHref && elementWithHref !== e && elementWithHref.contains(e)) {
-            flag = false;
-        }
-        return flag;
     });
 
     return filterAncestors(elements);

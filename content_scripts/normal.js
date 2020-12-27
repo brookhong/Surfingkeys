@@ -462,7 +462,7 @@ function createNormal() {
             var range = getNearestWord(selection.focusNode.textContent, selection.focusOffset);
             var selRect = getTextRect(selection.focusNode, range[0], range[0] + range[1]);
             var word = selection.focusNode.textContent.substr(range[0], range[1]);
-            if (selRect && selRect.has(_clickPos[0], _clickPos[1], 0, 0) && word) {
+            if (selRect && _clickPos && selRect.has(_clickPos[0], _clickPos[1], 0, 0) && word) {
                 return word.trim();
             }
         }
