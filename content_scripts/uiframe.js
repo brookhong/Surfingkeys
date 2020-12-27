@@ -2,6 +2,7 @@ function createUiHost() {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
+    uiHost.style.colorScheme = "auto";
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = document.createElement("iframe");
     ifr.setAttribute('allowtransparency', true);
