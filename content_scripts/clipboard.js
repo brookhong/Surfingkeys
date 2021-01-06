@@ -18,11 +18,15 @@ function createClipboard() {
     }
 
     self.read = function(onReady) {
+        if (typeof navigator.clipboard === 'object' && typeof navigator.clipboard.readText === 'function') {
+          navigator.clipboard.readText().then((data) => onReady({ data }));
+          return;
+        }
         clipboardActionWithSelectionPreserved(function() {
             holder.value = '';
             setSanitizedContent(holder, '');
             holder.focus();
-            document.execCommand("Paste");
+            document.execCommand("paste");
         });
         var data = holder.value;
         if (data === "") {
@@ -32,6 +36,11 @@ function createClipboard() {
     };
 
     self.write = function(text) {
+        const cb = () => Front.showBanner("Copied: " + text);
+        if (typeof navigator.clipboard === 'object' && typeof navigator.clipboard.writeText === 'function') {
+          navigator.clipboard.writeText(text).then(cb);
+          return;
+        }
         Normal.insertJS(function() {
             window.oncopy = document.oncopy;
             document.oncopy = null;
@@ -46,7 +55,7 @@ function createClipboard() {
                 document.oncopy = window.oncopy;
                 delete window.oncopy;
             });
-            Front.showBanner("Copied: " + text);
+            cb();
         });
     };
 
