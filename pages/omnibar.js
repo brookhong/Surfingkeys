@@ -59,6 +59,7 @@ function _filterByTitleOrUrl(urls, query) {
  *  * `Ctrl-`. to show results of next page
  *  * `Ctrl-`, to show results of previous page
  *  * `Ctrl-c` to copy all listed items
+ *  * `Ctrl-e` to copy currently focussed item url
  *  * In omnibar opened with `t:`
  *
  * `Ctrl - d` to delete from bookmark or history
@@ -204,6 +205,17 @@ var Omnibar = (function() {
             self.input.style.display = "none";
             Clipboard.write(JSON.stringify(_page, null, 4));
             self.input.style.display = "";
+        }
+    });
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-e>"), {
+        annotation: "Copy currently focussed item url",
+        feature_group: 8,
+        code: function () {
+            var fi = Omnibar.resultsDiv.querySelector('li.focused');
+            if (fi && fi.uid) {
+                Clipboard.write(fi.url);
+            }
         }
     });
 

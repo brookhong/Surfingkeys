@@ -29,6 +29,7 @@ Key bindings in Omnibar:
 -   `Ctrl-`. to show results of next page
 -   `Ctrl-`, to show results of previous page
 -   `Ctrl-c` to copy all listed items
+-   `Ctrl-e` to copy currently focussed item url
 -   In omnibar opened with `t:`
 
 `Ctrl - d` to delete from bookmark or history
