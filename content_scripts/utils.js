@@ -471,6 +471,9 @@ function RUNTIME(action, args, callback) {
     try {
         args.needResponse = callback !== undefined;
         chrome.runtime.sendMessage(args, callback);
+        if (action === 'read') {
+            runtime.on('onTtsEvent', callback);
+        }
     } catch (e) {
         Front.showPopup('[runtime exception] ' + e);
     }

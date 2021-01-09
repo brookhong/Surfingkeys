@@ -1496,9 +1496,21 @@ var ChromeService = (function() {
     self.read = function(message, sender, sendResponse) {
         var options = message.options || {};
         options.onEvent = function(ttsEvent) {
-            _response(message, sendResponse, {
-                ttsEvent: ttsEvent
-            });
+            // https://developer.chrome.com/docs/extensions/mv2/messaging/
+            // If multiple pages are listening for onMessage events, only the first to call sendResponse()
+            // for a particular event will succeed in sending the response. All other responses to that event will be ignored.
+            //
+            // Thus for the later events after `start` we will send them in sendTabMessage.
+            if (ttsEvent.type === "start") {
+                _response(message, sendResponse, {
+                    ttsEvent: ttsEvent
+                });
+            } else {
+                sendTabMessage(sender.tab.id, -1, {
+                    subject: 'onTtsEvent',
+                    ttsEvent: ttsEvent
+                });
+            }
         };
         chrome.tts.speak(message.content, options);
     };

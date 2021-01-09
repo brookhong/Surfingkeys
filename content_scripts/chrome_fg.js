@@ -40,7 +40,7 @@ function readText(text, options) {
                 Front.hidePopup();
             }
         }
-        if (onEnd && res.ttsEvent.type === "end") {
+        if (onEnd && (res.ttsEvent.type === "end" || res.ttsEvent.type === "interrupted")) {
             onEnd();
         }
         return res.ttsEvent.type !== "end";
