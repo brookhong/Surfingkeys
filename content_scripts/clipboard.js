@@ -18,7 +18,8 @@ function createClipboard() {
     }
 
     self.read = function(onReady) {
-        if (typeof navigator.clipboard === 'object' && typeof navigator.clipboard.readText === 'function') {
+        if (window.navigator.userAgent.indexOf("Firefox") !== -1 &&
+            typeof navigator.clipboard === 'object' && typeof navigator.clipboard.readText === 'function') {
           navigator.clipboard.readText().then((data) => onReady({ data }));
           return;
         }
@@ -37,7 +38,8 @@ function createClipboard() {
 
     self.write = function(text) {
         const cb = () => Front.showBanner("Copied: " + text);
-        if (typeof navigator.clipboard === 'object' && typeof navigator.clipboard.writeText === 'function') {
+        if (window.navigator.userAgent.indexOf("Firefox") !== -1 &&
+            typeof navigator.clipboard === 'object' && typeof navigator.clipboard.writeText === 'function') {
           navigator.clipboard.writeText(text).then(cb);
           return;
         }
