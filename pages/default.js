@@ -416,6 +416,11 @@ mapkey('yT', '#3Duplicate current tab in background', function() {
 mapkey('yy', "#7Copy current page's URL", function() {
     Clipboard.write(window.location.href);
 });
+mapkey('yY', "#1Copy all tabs's url", function() {
+    RUNTIME('getTabs', null, function (response) {
+        Clipboard.write([window.location.href].concat(response.tabs.map(tab => tab.url)).join('\n'))
+    })
+});    
 mapkey('yh', "#7Copy current page's host", function() {
     var url = new URL(window.location.href);
     Clipboard.write(url.host);
