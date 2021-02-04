@@ -8,7 +8,13 @@ function request(url, onReady, headers, data, onException) {
             xhr.setRequestHeader(h, headers[h]);
         }
         xhr.onload = function() {
-            acc(xhr.responseText);
+            if (xhr.readyState === xhr.DONE) {
+                if (xhr.status === 200) {
+                    acc(xhr.responseText);
+                } else {
+                    rej(xhr.status);
+                }
+            }
         };
         xhr.onerror = rej.bind(null, xhr);
         xhr.send(data);
@@ -252,8 +258,7 @@ var ChromeService = (function() {
                     cb(set);
                 }, undefined, undefined, function (po) {
                     // failed to read snippets from localPath
-                    set.error = "Failed to read snippets from " + set.localPath;
-                    cb(set);
+                    console.error("Failed to read snippets from " + set.localPath);
                 });
             } else {
                 cb(set);
@@ -610,8 +615,10 @@ var ChromeService = (function() {
         });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
-        _loadSettingsFromUrl(message.url, function(status) {
-            _response(message, sendResponse, status);
+        _loadSettingsFromUrl(message.url, function(result) {
+            if (!(result && result.status === "Failed")) {
+                _response(message, sendResponse, status);
+            }
         });
     };
     function _filterByTitleOrUrl(tabs, query) {

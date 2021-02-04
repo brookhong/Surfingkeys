@@ -318,6 +318,9 @@ function saveSettings() {
         RUNTIME('loadSettingsFromUrl', {
             url: localPath
         }, function(res) {
+            if (res.status && res.status === "Failed") {
+                return;
+            }
             Front.showBanner(res.status + ' to load settings from ' + localPath, 300);
             renderKeyMappings(res);
             if (res.snippets && res.snippets.length) {
