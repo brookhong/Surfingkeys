@@ -8,13 +8,7 @@ function request(url, onReady, headers, data, onException) {
             xhr.setRequestHeader(h, headers[h]);
         }
         xhr.onload = function() {
-            if (xhr.readyState === xhr.DONE) {
-                if (xhr.status === 200) {
-                    acc(xhr.responseText);
-                } else {
-                    rej(xhr.status);
-                }
-            }
+            acc(xhr.responseText);
         };
         xhr.onerror = rej.bind(null, xhr);
         xhr.send(data);
@@ -55,10 +49,24 @@ function getSubSettings(set, keys) {
 }
 
 function _save(storage, data, cb) {
-    if (data.localPath) {
-        delete data.snippets;
+    if (storage === chrome.storage.sync) {
+        // don't store snippets from localPath into sync storage, since sync storage has its quota.
+        if (data.localPath) {
+            delete data.snippets;
+        }
+        storage.set(data, cb);
+    } else {
+        if (data.localPath) {
+            delete data.snippets;
+            // try to fetch snippets from localPath and cache it in local storage.
+            request(data.localPath, function(resp) {
+                data.snippets = resp;
+                storage.set(data, cb);
+            });
+        } else {
+            storage.set(data, cb);
+        }
     }
-    storage.set(data, cb);
 }
 
 var Gist = (function() {
@@ -258,7 +266,8 @@ var ChromeService = (function() {
                     cb(set);
                 }, undefined, undefined, function (po) {
                     // failed to read snippets from localPath
-                    console.error("Failed to read snippets from " + set.localPath);
+                    set.error = "Failed to read snippets from " + set.localPath;
+                    cb(set);
                 });
             } else {
                 cb(set);
@@ -615,10 +624,8 @@ var ChromeService = (function() {
         });
     };
     self.loadSettingsFromUrl = function(message, sender, sendResponse) {
-        _loadSettingsFromUrl(message.url, function(result) {
-            if (!(result && result.status === "Failed")) {
-                _response(message, sendResponse, status);
-            }
+        _loadSettingsFromUrl(message.url, function(status) {
+            _response(message, sendResponse, status);
         });
     };
     function _filterByTitleOrUrl(tabs, query) {
