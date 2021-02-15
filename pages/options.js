@@ -271,7 +271,7 @@ document.getElementById('resetSettings').onclick = function() {
         RUNTIME("resetSettings", null, function(response) {
             renderSettings(response.settings);
             renderKeyMappings(response.settings);
-            Front.showBanner('Settings reset', 300);
+            Front.showBanner('Settings reset', 1000);
         });
     }
 };
@@ -318,12 +318,12 @@ function saveSettings() {
         RUNTIME('loadSettingsFromUrl', {
             url: localPath
         }, function(res) {
-            Front.showBanner(res.status + ' to load settings from ' + localPath, 300);
+            Front.showBanner(res.status + ' to load settings from ' + localPath, 5000);
             renderKeyMappings(res);
             if (res.snippets && res.snippets.length) {
                 localPathSaved = localPath;
                 mappingsEditor.setValue(res.snippets, -1);
-            } else {
+            } else if (settingsCode === "") {
                 mappingsEditor.setValue(sample, -1);
             }
         });
@@ -335,7 +335,7 @@ function saveSettings() {
             }
         });
 
-        Front.showBanner('Settings saved', 300);
+        Front.showBanner('Settings saved', 1000);
     }
 }
 document.getElementById('save_button').onclick = saveSettings;

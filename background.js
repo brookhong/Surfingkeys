@@ -8,7 +8,12 @@ function request(url, onReady, headers, data, onException) {
             xhr.setRequestHeader(h, headers[h]);
         }
         xhr.onload = function() {
-            acc(xhr.responseText);
+            // status from file:/// is always 0
+            if (xhr.status === 200 || xhr.status === 0) {
+                acc(xhr.responseText);
+            } else {
+                rej(xhr.status);
+            }
         };
         xhr.onerror = rej.bind(null, xhr);
         xhr.send(data);
