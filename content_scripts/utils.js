@@ -547,7 +547,11 @@ function getClickableElements(selectorString, pattern) {
     var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
         return n.offsetHeight && n.offsetWidth
             && getComputedStyle(n).cursor === "pointer"
-            && (n.matches(selectorString) || pattern.test(n.textContent));
+            && (n.matches(selectorString)
+                || pattern && (
+                    pattern.test(n.textContent)
+                    || pattern.test(n.getAttribute('aria-label')))
+            );
     });
     return filterOverlapElements(nodes);
 }
