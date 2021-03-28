@@ -34,7 +34,7 @@ div.surfingkeys_cursor:empty {
     background: rgba(170, 170, 255, 0.85);
 }
 #sk_hints[mode=text]>div.begin {
-    color: #00f !important;
+    color: #00f;
 }
 #sk_hints[mode=input]>div {
     background: rgba(255, 217, 0, 0.25);

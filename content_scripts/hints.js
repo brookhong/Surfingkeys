@@ -266,7 +266,7 @@ function createHints() {
         _initHolder('click');
         var hintLabels = self.genLabels(elements.length);
         var bof = self.coordinate();
-        var style = createElementWithContent("style", "#sk_hints div.myHint{" + _styleForClick + "}");
+        var style = createElementWithContent("style", _styleForClick);
         holder.prepend(style);
         var links = elements.map(function(elm, i) {
             var r = getRealRect(elm),
@@ -284,7 +284,7 @@ function createHints() {
             } else if (left + 32 > window.pageXOffset + window.innerWidth) {
                 left = window.pageXOffset + window.innerWidth - 32;
             }
-            var link = createElementWithContent('div', hintLabels[i], {class: "myHint"});
+            var link = createElementWithContent('div', hintLabels[i]);
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             link.style.top = Math.max(r.top + window.pageYOffset - bof.top, 0) + "px";
             link.style.left = left + "px";
@@ -462,7 +462,7 @@ function createHints() {
                 holder.append(e);
             });
 
-            var style = createElementWithContent('style', `#sk_hints[mode='text'] div{${_styleForText}}`);
+            var style = createElementWithContent('style', _styleForText);
             holder.prepend(style);
             document.documentElement.prepend(holder);
         }
@@ -617,10 +617,14 @@ function createHints() {
 
     var _styleForText = "", _styleForClick = "";
     self.style = function(css, mode) {
+        if (!/^div\b/.test(css)) {
+            css = `div{${css}}`;
+        }
+
         if (mode === "text") {
-            _styleForText = css;
+            _styleForText = css.replace(/\bdiv\b/g, "#sk_hints[mode='text'] div");
         } else {
-            _styleForClick = css;
+            _styleForClick = css.replace(/\bdiv\b/g, "#sk_hints div");
         }
     };
 
