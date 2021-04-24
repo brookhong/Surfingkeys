@@ -3,7 +3,7 @@ RUNTIME("getTopSites", null, function(response) {
         return `<li><a href="${u.url}"><i style="background:url('chrome://favicon/${u.url}') no-repeat"></i>${u.title}</a></li>`;
     });
     setSanitizedContent(document.querySelector("#topSites>ul"), urls.join("\n"));
-    var source = document.getElementById('quickIntroSource').innerText;
+    var source = document.getElementById('quickIntroSource').innerHTML;
     setSanitizedContent(document.querySelector('#quickIntro'), marked(source));
 
     var screen1 = document.querySelector("#screen1");

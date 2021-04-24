@@ -38,7 +38,11 @@ gulp.task('clean', function () {
 
 gulp.task('copy-html-files', function() {
     if (buildTarget === "Firefox") {
-        return gulp.src(['pages/*.html', '!pages/pdf_viewer.html'], {base: "."})
+        return gulp.src([
+            'pages/*.html',
+            '!pages/pdf_viewer.html',
+            '!pages/mermaid.html'
+        ], {base: "."})
             .pipe(replace(/\s*<script src="ga.js"><\/script>\n\s*<script async src='https:\/\/www.google-analytics.com\/analytics.js'><\/script>/, ''))
             .pipe(gulp.dest(`dist/${buildTarget}-extension`));
     } else {
@@ -65,11 +69,15 @@ gulp.task('copy-non-js-files', function() {
 });
 
 gulp.task('copy-es-files', function() {
-    return gulp.src([
+    let esFiles = [
         'content_scripts/front.js',
         'content_scripts/content_scripts.js',
         'pages/*.js'
-    ], {base: "."})
+    ];
+    if (buildTarget === "Firefox") {
+        esFiles.push('!pages/mermaid.js', '!pages/ga.js');
+    }
+    return gulp.src(esFiles, {base: "."})
         .pipe(gulpif(options.env === 'development', sourcemaps.init()))
         .pipe(babel({presets: ['@babel/preset-env']}))
         .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))

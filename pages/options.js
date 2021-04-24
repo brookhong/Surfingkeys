@@ -143,7 +143,7 @@ function renderProxyPair(proxy, number) {
     var divProxyPair = document.querySelector(`div.proxyPair[number='${number}']`);
     if (divProxyPair === null) {
         divProxyPair = createElementWithContent('div',
-            document.getElementById("templateProxyPair").textContent.trim(), {"class": "proxyPair", "number": number});
+            document.getElementById("templateProxyPair").innerHTML.trim(), {"class": "proxyPair", "number": number});
         proxyGroup.insertBefore(divProxyPair, addProxyPair);
     }
 

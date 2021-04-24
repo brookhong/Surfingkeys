@@ -8,7 +8,7 @@
         <script src="../libs/ace/ace.js" type="text/javascript" charset="utf-8"></script>
     </head>
     <body>
-        <script id="sample" type="text/template">// an example to create a new mapping `ctrl-y`
+        <template id="sample">// an example to create a new mapping `ctrl-y`
 mapkey('<Ctrl-y>', 'Show me the money', function() {
     Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
 });
@@ -57,8 +57,8 @@ settings.theme = `
 #sk_status, #sk_find {
     font-size: 20pt;
 }`;
-// click `Save` button to make above settings to take effect.</script>
-        <script id="templateProxyPair" type="text/template">
+// click `Save` button to make above settings to take effect.</template>
+        <template id="templateProxyPair">
             <div class="deleteProxyPair">🗑️</div>
             <div class="proxy">
                 Proxy:
@@ -78,7 +78,7 @@ settings.theme = `
                 <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
                 <div></div>
             </div>
-        </script>
+        </template>
         <div id="keyPicker" style="display: none;">
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
