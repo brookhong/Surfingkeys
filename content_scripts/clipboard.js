@@ -20,7 +20,13 @@ function createClipboard() {
     self.read = function(onReady) {
         if (window.navigator.userAgent.indexOf("Firefox") !== -1 &&
             typeof navigator.clipboard === 'object' && typeof navigator.clipboard.readText === 'function') {
-          navigator.clipboard.readText().then((data) => onReady({ data }));
+          navigator.clipboard.readText().then((data) => {
+              // call back onReady in a different thread to avoid breaking UI operations
+              // such as Front.openOmnibar
+              setTimeout(function() {
+                  onReady({ data });
+              }, 0);
+          });
           return;
         }
         clipboardActionWithSelectionPreserved(function() {
