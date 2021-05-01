@@ -81,7 +81,7 @@ function _filterByTitleOrUrl(urls, query) {
  * @param {Object} mode
  * @return {Omnibar} Omnibar instance
  */
-var Omnibar = (function() {
+const Omnibar = (function() {
     var self = new Mode("Omnibar");
 
     self.addEventListener('keydown', function(event) {
@@ -198,24 +198,19 @@ var Omnibar = (function() {
     });
 
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-c>"), {
-        annotation: "Copy all listed items",
+        annotation: "Copy selected item url or all listed item urls",
         feature_group: 8,
         code: function () {
             // hide Omnibar.input, so that we could use clipboard_holder to make copy
             self.input.style.display = "none";
-            Clipboard.write(JSON.stringify(_page, null, 4));
-            self.input.style.display = "";
-        }
-    });
 
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-e>"), {
-        annotation: "Copy currently focussed item url",
-        feature_group: 8,
-        code: function () {
-            var fi = Omnibar.resultsDiv.querySelector('li.focused');
-            if (fi && fi.uid) {
-                Clipboard.write(fi.url);
-            }
+            const fi = Omnibar.resultsDiv.querySelector('li.focused');
+            const url = (fi && fi.url) ? fi.url : _page.map(p => {
+                return p.url;
+            }).join("\n");
+            Clipboard.write(url);
+
+            self.input.style.display = "";
         }
     });
 
@@ -605,8 +600,8 @@ var Omnibar = (function() {
         if (type === 'T') {
             uid = uid.split(":");
             RUNTIME('focusTab', {
-                window_id: parseInt(uid[0]),
-                tab_id: parseInt(uid[1])
+                windowId: parseInt(uid[0]),
+                tabId: parseInt(uid[1])
             });
         } else if (url && url.length) {
             RUNTIME("openLink", {
@@ -675,7 +670,7 @@ var Omnibar = (function() {
     return self;
 })();
 
-var OpenBookmarks = (function() {
+const OpenBookmarks = (function() {
     var self = {
         prompt: `bookmark${separatorHtml}`,
         inFolder: []
@@ -802,7 +797,7 @@ var OpenBookmarks = (function() {
 })();
 Omnibar.addHandler('Bookmarks', OpenBookmarks);
 
-var AddBookmark = (function() {
+const AddBookmark = (function() {
     var self = {
         focusFirstCandidate: true,
         prompt: `add bookmark${separatorHtml}`
@@ -905,7 +900,7 @@ var AddBookmark = (function() {
 })();
 Omnibar.addHandler('AddBookmark', AddBookmark);
 
-var OpenHistory = (function() {
+const OpenHistory = (function() {
     var self = {
         prompt: `history${separatorHtml}`
     };
@@ -953,7 +948,7 @@ var OpenHistory = (function() {
 })();
 Omnibar.addHandler('History', OpenHistory);
 
-var OpenURLs = (function() {
+const OpenURLs = (function() {
     var self = {
         prompt: `${separatorHtml}`
     };
@@ -1014,7 +1009,7 @@ var OpenURLs = (function() {
 })();
 Omnibar.addHandler('URLs', OpenURLs);
 
-var OpenTabs = (function() {
+const OpenTabs = (function() {
     var self = {
         focusFirstCandidate: true,
         prompt: `tabs${separatorHtml}`
@@ -1044,7 +1039,76 @@ var OpenTabs = (function() {
 })();
 Omnibar.addHandler('Tabs', OpenTabs);
 
-var OpenVIMarks = (function() {
+const OpenWindows = (function() {
+    const self = {
+        prompt: `Move current tab to window${separatorHtml}`
+    };
+
+    self.getResults = function () {
+        Omnibar.cachedPromise = new Promise(function(resolve, reject) {
+            RUNTIME('getWindows', {
+                query: ''
+            }, function(response) {
+                resolve(response.windows);
+            });
+        });
+    };
+    self.onEnter = function() {
+        const fi = Omnibar.resultsDiv.querySelector('li.focused');
+        let windowId = -1;
+        if (fi && fi.windowId !== undefined) {
+            windowId = fi.windowId;
+        }
+        RUNTIME('moveToWindow', { windowId });
+        return true;
+    };
+    self.onOpen = function() {
+        self.getResults();
+        self.onInput();
+    };
+    self.onInput = function() {
+        Omnibar.cachedPromise.then(function(cached) {
+            let filtered = cached;
+            const query = Omnibar.input.value;
+            let rxp = null;
+            if (query && query.length) {
+                rxp = _regexFromString(query, false);
+                filtered = cached.filter(function(w) {
+                    for (const t of w.tabs) {
+                        if (rxp.test(t.title) || rxp.test(t.url)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            }
+            rxp = _regexFromString(query, true);
+            Omnibar.listResults(filtered, function(w) {
+                const li = createElementWithContent('li');
+                li.windowId = parseInt(w.id);
+                li.classList.add('window');
+                if (w.isPreviousChoice) {
+                    li.classList.add('focused');
+                }
+                w.tabs.forEach(t => {
+                    const div = createElementWithContent('div', '', {class: "tab_in_window"});
+                    div.appendChild(createElementWithContent('div', Omnibar.highlight(rxp, t.title), {class: "title"}));
+                    div.appendChild(createElementWithContent('div', Omnibar.highlight(rxp, new URL(t.url).origin), {class: "url"}));
+                    li.appendChild(div);
+                });
+                // set url so that we can copy all URls of tabs in this window.
+                li.url = w.tabs.map(t => {
+                    return t.url;
+                }).join("\n");
+                return li;
+            });
+        });
+    };
+    return self;
+})();
+Omnibar.addHandler('Windows', OpenWindows);
+
+const OpenVIMarks = (function() {
     var self = {
         focusFirstCandidate: true,
         prompt: `VIMarks${separatorHtml}`
@@ -1083,7 +1147,7 @@ var OpenVIMarks = (function() {
 })();
 Omnibar.addHandler('VIMarks', OpenVIMarks);
 
-var SearchEngine = (function() {
+const SearchEngine = (function() {
     var self = {};
     self.aliases = {};
 
@@ -1192,7 +1256,7 @@ var SearchEngine = (function() {
 })();
 Omnibar.addHandler('SearchEngine', SearchEngine);
 
-var Commands = (function() {
+const Commands = (function() {
     var self = {
         focusFirstCandidate: true,
         prompt: ':',
@@ -1305,7 +1369,7 @@ var Commands = (function() {
 })();
 Omnibar.addHandler('Commands', Commands);
 
-var OmniQuery = (function() {
+const OmniQuery = (function() {
     var self = {
         prompt: 'ǭ'
     };
@@ -1357,7 +1421,7 @@ var OmniQuery = (function() {
 })();
 Omnibar.addHandler('OmniQuery', OmniQuery);
 
-var OpenUserURLs = (function() {
+const OpenUserURLs = (function() {
     var self = {
         focusFirstCandidate: true,
         prompt: `UserURLs${separatorHtml}`

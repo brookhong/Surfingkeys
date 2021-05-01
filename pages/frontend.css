@@ -122,6 +122,14 @@ body {
 .sk_theme #sk_omnibarSearchResult>ul>li.focused {
     background: #cddef9;
 }
+.sk_theme #sk_omnibarSearchResult>ul>li.window {
+    border: 2px solid #c7c7c773;
+    border-radius: 8px;
+    margin: 4px 0px;
+}
+.sk_theme #sk_omnibarSearchResult>ul>li.window.focused {
+    border: 2px solid #fff;
+}
 .sk_theme div.table {
     display: table;
 }
@@ -141,6 +149,12 @@ body {
 }
 #sk_omnibarSearchResult li span.annotation {
     float: right;
+}
+#sk_omnibarSearchResult .tab_in_window {
+    display: inline-block;
+    padding: 5px;
+    margin: 5px;
+    box-shadow: 0px 2px 10px rgb(0 0 0 / 88%);
 }
 #sk_status {
     position: fixed;

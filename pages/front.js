@@ -33,8 +33,8 @@ var Front = (function() {
                     _tabs.trie = null;
                 } else if (_tabs.trie.meta) {
                     RUNTIME('focusTab', {
-                        tab_id: _tabs.trie.meta.id,
-                        window_id: _tabs.trie.meta.windowId
+                        windowId: _tabs.trie.meta.windowId,
+                        tabId: _tabs.trie.meta.id
                     });
                     self.hidePopup();
                     _tabs.trie = null;

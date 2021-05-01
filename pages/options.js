@@ -151,7 +151,7 @@ function renderProxyPair(proxy, number) {
     var proxyInput = divProxyPair.querySelector(".proxy>input");
 
     function __updateProxy(data) {
-        let v = proxyInput.value.replace(/[^0-9\.]+/, ':');
+        let v = proxyInput.value.replace(/\W+([0-9]+)$/, ":$1");
         _updateProxy({
             number: number,
             proxy: proxySelect.value + " " + v

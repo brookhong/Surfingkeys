@@ -189,7 +189,7 @@ var Gist = (function() {
     return self;
 })();
 
-var ChromeService = (function() {
+const ChromeService = (function() {
     var self = {};
 
     var tabHistory = [],
@@ -737,17 +737,20 @@ var ChromeService = (function() {
             });
         });
     };
-    self.focusTab = function(message, sender, sendResponse) {
-        if (message.window_id !== undefined && sender.tab.windowId !== message.window_id) {
-            chrome.windows.update(message.window_id, {
-                focused: true
-            }, function() {
-                chrome.tabs.update(message.tab_id, {
-                    active: true
-                });
+    function focusTab(windowId, tabId) {
+        chrome.windows.update(windowId, {
+            focused: true
+        }, function() {
+            chrome.tabs.update(tabId, {
+                active: true
             });
+        });
+    }
+    self.focusTab = function(message, sender, sendResponse) {
+        if (message.windowId !== undefined && sender.tab.windowId !== message.windowId) {
+            focusTab(message.windowId, message.tabId);
         } else {
-            chrome.tabs.update(message.tab_id, {
+            chrome.tabs.update(message.tabId, {
                 active: true
             });
         }
@@ -783,8 +786,8 @@ var ChromeService = (function() {
                     tabHistoryIndex = tabHistory.length - 1;
                 }
             }
-            var tab_id = tabHistory[tabHistoryIndex];
-            chrome.tabs.update(tab_id, {
+            const tabId = tabHistory[tabHistoryIndex];
+            chrome.tabs.update(tabId, {
                 active: true
             });
         }
@@ -911,28 +914,37 @@ var ChromeService = (function() {
             }
         });
     };
-    self.newWindow = function(message, sender, sendResponse) {
+    let previousWindowChoice = -1;
+    self.getWindows = function (message, sender, sendResponse) {
         chrome.tabs.query({}, function(tabs) {
-            var tabInWindow = {};
-            tabs.forEach(function(t) {
-                tabInWindow[t.windowId] = tabInWindow[t.windowId] || [];
-                tabInWindow[t.windowId].push(t.id);
-            });
-            if (tabInWindow[sender.tab.windowId] && tabInWindow[sender.tab.windowId].length === 1) {
-                // if there is only one tab in current window,
-                // then move this tab into the window with most tabs.
-                var maximumTab = 0, windowWithMostTab;
-                for (var w in tabInWindow) {
-                    if (tabInWindow[w].length > maximumTab) {
-                        maximumTab = tabInWindow[w].length;
-                        windowWithMostTab = w;
-                    }
+            const windows = {};
+            tabs.forEach(t => {
+                if (t.windowId !== sender.tab.windowId) {
+                    const tabsInWindow = windows[t.windowId] || [];
+                    tabsInWindow.push({title: t.title, url: t.url});
+                    windows[t.windowId] = tabsInWindow;
                 }
-                chrome.tabs.move(sender.tab.id, {windowId: parseInt(windowWithMostTab), index: -1});
-            } else {
-                chrome.windows.create({tabId: sender.tab.id});
-            }
+            });
+            _response(message, sendResponse, {
+                windows: Object.keys(windows).map(w => {
+                    return {
+                        id: w,
+                        tabs: windows[w],
+                        isPreviousChoice: (parseInt(w) === previousWindowChoice)
+                    };
+                })
+            });
         });
+    };
+    self.moveToWindow = function(message, sender, sendResponse) {
+        if (message.windowId === -1) {
+            chrome.windows.create({tabId: sender.tab.id});
+        } else {
+            chrome.tabs.move(sender.tab.id, {windowId: message.windowId, index: -1}, () => {
+                focusTab(message.windowId, sender.tab.id);
+            });
+        }
+        previousWindowChoice = message.windowId;
     };
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
