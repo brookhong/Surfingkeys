@@ -255,6 +255,15 @@ div.hint-scrollable {
         }
     }
 
+    function getHref(elm) {
+        var href = elm.href;
+        while (!href && elm) {
+            elm = elm.parentElement;
+            href = elm.href;
+        }
+        return href;
+    }
+
     self.onEnter = function() {
         document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
         document.addEventListener("surfingkeys:scrollDone", resetHints);
@@ -639,7 +648,7 @@ div.hint-scrollable {
                         tabbed: tabbed,
                         active: active
                     },
-                    url: element.href
+                    url: getHref(element)
                 });
             } else {
                 self.mouseoutLastElement();
