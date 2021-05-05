@@ -32,6 +32,7 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * [Search selected with](#search-selected-with)
 * [Vim-like marks](#vim-like-marks)
 * [Switch tabs](#switch-tabs)
+* [Windows management](#windows-management)
 * [Commands](#commands)
 * [Smooth scroll](#smooth-scroll)
 * [Session management](#session-management)
@@ -267,6 +268,14 @@ which works same as:
 The tabs are displayed in MRU order by default, either in omnibar or overlay. If you want them in natural order, use:
 
     settings.tabsMRUOrder = false;
+
+## Windows management
+
+`W` will bring up a popup of Windows, you can select one of them and press `Enter` to move current tab to the selected window. If there is only one window, `W` will move current tab to a new window directly.
+
+`;gt` will open Omnibar with all tabs not from current window, you could input some text to filter the tabs, then press `Enter` to gather the filtered tabs into current window. `;gw` will gather all tabs into current window.
+
+So to group your tabs into windows, you can use `W` to move one tab to a specified window or use `;gt` to gather filtered tabs into current window.
 
 ## Commands
 
@@ -649,7 +658,6 @@ For example,
 | settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
-| settings.hintsThreshold | 10000 | When total of regular clickable elements (a, button, select, input, textarea) exceeds this number, Surfingkeys will not show hints for other elements that are clickable. |
 | settings.clickableSelector | "" | Extra CSS selector to pick elements for hints mode, such as "\*.jfk-button, \*.goog-flat-menu-button". |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | A regex to detect clickable links from text, you could use `O` to open them. |
 | settings.editableSelector | div.CodeMirror-scroll,div.ace_content | CSS selector for additional editable elements. |

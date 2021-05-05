@@ -347,6 +347,14 @@ mapkey('X', '#3Restore closed tab', function() {
 mapkey('W', '#3Move current tab to another window',  function() {
     Front.openOmnibar(({type: "Windows"}));
 });
+mapkey(';gt', '#3Gather filtered tabs into current window', function() {
+    Front.openOmnibar({type: "Tabs", extra: {
+        action: "gather"
+    }});
+});
+mapkey(';gw', '#3Gather all tabs into current window',  function() {
+    RUNTIME("gatherWindows");
+});
 mapkey('m', '#10Add current URL to vim-like marks', Normal.addVIMark);
 mapkey("'", '#10Jump to vim-like mark', Normal.jumpVIMark);
 mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {

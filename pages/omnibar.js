@@ -501,6 +501,9 @@ const Omnibar = (function() {
         _showFolder = showFolder;
         _listResultPage();
     };
+    self.getItems = function() {
+        return _items;
+    };
 
     function _listResultPage() {
         var si = (_start - 1) * _pageSize,
@@ -574,6 +577,7 @@ const Omnibar = (function() {
 
         lastInput = "";
         self.input.value = "";
+        self.input.placeholder = "";
         setSanitizedContent(self.resultsDiv, "");
         lastHandler = null;
         handler.onClose && handler.onClose();
@@ -1012,20 +1016,31 @@ Omnibar.addHandler('URLs', OpenURLs);
 const OpenTabs = (function() {
     var self = {
         focusFirstCandidate: true,
-        prompt: `tabs${separatorHtml}`
     };
 
+    var queryInfo = {};
     self.getResults = function () {
         Omnibar.cachedPromise = new Promise(function(resolve, reject) {
-            RUNTIME('getTabs', {
-                query: ''
-            }, function(response) {
+            RUNTIME('getTabs', queryInfo, function(response) {
                 resolve(response.tabs);
             });
         });
     };
-    self.onEnter = Omnibar.openFocused.bind(self);
-    self.onOpen = function() {
+    self.onOpen = function(args) {
+        if (args && args.action === "gather") {
+            self.prompt = `Gather filtered tabs into current window${separatorHtml}`;
+            self.onEnter = function() {
+                RUNTIME('gatherTabs', {
+                    tabs: Omnibar.getItems()
+                });
+                return true;
+            };
+            queryInfo = {queryInfo: {currentWindow: false}};
+        } else {
+            self.prompt = `tabs${separatorHtml}`;
+            self.onEnter = Omnibar.openFocused.bind(self);
+            queryInfo = {};
+        }
         self.getResults();
         self.onInput();
     };
@@ -1063,11 +1078,16 @@ const OpenWindows = (function() {
         return true;
     };
     self.onOpen = function() {
+        Omnibar.input.placeholder = "Press enter without focusing an item to move to a new window.";
         self.getResults();
         self.onInput();
     };
     self.onInput = function() {
         Omnibar.cachedPromise.then(function(cached) {
+            if (cached.length === 0) {
+                RUNTIME('moveToWindow', { windowId: -1 });
+                Front.hidePopup();
+            }
             let filtered = cached;
             const query = Omnibar.input.value;
             let rxp = null;

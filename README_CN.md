@@ -32,6 +32,7 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * [搜索选中文本](#搜索选中文本)
 * [类vim标示](#类vim标示)
 * [切换标签页](#切换标签页)
+* [窗口管理](#窗口管理)
 * [命令](#命令)
 * [顺滑滚动](#顺滑滚动)
 * [会话管理](#会话管理)
@@ -269,6 +270,14 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 无论是否在搜索栏里，标签页都按最近使用的顺序列出。如果你希望按标签页原本的顺序列出，可以设置：
 
     settings.tabsMRUOrder = false;
+
+## 窗口管理
+
+`W`会列出所有窗口，你可以选择其中一个，然后按回车键把当面标签页移到选定的窗口。如果当前浏览器只有一个窗口，`W`就直接把当前标签页移到一个新的窗口。
+
+`;gt`打开搜索栏列出所有不在当前窗口里的标签页，你可以输入文本过滤标签页，然后按回车键把所有过滤出来的标签页移到当前窗口。`;gw`则把所有窗口的所有标签页移到当前窗口。
+
+这样，管理窗口的各种标签页，你可以用`W`移动某一个标签页到指定窗口，也可以用`;gt`来收集包含特定关键词的标签页到当前窗口。
 
 ## 命令
 
@@ -629,7 +638,6 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.omnibarSuggestionTimeout | 200 | 设置触发搜索引擎提示的超时，当按键过去设定毫秒后才发起搜索引擎提示的请求，这样避免每次按键就触发请求。|
 | settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
 | settings.tabsThreshold | 9 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
-| settings.hintsThreshold | 10000 | 当普通的可点击元素(a, button, select, input, textarea)数量超过设定值时，Surfingkeys就不会为其它可点击的元素显示拨号键了。 |
 | settings.clickableSelector | "" | 自定义CSS selector用于f键选择无法检测到的可点击元素，例如"\*.jfk-button, \*.goog-flat-menu-button"。 |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | 用于检测文字中可点击链接的正则表达式，你可以按`O`打开检测到的链接。|
 | settings.editableSelector | div.CodeMirror-scroll,div.ace_content | 额外CSS selector以自定义可编辑元素。|

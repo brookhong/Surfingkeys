@@ -65,6 +65,8 @@
         "Forward 20 lines": "向下20行",
         "Forward cycle through the candidates.": "切到下一个条目",
         "Forward to next char.": "往前查找字符",
+        "Gather all tabs into current window": "收集所有窗口的所有标签页到当前窗口",
+        "Gather filtered tabs into current window": "收集包含特定关键词的标签页到当前窗口",
         "Go back in history": "后退",
         "Go forward in history": "前进",
         "Go one tab history back": "返回前一个标签页",

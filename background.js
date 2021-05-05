@@ -916,14 +916,12 @@ const ChromeService = (function() {
     };
     let previousWindowChoice = -1;
     self.getWindows = function (message, sender, sendResponse) {
-        chrome.tabs.query({}, function(tabs) {
+        chrome.tabs.query({currentWindow: false}, function(tabs) {
             const windows = {};
             tabs.forEach(t => {
-                if (t.windowId !== sender.tab.windowId) {
-                    const tabsInWindow = windows[t.windowId] || [];
-                    tabsInWindow.push({title: t.title, url: t.url});
-                    windows[t.windowId] = tabsInWindow;
-                }
+                const tabsInWindow = windows[t.windowId] || [];
+                tabsInWindow.push({title: t.title, url: t.url});
+                windows[t.windowId] = tabsInWindow;
             });
             _response(message, sendResponse, {
                 windows: Object.keys(windows).map(w => {
@@ -945,6 +943,20 @@ const ChromeService = (function() {
             });
         }
         previousWindowChoice = message.windowId;
+    };
+    self.gatherWindows = function(message, sender, sendResponse) {
+        const windowId = sender.tab.windowId;
+        chrome.tabs.query({currentWindow: false}, function(tabs) {
+            tabs.forEach(function(tab) {
+                chrome.tabs.move(tab.id, {windowId, index: -1});
+            });
+        });
+    };
+    self.gatherTabs = function(message, sender, sendResponse) {
+        const windowId = sender.tab.windowId;
+        message.tabs.forEach(function(tab) {
+            chrome.tabs.move(tab.id, {windowId, index: -1});
+        });
     };
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {

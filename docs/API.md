@@ -6,35 +6,35 @@ According to a discussion here: [https://github.com/brookhong/Surfingkeys/pull/1
 
 ### Parameters
 
--   `elements`  array of elements to filter passed in the order like:
+*   `elements`  array of elements to filter passed in the order like:
     parent 1 > parent 0> child
 
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,
 
--   Open url(from both bookmarks and history) with `t`
--   Open bookmarks with `b`
--   Open search engines with `og` / `ow` ...
--   Open commands with `:`
+*   Open url(from both bookmarks and history) with `t`
+*   Open bookmarks with `b`
+*   Open search engines with `og` / `ow` ...
+*   Open commands with `:`
 
 Key bindings in Omnibar:
 
--   `Enter` to open selected item and close omnibar.
--   `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
--   `Shift-Enter` to open selected item in current tab and close omnibar.
+*   `Enter` to open selected item and close omnibar.
+*   `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
+*   `Shift-Enter` to open selected item in current tab and close omnibar.
     If you'd like to open in current tab by default, please use go.
--   Tab to forward cycle through the candidates.
--   `Shift-Tab` to backward cycle through the candidates.
--   `Ctrl-`. to show results of next page
--   `Ctrl-`, to show results of previous page
--   `Ctrl-c` to copy all listed items
--   `Ctrl-e` to copy currently focussed item url
--   In omnibar opened with `t:`
+*   Tab to forward cycle through the candidates.
+*   `Shift-Tab` to backward cycle through the candidates.
+*   `Ctrl-`. to show results of next page
+*   `Ctrl-`, to show results of previous page
+*   `Ctrl-c` to copy all listed items
+*   `Ctrl-e` to copy currently focussed item url
+*   In omnibar opened with `t:`
 
 `Ctrl - d` to delete from bookmark or history
 
--   In omnibar opened with `b:`
+*   In omnibar opened with `b:`
 
 `Ctrl - Shift - <any letter>` to create vim-like mark
 
@@ -45,22 +45,22 @@ cmap('<Ctrl-n>', '<Tab>');
 cmap('<Ctrl-p>', '<Shift-Tab>');
 ```
 
-* * *
+***
 
 ### Parameters
 
--   `mode` **[Object][2]** 
+*   `mode` **[Object][2]** 
 
 Returns **[Omnibar][3]** Omnibar instance
 
 ### listURLs
 
-List URLs like {url: "[https://github.com"][4], title: "github.com"} beneath omnibar
+List URLs like {url: "[https://github.com][4]", title: "github.com"} beneath omnibar
 
 #### Parameters
 
--   `items` **[Array][5]** Array of url items with title.
--   `showFolder` **[boolean][6]** True to show a item as folder if it has no property url.
+*   `items` **[Array][5]** Array of url items with title.
+*   `showFolder` **[boolean][6]** True to show a item as folder if it has no property url.
 
 #### Examples
 
@@ -90,7 +90,7 @@ The status bar displays the status of Surfingkeys current mode: Normal, visual, 
 
 ### Parameters
 
--   `ui` **[Object][2]** 
+*   `ui` **[Object][2]** 
 
 Returns **[StatusBar][8]** StatusBar instance
 
@@ -106,7 +106,7 @@ Returns **[undefined][7]**
 
 [3]: #omnibar
 
-[4]: https://github.com"
+[4]: https://github.com
 
 [5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 

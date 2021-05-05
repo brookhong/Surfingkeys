@@ -4,9 +4,9 @@
   "private": true,
   "description": "Map your keys for web surfing, expand your browser with javascript and keyboard.",
   "main": "background.js",
-  "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.9.6",
+    "@babel/core": "^7.14.0",
+    "@babel/preset-env": "^7.14.1",
     "documentation": "^13.1.0",
     "fancy-log": "^1.3.2",
     "gulp": "^4.0.0",
