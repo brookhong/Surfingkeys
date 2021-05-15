@@ -779,9 +779,11 @@ const OpenBookmarks = (function() {
         return eaten;
     };
     self.onInput = function() {
+        var query = Omnibar.input.value;
         RUNTIME('getBookmarks', {
             parentId: currentFolderId,
-            query: Omnibar.input.value
+            caseSensitive: runtime.getCaseSensitive(query),
+            query
         }, self.onResponse);
     };
     self.onResponse = function(response) {

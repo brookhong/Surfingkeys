@@ -976,14 +976,23 @@ const ChromeService = (function() {
             });
         });
     };
+    function filterBookmarksByQuery(bookmarks, query, caseSensitive) {
+        return bookmarks.filter(function(b) {
+            var title = b.title, url = b.url;
+            if (!caseSensitive) {
+                title = title.toLowerCase();
+                url = url && url.toLowerCase();
+                query = query.toLowerCase();
+            }
+            return title.indexOf(query) !== -1 || (url && url.indexOf(query) !== -1);
+        });
+    }
     self.getBookmarks = function(message, sender, sendResponse) {
         if (message.parentId) {
             chrome.bookmarks.getSubTree(message.parentId, function(tree) {
                 var bookmarks = tree[0].children;
                 if (message.query && message.query.length) {
-                    bookmarks = bookmarks.filter(function(b) {
-                        return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
-                    });
+                    bookmarks = filterBookmarksByQuery(bookmarks, message.query, message.caseSensitive);
                 }
                 _response(message, sendResponse, {
                     bookmarks: bookmarks
@@ -993,7 +1002,7 @@ const ChromeService = (function() {
             if (message.query && message.query.length) {
                 chrome.bookmarks.search(message.query, function(tree) {
                     _response(message, sendResponse, {
-                        bookmarks: tree
+                        bookmarks: filterBookmarksByQuery(tree, message.query, message.caseSensitive)
                     });
                 });
             } else {
