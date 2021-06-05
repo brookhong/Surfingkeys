@@ -16,6 +16,8 @@ Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exc
 * Proxy settings
 * Markdown preview
 
+Surfingkeys is doing its best to make full use of keyboard for web browsing, but there are some limitations from Google Chrome itself, please see [Brook Build of Chromium](https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html) for a more thorough experience.
+
 ## Installation
 
 * [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)

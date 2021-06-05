@@ -16,6 +16,8 @@ Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前�
 * 代理设置
 * Markdown预览
 
+Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Google Chrome本身的，如果想要更彻底的体验请试试[Brook的Chromium浏览器](https://brookhong.github.io/2021/04/18/brook-build-of-chromium-cn.html)。
+
 ## 安装
 
 * [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)

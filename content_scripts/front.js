@@ -181,14 +181,25 @@ function createFront() {
     };
 
     function updateElementBehindEditor(data) {
+        // setEditorText and setValueWithEventDispatched are experimental APIs from Brook Build of Chromium
+        // https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html
         if (elementBehindEditor.nodeName === "DIV") {
-            elementBehindEditor.innerText = data;
+            data = data.replace(/\n+$/, '');
+            if (typeof elementBehindEditor.setEditorText === "function") {
+                elementBehindEditor.setEditorText(data);
+            } else {
+                elementBehindEditor.innerText = data;
+            }
         } else {
-            elementBehindEditor.value = data;
+            if (typeof elementBehindEditor.setValueWithEventDispatched === "function") {
+                elementBehindEditor.setValueWithEventDispatched(data);
+            } else {
+                elementBehindEditor.value = data;
+                var evt = document.createEvent("HTMLEvents");
+                evt.initEvent("change", false, true);
+                elementBehindEditor.dispatchEvent(evt);
+            }
         }
-        var evt = document.createEvent("HTMLEvents");
-        evt.initEvent("change", false, true);
-        elementBehindEditor.dispatchEvent(evt);
     }
 
     var onEditorSaved, elementBehindEditor;
