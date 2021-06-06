@@ -49,6 +49,7 @@ var runtime = (function() {
             aceKeybindings: "vim",
             caretViewport: null,
             mouseSelectToQuery: [],
+            useNeovim: true,
             useLocalMarkdownAPI: true
         },
     }, _handlers = {};

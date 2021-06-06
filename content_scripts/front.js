@@ -203,7 +203,7 @@ function createFront() {
     }
 
     var onEditorSaved, elementBehindEditor;
-    self.showEditor = function(element, onWrite, type) {
+    function showAceVimEditor(element, onWrite, type) {
         var content,
             type = type || element.localName,
             initial_line = 0;
@@ -234,6 +234,23 @@ function createFront() {
             initial_line: initial_line,
             content: content
         });
+    }
+    self.showEditor = function(element, onWrite, type) {
+        try {
+            if (runtime.conf.useNeovim) {
+                Normal.passFocus(true);
+                element.focus();
+                chrome.runtime.sendMessage("egpjdkipkomnmjhjmdamaniclmdlobbo", {command: 'nvimify'},
+                    function(response) {
+                        console.log(response);
+                    }
+                );
+            } else {
+                showAceVimEditor(element, onWrite, type);
+            }
+        } catch(e) {
+            showAceVimEditor(element, onWrite, type);
+        }
     };
 
     self.chooseTab = function() {

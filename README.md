@@ -414,6 +414,8 @@ You could change to Emacs keybindings for the editor by adding below settings:
 
 With Emacs keybindings, use `C-x C-s` to save your input.
 
+Surfingkeys is also integrated with [glacambre/firenvim](https://github.com/glacambre/firenvim), so that user can use neovim to edit input. Basically when you try to activate vim editor by `Ctrl-i`, Surfingkeys will try to activate neovim through `firenvim` first, and if it fails, Surfingkeys will then call the built-in ACE vim editor for you. If you would not like such behavior, just set `settings.useNeovim` false.
+
 ### Edit any input on html page
 
 In normal mode, press capital `I`, then use a hint letter to pick up a input box. A vim editor is opened for you to edit text. The vim editor is opened in slightly different way for `<input>`, `<textarea>`, and `<select>` elements.
@@ -695,6 +697,7 @@ For example,
 | settings.caretViewport | null | Set it in format `[top, left, bottom, right]` to limit hints generation on `v` for entering visual mode, such as `[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]` will make Surfingkeys generate Hints only for text that display on vertically middle of window. |
 | settings.mouseSelectToQuery | [] | All hosts that have enable feature -- mouse selection to query. |
 | settings.autoSpeakOnInlineQuery | false | Whether to automatically speak the query string with TTS on inline query. |
+| settings.useNeovim | true | Whether to use neovim(through [glacambre/firenvim](https://github.com/glacambre/firenvim)) as editor rather than the built-in ACE vim editor. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

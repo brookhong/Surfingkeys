@@ -417,6 +417,8 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 使用Emacs按键时，用`C-x C-s`来保存你的输入。
 
+Surfingkeys也与[glacambre/firenvim](https://github.com/glacambre/firenvim)集成，用户可以通过neovim来编辑输入。基本上Surfingkeys会先尝试通过`firenvim`调用`neovim`来编辑输入，如果失败了，再调用内嵌的ACE VIM编辑器。如果不喜欢这样，可以把`settings.useNeovim`设为false。
+
 ### 编辑网页上的各类文本输入框
 
 在Normal模式，按大写的`I`，然后按相应的字母选择一个输入框。这时会打开一个VIM编辑器。对于单行输入框`input`和多行输入框`textarea`，打开的VIM编辑器会有点细微的不同。
@@ -673,6 +675,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
 | settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
 | settings.autoSpeakOnInlineQuery | false | 是否在使用inline query时自动发声。 |
+| settings.useNeovim | true | 是否使用neovim(通过[glacambre/firenvim](https://github.com/glacambre/firenvim)集成)编辑输入。 |
 
 ### settings.theme示例，修改状态栏字体
 
