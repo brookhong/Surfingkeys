@@ -662,6 +662,16 @@ mapkey(';dh', '#14Delete history older than 30 days', function() {
         days: 30
     });
 });
+mapkey(';yh', '#14Yank histories', function() {
+    RUNTIME('getHistory', {}, function(response) {
+        Clipboard.write(response.history.map(h => h.url).join("\n"));
+    });
+});
+mapkey(';ph', '#14Put histories from clipboard', function() {
+    Clipboard.read(function(response) {
+        RUNTIME('addHistories', {history: response.data.split("\n")});
+    });
+});
 mapkey(';db', '#14Remove bookmark for current page', function() {
     RUNTIME('removeBookmark');
 });

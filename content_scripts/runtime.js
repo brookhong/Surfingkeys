@@ -4,7 +4,7 @@ var runtime = (function() {
             autoSpeakOnInlineQuery: false,
             lastKeys: "",
             // local part from settings
-            blacklistPattern: undefined,
+            blocklistPattern: undefined,
             smartCase: true,
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
@@ -49,7 +49,7 @@ var runtime = (function() {
             aceKeybindings: "vim",
             caretViewport: null,
             mouseSelectToQuery: [],
-            useNeovim: true,
+            useNeovim: false,
             useLocalMarkdownAPI: true
         },
     }, _handlers = {};

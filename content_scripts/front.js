@@ -242,7 +242,10 @@ function createFront() {
                 element.focus();
                 chrome.runtime.sendMessage("egpjdkipkomnmjhjmdamaniclmdlobbo", {command: 'nvimify'},
                     function(response) {
-                        console.log(response);
+                        if (!response || response.status !== "succeeded") {
+                            element.blur();
+                            showAceVimEditor(element, onWrite, type);
+                        }
                     }
                 );
             } else {

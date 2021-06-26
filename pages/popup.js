@@ -1,8 +1,8 @@
 var disableAll = document.getElementById('disableAll'),
     version = "Surfingkeys " + chrome.runtime.getManifest().version;
 
-function updateStatus(blacklist) {
-    var disabled = blacklist.hasOwnProperty('.*');
+function updateStatus(blocklist) {
+    var disabled = blocklist.hasOwnProperty('.*');
     disableAll.textContent = (disabled ? 'Enable ' : 'Disable ') + version;
     RUNTIME('setSurfingkeysIcon', {
         status: disabled
@@ -10,16 +10,16 @@ function updateStatus(blacklist) {
 }
 
 RUNTIME('getSettings', {
-    key: 'blacklist'
+    key: 'blocklist'
 }, function(response) {
-    updateStatus(response.settings.blacklist);
+    updateStatus(response.settings.blocklist);
 });
 
 disableAll.addEventListener('click', function() {
-    RUNTIME('toggleBlacklist', {
+    RUNTIME('toggleBlocklist', {
         domain: ".*"
     }, function(response) {
-        updateStatus(response.blacklist);
+        updateStatus(response.blocklist);
     });
 });
 

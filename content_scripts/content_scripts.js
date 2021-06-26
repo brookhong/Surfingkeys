@@ -373,7 +373,7 @@ function applySettings(rs, resolve) {
     }
 
     RUNTIME('getDisabled', {
-        blacklistPattern: runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : ""
+        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : ""
     }, function (resp) {
         if (resp.disabled) {
             Normal.disable();

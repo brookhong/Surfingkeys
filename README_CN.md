@@ -350,13 +350,13 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 当Surfingkeys在某个网站被`Alt-s`关掉时，这个状态会被保存在设置里，如
 
-    "blacklist": {
+    "blocklist": {
         "https://github.com": 1
     },
 
-再按一次`Alt-s`会从settings.blacklist中删除该站点。这类状态并不保存在设置脚本里，你可以按`yj`把当前所有设置复制到系统剪贴板，然后粘贴到文本编辑器里查看。
+再按一次`Alt-s`会从settings.blocklist中删除该站点。这类状态并不保存在设置脚本里，你可以按`yj`把当前所有设置复制到系统剪贴板，然后粘贴到文本编辑器里查看。
 
-另一个禁用Surfingkeys的方法是用`settings.blacklistPattern`，请参考[regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
+另一个禁用Surfingkeys的方法是用`settings.blocklistPattern`，请参考[regex for disabling](https://github.com/brookhong/Surfingkeys/issues/63).
 
 ## 代理设置
 
@@ -653,7 +653,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| 匹配上一页链接的正则表达式。 |
 | settings.hintAlign | "center" | 拨号键与它对应的目标如何对齐。["left", "center", "right"] |
 | settings.defaultSearchEngine | "g" | 搜索栏里的默认搜索引擎。 |
-| settings.blacklistPattern | undefined | 如果当前访问的网站匹配设定的正则表达式，则禁用Surfingkeys。 |
+| settings.blocklistPattern | undefined | 如果当前访问的网站匹配设定的正则表达式，则禁用Surfingkeys。 |
 | settings.focusAfterClosed | "right" | 关掉当前标签页后，切换到哪一侧的标签页。["left", "right"] |
 | settings.repeatThreshold | 99 | 操作可重复最多次数。 |
 | settings.tabsMRUOrder | true | 查找打开标签页时，是否按最近访问顺序列出所有标签页。 |

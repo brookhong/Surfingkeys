@@ -250,7 +250,7 @@ const ChromeService = (function() {
 
     function loadSettings(keys, cb) {
         var tmpSet = {
-            blacklist: {},
+            blocklist: {},
             marks: {},
             findHistory: [],
             cmdHistory: [],
@@ -506,11 +506,11 @@ const ChromeService = (function() {
         return (sender.frameId !== 0 && sender.url === "about:blank") ? sender.tab.url : sender.url;
     }
     function _getDisabled(set, url, regex) {
-        if (set.blacklist['.*']) {
+        if (set.blocklist['.*']) {
             return true;
         }
         if (url) {
-            if (set.blacklist[url.origin]) {
+            if (set.blocklist[url.origin]) {
                 return true;
             }
             if (regex) {
@@ -520,22 +520,22 @@ const ChromeService = (function() {
         }
         return false;
     }
-    self.toggleBlacklist = function(message, sender, sendResponse) {
-        loadSettings('blacklist', function(data) {
+    self.toggleBlocklist = function(message, sender, sendResponse) {
+        loadSettings('blocklist', function(data) {
             var origin = ".*";
             var senderOrigin = sender.origin || new URL(getSenderUrl(sender)).origin;
             if (chrome.extension.getURL("").indexOf(senderOrigin) !== 0) {
                 origin = senderOrigin;
             }
-            if (data.blacklist.hasOwnProperty(origin)) {
-                delete data.blacklist[origin];
+            if (data.blocklist.hasOwnProperty(origin)) {
+                delete data.blocklist[origin];
             } else {
-                data.blacklist[origin] = 1;
+                data.blocklist[origin] = 1;
             }
-            _updateAndPostSettings({blacklist: data.blacklist}, function() {
+            _updateAndPostSettings({blocklist: data.blocklist}, function() {
                 sendResponse({
-                    disabled: _getDisabled(data, sender.tab ? new URL(getSenderUrl(sender)) : null, message.blacklistPattern),
-                    blacklist: data.blacklist,
+                    disabled: _getDisabled(data, sender.tab ? new URL(getSenderUrl(sender)) : null, message.blocklistPattern),
+                    blocklist: data.blocklist,
                     url: origin
                 });
             });
@@ -556,11 +556,11 @@ const ChromeService = (function() {
         });
     };
     self.getDisabled = function(message, sender, sendResponse) {
-        loadSettings(['blacklist', 'noPdfViewer'], function(data) {
+        loadSettings(['blocklist', 'noPdfViewer'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
                     noPdfViewer: data.noPdfViewer,
-                    disabled: _getDisabled(data, new URL(getSenderUrl(sender)), message.blacklistPattern)
+                    disabled: _getDisabled(data, new URL(getSenderUrl(sender)), message.blocklistPattern)
                 });
             }
         });
@@ -1020,6 +1020,11 @@ const ChromeService = (function() {
                 history: tree
             });
         }, message.sortByMostUsed);
+    };
+    self.addHistories = function(message, sender, sendResponse) {
+        message.history.forEach(h => {
+            chrome.history.addUrl({url: h});
+        });
     };
     function normalizeURL(url) {
         if (!/^view-source:|^javascript:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {

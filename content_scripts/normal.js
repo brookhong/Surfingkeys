@@ -74,7 +74,7 @@ function createMode() {
         };
     }, mode_stack = [];
     self.specialKeys = {
-        "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlacklist
+        "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlocklist
         "<Esc>": ["<Esc>"]
     };
 
@@ -294,7 +294,7 @@ function createDisabled() {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
         if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
-            Normal.toggleBlacklist();
+            Normal.toggleBlocklist();
             self.exit();
             event.sk_stopPropagation = true;
         }
@@ -398,7 +398,7 @@ function createNormal() {
                 }
             }
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
-            self.toggleBlacklist();
+            self.toggleBlocklist();
             Mode.finish(self);
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
@@ -469,13 +469,13 @@ function createNormal() {
         return null;
     };
 
-    self.toggleBlacklist = function() {
+    self.toggleBlocklist = function() {
         if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
-            RUNTIME('toggleBlacklist', {
-                blacklistPattern: (runtime.conf.blacklistPattern ? runtime.conf.blacklistPattern.toJSON() : "")
+            RUNTIME('toggleBlocklist', {
+                blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
             }, function(resp) {
                 if (resp.disabled) {
-                    if (resp.blacklist.hasOwnProperty(".*")) {
+                    if (resp.blocklist.hasOwnProperty(".*")) {
                         Front.showBanner('Surfingkeys is globally disabled, please enable it globally from popup menu.', 3000);
                     } else {
                         Front.showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
