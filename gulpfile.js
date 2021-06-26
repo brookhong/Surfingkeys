@@ -68,10 +68,25 @@ gulp.task('copy-non-js-files', function() {
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
+gulp.task('build_content_script', function() {
+    let contentScripts = [
+        'content_scripts/content_scripts.js'
+    ];
+    if (buildTarget === "Firefox") {
+        contentScripts.push('content_scripts/firefox_content_scripts.js');
+    }
+    return gulp.src(contentScripts)
+        .pipe(gulpif(options.env === 'development', sourcemaps.init()))
+        .pipe(gp_concat('content_scripts.js'))
+        .pipe(babel({presets: ['@babel/preset-env']}))
+        .pipe(gulpif(!options.nominify, gp_uglify().on('error', gulpUtil.log)))
+        .pipe(gulpif(options.env === 'development', sourcemaps.write('.')))
+        .pipe(gulp.dest(`dist/${buildTarget}-extension/content_scripts`));
+});
+
 gulp.task('copy-es-files', function() {
     let esFiles = [
         'content_scripts/front.js',
-        'content_scripts/content_scripts.js',
         'pages/*.js'
     ];
     if (buildTarget === "Firefox") {
@@ -85,7 +100,7 @@ gulp.task('copy-es-files', function() {
         .pipe(gulp.dest(`dist/${buildTarget}-extension`));
 });
 
-gulp.task('copy-js-files', gulp.series('copy-es-files', function() {
+gulp.task('copy-js-files', gulp.series('build_content_script', 'copy-es-files', function() {
     var libs = [
         'libs/ace/*.js'
     ];
@@ -111,6 +126,7 @@ gulp.task('build_background', function() {
     ];
     if (buildTarget === "Firefox") {
         background.unshift("firefox_bg.js");
+        background.push("firefox_background.js");
         gulp.src("firefox_pac.js").pipe(gulp.dest(`dist/${buildTarget}-extension`));
     } else {
         background.unshift("chrome_bg.js");

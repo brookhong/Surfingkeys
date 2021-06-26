@@ -46,7 +46,9 @@
         "downloads",
         "topSites",
         "clipboardRead",
-        "clipboardWrite"
+        "clipboardWrite",
+        "cookies",
+        "contextualIdentities"
     ],
     "background": {
         "scripts": [

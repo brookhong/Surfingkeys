@@ -189,7 +189,7 @@ var Gist = (function() {
     return self;
 })();
 
-const ChromeService = (function() {
+var ChromeService = (function() {
     var self = {};
 
     var tabHistory = [],
@@ -437,6 +437,7 @@ const ChromeService = (function() {
         }
         sendResponse(result);
     }
+    self._response = _response;
     chrome.runtime.onMessage.addListener(function (_message, _sender, _sendResponse) {
         if (self.hasOwnProperty(_message.action)) {
             if (_message.repeats > conf.repeatThreshold) {
