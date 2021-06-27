@@ -189,7 +189,7 @@ var Gist = (function() {
     return self;
 })();
 
-var ChromeService = (function() {
+const ChromeService = (function() {
     var self = {};
 
     var tabHistory = [],
@@ -203,7 +203,7 @@ var ChromeService = (function() {
         frameIndexes = {},
         tabURLs = {};
 
-    var newTabUrl = "chrome://newtab/";
+    var newTabUrl = _setNewTabUrl();
 
     var conf = {
         focusAfterClosed: "right",
@@ -437,7 +437,6 @@ var ChromeService = (function() {
         }
         sendResponse(result);
     }
-    self._response = _response;
     chrome.runtime.onMessage.addListener(function (_message, _sender, _sendResponse) {
         if (self.hasOwnProperty(_message.action)) {
             if (_message.repeats > conf.repeatThreshold) {
@@ -1598,6 +1597,7 @@ var ChromeService = (function() {
         chrome.tabs.reload(sender.tab.id);
     };
 
+    self.getContainerName = _getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
     return self;
 })();
