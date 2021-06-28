@@ -13,3 +13,20 @@ function loadRawSettings(keys, cb, defaultSet) {
 
 function _applyProxySettings(proxyConf) {
 }
+
+function _setNewTabUrl(){
+    return "about:newtab";
+}
+
+function _getContainerName(self, _response){
+return function (message, sender, sendResponse){
+    var cookieStoreId = sender.tab.cookieStoreId;
+    browser.contextualIdentities.get(cookieStoreId).then(function(container){
+        _response(message, sendResponse, {
+            name : container.name
+        });
+    }, function(err){
+        _response(message, sendResponse, {
+            name : null
+        });});
+};}

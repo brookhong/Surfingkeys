@@ -85,3 +85,10 @@ function _applyProxySettings(proxyConf) {
         });
     }
 }
+
+function _setNewTabUrl(){
+    return  "chrome://newtab/";
+}
+
+function _getContainerName(self, _response){
+}

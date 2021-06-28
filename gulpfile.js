@@ -165,6 +165,8 @@ gulp.task('build_manifest', gulp.series('copy-non-js-files', 'copy-html-files', 
             page: "pages/options.html"
         };
         json.content_security_policy = "script-src 'self'; object-src 'self'";
+        json.permissions.push("cookies",
+                              "contextualIdentities");
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");

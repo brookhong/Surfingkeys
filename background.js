@@ -203,7 +203,7 @@ const ChromeService = (function() {
         frameIndexes = {},
         tabURLs = {};
 
-    var newTabUrl = "chrome://newtab/";
+    var newTabUrl = _setNewTabUrl();
 
     var conf = {
         focusAfterClosed: "right",
@@ -1602,6 +1602,7 @@ const ChromeService = (function() {
         chrome.tabs.reload(sender.tab.id);
     };
 
+    self.getContainerName = _getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
     return self;
 })();
