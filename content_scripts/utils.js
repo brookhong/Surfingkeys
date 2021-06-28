@@ -60,6 +60,15 @@ function isElementClickable(e) {
         || e.closest("a, *[onclick], *[contenteditable=true], *.jfk-button, *.goog-flat-menu-button") !== null;
 }
 
+function getFurthestContiguousClickable(e) {
+    var clickable = isElementClickable(e);
+    var parent = e.parentElement;
+    if(clickable){
+        return getFurthestContiguousClickable(parent) || e;
+    }
+    return clickable;
+}
+
 function dispatchMouseEvent(element, events, shiftKey) {
     events.forEach(function(eventName) {
         var mouseButton = shiftKey ? 1 : 0;
