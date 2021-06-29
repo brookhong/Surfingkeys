@@ -172,6 +172,7 @@ div.hint-scrollable {
         var hints = holder.querySelectorAll('div');
         hints = Array.from(hints);
         if (textFilter.length > 0) {
+            var filterRegex = new RegExp(textFilter, self.caseInsensitiveFilter ? 'i' : null);
             hints = hints.filter(function(hint) {
                 hint.label = "";
                 setSanitizedContent(hint, "");
@@ -180,7 +181,7 @@ div.hint-scrollable {
                 if (text === undefined) {
                     text = e[0] ? e[0].textContent : "";
                 }
-                return text.indexOf(textFilter) !== -1;
+                return text.match(filterRegex);
             });
         }
         var hintLabels = self.genLabels(hints.length);
