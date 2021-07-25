@@ -404,8 +404,9 @@ div.hint-scrollable {
         } else {
             if (cssSelector === "") {
                 elements = getVisibleElements(function(e, v) {
-                    if (isElementClickable(e)) {
-                        v.push(e);
+                    var closestClickable = getFurthestContiguousClickable(e);
+                    if (closestClickable) {
+                        v.push(closestClickable);
                     }
                 });
                 elements = filterOverlapElements(elements);
