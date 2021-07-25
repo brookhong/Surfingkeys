@@ -264,6 +264,18 @@ function isExplicitlyRequested(element) {
         element.matches(runtime.conf.clickableSelector);
 }
 
+function isContainedWithin(inner, outer) {
+    // check if outer element contains inner element, recursively
+    // (works even if inner element is inside ShadowRoots)
+    if (!inner) {
+        return false;
+    }
+    if (outer.contains(inner)) {
+        return true;
+    }
+    return isContainedWithin(inner.getRootNode().host, outer);
+}
+
 function filterOverlapElements(elements) {
     // filter out tiny elements
     elements = elements.filter(function(e) {
@@ -274,7 +286,12 @@ function filterOverlapElements(elements) {
             return true;
         } else {
             var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
-            return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
+            return (
+                !el 
+                || el.shadowRoot && el.childElementCount === 0 
+                || isContainedWithin(e, el) 
+                || isContainedWithin(el, e)
+            );
         }
     });
 
