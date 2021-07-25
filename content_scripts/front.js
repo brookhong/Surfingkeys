@@ -93,7 +93,7 @@ function createFront() {
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
         if (_listSuggestions.hasOwnProperty(message.url)) {
-            ret = _listSuggestions[message.url](message.response);
+            ret = _listSuggestions[message.url](message.response, message.input);
         }
         return ret;
     };
