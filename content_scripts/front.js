@@ -58,6 +58,13 @@ function createFront() {
             alias: alias
         });
     };
+    self.addAliasDefaultUrl = function (alias, default_url) {
+        _uiUserSettings.push({
+            action: 'addAliasDefaultUrl',
+            alias: alias,
+            default_url: default_url
+        });
+    };
 
     var _actions = {};
 

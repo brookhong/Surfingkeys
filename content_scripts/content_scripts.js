@@ -160,6 +160,10 @@ function removeSearchAlias(alias) {
     Front.removeSearchAlias(alias);
 }
 
+function addAliasDefaultUrl(alias, default_url) {
+    Front.addAliasDefaultUrl(alias, default_url);
+}
+
 function addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key) {
     addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
     function ssw() {

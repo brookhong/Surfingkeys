@@ -1203,6 +1203,7 @@ const SearchEngine = (function() {
         clearPendingRequest();
         self.prompt = undefined;
         self.url = undefined;
+        self.default_url = undefined;
         self.suggestionURL = undefined;
     };
     self.onTabKey = function() {
@@ -1216,7 +1217,12 @@ const SearchEngine = (function() {
         if (fi) {
             url = fi.url || constructSearchURL(self.url, (fi.query || encodeURIComponent(Omnibar.input.value)));
         } else {
-            url = constructSearchURL(self.url, encodeURIComponent(Omnibar.input.value));
+            if (!Omnibar.input.value.trim() && typeof self.default_url !== "undefined") {
+                url = self.default_url;
+            }
+            else{
+                url = constructSearchURL(self.url, encodeURIComponent(Omnibar.input.value));
+            }
         }
         RUNTIME("openLink", {
             tab: {

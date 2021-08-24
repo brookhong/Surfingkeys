@@ -274,12 +274,21 @@ var Front = (function() {
         SearchEngine.aliases[message.alias] = {
             prompt: '' + message.prompt + separatorHtml,
             url: message.url,
-            suggestionURL: message.suggestionURL
+            suggestionURL: message.suggestionURL,
         };
     };
     _actions['removeSearchAlias'] = function (message) {
         delete SearchEngine.aliases[message.alias];
     };
+    _actions['addAliasDefaultUrl'] = function (message) {
+        if (! message.alias in SearchEngine.aliases) {
+            return;
+        }
+        else {
+            SearchEngine.aliases[message.alias].default_url = message.default_url;
+        }
+    };
+
     _actions['getUsage'] = function (message) {
         // send response in callback from buildUsage
         delete message.ack;
