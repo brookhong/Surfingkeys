@@ -274,7 +274,7 @@ var Front = (function() {
         SearchEngine.aliases[message.alias] = {
             prompt: '' + message.prompt + separatorHtml,
             url: message.url,
-            suggestionURL: message.suggestionURL,
+            suggestionURL: message.suggestionURL
         };
     };
     _actions['removeSearchAlias'] = function (message) {
