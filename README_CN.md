@@ -45,7 +45,6 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 * [点命令重复前一个操作](#点命令重复前一个操作)
 * [Markdown预览](#markdown预览)
 * [截屏](#截屏)
-* [mermaid图形生成器](#mermaid图形生成器)
 * [PDF阅读器](#pdf阅读器)
 * [配置参考](#配置参考)
 * [编译](#编译)
@@ -490,12 +489,6 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 * `yS` 截当前滚动对象的屏。
 
 按完以上任一快捷键之后，会弹出你所截取的图片，然后你可以用鼠标（😢）右键单击图片来保存或者复制。
-
-## mermaid图形生成器
-
-[Mermaid](https://github.com/knsv/mermaid) 是一个从文本生成各类图形如类图／时序图的工具。Surfingkeys提供了一个页面，可以从系统剪贴板里读取文本并生成图形，并可以用vim编辑器编辑。
-
-按`Ctrl-Alt-d`打开。
 
 ## PDF阅读器
 为了支持PDF文件，Surfingkeys集成了来自[pdf.js](https://github.com/mozilla/pdf.js)的PDF阅读器。当你用Chrome打开一个PDF文件时，这个PDF阅读器就会打开，这样所有Surfingkeys的按键都可以用了。

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "types": ["node", "offscreencanvas"],
+    "allowJs": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "declaration": false,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "baseUrl": "."
+  },
+  "include": ["src", "@types"]
+}

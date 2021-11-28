@@ -1,0 +1,817 @@
+import Trie from './trie';
+import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import Mode from './mode';
+import KeyboardUtils from './keyboardUtils';
+import {
+    getRealEdit,
+    scrollIntoViewIfNeeded,
+    setSanitizedContent,
+    showBanner,
+    showPopup,
+    isEditable,
+    isElementClickable,
+    isElementPartiallyInViewport,
+    isInUIFrame,
+} from './utils.js';
+
+function createDisabled(normal) {
+    var self = new Mode("Disabled");
+
+    // Disabled has higher priority than others.
+    self.priority = 99;
+
+    self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+        if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
+            normal.toggleBlocklist();
+            self.exit();
+            event.sk_stopPropagation = true;
+        }
+    });
+
+    return self;
+}
+
+function createPassThrough() {
+    var self = new Mode("PassThrough");
+    var _autoExit, _timeout;
+
+    self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+        if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+            self.exit();
+            event.sk_stopPropagation = true;
+        } else if (_timeout > 0) {
+            if (_autoExit) {
+                clearTimeout(_autoExit);
+                _autoExit = undefined;
+            }
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, _timeout);
+        }
+    }).addEventListener('mousedown', function(event) {
+        event.sk_suppressed = true;
+    });
+    self.addEventListener('focus', function(event) {
+        event.sk_suppressed = true;
+    });
+
+    self.onEnter = function() {
+        if (_timeout > 0) {
+            _autoExit = setTimeout(function() {
+                self.exit();
+            }, _timeout);
+            self.statusLine = `ephemeral(${_timeout}ms) pass through`;
+        } else {
+            self.statusLine = "pass through";
+        }
+    };
+
+    self.setTimeout = function(timeout) {
+        _timeout = timeout;
+    };
+
+    return self;
+}
+
+function createNormal(insert) {
+    var self = new Mode("Normal");
+
+    self.mappings = new Trie();
+    self.map_node = self.mappings;
+
+    // let next focus event pass
+    var _passFocus = false;
+    self.passFocus = function(pf) {
+        _passFocus = pf;
+    };
+
+    var _once = false;
+    self.addEventListener('keydown', function(event) {
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget) && event.isTrusted) {
+            if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
+                realTarget.blur();
+                insert.exit();
+            } else {
+                if (runtime.conf.editableBodyCare && realTarget === document.body && event.key !== "i") {
+                    self.statusLine = "Press i to enter Insert mode";
+                    runtime.conf.showModeStatus = true;
+                    if (event.sk_keyName.length) {
+                        Mode.handleMapKey.call(self, event);
+                    }
+                } else {
+                    event.sk_stopPropagation = (runtime.conf.editableBodyCare
+                        && realTarget === document.body && event.key === "i");
+                    if (event.sk_stopPropagation) {
+                        self.passFocus(true);
+                        realTarget.focus();
+                    }
+
+                    var stealFocus = false;
+                    if (!isElementPartiallyInViewport(realTarget)) {
+                        var n = realTarget;
+                        while (n !== document.documentElement && !n.newlyCreated) {
+                            n = n.parentElement;
+                        }
+                        stealFocus = n !== document.documentElement && n.newlyCreated;
+                    }
+                    if (stealFocus) {
+                        // steal focus from dynamically created input widget
+                        realTarget.blur();
+                        delete n.newlyCreated;
+                        Mode.handleMapKey.call(self, event);
+                    } else {
+                        // keep cursor where it is
+                        insert.enter(realTarget, true);
+                    }
+
+                }
+            }
+        } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
+            self.toggleBlocklist();
+            Mode.finish(self);
+            event.sk_stopPropagation = true;
+        } else if (event.sk_keyName.length) {
+            var done = Mode.handleMapKey.call(self, event);
+            if (_once && done) {
+                _once = false;
+                self.exit();
+            }
+        }
+        if (event.sk_stopPropagation) {
+            // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
+            Mode.suppressKeyUp(event.keyCode);
+        }
+    });
+    self.addEventListener('blur', function(event) {
+        keyHeld = 0;
+    });
+    self.addEventListener('focus', function(event) {
+        Mode.showStatus();
+        if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
+            var elm = getRealEdit(event);
+            if (isEditable(elm)) {
+                if (_passFocus || elm.enableAutoFocus) {
+                    if (!runtime.conf.enableAutoFocus) {
+                        // prevent focus on input only when enableAutoFocus is turned off.
+                        _passFocus = false;
+                    }
+                } else {
+                    elm.blur();
+                    event.sk_stopPropagation = true;
+                }
+            }
+        }
+    });
+    self.addEventListener('keyup', function(event) {
+        setTimeout(function() {
+            keyHeld = 0;
+        }, 0);
+    });
+    self.addEventListener('mousedown', function(event) {
+        // The isTrusted read-only property of the Event interface is a boolean
+        // that is true when the event was generated by a user action, and false
+        // when the event was created or modified by a script or dispatched via dispatchEvent.
+
+        // enable only mouse click from human being to focus input
+        if (runtime.conf.enableAutoFocus) {
+            self.passFocus(true);
+        } else {
+            self.passFocus(event.isTrusted);
+        }
+
+        var realTarget = getRealEdit(event);
+        if (isEditable(realTarget)) {
+            // keep cursor where it is
+            insert.enter(realTarget, true);
+        } else {
+            insert.exit();
+        }
+    });
+
+    self.toggleBlocklist = function() {
+        if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
+            RUNTIME('toggleBlocklist', {
+                blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
+            }, function(resp) {
+                if (resp.disabled) {
+                    if (resp.blocklist.hasOwnProperty(".*")) {
+                        showBanner('Surfingkeys is globally disabled, please enable it globally from popup menu.', 3000);
+                    } else {
+                        showBanner('Surfingkeys turned OFF for ' + resp.url, 3000);
+                    }
+                } else {
+                    showBanner('Surfingkeys turned ON for ' + resp.url, 3000);
+                }
+            });
+        } else {
+            showBanner('You could not toggle Surfingkeys on its own pages.', 3000);
+        }
+    };
+
+    const _passThrough = createPassThrough();
+    self.passThrough = function(timeout) {
+        _passThrough.setTimeout(timeout);
+        _passThrough.enter();
+        return _passThrough;
+    };
+    self.once = () => {
+        _once = true;
+        self.enter();
+    };
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Alt-i>"), {
+        annotation: "Enter PassThrough mode to temporarily suppress SurfingKeys",
+        feature_group: 0,
+        code: function() {
+            self.passThrough();
+        }
+    });
+    self.mappings.add("p", {
+        annotation: "Enter ephemeral PassThrough mode to temporarily suppress SurfingKeys",
+        feature_group: 0,
+        code: function() {
+            self.passThrough(1000);
+        }
+    });
+
+    self.repeats = "";
+    var keyHeld = 0;
+
+    var scrollNodes, scrollIndex = 0,
+        lastKeys;
+
+    function easeFn(t, b, c, d) {
+        // t: current time, b: begInnIng value, c: change In value, d: duration
+        return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
+    }
+
+    var _nodesHasSKScroll = [];
+    function initScroll(elm) {
+        elm.skScrollBy = function(x, y) {
+            if (runtime.conf.smartPageBoundary && ((this === document.scrollingElement)
+                || scrollNodes.length === 1 && this === scrollNodes[0])) {
+                if (this.scrollTop === 0 && y < 0) {
+                    return dispatchSKEvent('topBoundaryHit');
+                }
+                if (this.scrollHeight - this.scrollTop <= this.clientHeight + 1 && y > 0) {
+                    return dispatchSKEvent('bottomBoundaryHit');
+                }
+            }
+            if (RUNTIME.repeats > 1) {
+                x = RUNTIME.repeats * x;
+                y = RUNTIME.repeats * y;
+                RUNTIME.repeats = 0;
+            }
+            if (runtime.conf.smoothScroll) {
+                var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
+                elm.smoothScrollBy(x, y, d);
+            } else {
+                dispatchSKEvent('scrollStarted');
+                elm.scrollBy({
+                    'behavior': 'instant',
+                    'left': x,
+                    'top': y,
+                });
+                dispatchSKEvent('scrollDone');
+            }
+        };
+        elm.smoothScrollBy = function(x, y, d) {
+            if (!keyHeld) {
+                var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
+                    duration = d,
+                    previousTimestamp = 0,
+                    originValue = elm[prop],
+                    stepCompleted = false;
+                keyHeld = 1;
+                function step(t) {
+                    if (previousTimestamp === 0) {
+                        // init previousTimestamp in first step
+                        previousTimestamp = t;
+                        dispatchSKEvent('scrollStarted');
+                        return window.requestAnimationFrame(step);
+                    }
+                    var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
+                    if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
+                        stepCompleted = true;
+                        if (keyHeld > runtime.conf.scrollFriction) {
+                            elm[prop] += delta;
+                            originValue = elm[prop];
+                        } else if (keyHeld > 0) {
+                            keyHeld ++;
+                        } else {
+                            elm[prop] = originValue + distance;
+                        }
+                    } else {
+                        elm[prop] += delta;
+                    }
+                    previousTimestamp = t;
+
+                    if (!keyHeld && (elm[prop] === old // boundary hit
+                        || stepCompleted )// distance completed
+                    ) {
+                        keyHeld = 0;
+                        elm.style.scrollBehavior = '';
+                        dispatchSKEvent('scrollDone');
+                    } else {
+                        window.requestAnimationFrame(step);
+                    }
+                }
+                elm.style.scrollBehavior = 'auto';
+                window.requestAnimationFrame(step);
+            }
+        };
+        _nodesHasSKScroll.push(elm);
+    }
+
+    // set scrollIndex to the highest node
+    function initScrollIndex() {
+        if (!scrollNodes || scrollNodes.length === 0) {
+            scrollNodes = Mode.getScrollableElements();
+            scrollNodes.forEach(function (n) {
+                n.removeEventListener('mousedown', scrollableMousedownHandler);
+                n.addEventListener('mousedown', scrollableMousedownHandler);
+                n.dataset.hint_scrollable = true;
+            });
+            scrollIndex = 0;
+        }
+    }
+
+    function scrollableMousedownHandler(e) {
+        var n = e.currentTarget;
+        if (!n.contains(e.target)) return;
+        var index = scrollNodes.lastIndexOf(e.target);
+        for (var i = scrollNodes.length - 1; i >= 0 && index === -1; i--) {
+            if (scrollNodes[i] !== document.body && scrollNodes[i].contains(e.target)) {
+                index = i;
+            }
+        }
+        if (index !== -1) {
+            scrollIndex = index;
+        }
+    }
+
+    function _highlightElement(elm) {
+        var rc;
+        if (document.scrollingElement === elm) {
+            rc = {
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+        } else {
+            rc = elm.getBoundingClientRect();
+        }
+        dispatchSKEvent('highlightElement', {
+            duration: 200,
+            rect: {
+                top: rc.top,
+                left: rc.left,
+                width: rc.width,
+                height: rc.height
+            }
+        });
+    }
+    function changeScrollTarget(silent) {
+        scrollNodes = Mode.getScrollableElements();
+        if (scrollNodes.length > 0) {
+            scrollIndex = (scrollIndex + 1) % scrollNodes.length;
+            var sn = scrollNodes[scrollIndex];
+            scrollIntoViewIfNeeded(sn);
+            if (!silent) {
+                _highlightElement(sn);
+            }
+        }
+    }
+
+    self.scroll = function(type) {
+        initScrollIndex();
+        var scrollNode = document.scrollingElement;
+        if (scrollNodes.length > 0) {
+            scrollNode = scrollNodes[scrollIndex];
+            if (scrollNode !== document.scrollingElement && scrollNode !== document.body) {
+                var br = scrollNode.getBoundingClientRect();
+                if (br.width === 0 || br.height === 0 || !isElementPartiallyInViewport(scrollNode)
+                    || !Mode.hasScroll(scrollNode, 'x', 16) && !Mode.hasScroll(scrollNode, 'y', 16)) {
+                    // Recompute scrollable elements, the webpage has changed.
+                    self.refreshScrollableElements();
+                    scrollNode = scrollNodes[scrollIndex];
+                }
+            }
+        }
+        if (!scrollNode) {
+            // scrollNode could be null on a page with frameset as its body.
+            return;
+        }
+        if (!scrollNode.skScrollBy) {
+            initScroll(scrollNode);
+        }
+        var size = (scrollNode === document.scrollingElement) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
+        switch (type) {
+            case 'down':
+                scrollNode.skScrollBy(0, runtime.conf.scrollStepSize);
+                break;
+            case 'up':
+                scrollNode.skScrollBy(0, -runtime.conf.scrollStepSize);
+                break;
+            case 'pageDown':
+                scrollNode.skScrollBy(0, Math.round(size[1] / 2));
+                break;
+            case 'fullPageDown':
+                scrollNode.skScrollBy(0, size[1]);
+                break;
+            case 'pageUp':
+                scrollNode.skScrollBy(0, -Math.round(size[1] / 2));
+                break;
+            case 'fullPageUp':
+                scrollNode.skScrollBy(0, -size[1]);
+                break;
+            case 'top':
+                scrollNode.skScrollBy(0, -scrollNode.scrollTop);
+                break;
+            case 'bottom':
+                scrollNode.skScrollBy(scrollNode.scrollLeft, scrollNode.scrollHeight - scrollNode.scrollTop);
+                break;
+            case 'left':
+                scrollNode.skScrollBy(-Math.round(runtime.conf.scrollStepSize / 2), 0);
+                break;
+            case 'right':
+                scrollNode.skScrollBy(Math.round(runtime.conf.scrollStepSize / 2), 0);
+                break;
+            case 'leftmost':
+                scrollNode.skScrollBy(-scrollNode.scrollLeft - 10, 0);
+                break;
+            case 'rightmost':
+                scrollNode.skScrollBy(scrollNode.scrollWidth - scrollNode.scrollLeft - size[0] + 20, 0);
+                break;
+            case 'byRatio':
+                var y = parseInt(RUNTIME.repeats * scrollNode.scrollHeight / 100) - size[1] / 2 - scrollNode.scrollTop;
+                RUNTIME.repeats = 0;
+                scrollNode.skScrollBy(0, y);
+                break;
+            default:
+                break;
+        }
+        dispatchSKEvent('turnOffDOMObserver');
+    };
+
+    self.refreshScrollableElements = function () {
+        scrollNodes = null;
+        initScrollIndex();
+        return scrollNodes;
+    };
+
+    self.addScrollableElement = function(elm) {
+        if (!scrollNodes || !elm.contains(scrollNodes[scrollIndex]) && scrollNodes.indexOf(elm) === -1) {
+            initScrollIndex();
+            scrollNodes.push(elm);
+            scrollIndex = scrollNodes.length - 1;
+        }
+    };
+
+    self.rotateFrame = function() {
+        RUNTIME('nextFrame');
+    };
+
+    self.feedkeys = function(keys) {
+        setTimeout(function() {
+            var evt = new Event("keydown");
+            for (var i = 0; i < keys.length; i ++) {
+                evt.sk_keyName = keys[i];
+                Mode.handleMapKey.call(self, evt);
+            }
+        }, 1);
+    };
+
+    self.setLastKeys = function(key) {
+        if (!this.map_node.meta.repeatIgnore && key.length > 1) {
+            lastKeys = [key];
+            saveLastKeys();
+        }
+    };
+
+    function saveLastKeys() {
+        RUNTIME('localData', {
+            data: {
+                lastKeys: lastKeys
+            }
+        });
+    }
+
+    self.appendKeysForRepeat = function(mode, keys) {
+        if (lastKeys && lastKeys.length > 0) {
+            // keys for normal mode must be pushed.
+            lastKeys.push('{0}\t{1}'.format(mode, keys));
+            saveLastKeys();
+        }
+    };
+
+    self.addVIMark = function(mark, url) {
+        url = url || window.location.href;
+        var mo = {};
+        mo[mark] = {
+            url: url,
+            scrollLeft: document.scrollingElement.scrollLeft,
+            scrollTop: document.scrollingElement.scrollTop
+        };
+        RUNTIME('addVIMark', {mark: mo});
+        showBanner("Mark '{0}' added for: {1}.".format(mark, url));
+    };
+
+    self.jumpVIMark = function(mark) {
+        RUNTIME('jumpVIMark', {
+            mark: mark
+        });
+    };
+
+    self.moveTab = function(pos) {
+        RUNTIME('moveTab', {
+            position: pos
+        });
+    };
+
+    self.captureElement = function(elm) {
+        RUNTIME('getCaptureSize', null, function(response) {
+            var scale = response.width / window.innerWidth;
+
+            elm.scrollTop = 0;
+            elm.scrollLeft = 0;
+            var lastScrollTop = -1, lastScrollLeft = -1;
+            // hide scrollbars
+            var overflowY = elm.style.overflowY;
+            elm.style.overflowY = "hidden";
+            var overflowX = elm.style.overflowX;
+            elm.style.overflowX = "hidden";
+            // hide borders
+            var borderStyle = elm.style.borderStyle;
+            elm.style.borderStyle = "none";
+            dispatchSKEvent('toggleStatus', [false]);
+
+            var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
+            if (elm === document.scrollingElement) {
+                ww = window.innerWidth;
+                wh = window.innerHeight;
+                sx = 0;
+                sy = 0;
+            } else {
+                var br = elm.getBoundingClientRect();
+                // visible rectangle
+                var rc = [
+                    Math.max(br.left, 0),
+                    Math.max(br.top, 0),
+                    Math.min(br.right, window.innerWidth),
+                    Math.min(br.bottom, window.innerHeight)
+                ];
+                ww = rc[2] - rc[0];
+                wh = rc[3] - rc[1];
+                sx = rc[0] * scale;
+                sy = rc[1] * scale;
+            }
+            sw = ww * scale;
+            sh = wh * scale;
+
+            var canvas = document.createElement( "canvas" );
+            canvas.width = dw * scale;
+            canvas.height = dh * scale;
+            var ctx = canvas.getContext( "2d" );
+
+            var br = elm.getBoundingClientRect();
+            var img = document.createElement( "img" );
+
+            img.onload = function() {
+                ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
+                if (lastScrollTop === elm.scrollTop) {
+                    if (lastScrollLeft === elm.scrollLeft) {
+                        // done
+                        dispatchSKEvent('toggleStatus', [true]);
+                        showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
+                        // restore overflow
+                        elm.style.overflowY = overflowY;
+                        elm.style.overflowX = overflowX;
+                        // restore borders
+                        elm.style.borderStyle = borderStyle;
+                    } else {
+                        lastScrollTop = -1;
+                        elm.scrollTop = 0;
+                        dy = 0;
+                        lastScrollLeft = elm.scrollLeft;
+                        if (elm.scrollLeft + 2 * ww < dw) {
+                            elm.scrollLeft += ww;
+                            dx += ww * scale;
+                        } else {
+                            elm.scrollLeft += dw % ww;
+                            dx = elm.scrollLeft * scale;
+                        }
+                        setTimeout(function() {
+                            RUNTIME('captureVisibleTab', null, function(response) {
+                                img.src = response.dataUrl;
+                            });
+                        }, 100);
+                    }
+                } else {
+                    lastScrollTop = elm.scrollTop;
+                    if (elm.scrollTop + 2 * wh < dh) {
+                        elm.scrollTop += wh;
+                        dy += wh * scale;
+                    } else {
+                        elm.scrollTop += dh % wh;
+                        dy = elm.scrollTop * scale;
+                    }
+                    setTimeout(function() {
+                        RUNTIME('captureVisibleTab', null, function(response) {
+                            img.src = response.dataUrl;
+                        });
+                    }, 500);
+                }
+            };
+
+            // wait 500 millisecond for keystrokes of Surfingkeys to hide
+            setTimeout(function() {
+                RUNTIME('captureVisibleTab', null, function(response) {
+                    img.src = response.dataUrl;
+                });
+            }, 500);
+
+        });
+    };
+
+    self.mappings.add("yG", {
+        annotation: "Capture current full page",
+        feature_group: 7,
+        code: function() {
+            self.captureElement(document.scrollingElement);
+        }
+    });
+    self.mappings.add("yS", {
+        annotation: "Capture scrolling element",
+        feature_group: 7,
+        code: function() {
+            var scrollNode = document.scrollingElement;
+            initScrollIndex();
+            if (scrollNodes.length > 0) {
+                scrollNode = scrollNodes[scrollIndex];
+            }
+            self.captureElement(scrollNode);
+        }
+    });
+
+    self.mappings.add("cS", {
+        annotation: "Reset scroll target",
+        feature_group: 2,
+        code: function() {
+            scrollNodes = null;
+            initScrollIndex();
+            if (scrollNodes.length > 0) {
+                var scrollNode = scrollNodes[scrollIndex];
+                _highlightElement(scrollNode);
+            }
+        }
+    });
+    self.mappings.add("e", {
+        annotation: "Scroll half page up",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "pageUp")
+    });
+    self.mappings.add("d", {
+        annotation: "Scroll half page down",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "pageDown")
+    });
+    self.mappings.add("gg", {
+        annotation: "Scroll to the top of the page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "top")
+    });
+    self.mappings.add("G", {
+        annotation: "Scroll to the bottom of the page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "bottom")
+    });
+    self.mappings.add("j", {
+        annotation: "Scroll down",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "down")
+    });
+    self.mappings.add("k", {
+        annotation: "Scroll up",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "up")
+    });
+    self.mappings.add("h", {
+        annotation: "Scroll left",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "left")
+    });
+    self.mappings.add("l", {
+        annotation: "Scroll right",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "right")
+    });
+    self.mappings.add("0", {
+        annotation: "Scroll all the way to the left",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "leftmost")
+    });
+    self.mappings.add("$", {
+        annotation: "Scroll all the way to the right",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "rightmost")
+    });
+    self.mappings.add("%", {
+        annotation: "Scroll to percentage of current page",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "byRatio")
+    });
+    self.mappings.add("cs", {
+        annotation: "Change scroll target",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: function() {
+            changeScrollTarget();
+        }
+    });
+
+    self.mappings.add("/", {
+        annotation: "Find in current page",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            dispatchSKEvent('openFinder');
+        }
+    });
+
+    self.mappings.add("E", {
+        annotation: "Go one tab left",
+        feature_group: 3,
+        repeatIgnore: true,
+        code: function() {
+            RUNTIME("previousTab");
+        }
+    });
+    self.mappings.add("R", {
+        annotation: "Go one tab right",
+        feature_group: 3,
+        repeatIgnore: true,
+        code: function() {
+            RUNTIME("nextTab");
+        }
+    });
+
+    function _onMouseUp(event) {
+        if (runtime.conf.mouseSelectToQuery.indexOf(window.origin) !== -1
+            && !isElementClickable(event.target)
+            && !event.target.matches(".cm-matchhighlight")) {
+            // perform inline query after 1 ms
+            // to avoid calling on selection collapse
+            setTimeout(() => {
+                dispatchSKEvent('querySelectedWord');
+            }, 1);
+        }
+    }
+
+    var _disabled = null;
+    self.disable = function() {
+        if (!_disabled) {
+            _disabled = createDisabled(self);
+            _disabled.enter(0, true);
+        }
+        dispatchSKEvent('turnOffDOMObserver');
+        document.removeEventListener("mouseup", _onMouseUp);
+    };
+
+    self.enable = function() {
+        if (_disabled) {
+            _disabled.exit();
+            _disabled = null;
+        }
+        document.addEventListener("mouseup", _onMouseUp);
+    };
+    self.enable();
+
+    self.onExit = function() {
+        dispatchSKEvent('turnOffDOMObserver');
+        _nodesHasSKScroll.forEach(function(n) {
+            delete n.skScrollBy;
+            delete n.smoothScrollBy;
+        });
+    };
+
+    return self;
+}
+
+export default createNormal;

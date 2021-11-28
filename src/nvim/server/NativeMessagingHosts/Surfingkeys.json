@@ -1,0 +1,9 @@
+{
+    "allowed_origins": [
+        "chrome-extension://aajlcoiaogpknhgninhopncaldipjdnp/",
+        "chrome-extension://gfbliohnnapiefjpjlpjnehglfpaknnc/"
+    ],
+    "description": "Neovim UI client from Surfingkeys",
+    "name": "surfingkeys",
+    "type": "stdio"
+}
