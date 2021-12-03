@@ -213,17 +213,13 @@ const screen = ({
         screenEl.style.height = `${windowPixelSize().height}px`;
     };
 
-    const RETINA_SCALE = 2;
-
-    const isRetina = () => window.devicePixelRatio === RETINA_SCALE;
-
     const scaledLetterSpacing = () => {
-        if (isRetina() || letterSpacing === 0) {
+        if (letterSpacing === 0) {
             return letterSpacing;
         }
         return letterSpacing > 0
-            ? Math.floor(letterSpacing / RETINA_SCALE)
-            : Math.ceil(letterSpacing / RETINA_SCALE);
+            ? Math.floor(letterSpacing / window.devicePixelRatio)
+            : Math.ceil(letterSpacing / window.devicePixelRatio);
     };
 
     const scaledFontSize = () => fontSize * scale;
@@ -801,7 +797,7 @@ const screen = ({
     };
 
     const setScale = () => {
-        scale = isRetina() ? RETINA_SCALE : 1;
+        scale = window.devicePixelRatio;
         screenContainer.style.transform = `scale(${1 / scale})`;
         screenContainer.style.transformOrigin = '0 0';
 

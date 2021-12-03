@@ -240,7 +240,7 @@ local function parse_headers()
         headerend = string.find(headerstring, "\r?\n\r?\n")
     end
 
-    -- request is the first line of any HTTP request: `GET /file HTTP/1.1`
+    -- request is the first line of any HTTP request: 'GET /file HTTP/1.1'
     local request = string.sub(headerstring, 1, string.find(headerstring, "\n"))
     -- rest is any data that might follow the actual HTTP request
     -- (GET+key/values). If I understand the spec correctly, it should be
@@ -459,6 +459,7 @@ local function connection_handler(server, sock, token)
     end
 end
 
+current_server_port = 0
 local function start_server(token, port)
     vim.api.nvim_command("doautocmd GUIEnter")
     local server = vim.loop.new_tcp()
@@ -471,9 +472,10 @@ local function start_server(token, port)
         server:accept(sock)
         sock:read_start(connection_handler(server, sock, token))
     end)
+    current_server_port = server:getsockname().port
     return {
         event = "serverStarted",
-        port = server:getsockname().port
+        port = current_server_port
     }
 end
 
@@ -496,15 +498,27 @@ function handle_input(id, data)
     local tab = { string.byte(data[1], 5, -1) }
     data = utf8_from_byte_array(tab)
     log:write("stdin: " .. data .. "\n")
+    if string.len(data) == 0 then
+        log:write("qall: " .. current_server_port .. "\n")
+        vim.api.nvim_command('qall!')
+    end
     data = vim.fn.json_decode(data)
     if data['startServer'] and data['password'] then
-        vim.fn['SetSurfingkeysStandAlone'](data['standalone'])
         vim.g.surfingkeys_standalone = data['standalone']
         return start_server(data['password'], 0)
+    elseif data['mode'] then
+        vim.fn['SetSurfingkeysStandAlone'](data['mode'])
+        return {
+            mode = data['mode']
+        }
     end
 end
 
-log = io.open(os.getenv("HOME") .. "/.surfingkeys.log", "a")
+home_dir = os.getenv("HOME")
+if home_dir == nil then
+    home_dir = os.getenv("USERPROFILE")
+end
+log = io.open(home_dir .. "/.surfingkeys.log", "a")
 log:setvbuf("no")
 
 surfingkeys_server_id = 0
@@ -540,7 +554,7 @@ function! NewScratch(fn, content, type)
     let @v = a:content
     normal ggdG"vgP
     nnoremap <buffer> <silent> <Esc> :q<Cr>
-    nnoremap <buffer> <silent> <Enter> :wq<Cr>
+    nnoremap <buffer> <silent> <Enter> :w<Cr>
     set nomodified
     if a:type == 'url'
         inoremap <silent> <CR> <Esc>:w<CR>
@@ -554,7 +568,7 @@ function! NewScratch(fn, content, type)
 endfunction
 
 function! SetSurfingkeysStandAlone(v)
-    if !a:v
+    if a:v == "embed"
         set laststatus=0
     endif
 endfunction

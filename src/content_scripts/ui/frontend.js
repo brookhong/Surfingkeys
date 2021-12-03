@@ -383,7 +383,7 @@ const Front = (function() {
         }
         _neovim.then((nvim) => {
             normal.exit();
-            RUNTIME('connectNative', null, (resp) => {
+            RUNTIME('connectNative', {mode: "embed"}, (resp) => {
                 nvim.connect(resp.url, () => {
                     nvim.command(`call NewScratch("${message.file_name}", "${message.content}", "${message.type}")`);
                 });

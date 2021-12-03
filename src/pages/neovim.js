@@ -31,7 +31,7 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
         });
     });
     np.then((nvim) => {
-        RUNTIME('connectNative', {standalone: true}, (resp) => {
+        RUNTIME('connectNative', {mode: "standalone"}, (resp) => {
             if (resp.error) {
                 setSanitizedContent(document.querySelector('#overlay'), resp.error);
                 document.body.classList.add("neovim-disabled");

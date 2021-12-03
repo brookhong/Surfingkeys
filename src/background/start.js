@@ -1650,7 +1650,7 @@ function start(browser) {
     }
 
     let nativeConnected = false;
-    function startNative(standalone) {
+    function startNative() {
         return new Promise((resolve, reject) => {
             const nm = chrome.runtime.connectNative("surfingkeys");
             const password = generatePassword();
@@ -1659,11 +1659,7 @@ function start(browser) {
                     var error = chrome.runtime.lastError.message;
                 }
                 if (nativeConnected) {
-                    if (standalone) {
-                        standAloneNvimServer = startNative(true);
-                    } else {
-                        embedNvimServer = startNative();
-                    }
+                    nvimServer = startNative();
                 } else {
                     reject("Failed to connect neovim, please make sure your neovim version 0.5 or above.");
                 }
@@ -1672,7 +1668,8 @@ function start(browser) {
                 if (resp.status === true) {
                     nativeConnected = true;
                     if (resp.res.event === "serverStarted") {
-                        resolve(`127.0.0.1:${resp.res.port}/${password}`);
+                        const url = `127.0.0.1:${resp.res.port}/${password}`;
+                        resolve({url, nm});
                     }
                 } else if (resp.err) {
                     console.log(resp.err);
@@ -1680,17 +1677,17 @@ function start(browser) {
             });
             nm.postMessage({
                 startServer: true,
-                standalone,
                 password
             });
         });
     }
 
-    let embedNvimServer = startNative();
-    let standAloneNvimServer = startNative(true);
+    let nvimServer = startNative();
     self.connectNative = function (message, sender, sendResponse) {
-        const nvimServer = message.standalone ? standAloneNvimServer : embedNvimServer;
-        nvimServer.then((url) => {
+        nvimServer.then(({url, nm}) => {
+            nm.postMessage({
+                mode: message.mode
+            });
             _response(message, sendResponse, {
                 url,
             });

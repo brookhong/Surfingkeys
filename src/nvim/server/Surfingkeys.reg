@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\SOFTWARE\Chromium\NativeMessagingHosts\surfingkeys]
+@="<PATH_TO_SURFINGKEYS_JSON>\\surfingkeys.json"
