@@ -1,67 +1,32 @@
-if bit == nil then
-    bit = require("bit")
+local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
+-- encoding
+function base64_enc(data)
+    return ((data:gsub('.', function(x) 
+        local r,b='',x:byte()
+        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#data%3+1])
 end
 
--- base64 algorithm implemented from https://en.wikipedia.org/wiki/Base64
--- It's really simple: for each group of three bytes, concat the bits and then
--- split them into four values of 6 bits each, then look up said values in the
--- base64 table
-local function base64(val)
-    local b64 = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K",
-    "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W",
-    "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i",
-    "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
-    "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6",
-    "7", "8", "9", "+", "/" }
-
-    local function char1(byte1)
-        -- 252: 0b11111100
-        return b64[bit.rshift(bit.band(string.byte(byte1), 252), 2) + 1]
-    end
-
-    local function char2(byte1, byte2)
-        -- 3:   0b00000011
-        return b64[bit.lshift(bit.band(string.byte(byte1), 3), 4) +
-        -- 240: 0b11110000
-        bit.rshift(bit.band(string.byte(byte2), 240), 4) + 1]
-    end
-
-    local function char3(byte2, byte3)
-        -- 15:  0b00001111
-        return b64[bit.lshift(bit.band(string.byte(byte2), 15), 2) +
-        -- 192: 0b11000000
-        bit.rshift(bit.band(string.byte(byte3), 192), 6) + 1]
-    end
-
-    local function char4(byte3)
-        -- 63:  0b00111111
-        return b64[bit.band(string.byte(byte3), 63) + 1]
-    end
-
-    local result = ""
-    for byte1, byte2, byte3 in string.gmatch(val, "(.)(.)(.)") do
-        result = result ..
-        char1(byte1) ..
-        char2(byte1, byte2) ..
-        char3(byte2, byte3) ..
-        char4(byte3)
-    end
-    -- The last bytes might not fit in a triplet so we need to pad them
-    -- with zeroes
-    if (string.len(val) % 3) == 1 then
-        result = result ..
-        char1(string.sub(val, -1)) ..
-        char2(string.sub(val, -1), "\0") ..
-        "=="
-    elseif (string.len(val) % 3) == 2 then
-        result = result ..
-        char1(string.sub(val, -2, -2)) ..
-        char2(string.sub(val, -2, -2), string.sub(val, -1)) ..
-        char3(string.sub(val, -1), "\0") ..
-        "="
-    end
-
-    return result
+-- decoding
+function base64_dec(data)
+    data = string.gsub(data, '[^'..b..'=]', '')
+    return (data:gsub('.', function(x)
+        if (x == '=') then return '' end
+        local r,f='',(b:find(x)-1)
+        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if (#x ~= 8) then return '' end
+        local c=0
+        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+            return string.char(c)
+    end))
 end
 
 -- Returns a 2-characters string the bits of which represent the argument
@@ -256,7 +221,7 @@ local function parse_headers()
 end
 
 local function compute_key(key)
-    return base64(sha1(key .. "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+    return base64_enc(sha1(key .. "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
 end
 
 -- The server's opening handshake is described here: https://tools.ietf.org/html/rfc6455#section-4.2.2
@@ -551,7 +516,7 @@ function! NewScratch(fn, content, type)
     exec 'tabnew surfingkeys://'.a:fn
     setlocal bufhidden=wipe nobuflisted noswapfile
     tabonly
-    let @v = a:content
+    let @v = v:lua.base64_dec(a:content)
     normal ggdG"vgP
     nnoremap <buffer> <silent> <Esc> :q<Cr>
     nnoremap <buffer> <silent> <Enter> :w<Cr>
@@ -568,9 +533,6 @@ function! NewScratch(fn, content, type)
 endfunction
 
 function! SetSurfingkeysStandAlone(v)
-    if a:v == "embed"
-        set laststatus=0
-    endif
 endfunction
 
 function! SurfingkeysWrite()

@@ -69,6 +69,7 @@
     "@pixi/utils": "^6.1.1",
     "ace-builds": "^1.4.12",
     "dompurify": "^2.3.1",
+    "js-base64": "^3.7.2",
     "lodash": "^4.17.21",
     "marked": "^3.0.2",
     "pdfjs-dist": "^2.9.359"

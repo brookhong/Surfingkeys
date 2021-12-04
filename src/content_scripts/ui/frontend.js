@@ -1,3 +1,4 @@
+import { encode } from 'js-base64';
 import {
     createElementWithContent,
     generateQuickGuid,
@@ -385,7 +386,7 @@ const Front = (function() {
             normal.exit();
             RUNTIME('connectNative', {mode: "embed"}, (resp) => {
                 nvim.connect(resp.url, () => {
-                    nvim.command(`call NewScratch("${message.file_name}", "${message.content}", "${message.type}")`);
+                    nvim.command(`call NewScratch("${message.file_name}", "${encode(message.content)}", "${message.type}")`);
                 });
             });
         });
