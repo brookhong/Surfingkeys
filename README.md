@@ -584,7 +584,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 ## Donate
 Support me with [paypal](https://www.paypal.me/brookhong), or
 
-![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
+![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/src/pages/donation.png)
 
 ## License
 

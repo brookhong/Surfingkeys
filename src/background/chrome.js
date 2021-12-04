@@ -101,7 +101,39 @@ function _setNewTabUrl(){
 function _getContainerName(self, _response){
 }
 
+function getLatestHistoryItem(text, maxResults, cb) {
+    const caseSensitive = text.toLowerCase() !== text;
+    let endTime = new Date().getTime();
+    let results = [];
+    const impl = (endTime, maxResults, cb) => {
+        const prefetch = maxResults * Math.pow(10, Math.min(2, text.length));
+        chrome.history.search({
+            startTime: 0,
+            endTime,
+            text: "",
+            maxResults: prefetch
+        }, function(items) {
+            const filtered = items.filter((item) => {
+                const title = caseSensitive ? item.title : item.title.toLowerCase();
+                const url = caseSensitive ? item.url : item.url.toLowerCase();
+                return title.indexOf(text) !== -1 || url.indexOf(text) !== -1;
+            });
+            results = [...results, ...filtered];
+            if (items.length < maxResults || results.length >= maxResults) {
+                // all items are scanned or we have got what we want
+                cb(results.slice(0, maxResults));
+            } else {
+                endTime = items[items.length-1].lastVisitTime - 0.01;
+                impl(endTime, maxResults, cb);
+            }
+        });
+    };
+
+    impl(endTime, maxResults, cb);
+}
+
 start({
+    getLatestHistoryItem,
     loadRawSettings,
     _applyProxySettings,
     _setNewTabUrl,

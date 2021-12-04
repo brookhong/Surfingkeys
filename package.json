@@ -15,7 +15,7 @@
     "build:prod-firefox": "webpack --env=browser=firefox --mode=production --config ./config/webpack.config.js",
     "build:prod": "webpack --mode=production --config ./config/webpack.config.js",
     "build:testdata": "webpack --mode=production --config ./config/webpack.test.config.js",
-    "build": "npm-run-all clean build:prod",
+    "build": "npm-run-all clean test build:doc build:prod build:prod-firefox",
     "test": "jest"
   },
   "repository": {
@@ -44,6 +44,7 @@
     "file-loader": "^6.2.0",
     "filemanager-webpack-plugin": "^6.1.7",
     "jest-image-snapshot": "^4.5.1",
+    "npm-run-all": "^4.1.5",
     "puppeteer": "^10.2.0",
     "strict-event-emitter-types": "^2.0.0",
     "string-replace-loader": "^3.0.3",

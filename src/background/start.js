@@ -667,41 +667,9 @@ function start(browser) {
         });
     };
 
-    function getLatestHistoryItem(text, maxResults, cb) {
-        const oneMonth = 30*24*3600*1000;
-        let fabonaci = [1, 1];
-        const backoff = (startTime) => {
-            let n = fabonaci[0] + fabonaci[1];
-            fabonaci[0] = fabonaci[1];
-            fabonaci[1] = n;
-            return startTime - (fabonaci[0] + fabonaci[1]) * oneMonth * (text.length * 12 + 1);
-        };
-        const impl = (startTime, maxResults, cb) => {
-            chrome.history.search({
-                startTime,
-                text,
-                maxResults
-            }, function(items) {
-                if (items.length === maxResults) {
-                    cb(items);
-                } else {
-                    startTime = backoff(startTime);
-                    if (startTime > 0) {
-                        impl(startTime, maxResults, cb);
-                    } else {
-                        cb(items);
-                    }
-                }
-            });
-        };
-
-        let startTime = text.length > 2 ? 0 : new Date().getTime() - oneMonth;
-        impl(startTime, maxResults, cb);
-    }
 
     function _getHistory(text, maxResults, cb, sortByMostUsed) {
-        const start = new Date().getTime();
-        getLatestHistoryItem(text, maxResults, (items) => {
+        browser.getLatestHistoryItem(text, maxResults, (items) => {
             if (sortByMostUsed) {
                 items = items.sort(function(a, b) {
                     return b.visitCount - a.visitCount;
