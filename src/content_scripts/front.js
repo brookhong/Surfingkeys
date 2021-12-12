@@ -3,6 +3,7 @@ import {
     flashPressedLink,
     generateQuickGuid,
     getAnnotations,
+    getBrowserName,
     getDocumentOrigin,
     httpRequest,
     isEditable,
@@ -507,7 +508,7 @@ function createFront(insert, normal, hints, visual) {
             if (queryResult.constructor.name !== "Array") {
                 queryResult = [queryResult];
             }
-            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+            if (getBrowserName() === "Chrome") {
                 var sentence = visual.findSentenceOf(response.query);
                 if (sentence.length > 0) {
                     queryResult.push(sentence);
@@ -556,7 +557,7 @@ function createFront(insert, normal, hints, visual) {
         clearPendingQuery();
         _pendingQuery = setTimeout(function() {
             visual.visualUpdateForContentWindow(message.query);
-            if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+            if (getBrowserName() === "Firefox") {
                 frontendCommand({
                     action: "visualUpdatedForFirefox"
                 });

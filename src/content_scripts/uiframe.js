@@ -1,4 +1,5 @@
 import {
+    getBrowserName,
     getDocumentOrigin
 } from './common/utils.js';
 
@@ -111,6 +112,9 @@ function createUiHost(onload) {
                 document.body.style.overflowY = _origOverflowY;
             }
         } else {
+            if (getBrowserName() === "Safari") {
+                ifr.focus();
+            }
             if (document.body) {
                 document.body.style.animationFillMode = "none";
                 if (_origOverflowY === undefined) {

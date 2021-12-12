@@ -4,6 +4,7 @@ import Mode from './common/mode';
 import {
     createElementWithContent,
     generateQuickGuid,
+    getBrowserName,
     htmlEncode,
     httpRequest,
     initL10n,
@@ -11,15 +12,6 @@ import {
     setSanitizedContent,
     showBanner,
 } from './common/utils.js';
-
-var defaultMappingsEditor = ace.edit("defaultMappings");
-defaultMappingsEditor.setTheme("ace/theme/chrome");
-defaultMappingsEditor.setKeyboardHandler('ace/keyboard/vim');
-defaultMappingsEditor.getSession().setMode("ace/mode/javascript");
-defaultMappingsEditor.container.hide();
-defaultMappingsEditor.setReadOnly(true);
-defaultMappingsEditor.container.style.background="#f1f1f1";
-defaultMappingsEditor.$blockScrolling = Infinity;
 
 var mappingsEditor = null;
 function createMappingEditor(elmId) {
@@ -84,8 +76,13 @@ function createMappingEditor(elmId) {
     return self;
 }
 
-if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+if (getBrowserName() === "Firefox") {
+    document.querySelector("#localPathForSettings").style.display = "none";
     document.querySelector("#proxySettings").style.display = "none";
+} else if (getBrowserName() === "Safari") {
+    document.querySelector("#localPathForSettings").style.display = "none";
+    document.querySelector("#proxySettings").style.display = "none";
+    document.querySelector("#donationDiv").style.display = "none";
 }
 var proxyModeSelect = document.querySelector("#proxyMode>select");
 var proxyGroup = document.getElementById("proxyMode").parentElement;
@@ -250,7 +247,6 @@ function renderSettings(rs) {
     }
     var h = window.innerHeight / 2;
     mappingsEditor.container.style.height = h + "px";
-    defaultMappingsEditor.container.style.height = h + "px";
     if (rs.snippets && rs.snippets.length) {
         mappingsEditor.setValue(rs.snippets, -1);
     } else {
@@ -295,22 +291,6 @@ document.querySelector('.infoPointer').onclick = function() {
         f.style.display = "";
     } else {
         f.style.display = "none";
-    }
-};
-
-document.getElementById('showDefaultSettings').onclick = function() {
-    if (defaultMappingsEditor.container.style.display !== "none") {
-        defaultMappingsEditor.container.hide();
-        mappingsEditor.container.style.width = "100%";
-    } else {
-        httpRequest({
-            url: chrome.extension.getURL('/pages/default.js'),
-        }, function(res) {
-            defaultMappingsEditor.container.style.display = "inline-block";
-            defaultMappingsEditor.setValue(res.text, -1);
-            defaultMappingsEditor.container.style.width = "50%";
-        });
-        mappingsEditor.container.style.width = "50%";
     }
 };
 
@@ -359,11 +339,16 @@ var basicMappings = ['d', 'R', 'f', 'E', 'e', 'x', 'gg', 'j', '/', 'n', 'r', 'k'
 document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     const { normal } = evt.detail;
     basicMappings = basicMappings.map(function(w, i) {
-        return {
-            origin: w,
-            annotation: normal.mappings.find(KeyboardUtils.encodeKeystroke(w)).meta.annotation
-        };
-    });
+        const binding = normal.mappings.find(KeyboardUtils.encodeKeystroke(w));
+        if (binding) {
+            return {
+                origin: w,
+                annotation: binding.meta.annotation
+            };
+        } else {
+            return null;
+        }
+    }).filter((m) => m !== null);;
 });
 
 function renderKeyMappings(rs) {

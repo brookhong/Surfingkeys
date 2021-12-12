@@ -2,8 +2,24 @@ import * as DOMPurify from 'dompurify';
 import KeyboardUtils from './keyboardUtils';
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 
+/**
+ * Get current browser name
+ * @returns {string} "Chrome" | "Firefox" | "Safari"
+ *
+ */
+function getBrowserName() {
+    if (window.navigator.userAgent.indexOf("Chrome") !== -1) {
+        return "Chrome";
+    } else if (window.navigator.vendor.indexOf("Apple Computer, Inc.") === 0) {
+        return "Safari";
+    } else if (window.navigator.userAgent.indexOf("Firefox") !== -1) {
+        return "Firefox";
+    }
+    return "Chrome";
+}
+
 function isInUIFrame() {
-    return document.location.href.indexOf(chrome.extension.getURL("")) === 0;
+    return document.location.href.indexOf(chrome.extension.getURL("/")) === 0;
 }
 
 function timeStampString(t) {
@@ -720,6 +736,7 @@ export {
     flashPressedLink,
     generateQuickGuid,
     getAnnotations,
+    getBrowserName,
     getClickableElements,
     getDocumentOrigin,
     getElements,

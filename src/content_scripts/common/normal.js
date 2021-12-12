@@ -194,7 +194,7 @@ function createNormal(insert) {
     });
 
     self.toggleBlocklist = function() {
-        if (document.location.href.indexOf(chrome.extension.getURL("")) !== 0) {
+        if (document.location.href.indexOf(chrome.extension.getURL("/")) !== 0) {
             RUNTIME('toggleBlocklist', {
                 blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
             }, function(resp) {

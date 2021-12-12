@@ -4,6 +4,7 @@ import KeyboardUtils from './keyboardUtils';
 import {
     actionWithSelectionPreserved,
     constructSearchURL,
+    getBrowserName,
     getClickableElements,
     getRealEdit,
     getTextNodePos,
@@ -11,6 +12,7 @@ import {
     htmlEncode,
     mapInMode,
     parseAnnotation,
+    setSanitizedContent,
     showBanner,
     showPopup,
     tabOpenLink,
@@ -433,23 +435,39 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
         openVim(false);
     });
-    imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function() {
-        openVim(true);
-    });
-
-    function toggleProxySite(host) {
-        RUNTIME('updateProxy', {
-            host: host,
-            operation: "toggle"
+    const browserName = getBrowserName();
+    if (browserName === "Chrome") {
+        imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function() {
+            openVim(true);
         });
-        return true;
+        mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
+            var pdfUrl = window.location.href;
+            if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
+                pdfUrl = window.location.search.substr(3);
+                chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                    window.location.replace(pdfUrl);
+                });
+            } else {
+                if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
+                    chrome.storage.local.remove("noPdfViewer", function() {
+                        window.location.replace(pdfUrl);
+                    });
+                } else {
+                    chrome.storage.local.get("noPdfViewer", function(resp) {
+                        if(!resp.noPdfViewer) {
+                            chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                                showBanner("PDF viewer disabled.");
+                            });
+                        } else {
+                            chrome.storage.local.remove("noPdfViewer", function() {
+                                showBanner("PDF viewer enabled.");
+                            });
+                        }
+                    });
+                }
+            }
+        });
     }
-    mapkey('cp', '#13Toggle proxy for current site', function() {
-        var host = window.location.host.replace(/:\d+/,'');
-        if (host && host.length) {
-            toggleProxySite(host);
-        }
-    });
 
     mapkey(";ql", '#0Show last action', function() {
         showPopup(htmlEncode(runtime.conf.lastKeys.map(function(k) {
@@ -459,34 +477,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
     mapkey('gi', '#1Go to the first edit box', function() {
         hints.createInputLayer();
-    });
-
-    mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
-        var pdfUrl = window.location.href;
-        if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
-            pdfUrl = window.location.search.substr(3);
-            chrome.storage.local.set({"noPdfViewer": 1}, function() {
-                window.location.replace(pdfUrl);
-            });
-        } else {
-            if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
-                chrome.storage.local.remove("noPdfViewer", function() {
-                    window.location.replace(pdfUrl);
-                });
-            } else {
-                chrome.storage.local.get("noPdfViewer", function(resp) {
-                    if(!resp.noPdfViewer) {
-                        chrome.storage.local.set({"noPdfViewer": 1}, function() {
-                            showBanner("PDF viewer disabled.");
-                        });
-                    } else {
-                        chrome.storage.local.remove("noPdfViewer", function() {
-                            showBanner("PDF viewer enabled.");
-                        });
-                    }
-                });
-            }
-        }
     });
 
     mapkey('zv', '#9Enter visual mode, and select whole element', function() {
@@ -690,6 +680,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         cmap,
         imap,
         imapkey,
+        getBrowserName,
         getClickableElements,
         getFormData,
         map,

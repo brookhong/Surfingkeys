@@ -7,6 +7,7 @@ import {
     flashPressedLink,
     getElements,
     listElements,
+    getBrowserName,
     getClickableElements,
     getRealRect,
     getTextNodePos,
@@ -750,7 +751,7 @@ div.hint-scrollable {
             if (shiftKey && runtime.conf.hintShiftNonActive) {
                 tabbed = true;
                 active = false;
-            } else if (shiftKey && window.navigator.userAgent.indexOf("Firefox") !== -1) {
+            } else if (shiftKey && getBrowserName() === "Firefox") {
                 // mouseButton does not work for firefox in mouse event.
                 tabbed = true;
                 active = true;

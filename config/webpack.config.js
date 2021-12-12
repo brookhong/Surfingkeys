@@ -4,6 +4,7 @@ let buildPath = path.resolve(__dirname, '../dist/');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const FileManagerPlugin = require('filemanager-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 function modifyManifest(browser, mode, buffer) {
     // copy-webpack-plugin passes a buffer
@@ -36,21 +37,38 @@ function modifyManifest(browser, mode, buffer) {
     return manifest_JSON;
 }
 
-function modifyOptionsHtml(browser, buffer) {
-    let content = buffer.toString();
-    if (browser === "firefox") {
-        content = content.split("\n").filter((line) => {
-            return line.indexOf('https://www.google-analytics.com/analytics.js') === -1;
-        }).join("\n");
-    }
-    return content;
-}
-
 module.exports = (env, argv) => {
     const mode = argv.mode;
     const browser = env.browser ? env.browser : 'chrome';
     buildPath += "/" + browser;
-    return [{
+    const entry = {
+        background: `./src/background/${browser}.js`,
+        content: `./src/content_scripts/${browser}.js`,
+        'pages/frontend': `./src/content_scripts/ui/frontend.js`,
+        'pages/options': './src/content_scripts/options.js',
+        'pages/start': './src/content_scripts/start.js',
+        'pages/ace': './src/content_scripts/ace.js',
+    };
+    const pagesCopyOptions = {
+        ignore: [
+            '**/neovim.*',
+            '**/pdf_viewer.html',
+        ]
+    };
+    if (browser === "chrome") {
+        pagesCopyOptions.ignore = [];
+        entry['pages/neovim'] = './src/pages/neovim.js';
+        entry['pages/pdf_viewer'] = './src/content_scripts/pdf_viewer.js';
+    }
+    if (browser !== "safari") {
+        entry['pages/markdown'] = './src/content_scripts/markdown.js';
+    } else {
+        pagesCopyOptions.ignore.push('**/markdown.html');
+        pagesCopyOptions.ignore.push('**/donation.png');
+    }
+    console.log(pagesCopyOptions);
+
+    const modules = [{
         devtool: false,
         output: {
             path: buildPath,
@@ -88,21 +106,16 @@ module.exports = (env, argv) => {
             ],
         },
         target: 'web',
-        entry: {
-            'pages/neovim': './src/pages/neovim.js',
-            background: `./src/background/${browser}.js`,
-            content: `./src/content_scripts/${browser}.js`,
-            'pages/frontend': `./src/content_scripts/ui/frontend.js`,
-            'pages/options': './src/content_scripts/options.js',
-            'pages/markdown': './src/content_scripts/markdown.js',
-            'pages/pdf_viewer': './src/content_scripts/pdf_viewer.js',
-            'pages/start': './src/content_scripts/start.js',
-            'pages/ace': './src/content_scripts/ace.js',
+        entry: entry,
+        optimization: {
+            minimizer: [new TerserPlugin({
+                extractComments: false,
+            })],
         },
         plugins: [
             new CopyWebpackPlugin({
                 patterns: [
-                    { from: 'src/pages', to: 'pages' },
+                    { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
                     { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
                     { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
                     { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
@@ -114,16 +127,13 @@ module.exports = (env, argv) => {
                         transform (content, path) {
                             return modifyManifest(browser, mode, content)
                         }
-                    },
-                    {
-                        from: "src/pages/options.html",
-                        to:   "pages",
-                        transform (content, path) {
-                            return modifyOptionsHtml(browser, content)
-                        }
                     }
                 ]
-            }),
+            })
+        ]
+    }];
+    if (browser !== "safari") {
+        modules[0].plugins.push(
             new FileManagerPlugin({
                 events: {
                     onEnd: {
@@ -136,39 +146,48 @@ module.exports = (env, argv) => {
                     },
                 },
             })
-        ]
-    }, {
-        devtool: false,
-        output: {
-            path: buildPath,
-            filename: '[name].js',
-            libraryTarget: 'module',
-        },
-        resolve: {
-            extensions: ['.ts', '.js'],
-        },
-        target: 'web',
-        entry: {
-            'pages/neovim_lib': './src/nvim/renderer.ts',
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.ts$/,
-                    exclude: /node_modules/,
-                    loader: 'ts-loader',
-                },
-                {
-                    test: /\.css$/,
-                    use: [
-                        { loader: "style-loader", options: { injectType: "linkTag" } },
-                        { loader: "file-loader" },
-                    ]
-                },
-            ],
-        },
-        experiments: {
-            outputModule: true,
-        }
-    }]
+        );
+    }
+    if (browser === "chrome") {
+        modules.push({
+            devtool: false,
+            output: {
+                path: buildPath,
+                filename: '[name].js',
+                libraryTarget: 'module',
+            },
+            resolve: {
+                extensions: ['.ts', '.js'],
+            },
+            target: 'web',
+            entry: {
+                'pages/neovim_lib': './src/nvim/renderer.ts',
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.ts$/,
+                        exclude: /node_modules/,
+                        loader: 'ts-loader',
+                    },
+                    {
+                        test: /\.css$/,
+                        use: [
+                            { loader: "style-loader", options: { injectType: "linkTag" } },
+                            { loader: "file-loader" },
+                        ]
+                    },
+                ],
+            },
+            optimization: {
+                minimizer: [new TerserPlugin({
+                    extractComments: false,
+                })],
+            },
+            experiments: {
+                outputModule: true,
+            }
+        });
+    }
+    return modules;
 };

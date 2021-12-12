@@ -3,6 +3,7 @@ import {
     createElementWithContent,
     generateQuickGuid,
     getAnnotations,
+    getBrowserName,
     getWordUnderCursor,
     htmlEncode,
     initL10n,
@@ -180,6 +181,25 @@ const Front = (function() {
     var keystroke = document.getElementById('sk_keystroke');
 
     var _display;
+    self.startInputGuard = () => {
+        if (getBrowserName() === "Safari") {
+            var inputGuard = setInterval(() => {
+                let input = null;
+                for (const a of document.querySelectorAll("input, textarea")) {
+                    if (a.getBoundingClientRect().width) {
+                        input = a;
+                        break;
+                    }
+                }
+                if (input && document.activeElement !== input) {
+                    input.focus();
+                } else {
+                    clearInterval(inputGuard);
+                }
+                console.log(inputGuard);
+            }, 100);
+        }
+    };
     _actions['hidePopup'] = function() {
         if (_display && _display.style.display !== "none") {
             _display.style.display = "none";
@@ -198,6 +218,7 @@ const Front = (function() {
         _display = td;
         _display.style.display = "";
         _display.onShow && _display.onShow(args);
+        self.startInputGuard();
     }
 
     function showElement(td, args) {
@@ -783,6 +804,7 @@ var Find = (function() {
             }
         };
         input.focus();
+        Front.startInputGuard();
         self.enter();
     };
     return self;

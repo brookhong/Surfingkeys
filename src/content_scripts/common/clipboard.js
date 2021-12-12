@@ -1,6 +1,8 @@
+import { RUNTIME } from './runtime.js';
 import {
     actionWithSelectionPreserved,
     insertJS,
+    getBrowserName,
     setSanitizedContent,
     showBanner,
 } from './utils.js';
@@ -36,7 +38,7 @@ function createClipboard() {
      * });
      */
     self.read = function(onReady) {
-        if (window.navigator.userAgent.indexOf("Firefox") !== -1 &&
+        if (getBrowserName() === "Firefox" &&
             typeof navigator.clipboard === 'object' && typeof navigator.clipboard.readText === 'function') {
           navigator.clipboard.readText().then((data) => {
               // call back onReady in a different thread to avoid breaking UI operations
@@ -73,27 +75,28 @@ function createClipboard() {
         const cb = () => {
             showBanner("Copied: " + text);
         };
-        if (window.navigator.userAgent.indexOf("Firefox") !== -1 &&
-            typeof navigator.clipboard === 'object' && typeof navigator.clipboard.writeText === 'function') {
-          navigator.clipboard.writeText(text).then(cb);
-          return;
-        }
-        insertJS(function() {
-            window.oncopy = document.oncopy;
-            document.oncopy = null;
-        }, function() {
-            clipboardActionWithSelectionPreserved(function() {
-                holder.value = text;
-                holder.select();
-                document.execCommand('copy');
-                holder.value = '';
-            });
+        if (getBrowserName() === "Chrome") {
             insertJS(function() {
-                document.oncopy = window.oncopy;
-                delete window.oncopy;
+                window.oncopy = document.oncopy;
+                document.oncopy = null;
+            }, function() {
+                clipboardActionWithSelectionPreserved(function() {
+                    holder.value = text;
+                    holder.select();
+                    document.execCommand('copy');
+                    holder.value = '';
+                });
+                insertJS(function() {
+                    document.oncopy = window.oncopy;
+                    delete window.oncopy;
+                });
+                cb();
             });
+        } else {
+            // works for Firefox and Safari now.
+            RUNTIME("writeClipboard", { text });
             cb();
-        });
+        }
     };
 
     return self;

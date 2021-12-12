@@ -79,5 +79,5 @@
         "pages/shadow.css",
         "pages/default.css"
     ],
-    "content_security_policy": "script-src 'self' https://www.google-analytics.com chrome-extension://aajlcoiaogpknhgninhopncaldipjdnp; object-src 'self'"
+    "content_security_policy": "script-src 'self' chrome-extension://aajlcoiaogpknhgninhopncaldipjdnp; object-src 'self'"
 }

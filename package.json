@@ -11,11 +11,13 @@
     "clean": "rm -rf dist/*",
     "build:doc": "documentation build src/content_scripts/common/api.js src/content_scripts/common/clipboard.js src/content_scripts/common/hints.js src/content_scripts/common/visual.js src/content_scripts/front.js -f md -o docs/api.md",
     "build:dev-firefox": "webpack --env=browser=firefox --mode=development --config ./config/webpack.config.js",
+    "build:dev-safari": "webpack --env=browser=safari --mode=development --config ./config/webpack.config.js",
     "build:dev": "webpack --mode=development --config ./config/webpack.config.js",
     "build:prod-firefox": "webpack --env=browser=firefox --mode=production --config ./config/webpack.config.js",
+    "build:prod-safari": "webpack --env=browser=safari --mode=production --config ./config/webpack.config.js",
     "build:prod": "webpack --mode=production --config ./config/webpack.config.js",
     "build:testdata": "webpack --mode=production --config ./config/webpack.test.config.js",
-    "build": "npm-run-all clean test build:doc build:prod build:prod-firefox",
+    "build": "npm-run-all clean test build:doc build:prod build:prod-firefox build:prod-safari",
     "test": "jest"
   },
   "repository": {
@@ -43,6 +45,7 @@
     "documentation": "^13.2.5",
     "file-loader": "^6.2.0",
     "filemanager-webpack-plugin": "^6.1.7",
+    "jest": "^27.3.1",
     "jest-image-snapshot": "^4.5.1",
     "npm-run-all": "^4.1.5",
     "puppeteer": "^10.2.0",

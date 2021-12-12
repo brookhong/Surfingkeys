@@ -6,6 +6,7 @@ import {
     actionWithSelectionPreserved,
     dispatchMouseEvent,
     flashPressedLink,
+    getBrowserName,
     getTextNodes,
     getTextRect,
     getVisibleElements,
@@ -157,7 +158,7 @@ function createVisual(clipboard, hints) {
         feature_group: 9,
         code: function() {
             document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
-            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+            if (getBrowserName() !== "Firefox") {
                 modifySelection();
             } else {
                 self.hideCursor();
@@ -183,7 +184,7 @@ function createVisual(clipboard, hints) {
                 dispatchSKEvent('showStatus', [2, currentOccurrence + 1 + ' / ' + matches.length]);
             }
 
-            if (window.navigator.userAgent.indexOf("Firefox") === -1) {
+            if (getBrowserName() !== "Firefox") {
                 modifySelection();
             } else {
                 self.hideCursor();
@@ -211,7 +212,7 @@ function createVisual(clipboard, hints) {
         p: "paragraphboundary"
     };
     function _selectUnit(w) {
-        if (window.navigator.userAgent.indexOf("Firefox") === -1 || (w !== "p" && w !== "s")) {
+        if (getBrowserName() !== "Firefox" || (w !== "p" && w !== "s")) {
             var unit = _units[w];
             // sentence and paragraphboundary not support in firefox
             // document.getSelection().modify("move", "backward", "paragraphboundary")

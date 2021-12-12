@@ -1,4 +1,5 @@
 import {
+    createElementWithContent,
     showBanner,
     showPopup,
 } from '../common/utils.js';

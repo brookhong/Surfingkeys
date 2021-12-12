@@ -524,7 +524,7 @@ function start(browser) {
         loadSettings('blocklist', function(data) {
             var origin = ".*";
             var senderOrigin = sender.origin || new URL(getSenderUrl(sender)).origin;
-            if (chrome.extension.getURL("").indexOf(senderOrigin) !== 0) {
+            if (chrome.extension.getURL("/").indexOf(senderOrigin) !== 0 && senderOrigin !== "null") {
                 origin = senderOrigin;
             }
             if (data.blocklist.hasOwnProperty(origin)) {
@@ -543,7 +543,7 @@ function start(browser) {
     };
     self.toggleMouseQuery = function(message, sender, sendResponse) {
         loadSettings('mouseSelectToQuery', function(data) {
-            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("")) !== 0) {
+            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("/")) !== 0) {
                 var mouseSelectToQuery = data.mouseSelectToQuery || [];
                 var idx = mouseSelectToQuery.indexOf(message.origin);
                 if (idx === -1) {
@@ -659,12 +659,18 @@ function start(browser) {
         });
     };
     self.getTopSites = function(message, sender, sendResponse) {
-        chrome.topSites.get(function(urls) {
-            urls = _filterByTitleOrUrl(urls, message.query);
-            _response(message, sendResponse, {
-                urls: urls
+        if (chrome.topSites) {
+            chrome.topSites.get(function(urls) {
+                urls = _filterByTitleOrUrl(urls, message.query);
+                _response(message, sendResponse, {
+                    urls: urls
+                });
             });
-        });
+        } else {
+            _response(message, sendResponse, {
+                urls: []
+            });
+        }
     };
 
 
@@ -1606,6 +1612,9 @@ function start(browser) {
             chrome.webRequest.onBeforeSendHeaders.removeListener(onBeforeSendHeaders);
         }
         chrome.tabs.reload(sender.tab.id);
+    };
+    self.writeClipboard = function (message, sender, sendResponse) {
+        navigator.clipboard.writeText(message.text)
     };
 
     self.getContainerName = browser._getContainerName(self, _response);

@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import {
     constructSearchURL,
     createElementWithContent,
+    getBrowserName,
     htmlEncode,
     parseAnnotation,
     scrollIntoViewIfNeeded,
@@ -498,7 +499,7 @@ function createOmnibar(front, clipboard) {
             if (b.hasOwnProperty('html')) {
                 li = self.createItemFromRawHtml(b);
             } else if (b.hasOwnProperty('url') && b.url !== undefined) {
-                if (window.navigator.userAgent.indexOf("Firefox") !== -1 && /^(place|data):/i.test(b.url)) {
+                if (getBrowserName() === "Firefox" && /^(place|data):/i.test(b.url)) {
                     return null;
                 }
                 li = self.createURLItem(b, rxp);
