@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import Nvim from 'src/nvim/nvim';
+import Nvim from 'src/nvim/Nvim';
 
 import type { Transport } from 'src/nvim/types';
 

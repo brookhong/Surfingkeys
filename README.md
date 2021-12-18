@@ -2,7 +2,7 @@
 
 [![Node CI](https://github.com/brookhong/Surfingkeys/workflows/Node%20CI/badge.svg?branch=master)](https://github.com/brookhong/Surfingkeys/actions?query=workflow%3A%22Node+CI%22+branch%3Amaster)
 
-Surfingkeys is another Chrome/Firefox extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
+Surfingkeys is another web browser(including Google Chrome, Chromium based browsers, Firefox, Safari) extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his own functions.
 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his own defined Javascript function. For example,
 
@@ -10,22 +10,39 @@ Surfingkeys is created with all settings described in Javascript, so it's easy f
         Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
-Surfingkeys works for Firefox(above 57) since 0.9.15, with below features as exceptions:
-
-* Sync settings across devices for same account
-* Proxy settings
-* Markdown preview
-
 Surfingkeys is doing its best to make full use of keyboard for web browsing, but there are some limitations from Google Chrome itself, please see [Brook Build of Chromium](https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html) for a more thorough experience.
 
 ## Installation
 
 <img src="https://raw.githubusercontent.com/brookhong/Surfingkeys/master/sk.svg" width="384">
 
-* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
-* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
-* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
-* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1599827286)
+* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) for Google Chrome, Chromium based browsers
+* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/) for Firefox
+* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg) for Microsoft Edge
+* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1599827286) for Safari
+
+### Feature availability
+| Features \ Browsers | Chromium family (above 45) | Firefox (above 57) | Safari (above 15) |
+|:---------------|:-----|:-----|:-----|
+| Follow links | Y | Y | Y |
+| Surfingkeys modes | Y | Y | Y |
+| Omnibar | Y | Y | partly |
+| Search selected with | Y | Y | partly
+| Vim-like marks | Y | Y | Y |
+| Switch tabs | Y | Y | Y |
+| Windows management | Y | Y | N |
+| Commands | Y | Y | Y |
+| Smooth scroll | Y | Y | Y |
+| Session management | Y | Y | Y |
+| Repeats action by pressing number before mapkey | Y | Y | Y |
+| Hotkey to toggle Surfingkeys | Y | Y | Y |
+| VIM editor and Emacs editor | Y | Y | Y |
+| Dot to repeat previous action | Y | Y | Y |
+| Capture page | Y | Y | Y |
+| PDF viewer | Y | N | N |
+| Sync across devices | Y | N | Y |
+| Proxy | Y | N | N |
+| Markdown preview |Y  | Y | N |
 
 ### TABLE OF CONTENTS
 

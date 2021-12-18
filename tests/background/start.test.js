@@ -63,6 +63,15 @@ describe('background start', () => {
         };
 
         start({
+            getLatestHistoryItem: (text, maxResults, cb) => {
+                chrome.history.search({
+                    startTime: 0,
+                    text,
+                    maxResults
+                }, function(items) {
+                    cb(items);
+                });
+            },
             _setNewTabUrl: jest.fn(),
             _getContainerName: jest.fn(),
             loadRawSettings: jest.fn(),
