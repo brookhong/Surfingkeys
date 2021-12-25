@@ -79,7 +79,7 @@ function createMappingEditor(elmId) {
 if (getBrowserName() === "Firefox") {
     document.querySelector("#localPathForSettings").style.display = "none";
     document.querySelector("#proxySettings").style.display = "none";
-} else if (getBrowserName() === "Safari") {
+} else if (getBrowserName().startsWith("Safari")) {
     document.querySelector("#localPathForSettings").style.display = "none";
     document.querySelector("#proxySettings").style.display = "none";
     document.querySelector("#donationDiv").style.display = "none";

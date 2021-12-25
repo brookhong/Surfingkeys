@@ -182,7 +182,7 @@ const Front = (function() {
 
     var _display;
     self.startInputGuard = () => {
-        if (getBrowserName() === "Safari") {
+        if (getBrowserName().startsWith("Safari")) {
             var inputGuard = setInterval(() => {
                 let input = null;
                 for (const a of document.querySelectorAll("input, textarea")) {
@@ -655,12 +655,6 @@ const Front = (function() {
             evt.preventDefault();
         }
     }, { passive: false });
-
-    window.addEventListener('beforeunload', function() {
-        top.postMessage({
-            action: "frontendUnloaded"
-        }, topOrigin);
-    });
 
     return self;
 })();

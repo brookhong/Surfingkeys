@@ -111,8 +111,15 @@ function createUiHost(onload) {
                 document.body.style.animationFillMode = "";
                 document.body.style.overflowY = _origOverflowY;
             }
+            if (getBrowserName().startsWith("Safari-iOS")) {
+                const input = document.createElement("input");
+                document.body.appendChild(input);
+                input.focus();
+                input.blur();
+                input.remove();
+            }
         } else {
-            if (getBrowserName() === "Safari") {
+            if (getBrowserName().startsWith("Safari")) {
                 ifr.focus();
             }
             if (document.body) {
@@ -125,13 +132,10 @@ function createUiHost(onload) {
         }
         lastStateOfPointerEvents = response.pointerEvents;
     };
-    _actions['frontendUnloaded'] = function(response) {
-        window.removeEventListener('message', _onWindowMessage, true);
-        uiHost.remove();
-    };
 
     uiHost.detach = function() {
-        ifr.src = chrome.runtime.getURL('');
+        window.removeEventListener('message', _onWindowMessage, true);
+        uiHost.remove();
     };
     return uiHost;
 }
