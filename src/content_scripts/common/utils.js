@@ -413,7 +413,7 @@ function getTextRect() {
     } catch (e) {
         return null;
     }
-    return _focusedRange.getBoundingClientRect();
+    return _focusedRange.getClientRects();
 }
 
 function getNearestWord(text, offset) {
@@ -456,7 +456,7 @@ function getWordUnderCursor(mouseCursor) {
     var selection = document.getSelection();
     if (selection.focusNode && selection.focusNode.textContent) {
         var range = getNearestWord(selection.focusNode.textContent, selection.focusOffset);
-        var selRect = getTextRect(selection.focusNode, range[0], range[0] + range[1]);
+        var selRect = getTextRect(selection.focusNode, range[0], range[0] + range[1])[0];
         var word = selection.focusNode.textContent.substr(range[0], range[1]);
         if (selRect && word) {
             if (!mouseCursor || _clickPos && selRect.has(_clickPos[0], _clickPos[1], 0, 0)) {

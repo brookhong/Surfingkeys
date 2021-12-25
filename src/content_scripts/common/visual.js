@@ -423,7 +423,7 @@ function createVisual(clipboard, hints) {
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
             scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
-            var r = getTextRect(selection.focusNode, selection.focusOffset);
+            var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
             cursor.style.position = "fixed";
             cursor.style.left = r.left + 'px';
             if (r.left < 0 || r.left >= window.innerWidth) {
@@ -473,21 +473,26 @@ function createVisual(clipboard, hints) {
 
     var holder = document.createElement("div");
     function createMatchMark(node1, offset1, node2, offset2) {
-        var r = getTextRect(node1, offset1, node2, offset2);
-        if (r.width > 0 && r.height > 0) {
-            var mark = mark_template.cloneNode(false);
-            mark.style.position = "absolute";
-            mark.style.zIndex = 2147483298;
-            mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-            mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
-            mark.style.width = r.width + 'px';
-            mark.style.height = r.height + 'px';
-            holder.appendChild(mark);
-            if (!document.documentElement.contains(holder)) {
-                document.documentElement.prepend(holder);
+        var marks = Array.from(getTextRect(node1, offset1, node2, offset2)).map((r) => {
+            if (r.width > 0 && r.height > 0) {
+                var mark = mark_template.cloneNode(false);
+                mark.style.position = "absolute";
+                mark.style.zIndex = 2147483298;
+                mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                mark.style.width = r.width + 'px';
+                mark.style.height = r.height + 'px';
+                holder.appendChild(mark);
+                if (!document.documentElement.contains(holder)) {
+                    document.documentElement.prepend(holder);
+                }
+                return mark;
             }
+            return null;
+        }).filter((m) => m !== null);
 
-            matches.push([node1, offset1, mark]);
+        if (marks.length) {
+            matches.push([node1, offset1, marks]);
         }
     }
 
@@ -505,19 +510,18 @@ function createVisual(clipboard, hints) {
                 }
             }
         });
-        if (matches.length === 0) {
-            // find across nodes with window.find if no found within each node.
-            selection.setPosition(null, 0);
-            while (findNextTextNodeBy(pattern.source, pattern.flags.indexOf('i') === -1, false)) {
-                if (selection.anchorNode !== selection.focusNode) {
-                    createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
-                }
+        var scrollTop = document.scrollingElement.scrollTop;
+        selection.setPosition(null, 0);
+        while (findNextTextNodeBy(pattern.source, pattern.flags.indexOf('i') === -1, false)) {
+            if (selection.anchorNode !== selection.focusNode) {
+                createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
             }
         }
+        document.scrollingElement.scrollTop = scrollTop;
         if (matches.length) {
             currentOccurrence = 0;
             for (var i = 0; i < matches.length; i++) {
-                var br = matches[i][2].getBoundingClientRect();
+                var br = matches[i][2][0].getBoundingClientRect();
                 if (br.top > 0) {
                     currentOccurrence = i;
                     break;
@@ -716,9 +720,11 @@ function createVisual(clipboard, hints) {
             if (n !== document.scrollingElement) {
                 n.onscroll = function() {
                     matches.forEach(function(m) {
-                        var r = getTextRect(m[0], m[1]);
-                        m[2].style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-                        m[2].style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                        var r = getTextRect(m[0], m[1])[0];
+                        m[2].forEach((mi) => {
+                            mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                            mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                        });
                     });
                 };
                 registeredScrollNodes.push(n);
