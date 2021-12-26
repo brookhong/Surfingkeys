@@ -634,6 +634,9 @@ function start(browser) {
         });
     };
     function _filterByTitleOrUrl(tabs, query) {
+        tabs = tabs.filter(function(b) {
+            return b.url;
+        });
         if (query && query.length) {
             tabs = tabs.filter(function(b) {
                 return b.title.indexOf(query) !== -1 || (b.url && b.url.indexOf(query) !== -1);
@@ -1616,63 +1619,31 @@ function start(browser) {
     self.writeClipboard = function (message, sender, sendResponse) {
         navigator.clipboard.writeText(message.text)
     };
+    self.readClipboard = function (message, sender, sendResponse) {
+        // only for Safari
+        chrome.runtime.sendNativeMessage("application.id", {message: "Clipboard.read"}, function(response) {
+            _response(message, sendResponse, response);
+        });
+    };
 
     self.getContainerName = browser._getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
 
-    function generatePassword() {
-        const random = new Uint32Array(8);
-        window.crypto.getRandomValues(random);
-        return Array.from(random).join("");
-    }
-
-    let nativeConnected = false;
-    function startNative() {
-        return new Promise((resolve, reject) => {
-            const nm = chrome.runtime.connectNative("surfingkeys");
-            const password = generatePassword();
-            nm.onDisconnect.addListener((evt) => {
-                if (chrome.runtime.lastError) {
-                    var error = chrome.runtime.lastError.message;
-                }
-                if (nativeConnected) {
-                    nvimServer = startNative();
-                } else {
-                    reject("Failed to connect neovim, please make sure your neovim version 0.5 or above.");
-                }
-            });
-            nm.onMessage.addListener(async (resp) => {
-                if (resp.status === true) {
-                    nativeConnected = true;
-                    if (resp.res.event === "serverStarted") {
-                        const url = `127.0.0.1:${resp.res.port}/${password}`;
-                        resolve({url, nm});
-                    }
-                } else if (resp.err) {
-                    console.log(resp.err);
-                }
-            });
-            nm.postMessage({
-                startServer: true,
-                password
-            });
-        });
-    }
-
-    let nvimServer = startNative();
     self.connectNative = function (message, sender, sendResponse) {
-        nvimServer.then(({url, nm}) => {
-            nm.postMessage({
-                mode: message.mode
+        if (browser.nvimServer) {
+            browser.nvimServer.instance.then(({url, nm}) => {
+                nm.postMessage({
+                    mode: message.mode
+                });
+                _response(message, sendResponse, {
+                    url,
+                });
+            }).catch((error) => {
+                _response(message, sendResponse, {
+                    error,
+                });
             });
-            _response(message, sendResponse, {
-                url,
-            });
-        }).catch((error) => {
-            _response(message, sendResponse, {
-                error,
-            });
-        });
+        }
     };
 }
 

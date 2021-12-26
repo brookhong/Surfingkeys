@@ -481,7 +481,7 @@ module.exports = function(api) {
         });
     }
 
-    if (browser !== "Safari") {
+    if (!getBrowserName().startsWith("Safari")) {
         mapkey('t', '#8Open a URL', function() {
             Front.openOmnibar({type: "URLs"});
         });

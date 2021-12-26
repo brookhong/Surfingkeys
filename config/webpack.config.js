@@ -1,6 +1,5 @@
 const path = require('path');
 const package = require('../package.json');
-let buildPath = path.resolve(__dirname, '../dist/');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const FileManagerPlugin = require('filemanager-webpack-plugin');
@@ -23,7 +22,7 @@ function modifyManifest(browser, mode, buffer) {
     } else {
         manifest.permissions.push("tts");
         manifest.permissions.push("downloads.shelf");
-        manifest.background.persistent = true;
+        manifest.background.persistent = false;
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";
 
@@ -40,6 +39,7 @@ function modifyManifest(browser, mode, buffer) {
 module.exports = (env, argv) => {
     const mode = argv.mode;
     const browser = env.browser ? env.browser : 'chrome';
+    let buildPath = path.resolve(__dirname, `../dist/${mode}/`);
     buildPath += "/" + browser;
     const entry = {
         background: `./src/background/${browser}.js`,
@@ -132,7 +132,7 @@ module.exports = (env, argv) => {
             })
         ]
     }];
-    if (browser !== "safari") {
+    if (browser !== "safari" && mode === "production") {
         modules[0].plugins.push(
             new FileManagerPlugin({
                 events: {
