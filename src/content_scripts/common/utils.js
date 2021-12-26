@@ -401,19 +401,25 @@ function getTextNodePos(node, offset, length) {
 
 var _focusedRange = document.createRange();
 function getTextRect() {
+    let rects = [];
     try {
-        _focusedRange.setStart(arguments[0], arguments[1]);
-        if (arguments.length > 3) {
-            _focusedRange.setEnd(arguments[2], arguments[3]);
-        } else if (arguments.length > 2) {
-            _focusedRange.setEnd(arguments[0], arguments[2]);
-        } else {
-            _focusedRange.setEnd(arguments[0], arguments[1]);
+        let start = arguments[1];
+        while (rects.length === 0 && start >= 0) {
+            _focusedRange.setStart(arguments[0], start);
+            if (arguments.length > 3) {
+                _focusedRange.setEnd(arguments[2], arguments[3]);
+            } else if (arguments.length > 2) {
+                _focusedRange.setEnd(arguments[0], arguments[2]);
+            } else {
+                _focusedRange.setEnd(arguments[0], arguments[1]);
+            }
+            rects = _focusedRange.getClientRects();
+            start --;
         }
     } catch (e) {
-        return null;
+        return [];
     }
-    return _focusedRange.getClientRects();
+    return rects;
 }
 
 function getNearestWord(text, offset) {

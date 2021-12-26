@@ -112,7 +112,10 @@ function createUiHost(onload) {
                 document.body.style.overflowY = _origOverflowY;
             }
             if (getBrowserName().startsWith("Safari-iOS")) {
+                // hacky way to get back focus from frontend frame in iOS Safari.
                 const input = document.createElement("input");
+                input.style.position = 'fixed';
+                input.style.top = '0px';
                 document.body.appendChild(input);
                 input.focus();
                 input.blur();

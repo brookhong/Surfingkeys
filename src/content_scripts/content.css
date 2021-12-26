@@ -1,5 +1,10 @@
-surfingkeys_mark {
+div.surfingkeys_match_mark {
     background-color: #ff0;
+    color: #000;
+    opacity: 0.7;
+}
+div.surfingkeys_selection_mark {
+    background-color: #b4d7fe;
     color: #000;
     opacity: 0.7;
 }

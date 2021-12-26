@@ -85,6 +85,23 @@ function createVisual(clipboard, hints) {
         _onStateChange();
     });
 
+    self.addEventListener('resize', function(event) {
+        self.visualUpdate(runtime.conf.lastQuery);
+        select(matches[currentOccurrence]);
+    });
+    let selectionMark_ = null;
+    const clearSelectionMark = () => {
+        if (selectionMark_) {
+            selectionMark_.forEach((m) => {
+                m.remove();
+            });
+        }
+    };
+    self.addEventListener('selectionchange', function(event) {
+        clearSelectionMark();
+        selectionMark_ = createSelectionMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
+    });
+
     self.mappings = new Trie();
     self.map_node = self.mappings;
     self.repeats = "";
@@ -362,7 +379,7 @@ function createVisual(clipboard, hints) {
         currentOccurrence,
         state = 0,
         status = ['', 'Caret', 'Range'],
-        mark_template = document.createElement("surfingkeys_mark"),
+        mark_template = document.createElement("div"),
         cursor = document.createElement("div");
     cursor.className = "surfingkeys_cursor";
     cursor.style.zIndex = 2147483298;
@@ -424,22 +441,26 @@ function createVisual(clipboard, hints) {
             scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
 
             var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
-            cursor.style.position = "fixed";
-            cursor.style.left = r.left + 'px';
-            if (r.left < 0 || r.left >= window.innerWidth) {
-                document.scrollingElement.scrollLeft += r.left - window.innerWidth / 2;
-                cursor.style.left = window.innerWidth / 2 + 'px';
-            } else {
+            if (!r) {
+                r = selection.focusNode.getBoundingClientRect();
+            }
+            if (r) {
+                cursor.style.position = "fixed";
                 cursor.style.left = r.left + 'px';
+                if (r.left < 0 || r.left >= window.innerWidth) {
+                    document.scrollingElement.scrollLeft += r.left - window.innerWidth / 2;
+                    cursor.style.left = window.innerWidth / 2 + 'px';
+                } else {
+                    cursor.style.left = r.left + 'px';
+                }
+                if (r.top < 0 || r.top >= window.innerHeight) {
+                    document.scrollingElement.scrollTop += r.top - window.innerHeight / 2;
+                    cursor.style.top = window.innerHeight / 2 + 'px';
+                } else {
+                    cursor.style.top = r.top + 'px';
+                }
+                cursor.style.height = r.height + 'px';
             }
-            if (r.top < 0 || r.top >= window.innerHeight) {
-                document.scrollingElement.scrollTop += r.top - window.innerHeight / 2;
-                cursor.style.top = window.innerHeight / 2 + 'px';
-            } else {
-                cursor.style.top = r.top + 'px';
-            }
-            cursor.style.height = r.height + 'px';
-            cursor.style.width = r.width + 'px';
 
             document.body.appendChild(cursor);
         }
@@ -472,10 +493,11 @@ function createVisual(clipboard, hints) {
     }
 
     var holder = document.createElement("div");
-    function createMatchMark(node1, offset1, node2, offset2) {
-        var marks = Array.from(getTextRect(node1, offset1, node2, offset2)).map((r) => {
+    function createSelectionMark(node1, offset1, node2, offset2) {
+        return Array.from(getTextRect(node1, offset1, node2, offset2)).map((r) => {
             if (r.width > 0 && r.height > 0) {
                 var mark = mark_template.cloneNode(false);
+                mark.className = "surfingkeys_selection_mark";
                 mark.style.position = "absolute";
                 mark.style.zIndex = 2147483298;
                 mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
@@ -490,8 +512,14 @@ function createVisual(clipboard, hints) {
             }
             return null;
         }).filter((m) => m !== null);
+    }
+    function createMatchMark(node1, offset1, node2, offset2) {
+        const marks = createSelectionMark(node1, offset1, node2, offset2);
 
         if (marks.length) {
+            marks.forEach((m) => {
+                m.className = "surfingkeys_match_mark";
+            });
             matches.push([node1, offset1, marks]);
         }
     }
@@ -532,6 +560,7 @@ function createVisual(clipboard, hints) {
     }
 
     self.visualClear = function() {
+        clearSelectionMark();
         self.hideCursor();
         matches = [];
         registeredScrollNodes.forEach(function(n) {
@@ -557,6 +586,7 @@ function createVisual(clipboard, hints) {
     };
 
     self.onExit = function() {
+        self.visualClear();
         document.removeEventListener('surfingkeys:cursorHidden', onCursorHiden);
     };
 
