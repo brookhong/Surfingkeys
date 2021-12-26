@@ -279,6 +279,19 @@ function createNormal(insert) {
                 dispatchSKEvent('scrollDone');
             }
         };
+        elm.safeScroll_ = (prop, value, increasing) => {
+            const clientHeight = elm === document.scrollingElement ? window.innerHeight : elm.clientHeight;
+            const clientWidth = elm === document.scrollingElement ? window.innerWidth : elm.clientWidth;
+            const range = prop === "scrollTop" ? [0, elm.scrollHeight - clientHeight] : [0, elm.scrollWidth - clientWidth];
+            const boundary = increasing ? range[1] : range[0];
+            if (value >= range[0] && value <= range[1]) {
+                elm[prop] = value;
+                return false;
+            } else {
+                elm[prop] = boundary;
+                return true;
+            }
+        };
         elm.smoothScrollBy = function(x, y, d) {
             if (!keyHeld) {
                 var [prop, distance] = y ? ['scrollTop', y] : ['scrollLeft', x],
@@ -295,25 +308,25 @@ function createNormal(insert) {
                         return window.requestAnimationFrame(step);
                     }
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
+                    let boundaryHit = false;
                     if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
                         stepCompleted = true;
                         if (keyHeld > runtime.conf.scrollFriction) {
-                            elm[prop] += delta;
+                            boundaryHit = elm.safeScroll_(prop, old + delta, distance > 0);
                             originValue = elm[prop];
                         } else if (keyHeld > 0) {
                             keyHeld ++;
                         } else {
-                            elm[prop] = originValue + distance;
+                            boundaryHit = elm.safeScroll_(prop, originValue + distance, distance > 0);
                         }
                     } else {
-                        elm[prop] += delta;
+                        boundaryHit = elm.safeScroll_(prop, old + delta, distance > 0);
                     }
                     previousTimestamp = t;
 
-                    if (!keyHeld && (elm[prop] === old // boundary hit
+                    if (!keyHeld && (boundaryHit
                         || stepCompleted )// distance completed
                     ) {
-                        keyHeld = 0;
                         elm.style.scrollBehavior = '';
                         dispatchSKEvent('scrollDone');
                     } else {
