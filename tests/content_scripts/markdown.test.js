@@ -7,6 +7,12 @@ describe('markdown viewer', () => {
         createHints, createVisual, createFront, createAPI;
 
     beforeAll(async () => {
+        const navigator = { userAgent: "Chrome", platform: "Mac" };
+        Object.defineProperty(window, 'navigator', {
+            value: navigator,
+            writable: true
+        });
+
         global.chrome = {
             runtime: {
                 sendMessage: jest.fn(),

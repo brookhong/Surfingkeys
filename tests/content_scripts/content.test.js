@@ -119,7 +119,7 @@ describe('content.js', () => {
         await new Promise((r) => {
             // listener on surfingkeys:showPopup must be added before content.start
             document.addEventListener("surfingkeys:showPopup", function(evt) {
-                expect(evt.detail[0]).toBe("Error found in settings: ReferenceError: map is not defined");
+                expect(evt.detail[0]).toBe("[SurfingKeys] Error found in settings: ReferenceError: map is not defined");
                 r(evt);
             }, {once: true});
 
@@ -128,6 +128,26 @@ describe('content.js', () => {
             document.addEventListener("DOMContentLoaded", function(evt) {
                 expect(mockNormal.mappings.find('e').meta.code).toBe(mockHalfPageUp);
                 expect(mockNormal.mappings.find('d').meta.code).toBe(mockHalfPageDown);
+            }, {once: true});
+            document.dispatchEvent(new Event("DOMContentLoaded", {
+                bubbles: true,
+                cancelable: true
+            }));
+        });
+    });
+
+    test("verify unmapAllExcept", async () => {
+        settings = {
+            showAdvanced: true,
+            snippets: 'api.unmapAllExcept([";x"])'
+        };
+        content.start(mockBrowser);
+        await new Promise((r) => {
+            document.addEventListener("DOMContentLoaded", function(evt) {
+                expect(mockNormal.mappings.find('e')).toBe(undefined);
+                expect(mockNormal.mappings.find('d')).toBe(undefined);
+                expect(mockNormal.mappings.find(';x').meta.code).toBe(mockClosePage);
+                r(evt);
             }, {once: true});
             document.dispatchEvent(new Event("DOMContentLoaded", {
                 bubbles: true,

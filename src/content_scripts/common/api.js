@@ -1,4 +1,5 @@
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import Trie from './trie';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
@@ -692,6 +693,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         readText: browser.readText,
         removeSearchAlias,
         tabOpenLink,
+        vmap,
         vmapkey,
         Clipboard: clipboard,
         Hints: {

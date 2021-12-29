@@ -80,9 +80,9 @@ function applySettings(api, normal, rs) {
         var delta = runScript(api, rs.snippets);
         if (delta.error !== "") {
             if (window === top) {
-                showPopup("Error found in settings: " + delta.error);
+                showPopup("[SurfingKeys] Error found in settings: " + delta.error);
             } else {
-                console.log("Error found in settings({0}): {1}".format(window.location.href, delta.error));
+                console.log("[SurfingKeys] Error found in settings({0}): {1}".format(window.location.href, delta.error));
             }
         }
         if (!isEmptyObject(delta.settings)) {
