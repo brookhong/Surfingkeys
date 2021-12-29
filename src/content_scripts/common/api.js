@@ -18,6 +18,7 @@ import {
     tabOpenLink,
     toggleQuote,
 } from './utils.js';
+import Trie from './trie.js';
 
 function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
