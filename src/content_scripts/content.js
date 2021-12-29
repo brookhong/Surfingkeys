@@ -140,7 +140,7 @@ function _initModules() {
     startScrollNodeObserver(normal);
     const hints = createHints(insert, normal);
     const visual = createVisual(clipboard, hints);
-    const front = createFront(insert, normal, hints, visual);
+    const front = createFront(insert, normal, hints, visual, _browser);
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
     createDefaultMappings(api);

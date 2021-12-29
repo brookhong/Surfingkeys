@@ -1,7 +1,7 @@
 import {
     showPopup,
 } from './common/utils.js';
-import { dispatchSKEvent, RUNTIME } from './common/runtime.js';
+import { dispatchSKEvent, runtime, RUNTIME } from './common/runtime.js';
 import { start } from './content.js';
 
 function usePdfViewer() {

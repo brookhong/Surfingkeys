@@ -13,7 +13,7 @@ import {
 import { RUNTIME, dispatchSKEvent, runtime } from './common/runtime.js';
 import createUiHost from './uiframe.js';
 
-function createFront(insert, normal, hints, visual) {
+function createFront(insert, normal, hints, visual, browser) {
     var self = {};
     // The agent is a front stub to talk with pages/frontend.html
     // that will live in all content window except the frontend.html
@@ -344,7 +344,7 @@ function createFront(insert, normal, hints, visual) {
             hidePopup();
         } else if (_inlineQuery) {
             if (runtime.conf.autoSpeakOnInlineQuery) {
-                readText(query);
+                browser.readText(query);
             }
             query = query.toLocaleLowerCase();
             runtime.updateHistory('OmniQuery', query);
