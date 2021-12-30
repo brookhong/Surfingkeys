@@ -2,18 +2,18 @@ const path = require('path');
 export const DIST_DIR = path.resolve(__dirname, '../dist/');
 
 /*
- * wait for a window message that matches `messageToWait` and is delivered from `messageDeliver`.
+ * wait for an Event of `obj` that matches `messageToWait` and is delivered from `messageDeliver`.
  */
-export const waitForWindowMessage = async (messageToWait, messageDeliver) => {
+export const waitForEvent = async (obj, evt, messageToWait, messageDeliver) => {
     await new Promise((r) => {
         const handler = (evt) => {
             var _message = evt.data;
             if (messageToWait(_message)) {
-                window.removeEventListener("message", handler, true);
+                obj.removeEventListener(evt, handler, true);
                 r(_message);
             }
         };
-        window.addEventListener("message", handler, true);
+        obj.addEventListener(evt, handler, true);
         messageDeliver();
     });
 };

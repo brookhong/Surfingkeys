@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const html = fs.readFileSync(path.resolve(__dirname, '../../../src/content_scripts/ui/frontend.html'), 'utf8');
 
-import { waitForWindowMessage } from '../../utils';
+import { waitForEvent } from '../../utils';
 
 describe('ui front', () => {
 
@@ -25,7 +25,7 @@ describe('ui front', () => {
 
         window.focus = jest.fn();
         document.dispatchEvent = jest.fn();
-        await waitForWindowMessage((_msg) => {
+        await waitForEvent(window, "message", (_msg) => {
             return _msg.action === "initFrontendAck";
         }, () => {
             window.postMessage({ action: "initFrontend", ack: true, origin: document.location.origin }, document.location.origin);
@@ -35,7 +35,7 @@ describe('ui front', () => {
     test('show omnibar', async () => {
         const elmOmnibarStyle = document.getElementById("sk_omnibar").style;
         expect(elmOmnibarStyle).toHaveProperty('display', 'none');
-        await waitForWindowMessage((_msg) => {
+        await waitForEvent(window, "message", (_msg) => {
             return _msg.action === "setFrontFrame";
         }, () => {
             window.postMessage({ action: "openOmnibar", type: "SearchEngine", extra: "b" }, document.location.origin);

@@ -701,6 +701,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             create: hints.create,
             dispatchMouseClick: hints.dispatchMouseClick,
             style: hints.style,
+            setNumeric: hints.setNumeric,
+            setCharacters: hints.setCharacters,
         },
         Visual: {
             style: visual.style,

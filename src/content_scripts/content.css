@@ -1,3 +1,8 @@
+div.surfingkeys_hints_host {
+    display: block;
+    opacity: 1;
+    color-scheme: auto;
+}
 div.surfingkeys_match_mark {
     background-color: #ff0;
     color: #000;

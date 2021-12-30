@@ -369,6 +369,14 @@ function createFront(insert, normal, hints, visual, browser) {
         }
     };
 
+    /**
+     * Register an inline query.
+     *
+     * @param {object} args `url`: string or function, the dictionary service url or a function to return the dictionary service url, `parseResult`: function, a function to parse result from dictionary service and return a HTML string to render explanation, `headers`: object[optional], in case your dictionary service needs authentication.
+     * @name Front.registerInlineQuery
+     *
+     * @see [example](https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query).
+     */
     self.registerInlineQuery = function(args) {
         _inlineQuery = args;
     };

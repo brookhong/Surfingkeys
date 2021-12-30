@@ -43,42 +43,49 @@
 *   [Clipboard.write][39]
     *   [Parameters][40]
     *   [Examples][41]
-*   [Hints.click][42]
-    *   [Parameters][43]
-    *   [Examples][44]
-*   [Hints.create][45]
-    *   [Parameters][46]
-    *   [Examples][47]
-*   [Hints.dispatchMouseClick][48]
-    *   [Parameters][49]
-    *   [Examples][50]
-*   [Hints.style][51]
-    *   [Parameters][52]
-    *   [Examples][53]
-*   [Visual.style][54]
-    *   [Parameters][55]
-    *   [Examples][56]
-*   [Front.showEditor][57]
-    *   [Parameters][58]
-    *   [Examples][59]
-*   [Front.openOmnibar][60]
-    *   [Parameters][61]
-    *   [Examples][62]
-*   [Front.showBanner][63]
-    *   [Parameters][64]
-    *   [Examples][65]
-*   [Front.showPopup][66]
-    *   [Parameters][67]
-    *   [Examples][68]
-*   [getClickableElements][69]
-    *   [Parameters][70]
-    *   [Examples][71]
-*   [tabOpenLink][72]
-    *   [Parameters][73]
-    *   [Examples][74]
-*   [RUNTIME][75]
-    *   [Parameters][76]
-    *   [Examples][77]
+*   [Hints.setNumeric][42]
+    *   [Examples][43]
+*   [Hints.setCharacters][44]
+    *   [Examples][45]
+*   [Hints.click][46]
+    *   [Parameters][47]
+    *   [Examples][48]
+*   [Hints.create][49]
+    *   [Parameters][50]
+    *   [Examples][51]
+*   [Hints.dispatchMouseClick][52]
+    *   [Parameters][53]
+    *   [Examples][54]
+*   [Hints.style][55]
+    *   [Parameters][56]
+    *   [Examples][57]
+*   [Visual.style][58]
+    *   [Parameters][59]
+    *   [Examples][60]
+*   [Front.showEditor][61]
+    *   [Parameters][62]
+    *   [Examples][63]
+*   [Front.openOmnibar][64]
+    *   [Parameters][65]
+    *   [Examples][66]
+*   [Front.registerInlineQuery][67]
+    *   [Parameters][68]
+*   [getBrowserName][69]
+*   [Front.showBanner][70]
+    *   [Parameters][71]
+    *   [Examples][72]
+*   [Front.showPopup][73]
+    *   [Parameters][74]
+    *   [Examples][75]
+*   [getClickableElements][76]
+    *   [Parameters][77]
+    *   [Examples][78]
+*   [tabOpenLink][79]
+    *   [Parameters][80]
+    *   [Examples][81]
+*   [RUNTIME][82]
+    *   [Parameters][83]
+    *   [Examples][84]
 
 ## mapkey
 
@@ -86,10 +93,10 @@ Create a shortcut in normal mode to execute your own action.
 
 ### Parameters
 
-*   `keys` **[string][78]** the key sequence for the shortcut.
-*   `annotation` **[string][78]** a help message to describe the action, which will displayed in help opened by `?`.
-*   `jscode` **[function][79]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
-*   `options` **[object][80]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
+*   `keys` **[string][85]** the key sequence for the shortcut.
+*   `annotation` **[string][85]** a help message to describe the action, which will displayed in help opened by `?`.
+*   `jscode` **[function][86]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
+*   `options` **[object][87]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
 
 ### Examples
 
@@ -108,10 +115,10 @@ Create a shortcut in visual mode to execute your own action.
 
 ### Parameters
 
-*   `keys` **[string][78]** the key sequence for the shortcut.
-*   `annotation` **[string][78]** a help message to describe the action, which will displayed in help opened by `?`.
-*   `jscode` **[function][79]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
-*   `options` **[object][80]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
+*   `keys` **[string][85]** the key sequence for the shortcut.
+*   `annotation` **[string][85]** a help message to describe the action, which will displayed in help opened by `?`.
+*   `jscode` **[function][86]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
+*   `options` **[object][87]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
 
 ## imapkey
 
@@ -121,10 +128,10 @@ Create a shortcut in insert mode to execute your own action.
 
 ### Parameters
 
-*   `keys` **[string][78]** the key sequence for the shortcut.
-*   `annotation` **[string][78]** a help message to describe the action, which will displayed in help opened by `?`.
-*   `jscode` **[function][79]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
-*   `options` **[object][80]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
+*   `keys` **[string][85]** the key sequence for the shortcut.
+*   `annotation` **[string][85]** a help message to describe the action, which will displayed in help opened by `?`.
+*   `jscode` **[function][86]** a Javascript function to be bound. If the function needs an argument, next pressed key will be fed to the function.
+*   `options` **[object][87]** `domain`: regex, a Javascript regex pattern to identify the domains that this mapping works, for example, `/github\.com/i` says that this mapping works only for github.com, `repeatIgnore`: boolean, whether this action can be repeated by dot command. (optional, default `null`)
 
 ## map
 
@@ -132,10 +139,10 @@ Map a key sequence to another in normal mode.
 
 ### Parameters
 
-*   `new_keystroke` **[string][78]** a key sequence to replace
-*   `old_keystroke` **[string][78]** a key sequence to be replaced
+*   `new_keystroke` **[string][85]** a key sequence to replace
+*   `old_keystroke` **[string][85]** a key sequence to be replaced
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping works. (optional, default `null`)
-*   `new_annotation` **[string][78]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
+*   `new_annotation` **[string][85]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
 
 ### Examples
 
@@ -149,7 +156,7 @@ Unmap a key sequence in normal mode.
 
 ### Parameters
 
-*   `keystroke` **[string][78]** a key sequence to be removed.
+*   `keystroke` **[string][85]** a key sequence to be removed.
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping will be removed. (optional, default `null`)
 
 ### Examples
@@ -164,7 +171,7 @@ Unmap all keybindings except those specified.
 
 ### Parameters
 
-*   `keystrokes` **[array][81]** the keybindings you want to keep.
+*   `keystrokes` **[array][88]** the keybindings you want to keep.
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping will be removed. (optional, default `null`)
 
 ### Examples
@@ -181,10 +188,10 @@ Map a key sequence to another in insert mode.
 
 ### Parameters
 
-*   `new_keystroke` **[string][78]** a key sequence to replace
-*   `old_keystroke` **[string][78]** a key sequence to be replaced
+*   `new_keystroke` **[string][85]** a key sequence to replace
+*   `old_keystroke` **[string][85]** a key sequence to be replaced
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping works. (optional, default `null`)
-*   `new_annotation` **[string][78]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
+*   `new_annotation` **[string][85]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
 
 ## iunmap
 
@@ -194,7 +201,7 @@ Unmap a key sequence in insert mode.
 
 ### Parameters
 
-*   `keystroke` **[string][78]** a key sequence to be removed.
+*   `keystroke` **[string][85]** a key sequence to be removed.
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping will be removed. (optional, default `null`)
 
 ## cmap
@@ -205,10 +212,10 @@ Map a key sequence to another in omnibar.
 
 ### Parameters
 
-*   `new_keystroke` **[string][78]** a key sequence to replace
-*   `old_keystroke` **[string][78]** a key sequence to be replaced
+*   `new_keystroke` **[string][85]** a key sequence to replace
+*   `old_keystroke` **[string][85]** a key sequence to be replaced
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping works. (optional, default `null`)
-*   `new_annotation` **[string][78]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
+*   `new_annotation` **[string][85]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
 
 ## vmap
 
@@ -218,10 +225,10 @@ Map a key sequence to another in visual mode.
 
 ### Parameters
 
-*   `new_keystroke` **[string][78]** a key sequence to replace
-*   `old_keystroke` **[string][78]** a key sequence to be replaced
+*   `new_keystroke` **[string][85]** a key sequence to replace
+*   `old_keystroke` **[string][85]** a key sequence to be replaced
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping works. (optional, default `null`)
-*   `new_annotation` **[string][78]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
+*   `new_annotation` **[string][85]** use it instead of the annotation from old_keystroke if provided. (optional, default `null`)
 
 ## vunmap
 
@@ -231,7 +238,7 @@ Unmap a key sequence in visual mode.
 
 ### Parameters
 
-*   `keystroke` **[string][78]** a key sequence to be removed.
+*   `keystroke` **[string][85]** a key sequence to be removed.
 *   `domain` **regex** a Javascript regex pattern to identify the domains that this mapping will be removed. (optional, default `null`)
 
 ## aceVimMap
@@ -240,9 +247,9 @@ Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
 
 ### Parameters
 
-*   `lhs` **[string][78]** a key sequence to replace
-*   `rhs` **[string][78]** a key sequence to be replaced
-*   `ctx` **[string][78]** a mode such as `insert`, `normal`.
+*   `lhs` **[string][85]** a key sequence to replace
+*   `rhs` **[string][85]** a key sequence to be replaced
+*   `ctx` **[string][85]** a mode such as `insert`, `normal`.
 
 ### Examples
 
@@ -256,13 +263,13 @@ Add a search engine alias into Omnibar.
 
 ### Parameters
 
-*   `alias` **[string][78]** the key to trigger this search engine, one or several chars, used as search alias, when you input the string and press `space` in omnibar, the search engine will be triggered.
-*   `prompt` **[string][78]** a caption to be placed in front of the omnibar.
-*   `search_url` **[string][78]** the URL of the search engine
-*   `search_leader_key` **[string][78]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
-*   `suggestion_url` **[string][78]** the URL to fetch suggestions in omnibar when this search engine is triggered. (optional, default `null`)
-*   `callback_to_parse_suggestion` **[function][79]** a function to parse response from `suggestion_url` and return a list of strings as suggestions. (optional, default `null`)
-*   `only_this_site_key` **[string][78]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
+*   `alias` **[string][85]** the key to trigger this search engine, one or several chars, used as search alias, when you input the string and press `space` in omnibar, the search engine will be triggered.
+*   `prompt` **[string][85]** a caption to be placed in front of the omnibar.
+*   `search_url` **[string][85]** the URL of the search engine
+*   `search_leader_key` **[string][85]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
+*   `suggestion_url` **[string][85]** the URL to fetch suggestions in omnibar when this search engine is triggered. (optional, default `null`)
+*   `callback_to_parse_suggestion` **[function][86]** a function to parse response from `suggestion_url` and return a list of strings as suggestions. (optional, default `null`)
+*   `only_this_site_key` **[string][85]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
 
 ### Examples
 
@@ -281,9 +288,9 @@ Remove a search engine alias from Omnibar.
 
 ### Parameters
 
-*   `alias` **[string][78]** the alias of the search engine to be removed.
-*   `search_leader_key` **[string][78]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
-*   `only_this_site_key` **[string][78]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
+*   `alias` **[string][85]** the alias of the search engine to be removed.
+*   `search_leader_key` **[string][85]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
+*   `only_this_site_key` **[string][85]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
 
 ### Examples
 
@@ -297,7 +304,7 @@ Read from clipboard.
 
 ### Parameters
 
-*   `onReady` **[function][79]** a callback function to handle text read from clipboard.
+*   `onReady` **[function][86]** a callback function to handle text read from clipboard.
 
 ### Examples
 
@@ -313,12 +320,32 @@ Write text to clipboard.
 
 ### Parameters
 
-*   `text` **[string][78]** the text to be written to clipboard.
+*   `text` **[string][85]** the text to be written to clipboard.
 
 ### Examples
 
 ```javascript
 Clipboard.write(window.location.href);
+```
+
+## Hints.setNumeric
+
+Use digits as hint label, this API is to replace original setting like `Hints.numericHints = true;`.
+
+### Examples
+
+```javascript
+Hints.setNumeric();
+```
+
+## Hints.setCharacters
+
+Set characters for generating hints, this API is to replace original setting like `Hints.characters = "asdgqwertzxcvb";`.
+
+### Examples
+
+```javascript
+Hints.setCharacters("asdgqwertzxcvb");
 ```
 
 ## Hints.click
@@ -328,7 +355,7 @@ Click element or create hints for elements to click.
 ### Parameters
 
 *   `links`  `string or array of HTMLElement`, click on it if there is only one in the array or `force` parameter is true, otherwise hints will be generated for them. If `links` is a string, it will be used as css selector for `getClickableElements`.
-*   `force` **[boolean][82]** force to click the first input element whether there are more than one elements in `links` or not. (optional, default `false`)
+*   `force` **[boolean][89]** force to click the first input element whether there are more than one elements in `links` or not. (optional, default `false`)
 
 ### Examples
 
@@ -347,8 +374,8 @@ Create hints for elements to click.
 ### Parameters
 
 *   `cssSelector`  `string or array of HTMLElement`, if `links` is a string, it will be used as css selector.
-*   `onHintKey` **[function][79]** a callback function on hint keys pressed.
-*   `attrs` **[object][80]** `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered. (optional, default `null`)
+*   `onHintKey` **[function][86]** a callback function on hint keys pressed.
+*   `attrs` **[object][87]** `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered. (optional, default `null`)
 
 ### Examples
 
@@ -368,7 +395,7 @@ The default `onHintKey` implementation.
 
 ### Parameters
 
-*   `element` **[HTMLElement][83]** the element for which the pressed hint is targeted.
+*   `element` **[HTMLElement][90]** the element for which the pressed hint is targeted.
 
 ### Examples
 
@@ -384,8 +411,8 @@ Set styles for hints.
 
 ### Parameters
 
-*   `css` **[string][78]** styles for hints.
-*   `mode` **[string][78]** sub mode for hints, use `text` for hints mode to enter visual mode. (optional, default `null`)
+*   `css` **[string][85]** styles for hints.
+*   `mode` **[string][85]** sub mode for hints, use `text` for hints mode to enter visual mode. (optional, default `null`)
 
 ### Examples
 
@@ -400,8 +427,8 @@ Set styles for visual mode.
 
 ### Parameters
 
-*   `element` **[string][78]** element in visual mode, which can be `marks` and `cursor`.
-*   `style` **[string][78]** css style
+*   `element` **[string][85]** element in visual mode, which can be `marks` and `cursor`.
+*   `style` **[string][85]** css style
 
 ### Examples
 
@@ -416,10 +443,10 @@ Launch the vim editor.
 
 ### Parameters
 
-*   `element` **[HTMLElement][83]** the target element which the vim editor is launched for, this parameter can also be a string, which will be used as default content in vim editor.
-*   `onWrite` **[function][79]** a callback function to be executed on written back from vim editor.
-*   `type` **[string][78]** the type for the vim editor, which can be `url`, if not provided, it will be tag name of the target element. (optional, default `null`)
-*   `useNeovim` **[boolean][82]** the vim editor will be the embeded JS implementation, if `useNeovim` is true, neovim will be used through natvie messaging. (optional, default `false`)
+*   `element` **[HTMLElement][90]** the target element which the vim editor is launched for, this parameter can also be a string, which will be used as default content in vim editor.
+*   `onWrite` **[function][86]** a callback function to be executed on written back from vim editor.
+*   `type` **[string][85]** the type for the vim editor, which can be `url`, if not provided, it will be tag name of the target element. (optional, default `null`)
+*   `useNeovim` **[boolean][89]** the vim editor will be the embeded JS implementation, if `useNeovim` is true, neovim will be used through natvie messaging. (optional, default `false`)
 
 ### Examples
 
@@ -437,7 +464,7 @@ Open the omnibar.
 
 ### Parameters
 
-*   `args` **[object][80]** `type` the sub type for the omnibar, which can be `Bookmarks`, `AddBookmark`, `History`, `URLs`, `RecentlyClosed`, `TabURLs`, `Tabs`, `Windows`, `VIMarks`, `SearchEngine`, `Commands`, `OmniQuery` and `UserURLs`.
+*   `args` **[object][87]** `type` the sub type for the omnibar, which can be `Bookmarks`, `AddBookmark`, `History`, `URLs`, `RecentlyClosed`, `TabURLs`, `Tabs`, `Windows`, `VIMarks`, `SearchEngine`, `Commands`, `OmniQuery` and `UserURLs`.
 
 ### Examples
 
@@ -461,14 +488,30 @@ mapkey('ou', '#8Open AWS services', function() {
 }, {domain: /console.amazonaws|console.aws.amazon.com/i});
 ```
 
+## Front.registerInlineQuery
+
+*   **See**: [example][91].
+
+Register an inline query.
+
+### Parameters
+
+*   `args` **[object][87]** `url`: string or function, the dictionary service url or a function to return the dictionary service url, `parseResult`: function, a function to parse result from dictionary service and return a HTML string to render explanation, `headers`: object\[optional], in case your dictionary service needs authentication.
+
+## getBrowserName
+
+Get current browser name
+
+Returns **[string][85]** "Chrome" | "Firefox" | "Safari"
+
 ## Front.showBanner
 
 Show message in banner.
 
 ### Parameters
 
-*   `msg` **[string][78]** the message to be displayed in banner.
-*   `timeout` **[number][84]** milliseconds after which the banner will disappear. (optional, default `1600`)
+*   `msg` **[string][85]** the message to be displayed in banner.
+*   `timeout` **[number][92]** milliseconds after which the banner will disappear. (optional, default `1600`)
 
 ### Examples
 
@@ -482,7 +525,7 @@ Show message in popup.
 
 ### Parameters
 
-*   `msg` **[string][78]** the message to be displayed in popup.
+*   `msg` **[string][85]** the message to be displayed in popup.
 
 ### Examples
 
@@ -496,7 +539,7 @@ Get all clickable elements. SurfingKeys has its own logic to identify clickable 
 
 ### Parameters
 
-*   `selectorString` **[string][78]** extra css selector of those clickable elements.
+*   `selectorString` **[string][85]** extra css selector of those clickable elements.
 *   `pattern` **regex** a regular expression that matches text of the clickable elements.
 
 ### Examples
@@ -505,7 +548,7 @@ Get all clickable elements. SurfingKeys has its own logic to identify clickable 
 var elms = getClickableElements("[rel=link]", /click this/);
 ```
 
-Returns **[array][81]** array of clickable elements.
+Returns **[array][88]** array of clickable elements.
 
 ## tabOpenLink
 
@@ -513,8 +556,8 @@ Open links in new tabs.
 
 ### Parameters
 
-*   `str` **[string][78]** links to be opened, the links should be split by `\n` if there are more than one.
-*   `simultaneousness` **[number][84]** how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed. (optional, default `5`)
+*   `str` **[string][85]** links to be opened, the links should be split by `\n` if there are more than one.
+*   `simultaneousness` **[number][92]** how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed. (optional, default `5`)
 
 ### Examples
 
@@ -531,9 +574,9 @@ Call background `action` with `args`, the `callback` will be executed with respo
 
 ### Parameters
 
-*   `action` **[string][78]** a background action to be called.
-*   `args` **[object][80]** the parameters to be passed to the background action.
-*   `callback` **[function][79]** a function to be executed with the result from the background action.
+*   `action` **[string][85]** a background action to be called.
+*   `args` **[object][87]** the parameters to be passed to the background action.
+*   `callback` **[function][86]** a function to be executed with the result from the background action.
 
 ### Examples
 
@@ -625,88 +668,104 @@ RUNTIME('getTabs', {queryInfo: {currentWindow: true}}, response => {
 
 [41]: #examples-8
 
-[42]: #hintsclick
+[42]: #hintssetnumeric
 
-[43]: #parameters-16
+[43]: #examples-9
 
-[44]: #examples-9
+[44]: #hintssetcharacters
 
-[45]: #hintscreate
+[45]: #examples-10
 
-[46]: #parameters-17
+[46]: #hintsclick
 
-[47]: #examples-10
+[47]: #parameters-16
 
-[48]: #hintsdispatchmouseclick
+[48]: #examples-11
 
-[49]: #parameters-18
+[49]: #hintscreate
 
-[50]: #examples-11
+[50]: #parameters-17
 
-[51]: #hintsstyle
+[51]: #examples-12
 
-[52]: #parameters-19
+[52]: #hintsdispatchmouseclick
 
-[53]: #examples-12
+[53]: #parameters-18
 
-[54]: #visualstyle
+[54]: #examples-13
 
-[55]: #parameters-20
+[55]: #hintsstyle
 
-[56]: #examples-13
+[56]: #parameters-19
 
-[57]: #frontshoweditor
+[57]: #examples-14
 
-[58]: #parameters-21
+[58]: #visualstyle
 
-[59]: #examples-14
+[59]: #parameters-20
 
-[60]: #frontopenomnibar
+[60]: #examples-15
 
-[61]: #parameters-22
+[61]: #frontshoweditor
 
-[62]: #examples-15
+[62]: #parameters-21
 
-[63]: #frontshowbanner
+[63]: #examples-16
 
-[64]: #parameters-23
+[64]: #frontopenomnibar
 
-[65]: #examples-16
+[65]: #parameters-22
 
-[66]: #frontshowpopup
+[66]: #examples-17
 
-[67]: #parameters-24
+[67]: #frontregisterinlinequery
 
-[68]: #examples-17
+[68]: #parameters-23
 
-[69]: #getclickableelements
+[69]: #getbrowsername
 
-[70]: #parameters-25
+[70]: #frontshowbanner
 
-[71]: #examples-18
+[71]: #parameters-24
 
-[72]: #tabopenlink
+[72]: #examples-18
 
-[73]: #parameters-26
+[73]: #frontshowpopup
 
-[74]: #examples-19
+[74]: #parameters-25
 
-[75]: #runtime
+[75]: #examples-19
 
-[76]: #parameters-27
+[76]: #getclickableelements
 
-[77]: #examples-20
+[77]: #parameters-26
 
-[78]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[78]: #examples-20
 
-[79]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[79]: #tabopenlink
 
-[80]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[80]: #parameters-27
 
-[81]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[81]: #examples-21
 
-[82]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[82]: #runtime
 
-[83]: https://developer.mozilla.org/docs/Web/HTML/Element
+[83]: #parameters-28
 
-[84]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[84]: #examples-22
+
+[85]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[86]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[87]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[88]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[89]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[90]: https://developer.mozilla.org/docs/Web/HTML/Element
+
+[91]: https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query
+
+[92]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number

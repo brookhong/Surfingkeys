@@ -22,9 +22,7 @@ import {
 function createHints(insert, normal) {
     var self = new Mode("Hints");
     var hintsHost = document.createElement("div");
-    hintsHost.style.display = "block";
-    hintsHost.style.opacity = 1;
-    hintsHost.style.colorScheme = "auto";
+    hintsHost.className = "surfingkeys_hints_host";
     hintsHost.attachShadow({ mode: 'open' });
     var hintsStyle = createElementWithContent('style', `
 div {
@@ -60,6 +58,37 @@ div.hint-scrollable {
 }`);
     hintsHost.shadowRoot.appendChild(hintsStyle);
     document.documentElement.appendChild(hintsHost);
+
+    let numeric = false;
+    /**
+     * Use digits as hint label, with it set you could type text to filter links, this API is to replace original setting like `Hints.numericHints = true;`.
+     *
+     * @name Hints.setNumeric
+     *
+     * @example
+     * Hints.setNumeric();
+     */
+    self.setNumeric = function() {
+        numeric = true;
+    };
+    let characters = "asdfgqwertzxcvb";
+    /**
+     * Set characters for generating hints, this API is to replace original setting like `Hints.characters = "asdgqwertzxcvb";`.
+     *
+     * @param {string} characters the characters for generating hints.
+     * @name Hints.setCharacters
+     *
+     * @example
+     * Hints.setCharacters("asdgqwertzxcvb");
+     */
+    self.setCharacters = function(chars) {
+        characters = chars;
+        for (const c of chars) {
+            if (normal.isScrollKeyInHints(c)) {
+                throw Error(`The character '${c}' set by Hints.setCharacters("${chars}") has been bound to a function to scroll page in Hints mode, it could not be used for generating hints.` );
+            }
+        }
+    };
 
     self.addEventListener('keydown', function(event) {
         var hints = holder.querySelectorAll('div');
@@ -108,7 +137,7 @@ div.hint-scrollable {
                     shiftKey = true;
                 }
                 if (key !== '') {
-                    if (self.numericHints) {
+                    if (numeric) {
                         if (key >= "0" && key <= "9") {
                             prefix += key;
                         } else {
@@ -116,15 +145,15 @@ div.hint-scrollable {
                             refreshByTextFilter();
                         }
                         handleHint(event);
-                    } else if (self.characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
+                    } else if (characters.toLowerCase().indexOf(key.toLowerCase()) !== -1) {
                         prefix = prefix + key.toUpperCase();
                         handleHint(event);
                     } else {
-                        if (self.scrollKeys.indexOf(key) === -1) {
+                        if (!normal.isScrollKeyInHints(key)) {
                             // quit hints if user presses non-hint key and no keys for scrolling
                             hide();
                         } else {
-                            // pass on the key to next mode in stack
+                            // pass on the key to normal mode to scroll page.
                             event.sk_stopPropagation = false;
                         }
                     }
@@ -146,8 +175,6 @@ div.hint-scrollable {
         },
         holder = createElementWithContent('section', '', {style: "display: block; opacity: 1;"}),
         shiftKey = false;
-    self.characters = 'asdfgqwertzxcvb';
-    self.scrollKeys = '0jkhlG$';
     var _lastCreateAttrs = {},
         _onHintKey = self.dispatchMouseClick,
         _cssSelector = "";
@@ -379,8 +406,8 @@ div.hint-scrollable {
         offset = 0;
         while (hints.length - offset < total || hints.length === 1) {
             hint = hints[offset++];
-            for (i = 0, len = self.characters.length; i < len; i++) {
-                ch = self.characters[i];
+            for (i = 0, len = characters.length; i < len; i++) {
+                ch = characters[i];
                 hints.push(ch + hint);
             }
         }
@@ -700,8 +727,8 @@ div.hint-scrollable {
      * });
      */
     self.create = function(cssSelector, onHintKey, attrs) {
-        if (self.numericHints) {
-            self.characters = "1234567890";
+        if (numeric) {
+            characters = "1234567890";
         }
 
         // save last used attributes, which will be reused if the user scrolls while the hints are still open

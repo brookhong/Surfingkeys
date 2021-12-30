@@ -684,6 +684,18 @@ function createNormal(insert) {
             }
         }
     });
+
+    const bindScrollForHints = (action) => {
+        const f = self.scroll.bind(self, action);
+        // indicate that the key bound with this function is a key to scroll page and can be used to scroll in Hints mode.
+        f.isSKScrollInHints = true;
+        return f;
+    };
+    self.isScrollKeyInHints = (key) => {
+        const bound = self.mappings[key];
+        return bound && bound.meta && bound.meta.code && bound.meta.code.isSKScrollInHints;
+    };
+
     self.mappings.add("e", {
         annotation: "Scroll half page up",
         feature_group: 2,
@@ -706,43 +718,43 @@ function createNormal(insert) {
         annotation: "Scroll to the bottom of the page",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "bottom")
+        code: bindScrollForHints("bottom")
     });
     self.mappings.add("j", {
         annotation: "Scroll down",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "down")
+        code: bindScrollForHints("down")
     });
     self.mappings.add("k", {
         annotation: "Scroll up",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "up")
+        code: bindScrollForHints("up")
     });
     self.mappings.add("h", {
         annotation: "Scroll left",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "left")
+        code: bindScrollForHints("left")
     });
     self.mappings.add("l", {
         annotation: "Scroll right",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "right")
+        code: bindScrollForHints("right")
     });
     self.mappings.add("0", {
         annotation: "Scroll all the way to the left",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "leftmost")
+        code: bindScrollForHints("leftmost")
     });
     self.mappings.add("$", {
         annotation: "Scroll all the way to the right",
         feature_group: 2,
         repeatIgnore: true,
-        code: self.scroll.bind(self, "rightmost")
+        code: bindScrollForHints("rightmost")
     });
     self.mappings.add("%", {
         annotation: "Scroll to percentage of current page",

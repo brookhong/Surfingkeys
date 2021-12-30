@@ -111,7 +111,7 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 
 Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hint key is pressed. Add below line to your settings to make it right hand:
 
-    Hints.characters = 'yuiophjklnm'; // for right hand
+    Hints.setCharacters('yuiophjklnm'); // for right hand
 
 When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
 
@@ -199,11 +199,7 @@ Press `Ctrl-Enter` to find exactly the whole word input, like with the input `\b
 
 To press `Alt-i` to enter PassThrough mode gives you a chance to temporarily suppress SurfingKeys, which means Surfingkeys will not care any key press until leaving this mode by pressing `Esc`. In this mode, you could use built-in shortcuts from any site itself. Please see [Feature Request: implement Vimium-style insert mode · Issue #656](https://github.com/brookhong/Surfingkeys/issues/656) for why we brought this in and the difference between `Alt-i` and `Alt-s`.
 
-To press `p` to enter ephemeral PassThrough mode, which will automatically quit after 1 second. If the default timeout does fit your case, add below into your own settings script to make it 1500ms.
-
-    mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
-        Normal.passThrough(1500);
-    });
+To press `p` to enter ephemeral PassThrough mode, which will automatically quit after 1 second.
 
 ## Omnibar
 
@@ -477,11 +473,11 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 All keystrokes in normal mode are repeatable by dot, except those keystrokes mapped with `repeatIgnore` as `true`, for example,
 
-    mapkey('e', '#2Scroll a page up', function() {
-        Normal.scroll("pageUp");
+    mapkey('se', '#2My magic se', function() {
+        // your code here
     }, {repeatIgnore: true});
 
-Then `.` will not repeat action to page up, even `e` is just pressed.
+Then `.` will not repeat your magic action with `se`, even it is just pressed.
 
 ## Markdown preview
 
@@ -520,9 +516,6 @@ Some functionalities are also available when you're using original pdf viewer, b
 
 | key | default value | explanation |
 |:---------------|:-----|:-----|
-| Hints.characters | "asdfgqwertzxcvb" | The characters for generating hints. |
-| Hints.numericHints | false | Whether to use digit as hint label, if it is on, you could type text to filter links. |
-| Hints.scrollKeys | "0jkhlG$" | The keys that can be used to scroll page in hints mode. You need not change it unless that you have changed `Hints.characters`. |
 | settings.showModeStatus | false | Whether always to show mode status. |
 | settings.showProxyInStatusBar | false | Whether to show proxy info in status bar. |
 | settings.richHintsForKeystroke | 500 | Timeout(ms) to show rich hints for keystroke, 0 will disable rich hints. |
