@@ -69,7 +69,7 @@ describe('markdown viewer', () => {
     });
 
     test("render markdown from clipboard", async () => {
-        const clipboardReadSpy = jest.spyOn(clipboard, 'read').mockImplementationOnce((onReady) => {
+        jest.spyOn(clipboard, 'read').mockImplementationOnce((onReady) => {
             onReady({data: "* [github](https://github.com)\n* [google](https://google.com)"});
         });
         await waitForEvent(document, "surfingkeys:defaultSettingsLoaded", () => {
@@ -83,7 +83,7 @@ describe('markdown viewer', () => {
     });
 
     test("follow links generated from markdown", async () => {
-        const clipboardReadSpy = jest.spyOn(clipboard, 'read').mockImplementationOnce((onReady) => {
+        jest.spyOn(clipboard, 'read').mockImplementationOnce((onReady) => {
             onReady({data: "* [github](https://github.com)\n* [google](https://google.com)"});
         });
         await waitForEvent(document, "surfingkeys:defaultSettingsLoaded", () => {

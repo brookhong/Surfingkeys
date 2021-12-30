@@ -759,7 +759,7 @@ function OpenBookmarks(omnibar) {
             lastFocused = 0;
             RUNTIME('getBookmarks', {
                 parentId: currentFolderId
-            }, OpenBookmarks.onResponse);
+            }, self.onResponse);
         } else {
             ret = omnibar.openFocused.call(self);
             if (ret) {

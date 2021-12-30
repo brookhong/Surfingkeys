@@ -1,13 +1,26 @@
 import MockTrie from '../../src/content_scripts/common/trie';
+import KeyboardUtils from '../../src/content_scripts/common/keyboardUtils';
+import { waitForEvent } from '../utils';
 
 describe('content.js', () => {
-    let content, settings, mockNormal;
+    let content, settings;
     let mockHalfPageUp = () => {},
         mockHalfPageDown = () => {},
         mockClosePage = () => {};
     const mockBrowser = {
         usePdfViewer: jest.fn(),
         readText: jest.fn()
+    };
+
+    const loadDOMContent = async () => {
+        await waitForEvent(document, "DOMContentLoaded", () => {
+            return true;
+        }, () => {
+            document.dispatchEvent(new Event("DOMContentLoaded", {
+                bubbles: true,
+                cancelable: true
+            }));
+        });
     };
 
     beforeAll(async () => {
@@ -20,7 +33,9 @@ describe('content.js', () => {
                         callback({active: true, index: 1});
                     }
                 },
-                getURL: jest.fn(),
+                getURL: (path) => {
+                    return path;
+                },
                 onMessage: {
                     addListener: jest.fn()
                 }
@@ -31,41 +46,18 @@ describe('content.js', () => {
         }
         global.DOMRect = jest.fn();
 
-        jest.mock('../../src/content_scripts/common/normal.js', () => (insert) => {
-            mockNormal = {
-                enter: jest.fn(),
-                mappings: new MockTrie()
-            }
-            mockNormal.mappings.add('e', {
-                code: mockHalfPageUp
-            });
-            mockNormal.mappings.add('d', {
-                code: mockHalfPageDown
-            });
-            mockNormal.mappings.add(';x', {
-                code: mockClosePage
-            });
-            return mockNormal;
-        });
         content = require('src/content_scripts/content.js');
     });
 
     test("content start", async () => {
         settings = {
         };
-        content.start(mockBrowser);
-        await new Promise((r) => {
-            document.addEventListener("DOMContentLoaded", function(evt) {
-                expect(mockNormal.mappings.find('e').meta.code).toBe(mockHalfPageUp);
-                expect(mockNormal.mappings.find('d').meta.code).toBe(mockHalfPageDown);
-                expect(mockNormal.mappings.find(';x').meta.code).toBe(mockClosePage);
-                r(evt);
-            }, {once: true});
-            document.dispatchEvent(new Event("DOMContentLoaded", {
-                bubbles: true,
-                cancelable: true
-            }));
-        });
+        const modes = content.start(mockBrowser);
+
+        loadDOMContent();
+        expect(modes.normal.mappings.find('e').meta.annotation).toBe("Scroll half page up");
+        expect(modes.normal.mappings.find('d').meta.annotation).toBe("Scroll half page down");
+        expect(modes.normal.mappings.find(';e').meta.annotation).toBe("Edit Settings");
     });
 
     test("content start with custom basic mappings", async () => {
@@ -74,22 +66,14 @@ describe('content.js', () => {
             basicMappings: {
                 "e": "d",
                 "d": "e",
-                ";x": ""
+                ";e": ""
             }
         };
-        content.start(mockBrowser);
-        await new Promise((r) => {
-            document.addEventListener("DOMContentLoaded", function(evt) {
-                expect(mockNormal.mappings.find('e').meta.code).toBe(mockHalfPageDown);
-                expect(mockNormal.mappings.find('d').meta.code).toBe(mockHalfPageUp);
-                expect(mockNormal.mappings.find(';x')).toBe(undefined);
-                r(evt);
-            }, {once: true});
-            document.dispatchEvent(new Event("DOMContentLoaded", {
-                bubbles: true,
-                cancelable: true
-            }));
-        });
+        const modes = content.start(mockBrowser);
+        loadDOMContent();
+        expect(modes.normal.mappings.find('d').meta.annotation).toBe("Scroll half page up");
+        expect(modes.normal.mappings.find('e').meta.annotation).toBe("Scroll half page down");
+        expect(modes.normal.mappings.find(';e')).toBe(undefined);
     });
 
     test("content start with custom snippets", async () => {
@@ -97,18 +81,10 @@ describe('content.js', () => {
             showAdvanced: true,
             snippets: 'api.map("e", "d");api.unmap("d")'
         };
-        content.start(mockBrowser);
-        await new Promise((r) => {
-            document.addEventListener("DOMContentLoaded", function(evt) {
-                expect(mockNormal.mappings.find('e').meta.code).toBe(mockHalfPageDown);
-                expect(mockNormal.mappings.find('d')).toBe(undefined);
-                r(evt);
-            }, {once: true});
-            document.dispatchEvent(new Event("DOMContentLoaded", {
-                bubbles: true,
-                cancelable: true
-            }));
-        });
+        const modes = content.start(mockBrowser);
+        loadDOMContent();
+        expect(modes.normal.mappings.find('e').meta.annotation).toBe("Scroll half page down");
+        expect(modes.normal.mappings.find('d')).toBe(undefined);
     });
 
     test("content start with custom invalid snippets", async () => {
@@ -124,35 +100,45 @@ describe('content.js', () => {
             }, {once: true});
 
             content.start(mockBrowser);
-
-            document.addEventListener("DOMContentLoaded", function(evt) {
-                expect(mockNormal.mappings.find('e').meta.code).toBe(mockHalfPageUp);
-                expect(mockNormal.mappings.find('d').meta.code).toBe(mockHalfPageDown);
-            }, {once: true});
-            document.dispatchEvent(new Event("DOMContentLoaded", {
-                bubbles: true,
-                cancelable: true
-            }));
+            loadDOMContent();
         });
     });
 
     test("verify unmapAllExcept", async () => {
         settings = {
             showAdvanced: true,
-            snippets: 'api.unmapAllExcept([";x"])'
+            snippets: 'api.unmapAllExcept([";e"])'
         };
-        content.start(mockBrowser);
+        const modes = content.start(mockBrowser);
+        loadDOMContent();
+        expect(modes.normal.mappings.find('e')).toBe(undefined);
+        expect(modes.normal.mappings.find('d')).toBe(undefined);
+        expect(modes.normal.mappings.find(';e').meta.annotation).toBe("Edit Settings");
+    });
+
+    test("verify mapkey with double space", async () => {
+        settings = {
+            showAdvanced: true,
+            snippets: "api.mapkey('<Space><Space>', 'Test double space', function() { api.Front.showPopup('afdfd'); });"
+        };
+        const modes = content.start(mockBrowser);
+        modes.front.attach();
+        modes.normal.__trust_all_events__ = true;
+
+        loadDOMContent();
+
+        const bound = modes.normal.mappings.find(KeyboardUtils.encodeKeystroke("<Space><Space>"));
+        expect(bound.meta.annotation).toBe("Test double space");
+
         await new Promise((r) => {
-            document.addEventListener("DOMContentLoaded", function(evt) {
-                expect(mockNormal.mappings.find('e')).toBe(undefined);
-                expect(mockNormal.mappings.find('d')).toBe(undefined);
-                expect(mockNormal.mappings.find(';x').meta.code).toBe(mockClosePage);
+            document.addEventListener("surfingkeys:showKeystroke", function(evt) {
+                expect(evt.detail[0]).toBe(KeyboardUtils.encodeKeystroke("<Space>"));
                 r(evt);
             }, {once: true});
-            document.dispatchEvent(new Event("DOMContentLoaded", {
-                bubbles: true,
-                cancelable: true
-            }));
+
+            // press space
+            const spaceKey = new KeyboardEvent('keydown', {isTrusted: true, 'keyCode': 32});
+            document.body.dispatchEvent(spaceKey);
         });
     });
 });

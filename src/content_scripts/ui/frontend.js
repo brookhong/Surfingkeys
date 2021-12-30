@@ -564,7 +564,8 @@ const Front = (function() {
             words = Object.keys(cc).sort().map(function (w) {
                 var meta = cc[w];
                 if (meta.annotation) {
-                    return `<div><span class=kbd-span><kbd>${htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated))}<span class=candidates>${w.substr(keyHints.accumulated.length)}</span></kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
+                    const nextKey = w.substr(keyHints.accumulated.length);
+                    return `<div><span class=kbd-span><kbd>${htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated))}<span class=candidates>${htmlEncode(KeyboardUtils.decodeKeystroke(nextKey))}</span></kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
                 } else {
                     return "";
                 }

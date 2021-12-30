@@ -243,7 +243,7 @@ Mode.finish = function (mode) {
 Mode.handleMapKey = function(event, onNoMatched) {
     var thisMode = this,
         key = event.sk_keyName;
-    this.isTrustedEvent = event.isTrusted;
+    this.isTrustedEvent = this.__trust_all_events__ || event.isTrusted;
 
     var isEscKey = Mode.isSpecialKeyOf("<Esc>", key);
     if (isEscKey) {
