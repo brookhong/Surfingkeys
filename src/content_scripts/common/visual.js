@@ -377,13 +377,13 @@ function createVisual(clipboard, hints) {
 
     var selection = document.getSelection(),
         matches = [],
-        currentOccurrence,
+        currentOccurrence = 0,
         state = 0,
         status = ['', 'Caret', 'Range'],
         mark_template = document.createElement("div"),
         cursor = document.createElement("div");
     cursor.className = "surfingkeys_cursor";
-    cursor.style.zIndex = 2147483298;
+    cursor.style.zIndex = 2147483299;
 
     // f in visual mode
     var visualf = 0, lastF = null;
@@ -500,7 +500,7 @@ function createVisual(clipboard, hints) {
                 var mark = mark_template.cloneNode(false);
                 mark.className = "surfingkeys_selection_mark";
                 mark.style.position = "absolute";
-                mark.style.zIndex = 2147483298;
+                mark.style.zIndex = 2147483299;
                 mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
                 mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
                 mark.style.width = r.width + 'px';
@@ -692,7 +692,7 @@ function createVisual(clipboard, hints) {
         }
         return found;
     }
-    self.visualUpdateForContentWindow = function(query) {
+    self.visualUpdate = function(query) {
         self.visualClear();
 
         // set caret to top in view
@@ -724,14 +724,6 @@ function createVisual(clipboard, hints) {
             selection.setPosition(posToStartFind[0], posToStartFind[1]);
         }
 
-    };
-
-    // this is only for finding in frontend.html, like in usage popover.
-    self.visualUpdate = function(query) {
-        if (query.length && query !== ".") {
-            self.visualClear();
-            highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
-        }
     };
 
     var registeredScrollNodes = [];

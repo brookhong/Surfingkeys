@@ -564,12 +564,10 @@ function createFront(insert, normal, hints, visual, browser) {
     _actions["visualUpdate"] = function(message) {
         clearPendingQuery();
         _pendingQuery = setTimeout(function() {
-            visual.visualUpdateForContentWindow(message.query);
-            if (getBrowserName() === "Firefox") {
-                frontendCommand({
-                    action: "visualUpdatedForFirefox"
-                });
-            }
+            visual.visualUpdate(message.query);
+            frontendCommand({
+                action: "visualUpdated"
+            });
         }, 500);
     };
 

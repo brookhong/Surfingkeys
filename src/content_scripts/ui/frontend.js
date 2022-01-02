@@ -511,7 +511,7 @@ const Front = (function() {
         self.flush();
     };
 
-    _actions['visualUpdatedForFirefox'] = function(message) {
+    _actions['visualUpdated'] = function(message) {
         self.statusBar.querySelector('input').focus();
     };
 
@@ -553,10 +553,6 @@ const Front = (function() {
             clearPendingHint();
         }
     };
-    visual.mappings.add("y", {
-        annotation: "Yank a word(w) or line(l) or sentence(s) or paragraph(p)",
-        feature_group: 9
-    });
     function showRichHints(keyHints) {
         initL10n(function (locale) {
             var words = keyHints.accumulated;
@@ -634,7 +630,7 @@ const Front = (function() {
         if (!_bubble.contains(e.target)) {
             _bubble.style.display = "none";
             self.flush();
-            self.visualCommand({
+            self.contentCommand({
                 action: 'emptySelection'
             });
             window.removeEventListener("resize", onResize);
@@ -757,6 +753,10 @@ var Find = (function() {
                     action: 'visualUpdate',
                     query: input.value
                 });
+                // To find in usage popup will set focus and selection elsewhere
+                // we need bring it back
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
             }
         };
         var findHistory = [];
