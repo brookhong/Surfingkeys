@@ -739,6 +739,7 @@ export {
     createElementWithContent,
     dispatchMouseEvent,
     dispatchSKEvent,
+    filterAncestors,
     filterInvisibleElements,
     filterOverlapElements,
     flashPressedLink,

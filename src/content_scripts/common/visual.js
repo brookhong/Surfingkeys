@@ -5,6 +5,7 @@ import KeyboardUtils from './keyboardUtils';
 import {
     actionWithSelectionPreserved,
     dispatchMouseEvent,
+    filterAncestors,
     flashPressedLink,
     getBrowserName,
     getTextNodes,
