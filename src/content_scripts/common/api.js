@@ -355,6 +355,9 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             searchSelectedWith(search_url);
         }
         mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
+        mapkey('o' + alias, '#8Open Search with alias ' + alias, () => {
+            front.openOmnibar({type: "SearchEngine", extra: alias});
+        });
         vmapkey((search_leader_key || 's') + alias, '', ssw);
         function ssw2() {
             searchSelectedWith(search_url, true);
@@ -390,6 +393,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     function removeSearchAlias(alias, search_leader_key, only_this_site_key) {
         _removeSearchAlias(alias);
         unmap((search_leader_key || 's') + alias);
+        unmap('o' + alias);
         vunmap((search_leader_key || 's') + alias);
         unmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
         vunmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
