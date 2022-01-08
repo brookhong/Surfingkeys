@@ -702,11 +702,23 @@ function createNormal(insert) {
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageUp")
     });
+    self.mappings.add("U", {
+        annotation: "Scroll full page up",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "fullPageUp")
+    });
     self.mappings.add("d", {
         annotation: "Scroll half page down",
         feature_group: 2,
         repeatIgnore: true,
         code: self.scroll.bind(self, "pageDown")
+    });
+    self.mappings.add("P", {
+        annotation: "Scroll full page down",
+        feature_group: 2,
+        repeatIgnore: true,
+        code: self.scroll.bind(self, "fullPageDown")
     });
     self.mappings.add("gg", {
         annotation: "Scroll to the top of the page",

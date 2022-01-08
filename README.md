@@ -27,7 +27,7 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 | Follow links | Y | Y | Y |
 | Surfingkeys modes | Y | Y | Y |
 | Omnibar | Y | Y | partly |
-| Search selected with | Y | Y | partly
+| Search selected with | Y | Y | Y |
 | Vim-like marks | Y | Y | Y |
 | Switch tabs | Y | Y | Y |
 | Windows management | Y | Y | N |

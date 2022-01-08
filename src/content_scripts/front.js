@@ -140,12 +140,12 @@ function createFront(insert, normal, hints, visual, browser) {
             ctx: ctx
         });
     });
-    self.addVimKeyMap = function (vimKeyMap) {
+    document.addEventListener("surfingkeys:addVimKeyMap", function(evt) {
         _uiUserSettings.push({
             action: 'addVimKeyMap',
-            vimKeyMap: vimKeyMap
+            vimKeyMap: evt.detail
         });
-    };
+    });
 
     var frameElement = createElementWithContent('div', 'Hi, I\'m here now!', {id: "sk_frame"});
     frameElement.fromSurfingKeys = true;

@@ -291,6 +291,37 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         dispatchSKEvent('addVimMap', [lhs, rhs, ctx]);
     }
 
+    /**
+     * Add map key in ACE editor.
+     *
+     * @param {object} objects multiple objects to define key map in ACE, see more from [ace/keyboard/vim.js](https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099)
+     *
+     * @example
+     * addVimMapKey(
+     *     {
+     *         keys: 'n',
+     *         type: 'motion',
+     *         motion: 'moveByCharacters',
+     *         motionArgs: {
+     *             forward: false
+     *         }
+     *     },
+     *
+     *     {
+     *         keys: 'e',
+     *         type: 'motion',
+     *         motion: 'moveByLines',
+     *         motionArgs: {
+     *             forward: true,
+     *             linewise: true
+     *         }
+     *     }
+     * );
+     */
+    function addVimMapKey() {
+        dispatchSKEvent('addVimKeyMap', Array.from(arguments));
+    }
+
     function _addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion) {
         front.addSearchAlias(alias, prompt, url, suggestionURL, listSuggestion);
     }
@@ -371,6 +402,18 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         }
     }
 
+
+    /**
+     * Search selected with.
+     *
+     * @param {string} se a search engine's search URL
+     * @param {boolean} [onlyThisSite=false] whether to search only within current site, need support from the provided search engine.
+     * @param {boolean} [interactive=false] whether to search in interactive mode, in case that you need some small modification on the selected content.
+     * @param {string} [alias=""] only used with interactive mode, in such case the url from `se` is ignored, SurfingKeys will construct search URL from the alias registered by `addSearchAlias`.
+     *
+     * @example
+     * searchSelectedWith('https://translate.google.com/?hl=en#auto/en/');
+     */
     function searchSelectedWith(se, onlyThisSite, interactive, alias) {
         clipboard.read(function(response) {
             var query = window.getSelection().toString() || response.data;
@@ -677,6 +720,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     return {
         RUNTIME,
         aceVimMap,
+        addVimMapKey,
         addSearchAlias,
         cmap,
         imap,
@@ -692,6 +736,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         mapkey,
         readText: browser.readText,
         removeSearchAlias,
+        searchSelectedWith,
         tabOpenLink,
         vmap,
         vmapkey,
