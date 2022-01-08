@@ -7,7 +7,6 @@ import {
     getWordUnderCursor,
     htmlEncode,
     initL10n,
-    insertJS,
     setSanitizedContent,
     mapInMode
 } from '../common/utils.js';

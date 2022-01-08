@@ -9,7 +9,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist/*",
-    "build:doc": "documentation build src/content_scripts/common/api.js src/content_scripts/common/clipboard.js src/content_scripts/common/hints.js src/content_scripts/common/visual.js src/content_scripts/front.js -f md -o docs/api.md",
+    "build:doc": "documentation build src/content_scripts/common/api.js src/content_scripts/common/normal.js src/content_scripts/common/clipboard.js src/content_scripts/common/hints.js src/content_scripts/common/visual.js src/content_scripts/front.js -f md -o docs/api.md",
     "build:dev-firefox": "webpack --env=browser=firefox --mode=development --config ./config/webpack.config.js",
     "build:dev-safari": "webpack --env=browser=safari --mode=development --config ./config/webpack.config.js",
     "build:dev": "webpack --mode=development --config ./config/webpack.config.js",

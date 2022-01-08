@@ -214,6 +214,13 @@ function createNormal(insert) {
     };
 
     const _passThrough = createPassThrough();
+    /**
+     * Enter PassThrough mode.
+     *
+     * @param {number} [timeout] how many seconds to linger in PassThrough mode, to ignore it will stay in PassThrough mode until an Escape key is pressed.
+     * @name Normal.passThrough
+     *
+     */
     self.passThrough = function(timeout) {
         _passThrough.setTimeout(timeout);
         _passThrough.enter();
@@ -535,6 +542,13 @@ function createNormal(insert) {
         showBanner("Mark '{0}' added for: {1}.".format(mark, url));
     };
 
+    /**
+     * Jump to a vim-like mark.
+     *
+     * @param {string} mark a vim-like mark.
+     * @name Normal.jumpVIMark
+     *
+     */
     self.jumpVIMark = function(mark) {
         RUNTIME('jumpVIMark', {
             mark: mark

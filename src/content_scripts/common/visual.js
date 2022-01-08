@@ -87,8 +87,12 @@ function createVisual(clipboard, hints) {
     });
 
     self.addEventListener('resize', function(event) {
-        self.visualUpdate(runtime.conf.lastQuery);
-        select(matches[currentOccurrence]);
+        if (runtime.conf.lastQuery) {
+            self.visualUpdate(runtime.conf.lastQuery);
+        }
+        if (matches[currentOccurrence]) {
+            select(matches[currentOccurrence]);
+        }
     });
     let selectionMark_ = null;
     const clearSelectionMark = () => {

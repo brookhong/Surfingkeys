@@ -11,6 +11,7 @@ import {
     getTextNodePos,
     getWordUnderCursor,
     htmlEncode,
+    insertJS,
     mapInMode,
     parseAnnotation,
     setSanitizedContent,
@@ -729,6 +730,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         cmap,
         imap,
         imapkey,
+        insertJS,
         getBrowserName,
         getClickableElements,
         getFormData,
@@ -745,6 +747,10 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         vmap,
         vmapkey,
         Clipboard: clipboard,
+        Normal: {
+            jumpVIMark: normal.jumpVIMark,
+            passThrough: normal.passThrough,
+        },
         Hints: {
             click: hints.click,
             create: hints.create,

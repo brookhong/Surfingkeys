@@ -702,6 +702,13 @@ function httpRequest(args, onSuccess) {
     RUNTIME("request", args, onSuccess);
 }
 
+/**
+ * Insert javascript code into main world context.
+ *
+ * @param {function | string} code a javascript function to be executed in main world context, or an URL of js file.
+ * @param {function} onload a callback function after requested code executed.
+ *
+ */
 function insertJS(code, onload) {
     var s = document.createElement('script');
     s.type = 'text/javascript';
