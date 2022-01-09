@@ -3,7 +3,7 @@ import {
     getDocumentOrigin
 } from './common/utils.js';
 
-function createUiHost(onload) {
+function createUiHost(browser, onload) {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
@@ -99,28 +99,22 @@ function createUiHost(onload) {
             ifr.blur();
             // test with https://docs.google.com/ and https://web.whatsapp.com/
             if (lastStateOfPointerEvents !== response.pointerEvents && activeContent) {
-                activeContent.window.postMessage({
-                    action: 'getBackFocus',
-                    commandToContent: true
-                }, activeContent.origin);
+                if (browser.getBackFocusFromFrontend) {
+                    browser.getBackFocusFromFrontend();
+                } else {
+                    activeContent.window.postMessage({
+                        action: 'getBackFocus',
+                        commandToContent: true
+                    }, activeContent.origin);
+                }
             }
             if (document.body) {
                 document.body.style.animationFillMode = "";
                 document.body.style.overflowY = _origOverflowY;
             }
-            if (getBrowserName().startsWith("Safari-iOS")) {
-                // hacky way to get back focus from frontend frame in iOS Safari.
-                const input = document.createElement("input");
-                input.style.position = 'fixed';
-                input.style.top = '0px';
-                document.body.appendChild(input);
-                input.focus();
-                input.blur();
-                input.remove();
-            }
         } else {
-            if (getBrowserName().startsWith("Safari")) {
-                ifr.focus();
+            if (browser.focusFrontend) {
+                browser.focusFrontend(ifr);
             }
             if (document.body) {
                 document.body.style.animationFillMode = "none";

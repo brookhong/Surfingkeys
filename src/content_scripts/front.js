@@ -658,7 +658,7 @@ function createFront(insert, normal, hints, visual, browser) {
     var uiHostDetaching;
     self.attach = function() {
         if (!uiHost) {
-            uiHost = createUiHost((res) => {
+            uiHost = createUiHost(browser, (res) => {
                 _resolve(res);
                 applyUserSettings();
             });
