@@ -445,7 +445,7 @@ module.exports = function(api) {
             tabOpenLink("chrome://history/");
         });
         mapkey('gk', '#12Open Chrome Cookies', function() {
-            tabOpenLink("chrome://settings/content/cookies");
+            tabOpenLink("chrome://settings/cookies");
         });
         mapkey('ge', '#12Open Chrome Extensions', function() {
             tabOpenLink("chrome://extensions/");
