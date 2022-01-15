@@ -10,11 +10,7 @@
   "scripts": {
     "clean": "rm -rf dist/*",
     "build:doc": "documentation build src/content_scripts/common/api.js src/content_scripts/common/normal.js src/content_scripts/common/clipboard.js src/content_scripts/common/hints.js src/content_scripts/common/visual.js src/content_scripts/front.js -f md -o docs/api.md",
-    "build:dev-firefox": "webpack --env=browser=firefox --mode=development --config ./config/webpack.config.js",
-    "build:dev-safari": "webpack --env=browser=safari --mode=development --config ./config/webpack.config.js",
     "build:dev": "webpack --mode=development --config ./config/webpack.config.js",
-    "build:prod-firefox": "webpack --env=browser=firefox --mode=production --config ./config/webpack.config.js",
-    "build:prod-safari": "webpack --env=browser=safari --mode=production --config ./config/webpack.config.js",
     "build:prod": "webpack --mode=production --config ./config/webpack.config.js",
     "build:testdata": "webpack --mode=production --config ./config/webpack.test.config.js",
     "build": "npm-run-all clean test build:doc build:prod build:prod-firefox build:prod-safari",
@@ -76,7 +72,7 @@
     "dompurify": "^2.3.1",
     "js-base64": "^3.7.2",
     "lodash": "^4.17.21",
-    "marked": "^3.0.2",
+    "marked": "^4.0.10",
     "pdfjs-dist": "^2.9.359"
   }
 }

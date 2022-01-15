@@ -330,16 +330,16 @@ function createFront(insert, normal, hints, visual, browser) {
                 if (window === top) {
                     window.location.href = query;
                 } else {
-                    window.postMessage({ type: 'DictoriumReload', word: query });
+                    window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
                 }
             } else {
-                window.postMessage({
+                window.postMessage({surfingkeys_data: {
                     type: "OpenDictoriumQuery",
                     word: query,
                     sentence: "",
                     pos: pos,
                     source: window.location.href
-                });
+                }});
             }
             hidePopup();
         } else if (_inlineQuery) {
@@ -358,11 +358,11 @@ function createFront(insert, normal, hints, visual, browser) {
             _showQueryResult = function(result) {
                 showQueryResult(pos, result);
             };
-            document.getElementById("proxyFrame").contentWindow.postMessage({
+            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_data: {
                 action: "performInlineQuery",
                 pos: pos,
                 query: query
-            }, "*");
+            }}, "*");
         } else {
             tabOpenLink("https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query");
             hidePopup();
@@ -615,17 +615,17 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     window.addEventListener('message', function (event) {
-        var _message = event.data;
+        var _message = event.data && event.data.surfingkeys_data;
         if (_message === undefined) {
             return;
         }
         if (_message.action === "performInlineQuery") {
             self.performInlineQuery(_message.query, _message.pos, function (pos, queryResult) {
-                event.source.postMessage({
+                event.source.postMessage({surfingkeys_data: {
                     action: "performInlineQueryResult",
                     pos: pos,
                     result: queryResult
-                }, event.origin);
+                }}, event.origin);
             });
         } else if (_message.action === "performInlineQueryResult") {
             _showQueryResult(_message.pos, _message.result);

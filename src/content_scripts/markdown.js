@@ -7,7 +7,7 @@ import {
     setSanitizedContent,
     showBanner,
 } from './common/utils.js';
-import marked from 'marked';
+import { marked } from 'marked';
 
 document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     const { normal, api } = evt.detail;
@@ -56,7 +56,7 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     function previewMarkdown(mk) {
         _source = mk;
         if (runtime.conf.useLocalMarkdownAPI) {
-            setSanitizedContent(markdownBody, marked(mk));
+            setSanitizedContent(markdownBody, marked.parse(mk));
         } else {
             setSanitizedContent(markdownBody, "Loading preview…");
             httpRequest({

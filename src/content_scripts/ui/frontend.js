@@ -56,7 +56,7 @@ const Front = (function() {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        top.postMessage(args, topOrigin);
+        top.postMessage({surfingkeys_data: args}, topOrigin);
     };
 
     self.addEventListener('keydown', function(event) {
@@ -87,11 +87,11 @@ const Front = (function() {
         this.enter = function() {
             onEnter && onEnter();
             _state = this;
-            top.postMessage({
+            top.postMessage({surfingkeys_data: {
                 action: 'setFrontFrame',
                 pointerEvents: pointerEvents,
                 frameHeight: frameHeight
-            }, topOrigin);
+            }}, topOrigin);
         };
         this.nextState = function () {
             var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
@@ -332,11 +332,11 @@ const Front = (function() {
         // send response in callback from buildUsage
         delete message.ack;
         buildUsage(message.metas, function(usage) {
-            top.postMessage({
+            top.postMessage({surfingkeys_data: {
                 data: usage,
                 responseToContent: message.commandToFrontend,
                 id: message.id
-            }, topOrigin);
+            }}, topOrigin);
         });
     };
 
@@ -596,7 +596,7 @@ const Front = (function() {
     };
 
     window.addEventListener('message', function(event) {
-        var _message = event.data;
+        var _message = event.data && event.data.surfingkeys_data;
         if (_callbacks[_message.id]) {
             var f = _callbacks[_message.id];
             // returns true to make callback stay for coming response.
@@ -606,11 +606,11 @@ const Front = (function() {
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
             var ret = _actions[_message.action](_message);
             if (_message.ack) {
-                top.postMessage({
+                top.postMessage({surfingkeys_data: {
                     data: ret,
                     action: _message.action + "Ack",
                     responseToContent: _message.commandToFrontend,
-                }, topOrigin);
+                }}, topOrigin);
             }
         }
     }, true);

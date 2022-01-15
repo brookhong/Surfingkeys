@@ -408,6 +408,13 @@ function createNormal(insert) {
         }
     }
 
+    /**
+     * Scroll within current target.
+     *
+     * @param {string} type down | up | pageDown | fullPageDown | pageUp | fullPageUp | top | bottom | left | right | leftmost | rightmost | byRatio
+     * @name Normal.scroll
+     *
+     */
     self.scroll = function(type) {
         initScrollIndex();
         var scrollNode = document.scrollingElement;
@@ -431,6 +438,8 @@ function createNormal(insert) {
             initScroll(scrollNode);
         }
         var size = (scrollNode === document.scrollingElement) ? [window.innerWidth, window.innerHeight] : [scrollNode.offsetWidth, scrollNode.offsetHeight];
+        scrollNode.lastScrollTop = scrollNode.scrollTop;
+        scrollNode.lastScrollLeft = scrollNode.scrollLeft;
         switch (type) {
             case 'down':
                 scrollNode.skScrollBy(0, runtime.conf.scrollStepSize);
@@ -497,6 +506,13 @@ function createNormal(insert) {
         RUNTIME('nextFrame');
     };
 
+    /**
+     * Feed keys into Normal mode.
+     *
+     * @param {string} keys the keys to be fed into Normal mode.
+     * @name Normal.feedkeys
+     *
+     */
     self.feedkeys = function(keys) {
         setTimeout(function() {
             var evt = new Event("keydown");
@@ -550,9 +566,25 @@ function createNormal(insert) {
      *
      */
     self.jumpVIMark = function(mark) {
-        RUNTIME('jumpVIMark', {
-            mark: mark
-        });
+        if (mark === "'") {
+            let scrollNode = document.scrollingElement;
+            initScrollIndex();
+            if (scrollNodes.length > 0) {
+                scrollNode = scrollNodes[scrollIndex];
+                if (scrollNode.lastScrollTop !== undefined && scrollNode.lastScrollLeft !== undefined) {
+                    const lt = scrollNode.scrollTop;
+                    const ll = scrollNode.scrollLeft;
+                    scrollNode.scrollTop = scrollNode.lastScrollTop;
+                    scrollNode.scrollLeft = scrollNode.lastScrollLeft;
+                    scrollNode.lastScrollTop = lt;
+                    scrollNode.lastScrollLeft = ll;
+                }
+            }
+        } else {
+            RUNTIME('jumpVIMark', {
+                mark: mark
+            });
+        }
     };
 
     self.moveTab = function(pos) {

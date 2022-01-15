@@ -21,9 +21,9 @@ Please use below template to report issue, or you could click menu item from Sur
 ## Build
 
     npm install
-    npm run build
+    npm run build:prod
 
-    npm run build firefox       # build webextension for firefox
+    browser=firefox npm run build:prod             # build webextension for firefox
 
-    npm run dev                 # build development version
-    npm run dev firefox         # build development version for firefox
+    npm run build:dev                         # build development version
+    browser=firefox npm run build:dev         # build development version for firefox

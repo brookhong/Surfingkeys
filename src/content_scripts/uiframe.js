@@ -26,25 +26,25 @@ function createUiHost(browser, onload) {
     uiHost.shadowRoot.appendChild(ifr);
 
     function _onWindowMessage(event) {
-        var _message = event.data;
+        var _message = event.data && event.data.surfingkeys_data;
         if (_message === undefined) {
             return;
         }
         if (_message.commandToFrontend || _message.responseToFrontend) {
             // forward message to frontend
-            ifr.contentWindow.postMessage(_message, frontEndURL);
+            ifr.contentWindow.postMessage({surfingkeys_data: _message}, frontEndURL);
             if (_message.commandToFrontend && event.source
                 && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder'].indexOf(_message.action) !== -1) {
                 if (!activeContent || activeContent.window !== event.source) {
                     // reset active Content
 
                     if (activeContent) {
-                        activeContent.window.postMessage({
+                        activeContent.window.postMessage({surfingkeys_data: {
                             action: 'deactivated',
                             direct: true,
                             reason: `${_message.action}@${event.timeStamp}`,
                             commandToContent: true
-                        }, activeContent.origin);
+                        }}, activeContent.origin);
                     }
 
                     activeContent = {
@@ -52,12 +52,12 @@ function createUiHost(browser, onload) {
                         origin: _message.origin
                     };
 
-                    activeContent.window.postMessage({
+                    activeContent.window.postMessage({surfingkeys_data: {
                         action: 'activated',
                         direct: true,
                         reason: `${_message.action}@${event.timeStamp}`,
                         commandToContent: true
-                    }, activeContent.origin);
+                    }}, activeContent.origin);
                 }
             }
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
@@ -65,7 +65,7 @@ function createUiHost(browser, onload) {
         } else if (_message.commandToContent || _message.responseToContent) {
             // forward message to content
             if (activeContent && !_message.direct && activeContent.window !== top) {
-                activeContent.window.postMessage(_message, activeContent.origin);
+                activeContent.window.postMessage({surfingkeys_data: _message}, activeContent.origin);
             }
         }
     }
@@ -74,11 +74,11 @@ function createUiHost(browser, onload) {
     // frontend -> top:
     // top -> top: apply user settings
     ifr.addEventListener("load", function() {
-        this.contentWindow.postMessage({
+        this.contentWindow.postMessage({surfingkeys_data: {
             action: 'initFrontend',
             ack: true,
             origin: getDocumentOrigin()
-        }, frontEndURL);
+        }}, frontEndURL);
 
         window.addEventListener('message', _onWindowMessage, true);
 
@@ -102,10 +102,10 @@ function createUiHost(browser, onload) {
                 if (browser.getBackFocusFromFrontend) {
                     browser.getBackFocusFromFrontend();
                 } else {
-                    activeContent.window.postMessage({
+                    activeContent.window.postMessage({surfingkeys_data: {
                         action: 'getBackFocus',
                         commandToContent: true
-                    }, activeContent.origin);
+                    }}, activeContent.origin);
                 }
             }
             if (document.body) {
