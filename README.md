@@ -17,7 +17,7 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 <img src="https://raw.githubusercontent.com/brookhong/Surfingkeys/master/sk.svg" width="384">
 
 * [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) for Google Chrome, Chromium based browsers
-* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/) for Firefox
+* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/firefox/addon/surfingkeys_ff/) for Firefox
 * [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg) for Microsoft Edge
 * [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1599827286) for Safari
 
