@@ -200,7 +200,6 @@ function start(browser) {
     // data by tab id
     var tabActivated = {},
         tabMessages = {},
-        frameIndexes = {},
         tabURLs = {};
 
     var newTabUrl = browser._setNewTabUrl();
@@ -286,7 +285,6 @@ function start(browser) {
         delete tabActivated[tabId];
         delete tabMessages[tabId];
         delete tabURLs[tabId];
-        delete frameIndexes[tabId];
         tabHistory = tabHistory.filter(function(e) {
             return e !== tabId;
         });
@@ -332,9 +330,7 @@ function start(browser) {
         }
     }
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-        if (changeInfo.status === "loading") {
-            delete frameIndexes[tabId];
-        } else if (changeInfo.status === "complete") {
+        if (changeInfo.status === "complete") {
             if (tab.active) {
                 _tabActivated(tabId);
             }
@@ -1177,19 +1173,16 @@ function start(browser) {
             });
 
             if (framesInTab.length > 0) {
-                var fid = framesInTab[0];
-                if (framesInTab.length > 1) {
-                    if (!frameIndexes.hasOwnProperty(tid)) {
-                        frameIndexes[tid] = 0;
+                let i = 0;
+                for (i = 0; i < framesInTab.length; i++) {
+                    if (framesInTab[i] === message.frameId) {
+                        break;
                     }
-                    frameIndexes[tid]++;
-                    frameIndexes[tid] = frameIndexes[tid] % framesInTab.length;
-                    fid = framesInTab[frameIndexes[tid]];
                 }
-
+                i = (i === framesInTab.length - 1) ? 0 : i + 1;
                 sendTabMessage(tid, -1, {
                     subject: "focusFrame",
-                    frameId: fid
+                    frameId: framesInTab[i]
                 });
             }
         });

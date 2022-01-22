@@ -717,6 +717,7 @@ div.hint-scrollable {
      * @param {function} onHintKey a callback function on hint keys pressed.
      * @param {object} [attrs=null] `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered.
      * @name Hints.create
+     * @returns {boolean} whether any hint is created for target elements.
      * @see Hints.dispatchMouseClick
      *
      * @example
@@ -744,6 +745,7 @@ div.hint-scrollable {
         } else {
             handleHint();
         }
+        return found > 0;
     };
 
     /**

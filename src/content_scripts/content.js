@@ -258,11 +258,9 @@ function start(browser) {
         if (window.location.protocol === "dictorium:") {
             _initContent(_initModules());
         } else {
-            setTimeout(function () {
-                document.addEventListener('click', function (e) {
-                    getFrameId();
-                }, { once: true });
-            }, 1);
+            window.addEventListener("focus", () => {
+                getFrameId();
+            }, {once: true});
         }
     }
 }

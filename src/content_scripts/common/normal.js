@@ -374,7 +374,7 @@ function createNormal(insert) {
         }
     }
 
-    function _highlightElement(elm) {
+    self.highlightElement = function(elm) {
         var rc;
         if (document.scrollingElement === elm) {
             rc = {
@@ -403,7 +403,7 @@ function createNormal(insert) {
             var sn = scrollNodes[scrollIndex];
             scrollIntoViewIfNeeded(sn);
             if (!silent) {
-                _highlightElement(sn);
+                self.highlightElement(sn);
             }
         }
     }
@@ -503,7 +503,9 @@ function createNormal(insert) {
     };
 
     self.rotateFrame = function() {
-        RUNTIME('nextFrame');
+        RUNTIME('nextFrame', {
+            frameId: window.frameId
+        });
     };
 
     /**
@@ -726,7 +728,7 @@ function createNormal(insert) {
             initScrollIndex();
             if (scrollNodes.length > 0) {
                 var scrollNode = scrollNodes[scrollIndex];
-                _highlightElement(scrollNode);
+                self.highlightElement(scrollNode);
             }
         }
     });

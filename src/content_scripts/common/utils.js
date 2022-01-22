@@ -266,7 +266,9 @@ function filterAncestors(elements) {
         } else {
             for (var j = 0; j < result.length; j++) {
                 if (result[j].contains(e)) {
-                    result[j] = e;
+                    if (result[j].tagName !== 'A' || !result[j].href) {
+                        result[j] = e;
+                    }
                     return;
                 } else if (result[j].shadowRoot && result[j].shadowRoot.contains(e)) {
                     // skip child from shadowRoot of a selected element.

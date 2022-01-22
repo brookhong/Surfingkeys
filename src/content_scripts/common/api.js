@@ -566,7 +566,17 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     });
 
     mapkey('w', '#2Switch frames', function() {
-        normal.rotateFrame();
+        if (window !== top || !hints.create("iframe", function(element) {
+            element.scrollIntoView({
+                behavior: 'auto',
+                block: 'center',
+                inline: 'center'
+            });
+            normal.highlightElement(element);
+            element.contentWindow.focus();
+        })) {
+            normal.rotateFrame();
+        }
     });
 
     mapkey('yg', '#7Capture current page', function() {
