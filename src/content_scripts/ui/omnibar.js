@@ -746,7 +746,30 @@ function OpenBookmarks(omnibar) {
         var ret = false,
             fi = omnibar.resultsDiv.querySelector('li.focused');
         var folderId = fi.folderId;
-        if (folderId) {
+        if (folderId && !this.activeTab){
+            RUNTIME('getBookmarks', {
+                parentId: folderId
+            }, function(response){
+                var subItems = response.bookmarks;
+                for ( var m of subItems){
+                    if (m.url){
+                        RUNTIME("openLink",	{
+                            tab: {
+                                tabbed: true,
+                                active: false
+                            },
+                            url: m.url
+                        });
+                    }
+                }
+            });
+            self.inFolder.push({
+                prompt: self.prompt,
+                folderId: currentFolderId,
+                focused: items.indexOf(fi)
+            });
+            localStorage.setItem("surfingkeys.lastOpenBookmark", JSON.stringify(self.inFolder));
+        } else if (folderId) {
             self.inFolder.push({
                 prompt: self.prompt,
                 folderId: currentFolderId,
