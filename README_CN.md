@@ -163,7 +163,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 如果你不喜欢这个功能，可以用以下设置禁用：
 
-    iunmap(":");
+    api.iunmap(":");
 
 如果你希望按下冒号后立刻出现表情下拉选项，可以用以下设置：
 

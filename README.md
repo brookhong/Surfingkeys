@@ -181,7 +181,7 @@ When user inputs a colon and 2(set by `settings.startToShowEmoji`) characters su
 
 If you want this feature disabled completely, use below settings:
 
-    iunmap(":");
+    api.iunmap(":");
 
 If you'd like emoji suggestions popup as soon as you input colon, use below:
 
