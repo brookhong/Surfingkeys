@@ -22,7 +22,7 @@ function createFront(insert, normal, hints, visual, browser) {
     var _uiUserSettings = [];
     function applyUserSettings() {
         for (var cmd of _uiUserSettings) {
-            frontendCommand(cmd);
+            self.command(cmd);
         }
     }
 
@@ -36,7 +36,7 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     var _callbacks = {};
-    function frontendCommand(args, successById) {
+    self.command = function(args, successById) {
         args.commandToFrontend = true;
         args.origin = getDocumentOrigin();
         args.id = generateQuickGuid();
@@ -47,7 +47,7 @@ function createFront(insert, normal, hints, visual, browser) {
         frontendPromise.then(function() {
             runtime.postTopMessage(args);
         });
-    }
+    };
 
     document.addEventListener("surfingkeys:setUserSettings", function(evt) {
         _uiUserSettings.push({
@@ -117,7 +117,7 @@ function createFront(insert, normal, hints, visual, browser) {
     };
 
     self.executeCommand = function (cmd) {
-        frontendCommand({
+        self.command({
             action: 'executeCommand',
             cmdline: cmd
         });
@@ -175,14 +175,14 @@ function createFront(insert, normal, hints, visual, browser) {
     }
 
     self.showUsage = function() {
-        frontendCommand({
+        self.command({
             action: 'showUsage',
             metas: getAllAnnotations()
         });
     };
 
     self.getUsage = function(cb) {
-        frontendCommand({
+        self.command({
             action: 'getUsage',
             metas: getAllAnnotations()
         }, function(response) {
@@ -192,14 +192,14 @@ function createFront(insert, normal, hints, visual, browser) {
 
     document.addEventListener("surfingkeys:showPopup", function(evt) {
         const [ content ] = evt.detail;
-        frontendCommand({
+        self.command({
             action: 'showPopup',
             content: content
         });
     });
 
     function hidePopup() {
-        frontendCommand({
+        self.command({
             action: 'hidePopup'
         });
     }
@@ -279,14 +279,14 @@ function createFront(insert, normal, hints, visual, browser) {
         if (useNeovim || runtime.conf.useNeovim) {
             cmd.file_name = `${new URL(window.location.origin).host}/${elementBehindEditor.nodeName.toLowerCase()}`;
         }
-        frontendCommand(cmd);
+        self.command(cmd);
     };
 
     self.chooseTab = function() {
         if (normal.repeats !== "") {
             RUNTIME('focusTabByIndex');
         } else {
-            frontendCommand({
+            self.command({
                 action: 'chooseTab'
             });
         }
@@ -319,7 +319,7 @@ function createFront(insert, normal, hints, visual, browser) {
      */
     self.openOmnibar = function(args) {
         args.action = 'openOmnibar';
-        frontendCommand(args);
+        self.command(args);
     };
 
     var _inlineQuery;
@@ -385,14 +385,14 @@ function createFront(insert, normal, hints, visual, browser) {
     };
 
     document.addEventListener("surfingkeys:openFinder", function(evt) {
-        frontendCommand({
+        self.command({
             action: "openFinder"
         });
     });
 
     document.addEventListener("surfingkeys:showBanner", function(evt) {
         const [ msg, linger_time ] = evt.detail;
-        frontendCommand({
+        self.command({
             action: "showBanner",
             content: msg,
             linger_time: linger_time
@@ -410,7 +410,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 pos.winX = window.frameElement.offsetLeft;
                 pos.winY = window.frameElement.offsetTop;
             }
-            frontendCommand({
+            self.command({
                 action: "showBubble",
                 content: msg,
                 position: pos,
@@ -420,7 +420,7 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     document.addEventListener("surfingkeys:hideBubble", function(evt) {
-        frontendCommand({
+        self.command({
             action: 'hideBubble'
         });
     });
@@ -434,7 +434,7 @@ function createFront(insert, normal, hints, visual, browser) {
     document.addEventListener("surfingkeys:hideKeystroke", function(evt) {
         _keyHints.accumulated = "";
         _keyHints.candidates = {};
-        frontendCommand({
+        self.command({
             action: 'hideKeystroke'
         });
     });
@@ -456,7 +456,7 @@ function createFront(insert, normal, hints, visual, browser) {
             });
         }
 
-        frontendCommand({
+        self.command({
             action: 'showKeystroke',
             keyHints: _keyHints
         });
@@ -467,7 +467,7 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     self.showStatus = function (pos, msg, duration) {
-        frontendCommand({
+        self.command({
             action: "showStatus",
             content: msg,
             duration: duration,
@@ -475,7 +475,7 @@ function createFront(insert, normal, hints, visual, browser) {
         });
     };
     self.toggleStatus = function (visible) {
-        frontendCommand({
+        self.command({
             action: "toggleStatus",
             visible: visible
         });
@@ -523,7 +523,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 }
             }
 
-            frontendCommand({
+            self.command({
                 action: 'updateOmnibarResult',
                 words: queryResult
             });
@@ -534,7 +534,7 @@ function createFront(insert, normal, hints, visual, browser) {
         RUNTIME('executeScript', {
             code: message.cmdline
         }, function (response) {
-            frontendCommand({
+            self.command({
                 action: 'updateOmnibarResult',
                 words: response.response
             });
@@ -565,7 +565,7 @@ function createFront(insert, normal, hints, visual, browser) {
         clearPendingQuery();
         _pendingQuery = setTimeout(function() {
             visual.visualUpdate(message.query);
-            frontendCommand({
+            self.command({
                 action: "visualUpdated"
             });
         }, 500);

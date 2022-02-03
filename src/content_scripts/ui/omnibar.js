@@ -69,6 +69,9 @@ function createOmnibar(front, clipboard) {
         }
         event.sk_suppressed = true;
     }).addEventListener('mousedown', function(event) {
+        if (!ui.contains(event.target)) {
+            front.hidePopup();
+        }
         event.sk_suppressed = true;
     });
 
@@ -253,11 +256,7 @@ function createOmnibar(front, clipboard) {
     var lastInput = "", handler, lastHandler = null;
     var ui = document.getElementById('sk_omnibar');
     ui.onclick = function(e) {
-        if (handler.onClick) {
-            handler.onClick(e);
-        } else {
-            self.input.focus();
-        }
+        self.input.focus();
     };
 
     self.triggerInput = function() {
@@ -521,6 +520,9 @@ function createOmnibar(front, clipboard) {
         _savedAargs = args;
         ui.classList.remove("sk_omnibar_middle");
         ui.classList.remove("sk_omnibar_bottom");
+        if (getBrowserName() === "Safari-iOS") {
+            runtime.conf.omnibarPosition = "bottom";
+        }
         ui.classList.add("sk_omnibar_" + runtime.conf.omnibarPosition);
         if (runtime.conf.omnibarPosition === "bottom") {
             self.resultsDiv.remove();
@@ -610,6 +612,20 @@ function createOmnibar(front, clipboard) {
             var li = renderItem(b);
             if (li) {
                 ul.append(li);
+                li.onclick = () => {
+                    if (li.url) {
+                        RUNTIME("openLink", {
+                            tab: {
+                                tabbed: true,
+                                active: true,
+                            },
+                            url: li.url
+                        });
+                    } else {
+                        self.input.value = li.query;
+                        self.input.focus();
+                    }
+                };
             }
         });
         self.resultsDiv.append(ul);
@@ -1270,9 +1286,30 @@ function SearchEngine(omnibar, front) {
             url: message.url,
             suggestionURL: message.suggestionURL
         };
+        const searchEngineIconStorageKey = `surfingkeys.searchEngineIcon.${message.alias}`;
+        const searchEngineIcon = localStorage.getItem(searchEngineIconStorageKey);
+        if (searchEngineIcon) {
+            self.aliases[message.alias].prompt = `<img src="${searchEngineIcon}" alt=${message.prompt} style="width: 20px;" />`;
+        } else if (front.topOrigin.startsWith("http")){
+            let origin = new URL(message.url).origin;
+            origin = origin.replace(/(https?:\/\/)([^.]*)\.([^.]*)\.([^.]*)/, new URL(front.topOrigin).protocol + "//www.$3.$4");
+            RUNTIME('requestImage', {
+                url: `${origin}/favicon.ico`
+            }, function(response) {
+                localStorage.setItem(searchEngineIconStorageKey, response.text);
+                self.aliases[message.alias].prompt = `<img src="${response.text}" alt=${message.prompt} style="width: 20px;" />`;
+            });
+        }
     };
     front._actions['removeSearchAlias'] = function (message) {
         delete self.aliases[message.alias];
+    };
+    front._actions['getSearchAliases'] = function (message) {
+        front.postMessage({
+            aliases: self.aliases,
+            responseToContent: message.commandToFrontend,
+            id: message.id
+        });
     };
 
     return self;

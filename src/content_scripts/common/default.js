@@ -349,18 +349,18 @@ module.exports = function(api) {
             return r.phrase;
         });
     });
-    addSearchAlias('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'http://suggestion.baidu.com/su?cb=&wd=', function(response) {
+    addSearchAlias('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'https://suggestion.baidu.com/su?cb=&wd=', function(response) {
         var res = response.text.match(/,s:\[("[^\]]+")]}/);
         return res ? res[1].replace(/"/g, '').split(",") : [];
     });
     addSearchAlias('e', 'wikipedia', 'https://en.wikipedia.org/wiki/', 's', 'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=40&search=', function(response) {
         return JSON.parse(response.text)[1];
     });
-    addSearchAlias('w', 'bing', 'http://global.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'http://api.bing.com/osjson.aspx?query=', function(response) {
+    addSearchAlias('w', 'bing', 'https://www.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'https://api.bing.com/osjson.aspx?query=', function(response) {
         var res = JSON.parse(response.text);
         return res[1];
     });
-    addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
+    addSearchAlias('s', 'stackoverflow', 'https://stackoverflow.com/search?q=');
     addSearchAlias('h', 'github', 'https://github.com/search?q=', 's', 'https://api.github.com/search/repositories?order=desc&q=', function(response) {
         var res = JSON.parse(response.text)['items'];
         return res ? res.map(function(r){

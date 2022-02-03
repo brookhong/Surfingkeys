@@ -1160,6 +1160,22 @@ function start(browser) {
             });
         }, message.headers, message.data);
     };
+    self.requestImage = function(message, sender, sendResponse) {
+        const img = document.createElement("img");
+        img.src = message.url;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.height = img.naturalHeight;
+            canvas.width = img.naturalWidth;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            _response(message, sendResponse, {
+                text: canvas.toDataURL()
+            });
+        };
+
+    };
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
         chrome.tabs.executeScript(tid, {

@@ -73,8 +73,15 @@ function applySettings(api, normal, rs) {
     if ('findHistory' in rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
-    if (!rs.showAdvanced && rs.basicMappings) {
-        applyBasicMappings(api, normal, rs.basicMappings);
+    if (!rs.showAdvanced) {
+        if (rs.basicMappings) {
+            applyBasicMappings(api, normal, rs.basicMappings);
+        }
+        if (rs.disabledSearchAliases) {
+            for (const key in rs.disabledSearchAliases) {
+                api.removeSearchAlias(key);
+            }
+        }
     }
     if (rs.showAdvanced && 'snippets' in rs && rs.snippets && !isInUIFrame()) {
         var delta = runScript(api, rs.snippets);
@@ -144,12 +151,15 @@ function _initModules() {
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
     createDefaultMappings(api);
+    if (typeof(_browser.plugin) === "function") {
+        _browser.plugin({ front });
+    }
 
     dispatchSKEvent('defaultSettingsLoaded', {normal, api});
     RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
         applySettings(api, normal, rs);
-        dispatchSKEvent('userSettingsLoaded', {settings: rs, api});
+        dispatchSKEvent('userSettingsLoaded', {settings: rs, api, front});
     });
     return {
         normal,

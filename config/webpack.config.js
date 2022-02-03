@@ -20,6 +20,7 @@ function modifyManifest(browser, mode, buffer) {
         manifest.permissions.push("cookies",
             "contextualIdentities");
     } else {
+        manifest.permissions.push("proxy");
         manifest.permissions.push("tts");
         manifest.permissions.push("downloads.shelf");
         manifest.background.persistent = false;

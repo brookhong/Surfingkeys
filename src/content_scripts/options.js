@@ -77,7 +77,7 @@ function createMappingEditor(elmId) {
 }
 
 if (getBrowserName() === "Firefox") {
-    document.querySelector("#localPathForSettings").style.display = "none";
+    document.querySelector("#localPathForSettings").style.display = "";
     document.querySelector("#proxySettings").style.display = "none";
 } else if (getBrowserName().startsWith("Safari")) {
     document.querySelector("#localPathForSettings").style.display = "none";
@@ -221,16 +221,17 @@ function _updateProxy(data) {
     });
 }
 
+var basicSettingsDiv = document.getElementById("basicSettings");
 var basicMappingsDiv = document.getElementById("basicMappings");
 var advancedSettingDiv = document.getElementById("advancedSetting");
 var advancedTogglerDiv = document.getElementById("advancedToggler");
 function showAdvanced(flag) {
     if (flag) {
-        basicMappingsDiv.hide();
+        basicSettingsDiv.hide();
         advancedSettingDiv.show();
         advancedTogglerDiv.setAttribute('checked', 'checked');
     } else {
-        basicMappingsDiv.show();
+        basicSettingsDiv.show();
         advancedSettingDiv.hide();
         advancedTogglerDiv.removeAttribute('checked');
     }
@@ -351,6 +352,55 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
     }).filter((m) => m !== null);;
 });
 
+function renderSearchAlias(front, disabledSearchAliases) {
+    const aliasesPromise = new Promise((r, j) => {
+        const getSearchAliases = () => {
+            front.command({
+                action: 'getSearchAliases'
+            }, function(response) {
+                if (Object.keys(response.aliases).length > 0) {
+                    r(response.aliases);
+                } else {
+                    setTimeout(getSearchAliases, 300);
+                }
+            });
+        };
+        getSearchAliases();
+    });
+    aliasesPromise.then((aliases) => {
+        const allAliases = {};
+        for (const key in aliases) {
+            let prompt = aliases[key].prompt;
+            if (!prompt.startsWith("<img src=")) {
+                prompt = prompt.replace(/<span class='separator'>.*/, '');
+            }
+            allAliases[key] = { prompt, checked: "checked" };
+        }
+        for (const key in disabledSearchAliases) {
+            allAliases[key] = { prompt: disabledSearchAliases[key], checked: "" };
+        }
+        for (const key in allAliases) {
+            const { prompt, checked } = allAliases[key];
+            const elm = createElementWithContent("div", `<div class='remove'><input type="checkbox" ${checked} /></div><span class='prompt'>${prompt}</span>`);
+            document.querySelector("#searchAliases").appendChild(elm);
+
+            elm.querySelector("input").onchange = () => {
+                if (disabledSearchAliases.hasOwnProperty(key)) {
+                    delete disabledSearchAliases[key];
+                } else {
+                    disabledSearchAliases[key] = prompt;
+                }
+
+                RUNTIME('updateSettings', {
+                    settings: {
+                        disabledSearchAliases
+                    }
+                });
+            };
+        }
+    });
+}
+
 function renderKeyMappings(rs) {
     initL10n(function (locale) {
         var customization = basicMappings.map(function (w, i) {
@@ -374,7 +424,9 @@ function renderKeyMappings(rs) {
 }
 
 document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
-    renderKeyMappings(evt.detail.settings);
+    const { settings, front } = evt.detail;
+    renderSearchAlias(front, settings.disabledSearchAliases || {});
+    renderKeyMappings(settings);
 });
 
 var KeyPicker = (function() {

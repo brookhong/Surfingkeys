@@ -36,7 +36,6 @@
     "author": "brook hong",
     "permissions": [
         "nativeMessaging",
-        "proxy",
         "<all_urls>",
         "tabs",
         "history",

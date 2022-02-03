@@ -46,8 +46,7 @@ const Front = (function() {
 
     const api = createAPI(clipboard, insert, normal, hints, visual, self, {});
 
-    var topOrigin,
-        _actions = self._actions,
+    var _actions = self._actions,
         _callbacks = {};
     self.contentCommand = function(args, successById) {
         args.commandToContent = true;
@@ -56,7 +55,11 @@ const Front = (function() {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        top.postMessage({surfingkeys_data: args}, topOrigin);
+        top.postMessage({surfingkeys_data: args}, self.topOrigin);
+    };
+
+    self.postMessage = function(args) {
+        top.postMessage({surfingkeys_data: args}, self.topOrigin);
     };
 
     self.addEventListener('keydown', function(event) {
@@ -91,7 +94,7 @@ const Front = (function() {
                 action: 'setFrontFrame',
                 pointerEvents: pointerEvents,
                 frameHeight: frameHeight
-            }}, topOrigin);
+            }}, self.topOrigin);
         };
         this.nextState = function () {
             var visibleDivs = Array.from(document.body.querySelectorAll("body>div")).filter(function(n) {
@@ -336,7 +339,7 @@ const Front = (function() {
                 data: usage,
                 responseToContent: message.commandToFrontend,
                 id: message.id
-            }}, topOrigin);
+            }}, self.topOrigin);
         });
     };
 
@@ -591,7 +594,7 @@ const Front = (function() {
     };
 
     _actions['initFrontend'] = function(message) {
-        topOrigin = message.origin;
+        self.topOrigin = message.origin;
         return new Date().getTime();
     };
 
@@ -610,7 +613,7 @@ const Front = (function() {
                     data: ret,
                     action: _message.action + "Ack",
                     responseToContent: _message.commandToFrontend,
-                }}, topOrigin);
+                }}, self.topOrigin);
             }
         }
     }, true);
