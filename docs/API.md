@@ -320,6 +320,7 @@ Add a search engine alias into Omnibar.
 *   `suggestion_url` **[string][102]** the URL to fetch suggestions in omnibar when this search engine is triggered. (optional, default `null`)
 *   `callback_to_parse_suggestion` **[function][103]** a function to parse response from `suggestion_url` and return a list of strings as suggestions. (optional, default `null`)
 *   `only_this_site_key` **[string][102]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
+*   `options` **[object][104]** `favicon_url` URL for favicon for this search engine (optional, default `null`)
 
 ### Examples
 
@@ -457,6 +458,8 @@ mapkey('yA', '#7Copy a link URL to the clipboard', function() {
     });
 });
 ```
+
+Returns **[boolean][107]** whether any hint is created for target elements.
 
 ## Hints.dispatchMouseClick
 

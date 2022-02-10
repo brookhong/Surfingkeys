@@ -1291,10 +1291,20 @@ function SearchEngine(omnibar, front) {
         if (searchEngineIcon) {
             self.aliases[message.alias].prompt = `<img src="${searchEngineIcon}" alt=${message.prompt} style="width: 20px;" />`;
         } else if (front.topOrigin.startsWith("http")){
-            let origin = new URL(message.url).origin;
-            origin = origin.replace(/(https?:\/\/)([^.]*)\.([^.]*)\.([^.]*)/, new URL(front.topOrigin).protocol + "//www.$3.$4");
+            let iconUrl;
+            if (message.options?.favicon_url) {
+              iconUrl = new URL(message.options.favicon_url);
+            } else {
+              iconUrl = new URL(message.url);
+              iconUrl.pathname = "favicon.ico";
+              iconUrl.search = "";
+              iconUrl.hash = "";
+            }
+            if (iconUrl.protocol !== "data:") {
+              iconUrl.protocol = (new URL(front.topOrigin)).protocol;
+            }
             RUNTIME('requestImage', {
-                url: `${origin}/favicon.ico`
+                url: iconUrl.href,
             }, function(response) {
                 localStorage.setItem(searchEngineIconStorageKey, response.text);
                 self.aliases[message.alias].prompt = `<img src="${response.text}" alt=${message.prompt} style="width: 20px;" />`;
