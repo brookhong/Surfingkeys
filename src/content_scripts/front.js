@@ -57,7 +57,7 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     var _listSuggestions = {};
-    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion) {
+    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion, options) {
         if (suggestionURL && listSuggestion) {
             _listSuggestions[suggestionURL] = listSuggestion;
         }
@@ -66,7 +66,8 @@ function createFront(insert, normal, hints, visual, browser) {
             alias: alias,
             prompt: prompt,
             url: url,
-            suggestionURL: suggestionURL
+            suggestionURL: suggestionURL,
+            options: options,
         });
     };
     self.removeSearchAlias = function (alias) {
