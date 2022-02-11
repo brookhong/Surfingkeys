@@ -1300,9 +1300,6 @@ function SearchEngine(omnibar, front) {
               iconUrl.search = "";
               iconUrl.hash = "";
             }
-            if (iconUrl.protocol !== "data:") {
-              iconUrl.protocol = (new URL(front.topOrigin)).protocol;
-            }
             RUNTIME('requestImage', {
                 url: iconUrl.href,
             }, function(response) {
