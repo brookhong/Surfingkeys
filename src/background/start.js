@@ -1162,6 +1162,7 @@ function start(browser) {
     };
     self.requestImage = function(message, sender, sendResponse) {
         const img = document.createElement("img");
+        img.crossOrigin = "Anonymous";
         img.src = message.url;
         img.onload = () => {
             const canvas = document.createElement('canvas');
