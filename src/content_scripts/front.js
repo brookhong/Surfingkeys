@@ -112,7 +112,10 @@ function createFront(insert, normal, hints, visual, browser) {
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
         if (_listSuggestions.hasOwnProperty(message.url)) {
-            ret = _listSuggestions[message.url](message.response);
+            ret = _listSuggestions[message.url](message.response, {
+              url: message.requestUrl,
+              query: message.query,
+            });
         }
         return ret;
     };
@@ -640,12 +643,13 @@ function createFront(insert, normal, hints, visual, browser) {
             } else if (_message.commandToContent && _message.action && _actions.hasOwnProperty(_message.action)) {
                 var ret = _actions[_message.action](_message);
                 if (_message.ack) {
-                    runtime.postTopMessage({
-                        data: ret,
-                        responseToFrontend: true,
-                        origin: _message.origin,
-                        id: _message.id
-                    });
+                    Promise.resolve(ret).then((data) =>
+                      runtime.postTopMessage({
+                          data,
+                          responseToFrontend: true,
+                          origin: _message.origin,
+                          id: _message.id
+                      }));
                 }
             }
         } else if (_message.action === "activated") {

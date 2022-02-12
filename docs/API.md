@@ -318,7 +318,7 @@ Add a search engine alias into Omnibar.
 *   `search_url` **[string][102]** the URL of the search engine
 *   `search_leader_key` **[string][102]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
 *   `suggestion_url` **[string][102]** the URL to fetch suggestions in omnibar when this search engine is triggered. (optional, default `null`)
-*   `callback_to_parse_suggestion` **[function][103]** a function to parse response from `suggestion_url` and return a list of strings as suggestions. (optional, default `null`)
+*   `callback_to_parse_suggestion` **[function][103]** a function to parse the response from `suggestion_url` and return a list of strings as suggestions. Receives two arguments: `response`, the first argument, is an object containing a property `text` which holds the text of the response; and `request`, the second argument, is an object containing the properties `query` which is the text of the query and `url` which is the formatted URL for the request. (optional, default `null`)
 *   `only_this_site_key` **[string][102]** `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`. (optional, default `o`)
 *   `options` **[object][104]** `favicon_url` URL for favicon for this search engine (optional, default `null`)
 

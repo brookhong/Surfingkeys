@@ -1261,13 +1261,16 @@ function SearchEngine(omnibar, front) {
         // This helps prevent rate-limits when typing a long query.
         // E.g. github.com's API rate-limits after only 10 unauthenticated requests.
         _pendingRequest = setTimeout(function() {
+            const requestUrl = formatURL(self.suggestionURL, encodeURIComponent(omnibar.input.value));
             RUNTIME('request', {
                 method: 'get',
-                url: formatURL(self.suggestionURL, encodeURIComponent(omnibar.input.value))
+                url: requestUrl
             }, function (resp) {
                 front.contentCommand({
                     action: 'getSearchSuggestions',
                     url: self.suggestionURL,
+                    query: omnibar.input.value,
+                    requestUrl,
                     response: resp
                 }, function(resp) {
                     resp = resp.data;
