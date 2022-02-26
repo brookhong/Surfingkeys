@@ -6,6 +6,7 @@
         <link rel="stylesheet" href="../content.css">
         <link rel="stylesheet" href="options.css">
         <script src="ace.js" type="text/javascript" charset="utf-8"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
         <template id="sample">// an example to create a new mapping `ctrl-y`
@@ -62,7 +63,7 @@ settings.theme = `
             <div class="deleteProxyPair">🗑️</div>
             <div class="proxy">
                 Proxy:
-                <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
+                <input type="text" value="" placeholder="192.168.1.100:8080" size=40>
                 Proxy Type:
                 <select value="PROXY">
                     <option value="PROXY" selected="selected">PROXY</option>
@@ -75,7 +76,7 @@ settings.theme = `
             </div>
             <div class="autoproxy_hosts">
                 <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
-                <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
+                <input type="text" value="" placeholder="google.*, youtube.com" size=40> <button>Add New</button>
                 <div></div>
             </div>
         </template>
@@ -97,7 +98,7 @@ settings.theme = `
         <div id="advancedSetting" class="section" style="display: none;">
             <div id="localPathForSettings" style="display: inline-block;">
                 <label for="localPath">Load settings from:</label>
-                <input type="text" value="" id="localPath" name="localPath" size=72>
+                <input type="text" value="" id="localPath" name="localPath" size=40>
                 <span class=infoPointer for=localPathHelp>?</span>
                 <div class=info id='localPathHelp' style="display: none;">You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt">https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt</a>. If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</div>
             </div>

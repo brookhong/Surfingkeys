@@ -6,7 +6,6 @@ import {
     isEditable,
     flashPressedLink,
     getElements,
-    listElements,
     getBrowserName,
     getClickableElements,
     getRealRect,

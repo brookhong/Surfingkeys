@@ -323,7 +323,7 @@ function filterOverlapElements(elements) {
             return true;
         } else {
             var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
-            return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
+            return !el || el.shadowRoot && (el.childElementCount === 0 || el.shadowRoot.contains(e)) || el.contains(e) || e.contains(el);
         }
     });
 
@@ -686,6 +686,24 @@ HTMLElement.prototype.removeAttributes = function () {
         this.removeAttribute(this.attributes[0].name);
     }
 };
+HTMLElement.prototype.containsWithShadow = function (e) {
+    const roots = [this];
+    while (roots.length) {
+        const root = roots.shift();
+        if (root.contains(e)) {
+            return true;
+        }
+        roots.push(...root.children);
+        if (root.shadowRoot) {
+            if (root.shadowRoot.contains(e)) {
+                return true;
+            }
+            roots.push(...root.shadowRoot.children);
+        }
+    }
+    return false;
+};
+
 NodeList.prototype.remove = function() {
     this.forEach(function(node) {
         node.remove();
