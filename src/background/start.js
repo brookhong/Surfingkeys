@@ -1312,7 +1312,7 @@ function start(browser) {
         });
     };
     self.download = function(message, sender, sendResponse) {
-        chrome.downloads.download({ url: message.url })
+        chrome.downloads.download({ url: message.url, saveAs: message.saveAs });
     };
     self.executeScript = function(message, sender, sendResponse) {
         chrome.tabs.executeScript(sender.tab.id, {
