@@ -195,6 +195,10 @@ const Front = (function() {
                 }
                 if (input && document.activeElement !== input) {
                     input.focus();
+                    input.value = " "
+                    setTimeout(() => {
+                        input.value = ""
+                    }, 10);
                 } else {
                     clearInterval(inputGuard);
                 }
