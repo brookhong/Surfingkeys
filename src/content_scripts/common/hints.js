@@ -523,28 +523,23 @@ div.hint-scrollable {
             behaviours.tabbed = true;
         }
         var elements;
-        if (behaviours.tabbed) {
-            elements = Array.from(getElements('a[href]:not([href^=javascript])'));
-            elements = filterInvisibleElements(elements);
+        if (cssSelector === "") {
+            elements = getVisibleElements(function(e, v) {
+                if (isElementClickable(e)) {
+                    v.push(e);
+                }
+            });
+            elements = filterOverlapElements(elements);
+        } else if (Array.isArray(cssSelector)) {
+            elements = filterInvisibleElements(cssSelector);
         } else {
-            if (cssSelector === "") {
-                elements = getVisibleElements(function(e, v) {
-                    if (isElementClickable(e)) {
-                        v.push(e);
-                    }
-                });
-                elements = filterOverlapElements(elements);
-            } else if (Array.isArray(cssSelector)) {
-                elements = filterInvisibleElements(cssSelector);
-            } else {
-                elements = getVisibleElements(function (e, v) {
-                    if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
-                        v.push(e);
-                    }
-                });
-                elements = filterInvisibleElements(elements);
-                elements = filterOverlapElements(elements);
-            }
+            elements = getVisibleElements(function (e, v) {
+                if (e.matches(cssSelector) && !e.disabled && !e.readOnly) {
+                    v.push(e);
+                }
+            });
+            elements = filterInvisibleElements(elements);
+            elements = filterOverlapElements(elements);
         }
 
         if (elements.length > 0) {
