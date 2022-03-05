@@ -1,3 +1,6 @@
+import {
+    filterByTitleOrUrl,
+} from '../content_scripts/common/utils.js';
 function request(url, onReady, headers, data, onException) {
     headers = headers || {};
     return new Promise(function(acc, rej) {
@@ -633,12 +636,7 @@ function start(browser) {
         tabs = tabs.filter(function(b) {
             return b.url;
         });
-        if (query && query.length) {
-            tabs = tabs.filter(function(b) {
-                return b.title.indexOf(query) !== -1 || (b.url && b.url.indexOf(query) !== -1);
-            });
-        }
-        return tabs;
+        return filterByTitleOrUrl(tabs, query);
     }
     self.getRecentlyClosed = function(message, sender, sendResponse) {
         chrome.sessions.getRecentlyClosed({}, function(sessions) {

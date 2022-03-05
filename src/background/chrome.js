@@ -1,4 +1,7 @@
 import {
+    filterByTitleOrUrl,
+} from '../content_scripts/common/utils.js';
+import {
     _save,
     dictFromArray,
     extendObject,
@@ -113,11 +116,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
             text: "",
             maxResults: prefetch
         }, function(items) {
-            const filtered = items.filter((item) => {
-                const title = caseSensitive ? item.title : item.title.toLowerCase();
-                const url = caseSensitive ? item.url : item.url.toLowerCase();
-                return title.indexOf(text) !== -1 || url.indexOf(text) !== -1;
-            });
+            const filtered = filterByTitleOrUrl(items, text);
             results = [...results, ...filtered];
             if (items.length < maxResults || results.length >= maxResults) {
                 // all items are scanned or we have got what we want

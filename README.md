@@ -6,8 +6,8 @@ Surfingkeys is another web browser(including Google Chrome, Chromium based brows
 
 Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his/her own defined Javascript function. For example,
 
-    mapkey('<Ctrl-y>', 'Show me the money', function() {
-        Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
+    api.mapkey('<Ctrl-y>', 'Show me the money', function() {
+        api.Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
 Surfingkeys is doing its best to make full use of keyboard for web browsing, but there are some limitations from Google Chrome itself, please see [Brook Build of Chromium](https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html) for a more thorough experience.
@@ -19,7 +19,7 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 * [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) for Google Chrome, Chromium based browsers
 * [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/) for Firefox
 * [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg) for Microsoft Edge
-* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1599827286) for Safari
+* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1609752330) for Safari, works for both macOS and iOS, except that for iOS an external keyboard is required to be connected with your device. There is one exception of the [special feature designed for iOS device](https://youtu.be/xaTf2booQkQ) -- `Search selected with`.
 
 ### Feature availability
 | Features \ Browsers | Chromium family (above 45) | Firefox (above 57) | Safari (above 15) |
@@ -111,7 +111,7 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 
 Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hint key is pressed. Add below line to your settings to make it right hand:
 
-    Hints.setCharacters('yuiophjklnm'); // for right hand
+    api.Hints.setCharacters('yuiophjklnm'); // for right hand
 
 When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
 
@@ -170,8 +170,8 @@ All mappings added with `imapkey` work in this mode.
 
 `imap` and `iunmap` for insert mode.
 
-    imap(',,', "<Esc>");        // press comma twice to leave current input box.
-    imap(';;', "<Ctrl-'>");     // press semicolon twice to toggle quote.
+    api.imap(',,', "<Esc>");        // press comma twice to leave current input box.
+    api.imap(';;', "<Ctrl-'>");     // press semicolon twice to toggle quote.
 
 #### Emoji completion
 
@@ -181,7 +181,7 @@ When user inputs a colon and 2(set by `settings.startToShowEmoji`) characters su
 
 If you want this feature disabled completely, use below settings:
 
-    iunmap(":");
+    api.iunmap(":");
 
 If you'd like emoji suggestions popup as soon as you input colon, use below:
 
@@ -232,8 +232,8 @@ In omnibar opened with `b`:
 
 `cmap` could be used for Omnibar to change mappings, for example:
 
-    cmap('<Ctrl-n>', '<Tab>');
-    cmap('<Ctrl-p>', '<Shift-Tab>');
+    api.cmap('<Ctrl-n>', '<Tab>');
+    api.cmap('<Ctrl-p>', '<Shift-Tab>');
 
 ### Add bookmark
 `ab` is a shortcut to bookmark current page. An Omnibar is displayed for you to choose a folder to place the new bookmark after you pressed `ab`. If you want to place the new bookmark into a new folder, you could input folder name -- **which must be ended with `/`** in Omnibar. For example, I choose folder `/Bookmarks Bar/tool/`, and append `abc/`, then current page will be bookmarked into `/Bookmarks Bar/tool/abc/`. If there is no `/` behind `abc`, `abc` will be used as title of the new bookmark.
@@ -274,8 +274,8 @@ There is `settings.tabsThreshold` here. When total of opened tabs exceeds `setti
 
 If you prefer to use omnibar always, use below mapping:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', function() {
-        Front.openOmnibar({type: "Tabs"});
+    api.mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        api.Front.openOmnibar({type: "Tabs"});
     });
 
 which works same as:
@@ -299,9 +299,9 @@ So to group your tabs into windows, you can use `W` to move one tab to a specifi
 `:` to open omnibar for commands, then you can execute any pre-defined there. The result will be displayed below the omnibar.
 
     // create shortcuts for the command with different parameters
-    map(';pa', ':setProxyMode always');
-    map(';pb', ':setProxyMode byhost');
-    map(';pd', ':setProxyMode direct');
+    api.map(';pa', ':setProxyMode always');
+    api.map(';pb', ':setProxyMode byhost');
+    api.map(';pd', ':setProxyMode direct');
 
 Besides commands, you can also run javascript code.
 
@@ -359,7 +359,7 @@ Usually, you need not count the number, you just prefix a large number such as `
 
 By default, `Alt-s` will toggle Surfingkeys for current site. When Surfingkeys is turned off, all mappings stop working except the hotkey. To change hotkey, use settings below:
 
-    map('<Ctrl-i>', '<Alt-s>'); // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
+    api.map('<Ctrl-i>', '<Alt-s>'); // hotkey must be one keystroke with/without modifier, it can not be a sequence of keystrokes like `gg`.
 
 When Surfingkeys is turned off on some site by `Alt-s`, the status will be persisted in settings, for example,
 
@@ -429,8 +429,6 @@ You could change to Emacs keybindings for the editor by adding below settings:
 
 With Emacs keybindings, use `C-x C-s` to save your input.
 
-Surfingkeys is also integrated with [glacambre/firenvim](https://github.com/glacambre/firenvim), so that user can use neovim to edit input. Basically when you try to activate vim editor by `Ctrl-i`, Surfingkeys will try to activate neovim through `firenvim` first, and if it fails, Surfingkeys will then call the built-in ACE vim editor for you. If you would not like such behavior, just set `settings.useNeovim` false.
-
 ### Edit any input on html page
 
 In normal mode, press capital `I`, then use a hint letter to pick up a input box. A vim editor is opened for you to edit text. The vim editor is opened in slightly different way for `<input>`, `<textarea>`, and `<select>` elements.
@@ -473,7 +471,7 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 
 All keystrokes in normal mode are repeatable by dot, except those keystrokes mapped with `repeatIgnore` as `true`, for example,
 
-    mapkey('se', '#2My magic se', function() {
+    api.mapkey('se', '#2My magic se', function() {
         // your code here
     }, {repeatIgnore: true});
 
@@ -563,7 +561,6 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.caretViewport | null | Set it in format `[top, left, bottom, right]` to limit hints generation on `v` for entering visual mode, such as `[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]` will make Surfingkeys generate Hints only for text that display on vertically middle of window. |
 | settings.mouseSelectToQuery | [] | All hosts that have enable feature -- mouse selection to query. |
 | settings.autoSpeakOnInlineQuery | false | Whether to automatically speak the query string with TTS on inline query. |
-| settings.useNeovim | true | Whether to use neovim(through [glacambre/firenvim](https://github.com/glacambre/firenvim)) as editor rather than the built-in ACE vim editor. |
 
 ### Example of settings.theme, below is to set font size of status bar
 

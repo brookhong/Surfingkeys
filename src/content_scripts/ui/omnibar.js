@@ -5,9 +5,11 @@ import { debounce } from 'lodash';
 import {
     constructSearchURL,
     createElementWithContent,
+    filterByTitleOrUrl,
     getBrowserName,
     htmlEncode,
     parseAnnotation,
+    regexFromString,
     scrollIntoViewIfNeeded,
     setSanitizedContent,
     showBanner,
@@ -19,46 +21,6 @@ import { RUNTIME, runtime } from '../common/runtime.js';
 
 const separator = '➤';
 const separatorHtml = `<span class='separator'>${separator}</span>`;
-
-function _regexFromString(str, highlight) {
-    var rxp = null;
-    if (/^\/.+\/([gimuy]*)$/.test(str)) {
-        // full regex input
-        try {
-            rxp = eval(str);
-        } catch (e) {
-            rxp = null;
-        }
-    }
-    if (!rxp) {
-        if (/^\/.+$/.test(str)) {
-            // part regex input
-            rxp = eval(str + "/i");
-        }
-        if (!rxp) {
-            str = str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
-            if (highlight) {
-                rxp = new RegExp(str.replace(/\s+/, "\|"), 'gi');
-            } else {
-                var words = str.split(/\s+/).map(function(w) {
-                    return `(?=.*${w})`;
-                }).join('');
-                rxp = new RegExp(`^${words}.*$`, "gi");
-            }
-        }
-    }
-    return rxp;
-}
-
-function _filterByTitleOrUrl(urls, query) {
-    if (query && query.length) {
-        var rxp = _regexFromString(query, false);
-        urls = urls.filter(function(b) {
-            return rxp.test(b.title) || rxp.test(b.url);
-        });
-    }
-    return urls;
-}
 
 function createOmnibar(front, clipboard) {
     var self = new Mode("Omnibar");
@@ -491,7 +453,7 @@ function createOmnibar(front, clipboard) {
         var query = self.input.value.trim();
         var rxp = null;
         if (query.length) {
-            rxp = _regexFromString(query, true);
+            rxp = regexFromString(query, true);
         }
         self.listResults(_page, function(b) {
             var li;
@@ -689,7 +651,7 @@ function createOmnibar(front, clipboard) {
                 var results = response.tabs;
                 RUNTIME("getTopSites", null, function(response) {
                     results = results.concat(response.urls);
-                    results = _filterByTitleOrUrl(results, self.input.value);
+                    results = filterByTitleOrUrl(results, self.input.value);
                     self.listBookmarkFolders(function() {
                         RUNTIME('getAllURLs', {
                             maxResults: self.getHistoryCacheSize() - results.length,
@@ -706,14 +668,14 @@ function createOmnibar(front, clipboard) {
     self.addHandler('RecentlyClosed', OpenURLs(`Recently closed${separatorHtml}`, self, () => {
         return new Promise((resolve, reject) => {
             RUNTIME('getRecentlyClosed', null, function(response) {
-                resolve(_filterByTitleOrUrl(response.urls, self.input.value));
+                resolve(filterByTitleOrUrl(response.urls, self.input.value));
             });
         });
     }));
     self.addHandler('TabURLs', OpenURLs(`Tab History${separatorHtml}`, self, () => {
         return new Promise((resolve, reject) => {
             RUNTIME('getTabURLs', null, function(response) {
-                resolve(_filterByTitleOrUrl(response.urls, self.input.value));
+                resolve(filterByTitleOrUrl(response.urls, self.input.value));
             });
         });
     }));
@@ -1057,7 +1019,7 @@ function OpenTabs(omnibar) {
     };
     self.onInput = function() {
         omnibar.cachedPromise.then(function(cached) {
-            var filtered = _filterByTitleOrUrl(cached, omnibar.input.value);
+            var filtered = filterByTitleOrUrl(cached, omnibar.input.value);
             omnibar.listURLs(filtered, false);
         });
     };
@@ -1102,7 +1064,7 @@ function OpenWindows(omnibar, front) {
             const query = omnibar.input.value;
             let rxp = null;
             if (query && query.length) {
-                rxp = _regexFromString(query, false);
+                rxp = regexFromString(query, false);
                 filtered = cached.filter(function(w) {
                     for (const t of w.tabs) {
                         if (rxp.test(t.title) || rxp.test(t.url)) {
@@ -1112,7 +1074,7 @@ function OpenWindows(omnibar, front) {
                     return false;
                 });
             }
-            rxp = _regexFromString(query, true);
+            rxp = regexFromString(query, true);
             omnibar.listResults(filtered, function(w) {
                 const li = createElementWithContent('li');
                 li.windowId = parseInt(w.id);
@@ -1234,7 +1196,7 @@ function SearchEngine(omnibar, front) {
     };
     function listSuggestions(suggestions) {
         omnibar.detectAndInsertURLItem(omnibar.input.value, suggestions);
-        var rxp = _regexFromString(encodeURIComponent(omnibar.input.value), true);
+        var rxp = regexFromString(encodeURIComponent(omnibar.input.value), true);
         omnibar.listResults(suggestions, function (w) {
             if (w.hasOwnProperty('html')) {
                 return omnibar.createItemFromRawHtml(w);

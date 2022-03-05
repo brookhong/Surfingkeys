@@ -7,8 +7,8 @@ Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
-    mapkey('<Ctrl-y>', 'Show me the money', function() {
-        Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
+    api.mapkey('<Ctrl-y>', 'Show me the money', function() {
+        api.Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
 Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
@@ -23,6 +23,7 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 * [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
 * [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
 * [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
+* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1609752330)
 
 ### 目录
 
@@ -151,8 +152,8 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 `imap` 和 `iunmap`：
 
-    imap(',,', "<Esc>");        // 按两次逗号退出当前输入框。
-    imap(';;', "<Ctrl-'>");     // 按两次分号切换双引号。
+    api.imap(',,', "<Esc>");        // 按两次逗号退出当前输入框。
+    api.imap(';;', "<Ctrl-'>");     // 按两次分号切换双引号。
 
 
 #### 表情下拉选项
@@ -163,7 +164,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 如果你不喜欢这个功能，可以用以下设置禁用：
 
-    iunmap(":");
+    api.iunmap(":");
 
 如果你希望按下冒号后立刻出现表情下拉选项，可以用以下设置：
 
@@ -183,8 +184,8 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 按`p`进入一个短暂的PassThrough模式，它在一秒后会自动退出。如果默认设置的1秒超时不适合你的情况，可以在你的设置脚本里这样写改为1500毫秒：
 
-    mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
-        Normal.passThrough(1500);
+    api.mapkey('p', '#0enter ephemeral PassThrough mode to temporarily suppress SurfingKeys', function() {
+        api.Normal.passThrough(1500);
     });
 
 ## 搜索栏
@@ -218,8 +219,8 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 `cmap`用于搜索栏修改按键，如：
 
-    cmap('<Ctrl-n>', '<Tab>');
-    cmap('<Ctrl-p>', '<Shift-Tab>');
+    api.cmap('<Ctrl-n>', '<Tab>');
+    api.cmap('<Ctrl-p>', '<Shift-Tab>');
 
 ### 添加书签
 `ab`可以把当前页加入书签。按`ab`后，搜索栏会弹出来让你选择放到哪个目录。如果你希望放到一个新建目录下面，可以输入新的目录名，**并以`/`结尾**，比如我选中了`/Bookmarks Bar/tool/`，然后在后面输入`abc/`，会把当前页加到`/Bookmarks Bar/tool/abc/`这个目录里。如果`abc`后面没有`/`，`abc`会被当作新建书签的标题保存。
@@ -260,8 +261,8 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 如果你希望一直用搜索栏来选择标签页，可使用如下设置:
 
-    mapkey('<Space>', 'Choose a tab with omnibar', function() {
-        Front.openOmnibar({type: "Tabs"});
+    api.mapkey('<Space>', 'Choose a tab with omnibar', function() {
+        api.Front.openOmnibar({type: "Tabs"});
     });
 
 效果相当于：
@@ -285,9 +286,9 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 用`:`打开搜索栏可用于执行命令，命令执行结果会显示在搜索栏下方。
 
     // 映射不同的按键到该命令，但采用不同的参数。
-    map(';pa', ':setProxyMode always');
-    map(';pb', ':setProxyMode byhost');
-    map(';pd', ':setProxyMode direct');
+    api.map(';pa', ':setProxyMode always');
+    api.map(';pb', ':setProxyMode byhost');
+    api.map(';pd', ':setProxyMode direct');
 
 除了命令，你还可以执行各类简单js代码。
 
@@ -345,7 +346,7 @@ search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以�
 
 默认情况下，按`Alt-s`可以在当前站点开关Surfingkeys。当Surfingkeys处于关闭状态时，除了热键，其它所有按键映射都停止工作。用如下设置修改热键：
 
-    map('<Ctrl-i>', '<Alt-s>'); // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
+    api.map('<Ctrl-i>', '<Alt-s>'); // 热键只能是一个按键，但可以带辅助按键，不能是`gg`这样的一串按键。
 
 当Surfingkeys在某个网站被`Alt-s`关掉时，这个状态会被保存在设置里，如
 
@@ -416,7 +417,6 @@ Surfingkeys集成了ACE里的VIM编辑器，用于：
 
 使用Emacs按键时，用`C-x C-s`来保存你的输入。
 
-Surfingkeys也与[glacambre/firenvim](https://github.com/glacambre/firenvim)集成，用户可以通过neovim来编辑输入。基本上Surfingkeys会先尝试通过`firenvim`调用`neovim`来编辑输入，如果失败了，再调用内嵌的ACE VIM编辑器。如果不喜欢这样，可以把`settings.useNeovim`设为false。
 
 ### 编辑网页上的各类文本输入框
 
@@ -460,8 +460,8 @@ Surfingkeys也与[glacambre/firenvim](https://github.com/glacambre/firenvim)集�
 
 所有normal模式下的按键都可以由点来重复，除了那些在创建时指定`repeatIgnore`为`true`的按键，如
 
-    mapkey('e', '#2Scroll a page up', function() {
-        Normal.scroll("pageUp");
+    api.mapkey('e', '#2Scroll a page up', function() {
+        api.Normal.scroll("pageUp");
     }, {repeatIgnore: true});
 
 这样，`.`就不会往上翻页，即使你刚刚按了`e`。
@@ -499,138 +499,17 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 ## 配置参考
 
-### 添加一个按键映射
-
-    mapkey(keystroke, help_string, action_code, [options])
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**keystroke**                   | 字符串，触发某个操作的按键|
-|**help_string**                 | 字符串，帮助描述，会自动出现在`u`打开的帮助小窗里。|
-|**action_code**                 | 函数，一个Javascript函数。如果该函数需要一个参数，下一个按键会作为参数传给这个函数。|
-|**options**                     | object, 字段属性如下 |
-|**domain**                      | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。比如，`/github\.com/i` 说明按键映射只在github.com上生效。|
-|**repeatIgnore**                | 布尔值[可选]，是否可通过点命令重复该按键。|
-
-一个示例，在不同网站上映射相同的按键到不同的操作：
-
-    mapkey('zz', 'Choose a tab', function() {
-        Front.chooseTab();
-    }, {domain: /github\.com/i});
-    mapkey('zz', 'Show usage', function() {
-        Front.showUsage();
-    }, {domain: /google\.com/i});
-
-可视化模式下的mapkey
-
-    vmapkey(keystroke, help_string, action_code, [options])
-
-### 映射按键到其他按键
-
-    map(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
-
-    imap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
-
-    vmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
-
-    cmap(new_keystroke, old_keystroke, [domain_pattern], [new_annotation])
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**new_keystroke**               | 字符串，将要使用的按键。|
-|**old_keystroke**               | 字符串，将被替换的按键。|
-|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该按键映射才会生效。|
-|**new_annotation**              | 字符串[可选], 如果提供了就用作帮助描述，否则就用old_keystroke对应的帮助描述。|
-
-### 删除一个按键映射
-
-    unmap(keystroke, [domain_pattern])
-
-    iunmap(keystroke, [domain_pattern])
-
-    vunmap(keystroke, [domain_pattern])
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**keystroke**                   | 字符串，将要删除的按键。|
-|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该操作会生效。|
-
-### 删除所有按键映射
-
-    unmapAllExcept(keystrokes, [domain_pattern])
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**keystrokes**                  | 字符串数组，将要删除的按键。|
-|**domain_pattern**              | 正则表达式[可选]，表明只有当域名匹配时，该操作会生效。|
-
-示例,
-
-    unmapAllExcept(['f', '/', '?']);
-
-### 在搜索栏里添加搜索别名
-
-    addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion);
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**alias**                                   | 一个以上字符，用作搜索别名。当你在搜索栏里输入它之后，再按空格键，会切换到对应的搜索引擎。|
-|**prompt**                                  | 提示符，说明当前所用搜索引擎。|
-|**search_url**                              | 搜索引擎搜索地址。|
-|**suggestion_url[可选]**                    | 搜索自动完成URL，如果提供的话，搜索栏会列出相关关键字。|
-|**callback_to_parse_suggestion[可选]**      | 解析suggestion_url返回的内容，列出相关关键字。|
-
-    addSearchAliasX(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key);
-
-| 参数  | 含义 |
-|:---------------| :-----|
-|**search_leader_key**                                   | 一个以上字符，如果你不想使用默认的`s`键。|
-|**only_this_site_key**                                  | 一个以上字符，如果你不想使用默认的`o`键。|
-
-这是一个扩展版本，除了往搜索栏里添加搜索别名，还会创建一个按键映射，由`search_leader_key`加上`alias`组成，对应的操作就是搜索选中文本。比如，下面这行，
-
-    addSearchAliasX('s', 'stackoverflow', 'http://stackoverflow.com/search?q=', 'o');
-
-就相当于
-
-    addSearchAlias('s', 'stackoverflow', 'http://stackoverflow.com/search?q=');
-    mapkey('os', 'Search Selected with stackoverflow', function() {
-        searchSelectedWith("http://stackoverflow.com/search?q=");
-    });
-    vmapkey('os', 'Search Selected with stackoverflow', function() {
-        searchSelectedWith("http://stackoverflow.com/search?q=");
-    });
-
-### 删除搜索别名及相关绑定
-
-    removeSearchAliasX(alias, search_leader_key, only_this_site_key);
-
-### 搜索栏辅助函数
-
-    Omnibar.listWords(<array of words>)
-    Omnibar.html(<any html snippets>)
-
-### 修改内嵌vim编辑器里的按键
-
-    aceVimMap(lhs, rhs, ctx)
-
-例如，
-
-    aceVimMap('jk', '<Esc>', 'insert');
-
 ### 属性设置列表
 
 | 属性 | 默认值 | 解释 |
 |:---------------|:-----|:-----|
-| Hints.characters | "asdfgqwertzxcvb" | 可用于生成拨号盘的字符。 |
-| Hints.numericHints | false | 是否使用数字生成拨号字符，如果打开，你可以输入英文字符过滤链接。|
-| Hints.scrollKeys | "0jkhlG$" | 在拨号模式下可用于滚屏的按键，你通常不需要修改，除非你改了`Hints.characters`. |
 | settings.showModeStatus | false | 是否在状态栏显示当前模式。 |
 | settings.showProxyInStatusBar | false | 是否在状态栏显示代理信息。 |
 | settings.richHintsForKeystroke | 500 | 超过指定毫秒数后显示按键提示，如果指定值等于0会禁用按键提示。 |
 | settings.useLocalMarkdownAPI |  true | 是否使用[chjj/marked](https://github.com/chjj/marked)解析markdown，否则使用github API。 |
 | settings.focusOnSaved | true | 是否在退出内嵌VIM编辑器后把光标定位到输入框。 |
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
+| settings.omnibarHistoryCacheSize | 100 | 从浏览历史记录中返回查询结果的最大条数. |
 | settings.omnibarPosition | "middle" | 定义搜索框位置。 ["middle", "bottom"] |
 | settings.omnibarSuggestionTimeout | 200 | 设置触发搜索引擎提示的超时，当按键过去设定毫秒后才发起搜索引擎提示的请求，这样避免每次按键就触发请求。|
 | settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
@@ -668,7 +547,6 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
 | settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
 | settings.autoSpeakOnInlineQuery | false | 是否在使用inline query时自动发声。 |
-| settings.useNeovim | true | 是否使用neovim(通过[glacambre/firenvim](https://github.com/glacambre/firenvim)集成)编辑输入。 |
 
 ### settings.theme示例，修改状态栏字体
 
@@ -698,7 +576,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 ## 捐赠
 Support me with [paypal](https://www.paypal.me/brookhong), or
 
-![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/pages/donation.png)
+![donation](https://raw.githubusercontent.com/brookhong/Surfingkeys/master/src/pages/donation.png)
 
 ## License
 
