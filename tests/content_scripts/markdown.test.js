@@ -101,11 +101,10 @@ describe('markdown viewer', () => {
         document.elementFromPoint = jest.fn(() => {
             return null;
         });
-        const hintsRoot = document.querySelector("div.surfingkeys_hints_host").shadowRoot;
-        expect(hintsRoot.querySelectorAll("section>div").length).toBe(0);
+        expect(document.querySelector("div.surfingkeys_hints_host")).toBe(null);
 
         document.body.dispatchEvent(new KeyboardEvent('keydown', {'key': 'f'}));
-        const hint_labels = hintsRoot.querySelectorAll("section>div");
+        const hint_labels = document.querySelector("div.surfingkeys_hints_host").shadowRoot.querySelectorAll("section>div");
         expect(hint_labels.length).toBe(2);
         expect(hint_labels[0].label).toBe("A");
         expect(hint_labels[1].label).toBe("S");

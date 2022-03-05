@@ -56,7 +56,6 @@ div.hint-scrollable {
     background: rgba(0, 0, 255, 0.25);
 }`);
     hintsHost.shadowRoot.appendChild(hintsStyle);
-    document.documentElement.appendChild(hintsHost);
 
     let numeric = false;
     /**
@@ -267,6 +266,7 @@ div.hint-scrollable {
         };
         setSanitizedContent(holder, "");
         holder.remove();
+        hintsHost.remove();
         prefix = "";
         textFilter = "";
         shiftKey = false;
@@ -646,6 +646,7 @@ div.hint-scrollable {
     }
 
     function createHints(cssSelector, attrs) {
+        document.documentElement.appendChild(hintsHost);
         if (cssSelector.constructor.name === "RegExp") {
             return createHintsForTextNode(cssSelector, attrs);
         } else if (Array.isArray(cssSelector)) {

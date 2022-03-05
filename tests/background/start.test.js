@@ -56,6 +56,7 @@ describe('background start', () => {
                 }
             },
         }
+        global.DOMRect = jest.fn();
 
         start = require('src/background/start.js').start;
         window.crypto = {
