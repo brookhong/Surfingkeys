@@ -540,7 +540,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     mapkey('ymv', '#7Yank text of multiple elements', function() {
         var textToYank = [];
         hints.create(runtime.conf.textAnchorPat, function (element) {
-            textToYank.push(element[2].trim());
+            textToYank.push(element[1] === 0 ? element[0].data.trim() : element[2].trim());
             clipboard.write(textToYank.join('\n'));
         }, { multipleHits: true });
     });
