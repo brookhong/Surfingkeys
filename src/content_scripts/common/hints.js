@@ -293,7 +293,7 @@ div.hint-scrollable {
         prefix = "";
     }
 
-    function resetHints(evt) {
+    function resetHints() {
         var start = new Date().getTime();
         var found = createHints(_cssSelector, _lastCreateAttrs);
         if (found > 0) {
@@ -518,9 +518,6 @@ div.hint-scrollable {
         }, attrs || {});
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
-        }
-        if (behaviours.multipleHits) {
-            behaviours.tabbed = true;
         }
         var elements;
         if (cssSelector === "") {
@@ -767,9 +764,12 @@ div.hint-scrollable {
                 self.exit();
             }
             var tabbed = behaviours.tabbed, active = behaviours.active;
-            if (behaviours.multipleHits && element.href) {
-                tabbed = true;
-                active = false;
+            if (behaviours.multipleHits) {
+                const href = element.getAttribute('href');
+                if (href !== null && href !== "#") {
+                    tabbed = true;
+                    active = false;
+                }
             }
 
             if (shiftKey && runtime.conf.hintShiftNonActive) {
@@ -794,6 +794,10 @@ div.hint-scrollable {
                 dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
                 dispatchSKEvent('turnOnDOMObserver');
                 lastMouseTarget = element;
+            }
+
+            if (behaviours.multipleHits) {
+                setTimeout(resetHints, 300);
             }
         }
     };
