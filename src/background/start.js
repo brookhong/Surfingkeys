@@ -943,6 +943,11 @@ function start(browser) {
             });
         });
     };
+    self.moveTabs = function(message, sender, sendResponse) {
+        message.tabsToMove.forEach(function([tabId, moveParams]) {
+            chrome.tabs.move(tabId, moveParams);
+        });
+    };
     self.moveToWindow = function(message, sender, sendResponse) {
         if (message.windowId === -1) {
             chrome.windows.create({tabId: sender.tab.id});
