@@ -217,7 +217,7 @@ function createNormal(insert) {
     /**
      * Enter PassThrough mode.
      *
-     * @param {number} [timeout] how many seconds to linger in PassThrough mode, to ignore it will stay in PassThrough mode until an Escape key is pressed.
+     * @param {number} [timeout] how many milliseconds to linger in PassThrough mode, to ignore it will stay in PassThrough mode until an Escape key is pressed.
      * @name Normal.passThrough
      *
      */

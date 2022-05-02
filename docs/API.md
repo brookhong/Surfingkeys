@@ -315,7 +315,7 @@ Add a search engine alias into Omnibar.
 
 *   `alias` **[string][102]** the key to trigger this search engine, one or several chars, used as search alias, when you input the string and press `space` in omnibar, the search engine will be triggered.
 *   `prompt` **[string][102]** a caption to be placed in front of the omnibar.
-*   `search_url` **[string][102]** the URL of the search engine
+*   `search_url` **[string][102]** the URL of the search engine, for example, `https://www.s.com/search.html?query=`, if there are extra parameters for the search engine, you can use it as `https://www.s.com/search.html?query={0}&type=cs` or `https://www.s.com/search.html?type=cs&query=`(since order of URL parameters usually does not matter).
 *   `search_leader_key` **[string][102]** `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`. (optional, default `s`)
 *   `suggestion_url` **[string][102]** the URL to fetch suggestions in omnibar when this search engine is triggered. (optional, default `null`)
 *   `callback_to_parse_suggestion` **[function][103]** a function to parse the response from `suggestion_url` and return a list of strings as suggestions. Receives two arguments: `response`, the first argument, is an object containing a property `text` which holds the text of the response; and `request`, the second argument, is an object containing the properties `query` which is the text of the query and `url` which is the formatted URL for the request. (optional, default `null`)
@@ -501,7 +501,7 @@ Enter PassThrough mode.
 
 ### Parameters
 
-*   `timeout` **[number][109]?** how many seconds to linger in PassThrough mode, to ignore it will stay in PassThrough mode until an Escape key is pressed.
+*   `timeout` **[number][109]?** how many milliseconds to linger in PassThrough mode, to ignore it will stay in PassThrough mode until an Escape key is pressed.
 
 ## Normal.scroll
 

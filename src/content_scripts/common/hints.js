@@ -204,13 +204,14 @@ div.hint-scrollable {
             } else {
                 hide();
             }
-            if (evt) {
-                Mode.suppressKeyUp(evt.keyCode);
-                evt.stopImmediatePropagation();
-                evt.preventDefault();
-            }
         } else if (matches.length === 0) {
             hide();
+        }
+        // suppress future key handler since the event has been treated as a hint
+        if (evt) {
+            Mode.suppressKeyUp(evt.keyCode);
+            evt.stopImmediatePropagation();
+            evt.preventDefault();
         }
     }
 
