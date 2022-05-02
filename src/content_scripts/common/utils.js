@@ -299,7 +299,7 @@ function getRealRect(elm) {
         }
     } else if (elm.childElementCount === 1 && elm.firstElementChild.textContent) {
         var r = elm.firstElementChild.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) {
+        if (r.width < 4 || r.height < 4) {
             r = elm.getBoundingClientRect();
         }
         return r;

@@ -337,7 +337,7 @@ function createFront(insert, normal, hints, visual, browser) {
                     window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
                 }
             } else {
-                window.postMessage({surfingkeys_data: {
+                window.postMessage({dictorium_data: {
                     type: "OpenDictoriumQuery",
                     word: query,
                     sentence: "",
