@@ -267,10 +267,6 @@ function start(browser) {
         });
         if (window.location.protocol === "dictorium:") {
             _initContent(_initModules());
-        } else {
-            window.addEventListener("focus", () => {
-                getFrameId();
-            }, {once: true});
         }
     }
 }

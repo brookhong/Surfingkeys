@@ -156,6 +156,11 @@ function init() {
     for (var evtName in _listenedEvents) {
         window.addEventListener(evtName, _listenedEvents[evtName], true);
     }
+    if (!isInUIFrame()) {
+        window.addEventListener("focus", () => {
+            getFrameId();
+        }, {once: true});
+    }
 }
 
 Mode.hasScroll = function (el, direction, barSize) {

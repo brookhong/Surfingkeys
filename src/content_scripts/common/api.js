@@ -143,6 +143,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                 if (!mapInMode(normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
                     Mode.specialKeys[old_keystroke].push(new_keystroke);
                     dispatchSKEvent('addMapkey', ["Mode", new_keystroke, old_keystroke]);
+                } else {
+                    console.warn(`${old_keystroke} not found in normal mode.`);
                 }
             }
         }
