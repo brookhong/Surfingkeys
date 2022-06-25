@@ -907,6 +907,13 @@ function start(browser) {
         });
     };
 
+    self.playingOnly = function(message, sender, sendResponse) {
+        chrome.tabs.query({audible: true}, function(tabs) {
+            if (tabs) {
+                chrome.tabs.remove(tabs[0].id)
+            }
+        });
+    };
     self.muteTab = function(message, sender, sendResponse) {
         var tab = sender.tab;
         chrome.tabs.update(tab.id, {
