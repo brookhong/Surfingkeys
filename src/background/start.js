@@ -907,7 +907,7 @@ function start(browser) {
         });
     };
 
-    self.playingOnly = function(message, sender, sendResponse) {
+    self.closeAudibleTab = function(message, sender, sendResponse) {
         chrome.tabs.query({audible: true}, function(tabs) {
             if (tabs) {
                 chrome.tabs.remove(tabs[0].id)

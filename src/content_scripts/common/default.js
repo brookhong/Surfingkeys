@@ -337,7 +337,7 @@ module.exports = function(api) {
         RUNTIME("tabOnly");
     });
     mapkey('gxp', '#3Close playing tab', function() {
-        RUNTIME("playingOnly");
+        RUNTIME("closeAudibleTab");
     });
     mapkey(';e', '#11Edit Settings', function() {
         tabOpenLink("/pages/options.html");
