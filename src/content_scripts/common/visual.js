@@ -297,6 +297,16 @@ function createVisual(clipboard, hints) {
             clickLink(selection.focusNode.parentNode, true);
         }
     });
+    self.mappings.add("zt", {
+        annotation: "make cursor at start of window.",
+        feature_group: 9,
+        code: function() {
+            var offset = cursor.getBoundingClientRect().top;
+            self.hideCursor();
+            document.scrollingElement.scrollTop += offset;
+            self.showCursor();
+        }
+    });
     self.mappings.add("zz", {
         annotation: "make cursor at center of window.",
         feature_group: 9,
@@ -304,6 +314,16 @@ function createVisual(clipboard, hints) {
             var offset = cursor.getBoundingClientRect().top - window.innerHeight/2;
             self.hideCursor();
             document.scrollingElement.scrollTop += offset;
+            self.showCursor();
+        }
+    });
+    self.mappings.add("zb", {
+        annotation: "make cursor at bottom of window.",
+        feature_group: 9,
+        code: function() {
+            var offset = window.innerHeight - cursor.getBoundingClientRect().bottom;
+            self.hideCursor();
+            document.scrollingElement.scrollTop -= offset;
             self.showCursor();
         }
     });
