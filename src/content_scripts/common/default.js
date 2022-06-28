@@ -151,6 +151,17 @@ module.exports = function(api) {
     mapkey('gt', '#4Go to last activated tab', function() {
         RUNTIME("historyTab", {index: -1});
     }, {repeatIgnore: true});
+    mapkey('gp', '#4Go to the playing tab', function() {
+        RUNTIME('getTabs', { queryInfo: {audible: true}}, response => {
+            if (response.tabs?.at(0)) {
+                tab = response.tabs[0]
+                RUNTIME('focusTab', {
+                    windowId: tab.windowId,
+                    tabId: tab.id
+                });
+            }
+        })
+    }, { repeatIgnore: true });
     mapkey('S', '#4Go back in history', function() {
         history.go(-1);
     }, {repeatIgnore: true});
@@ -324,6 +335,9 @@ module.exports = function(api) {
     });
     mapkey('gxx', '#3Close all tabs except current one', function() {
         RUNTIME("tabOnly");
+    });
+    mapkey('gxp', '#3Close playing tab', function() {
+        RUNTIME("closeAudibleTab");
     });
     mapkey(';e', '#11Edit Settings', function() {
         tabOpenLink("/pages/options.html");
