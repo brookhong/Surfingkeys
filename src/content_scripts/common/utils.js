@@ -582,6 +582,7 @@ function constructSearchURL(se, word) {
  *
  * @param {string} str links to be opened, the links should be split by `\n` if there are more than one.
  * @param {number} [simultaneousness=5] how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed.
+ * @param {boolean} [inBackground=false] open link in background
  *
  * @example
  * mapkey("<Space>", "pause/resume on youtube", function() {
@@ -589,7 +590,7 @@ function constructSearchURL(se, word) {
  *     btn.click();
  * }, {domain: /youtube.com/i});
  */
-function tabOpenLink(str, simultaneousness) {
+function tabOpenLink(str, simultaneousness,inBackground = false) {
     simultaneousness = simultaneousness || 5;
 
     var urls;
@@ -612,7 +613,8 @@ function tabOpenLink(str, simultaneousness) {
     urls.slice(0, simultaneousness).forEach(function(url) {
         RUNTIME("openLink", {
             tab: {
-                tabbed: true
+                tabbed: true,
+                active: !inBackground
             },
             url: url
         });
