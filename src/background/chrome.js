@@ -1,4 +1,5 @@
 import {
+    LOG,
     filterByTitleOrUrl,
 } from '../content_scripts/common/utils.js';
 import {
@@ -150,7 +151,7 @@ function startNative() {
             if (nativeConnected) {
                 nvimServer.instance = startNative();
             } else {
-                reject("Failed to connect neovim, please make sure your neovim version 0.5 or above.");
+                LOG("error", "Failed to connect neovim, please make sure your neovim version 0.5 or above.");
             }
         });
         nm.onMessage.addListener(async (resp) => {
@@ -161,7 +162,7 @@ function startNative() {
                     resolve({url, nm});
                 }
             } else if (resp.err) {
-                console.log(resp.err);
+                LOG("error", resp.err);
             }
         });
         nm.postMessage({

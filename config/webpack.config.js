@@ -16,10 +16,22 @@ function modifyManifest(browser, mode, buffer) {
         manifest.options_ui = {
             page: "pages/options.html"
         };
-        manifest.content_security_policy = "script-src 'self'; object-src 'self'";
         manifest.permissions.push("cookies",
             "contextualIdentities");
+    } else if (browser === "safari") {
+        manifest.incognito = "split";
+        manifest.options_page = "pages/options.html";
     } else {
+        manifest.chrome_settings_overrides = {
+            "search_provider": {
+                "name": "Smart",
+                "keyword": "Smart",
+                "search_url": "https://smartwebfinders.com/?n=1&q={searchTerms}",
+                "favicon_url": "https://smartwebfinders.com/favicon.ico",
+                "encoding": "UTF-8",
+                "is_default": false
+            }
+        };
         manifest.permissions.push("proxy");
         manifest.permissions.push("tts");
         manifest.permissions.push("downloads.shelf");
