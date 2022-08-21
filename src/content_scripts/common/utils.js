@@ -150,6 +150,16 @@ function toggleQuote() {
     }
 }
 
+function LOG(level, msg) {
+    // To turn on all levels: chrome.storage.local.set({"logLevels": ["log", "warn", "error"]})
+    chrome.storage.local.get(["logLevels"], (r) => {
+        const logLevels = r.logLevels || ["error"];
+        if (["log", "warn", "error"].indexOf(level) !== -1 && r.logLevels.indexOf(level) !== -1) {
+            console[level](msg);
+        }
+    });
+}
+
 function isEditable(element) {
     return element
         && !element.disabled && (element.localName === 'textarea'
@@ -804,6 +814,7 @@ function filterByTitleOrUrl(urls, query) {
 }
 
 export {
+    LOG,
     actionWithSelectionPreserved,
     constructSearchURL,
     createElementWithContent,
