@@ -370,7 +370,7 @@ module.exports = function(api) {
     addSearchAlias('e', 'wikipedia', 'https://en.wikipedia.org/wiki/', 's', 'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=40&search=', function(response) {
         return JSON.parse(response.text)[1];
     });
-    addSearchAlias('w', 'bing', 'https://smartwebfinders.com/?n=1&q=', 's', 'https://api.bing.com/osjson.aspx?query=', function(response) {
+    addSearchAlias('w', 'bing', 'https://www.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'https://api.bing.com/osjson.aspx?query=', function(response) {
         var res = JSON.parse(response.text);
         return res[1];
     });

@@ -22,16 +22,6 @@ function modifyManifest(browser, mode, buffer) {
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";
     } else {
-        manifest.chrome_settings_overrides = {
-            "search_provider": {
-                "name": "Smart",
-                "keyword": "Smart",
-                "search_url": "https://smartwebfinders.com/?n=1&q={searchTerms}",
-                "favicon_url": "https://smartwebfinders.com/favicon.ico",
-                "encoding": "UTF-8",
-                "is_default": false
-            }
-        };
         manifest.permissions.push("proxy");
         manifest.permissions.push("tts");
         manifest.permissions.push("downloads.shelf");
