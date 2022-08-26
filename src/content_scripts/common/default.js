@@ -249,6 +249,9 @@ module.exports = function(api) {
     mapkey('yl', "#7Copy current page's title", function() {
         Clipboard.write(document.title);
     });
+    mapkey('yL', "#7Copy current page's url in markdown format", function() {
+        Clipboard.write( '[' + document.title + '](' + window.location.href + ')');
+    });
     mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
         RUNTIME('getSettings', {
             key: 'OmniQueryHistory'
