@@ -900,9 +900,9 @@ function start(browser) {
     };
     self.tabOnly = function(message, sender, sendResponse) {
         chrome.tabs.query({currentWindow: true}, function(tabs) {
-            tabs = tabs.map(function(e) { return e.id; }).filter(function(t) {
-                return t != sender.tab.id;
-            });
+            tabs = tabs.filter(function(t) {
+                return t.id != sender.tab.id && !t.pinned;
+            }).map(function(t) { return t.id });
             chrome.tabs.remove(tabs);
         });
     };
