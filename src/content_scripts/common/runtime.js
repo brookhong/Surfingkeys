@@ -85,6 +85,7 @@ var runtime = (function() {
             ignoredFrameHosts: ["https://tpc.googlesyndication.com"],
             scrollFriction: 0,
             aceKeybindings: "vim",
+            aceTheme: "chrome",
             caretViewport: null,
             mouseSelectToQuery: [],
             useNeovim: false,
