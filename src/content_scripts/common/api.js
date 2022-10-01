@@ -716,13 +716,15 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             var word = element[2].trim().replace(/[^A-z].*$/, "");
             var b = getTextNodePos(element[0], element[1], element[2].length);
             if (document.dictEnabled !== undefined) {
-                window.postMessage({dictorium_data: {
-                    type: "OpenDictoriumQuery",
-                    word: word,
-                    sentence: getSentence(element[0], element[1]),
-                    pos: b,
-                    source: window.location.href
-                }});
+                if (document.dictEnabled) {
+                    window.postMessage({dictorium_data: {
+                        type: "OpenDictoriumQuery",
+                        word: word,
+                        sentence: getSentence(element[0], element[1]),
+                        pos: b,
+                        source: window.location.href
+                    }});
+                }
             } else {
                 front.performInlineQuery(word, {
                     top: b.top,

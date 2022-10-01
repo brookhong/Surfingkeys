@@ -330,22 +330,24 @@ function createFront(insert, normal, hints, visual, browser) {
     var _showQueryResult;
     self.performInlineQuery = function (query, pos, showQueryResult) {
         if (document.dictEnabled !== undefined) {
-            if (window.location.protocol === "dictorium:") {
-                if (window === top) {
-                    window.location.href = query;
+            if (document.dictEnabled) {
+                if (window.location.protocol === "dictorium:") {
+                    if (window === top) {
+                        window.location.href = query;
+                    } else {
+                        window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
+                    }
                 } else {
-                    window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
+                    window.postMessage({dictorium_data: {
+                        type: "OpenDictoriumQuery",
+                        word: query,
+                        sentence: "",
+                        pos: pos,
+                        source: window.location.href
+                    }});
                 }
-            } else {
-                window.postMessage({dictorium_data: {
-                    type: "OpenDictoriumQuery",
-                    word: query,
-                    sentence: "",
-                    pos: pos,
-                    source: window.location.href
-                }});
+                hidePopup();
             }
-            hidePopup();
         } else if (_inlineQuery) {
             if (runtime.conf.autoSpeakOnInlineQuery) {
                 browser.readText(query);

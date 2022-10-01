@@ -40,6 +40,11 @@ describe('content.js', () => {
                     addListener: jest.fn()
                 }
             },
+            storage: {
+                local: {
+                    get: jest.fn()
+                }
+            },
             extension: {
                 getURL: jest.fn()
             }

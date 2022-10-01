@@ -153,10 +153,11 @@ var suppressScrollEvent = 0, _listenedEvents = {
 };
 
 function init() {
+    mode_stack = [];
     for (var evtName in _listenedEvents) {
         window.addEventListener(evtName, _listenedEvents[evtName], true);
     }
-    if (!isInUIFrame()) {
+    if (!isInUIFrame() && window.getFrameId) {
         window.addEventListener("focus", () => {
             getFrameId();
         }, {once: true});

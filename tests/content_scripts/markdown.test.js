@@ -23,6 +23,11 @@ describe('markdown viewer', () => {
                     addListener: jest.fn()
                 }
             },
+            storage: {
+                local: {
+                    get: jest.fn()
+                }
+            },
             extension: {
                 getURL: jest.fn()
             }
