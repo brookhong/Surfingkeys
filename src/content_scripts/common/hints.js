@@ -79,11 +79,12 @@ div.hint-scrollable {
      * @example
      * Hints.setCharacters("asdgqwertzxcvb");
      */
+    let excludedScrollKeys = [];
     self.setCharacters = function(chars) {
         characters = chars;
         for (const c of chars) {
             if (normal.isScrollKeyInHints(c)) {
-                throw Error(`The character '${c}' set by Hints.setCharacters("${chars}") has been bound to a function to scroll page in Hints mode, it could not be used for generating hints.` );
+                excludedScrollKeys.push(c);
             }
         }
     };
@@ -147,12 +148,12 @@ div.hint-scrollable {
                         prefix = prefix + key.toUpperCase();
                         handleHint(event);
                     } else {
-                        if (!normal.isScrollKeyInHints(key)) {
-                            // quit hints if user presses non-hint key and no keys for scrolling
-                            hide();
-                        } else {
+                        if (normal.isScrollKeyInHints(key) && excludedScrollKeys.indexOf(key) === -1) {
                             // pass on the key to normal mode to scroll page.
                             event.sk_stopPropagation = false;
+                        } else {
+                            // quit hints if user presses non-hint key and no keys for scrolling
+                            hide();
                         }
                     }
                 }
