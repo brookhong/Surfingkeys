@@ -80,7 +80,7 @@ if (getBrowserName() === "Firefox") {
     document.querySelector("#localPathForSettings").style.display = "";
     document.querySelector("#proxySettings").style.display = "none";
 } else if (getBrowserName().startsWith("Safari")) {
-    document.querySelector("#localPathForSettings").style.display = "none";
+    document.querySelector("#localPathHelpForFile").remove();
     document.querySelector("#proxySettings").style.display = "none";
     document.querySelector("#donationDiv").style.display = "none";
 }
