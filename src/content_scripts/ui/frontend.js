@@ -754,18 +754,20 @@ var Find = (function() {
         historyInc = -1;
         StatusBar.show(1, '<input id="sk_find" class="sk_theme"/>');
         input = Front.statusBar.querySelector("input");
-        input.oninput = function() {
-            if (input.value.length && input.value !== ".") {
-                Front.visualCommand({
-                    action: 'visualUpdate',
-                    query: input.value
-                });
-                // To find in usage popup will set focus and selection elsewhere
-                // we need bring it back
-                input.focus();
-                input.setSelectionRange(input.value.length, input.value.length);
-            }
-        };
+        if (!getBrowserName().startsWith("Safari")) {
+            input.oninput = function() {
+                if (input.value.length && input.value !== ".") {
+                    Front.visualCommand({
+                        action: 'visualUpdate',
+                        query: input.value
+                    });
+                    // To find in usage popup will set focus and selection elsewhere
+                    // we need bring it back
+                    input.focus();
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            };
+        }
         var findHistory = [];
         RUNTIME('getSettings', {
             key: 'findHistory'
