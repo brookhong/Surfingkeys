@@ -16,6 +16,8 @@ describe('normal mode', () => {
         global.DOMRect = jest.fn();
 
         runtime = require('src/content_scripts/common/runtime.js').runtime;
+        Mode = require('src/content_scripts/common/mode.js').default;
+        Mode.init();
         insert = require('src/content_scripts/common/insert.js').default();
         normal = require('src/content_scripts/common/normal.js').default(insert);
     });

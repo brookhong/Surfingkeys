@@ -38,6 +38,7 @@ describe('markdown viewer', () => {
 
         dispatchSKEvent = require('src/content_scripts/common/runtime.js').dispatchSKEvent;
         createClipboard = require('src/content_scripts/common/clipboard.js').default;
+        Mode = require('src/content_scripts/common/mode.js').default;
         createInsert = require('src/content_scripts/common/insert.js').default;
         createNormal = require('src/content_scripts/common/normal.js').default;
         createHints = require('src/content_scripts/common/hints.js').default;
@@ -46,6 +47,7 @@ describe('markdown viewer', () => {
         createAPI = require('src/content_scripts/common/api.js').default;
         require('src/content_scripts/markdown');
 
+        Mode.init();
         document.scrollingElement = {};
         clipboard = createClipboard();
         const insert = createInsert();

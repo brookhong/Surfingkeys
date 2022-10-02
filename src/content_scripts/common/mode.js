@@ -152,16 +152,12 @@ var suppressScrollEvent = 0, _listenedEvents = {
     }
 };
 
-function init() {
+function init(cb) {
     mode_stack = [];
     for (var evtName in _listenedEvents) {
         window.addEventListener(evtName, _listenedEvents[evtName], true);
     }
-    if (!isInUIFrame() && window.getFrameId) {
-        window.addEventListener("focus", () => {
-            getFrameId();
-        }, {once: true});
-    }
+    cb && cb();
 }
 
 Mode.hasScroll = function (el, direction, barSize) {
@@ -199,20 +195,22 @@ Mode.getScrollableElements = function () {
     return nodes;
 };
 
-// For blank page in frames, we defer init to page loaded
-// as document.write will clear added eventListeners.
-if (window.location.href === "about:blank" && window.frameElement &&
-    (!document.body || document.body.childElementCount === 0)) {
-    window.frameElement.addEventListener("load", function(evt) {
-        try {
-            init();
-        } catch (e) {
-            console.log("Error on blank iframe loaded: " + e);
-        }
-    });
-} else {
-    init();
-}
+Mode.init = (cb)=> {
+    // For blank page in frames, we defer init to page loaded
+    // as document.write will clear added eventListeners.
+    if (window.location.href === "about:blank" && window.frameElement &&
+        (!document.body || document.body.childElementCount === 0)) {
+        window.frameElement.addEventListener("load", function(evt) {
+            try {
+                init(cb);
+            } catch (e) {
+                console.log("Error on blank iframe loaded: " + e);
+            }
+        });
+    } else {
+        init(cb);
+    }
+};
 
 
 Mode.showStatus = function() {

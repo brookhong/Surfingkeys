@@ -25,6 +25,7 @@ import createCommands from './command.js';
 
 const Front = (function() {
     const clipboard = createClipboard();
+    Mode.init();
     const insert = createInsert();
     const normal = createNormal(insert);
     normal.enter();

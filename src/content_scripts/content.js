@@ -1,4 +1,5 @@
 import { RUNTIME, dispatchSKEvent, runtime } from './common/runtime.js';
+import Mode from './common/mode.js';
 import createNormal from './common/normal.js';
 import startScrollNodeObserver from './common/observer.js';
 import createInsert from './common/insert.js';
@@ -194,6 +195,11 @@ window.getFrameId = function () {
     }
     return window.frameId;
 };
+Mode.init(()=> {
+    window.addEventListener("focus", () => {
+        getFrameId();
+    }, {once: true});
+});
 
 let _browser;
 function start(browser) {
