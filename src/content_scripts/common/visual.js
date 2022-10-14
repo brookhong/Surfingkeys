@@ -519,7 +519,12 @@ function createVisual(clipboard, hints) {
 
     var holder = document.createElement("div");
     function createSelectionMark(node1, offset1, node2, offset2) {
-        return Array.from(getTextRect(node1, offset1, node2, offset2)).map((r) => {
+        let rects = getTextRect(node1, offset1, node2, offset2);
+        if (rects.length > 100) {
+            // avoid hangs due to huge amounts of selection
+            return []
+        }
+        return Array.from(rects).map((r) => {
             if (r.width > 0 && r.height > 0) {
                 var mark = mark_template.cloneNode(false);
                 mark.className = "surfingkeys_selection_mark";

@@ -1631,9 +1631,6 @@ function start(browser) {
         }
         chrome.tabs.reload(sender.tab.id);
     };
-    self.writeClipboard = function (message, sender, sendResponse) {
-        navigator.clipboard.writeText(message.text)
-    };
     self.readClipboard = function (message, sender, sendResponse) {
         // only for Safari
         chrome.runtime.sendNativeMessage("application.id", {message: "Clipboard.read"}, function(response) {
