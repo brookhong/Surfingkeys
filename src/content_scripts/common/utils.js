@@ -332,7 +332,7 @@ function filterOverlapElements(elements) {
         } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
             return true;
         } else {
-            var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
+            var el = e.getRootNode().elementFromPoint(be.left + be.width/2, be.top + be.height/2);
             return !el || el.shadowRoot && (el.childElementCount === 0 || el.shadowRoot.contains(e)) || el.contains(e) || e.contains(el);
         }
     });
