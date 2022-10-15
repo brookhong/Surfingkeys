@@ -355,7 +355,9 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * });
      */
     function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
+        var background_tab_key = ';'; // TODO
         _addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
+
         function ssw() {
             searchSelectedWith(search_url);
         }
@@ -364,11 +366,18 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             front.openOmnibar({type: "SearchEngine", extra: alias});
         });
         vmapkey((search_leader_key || 's') + alias, '', ssw);
+
         function ssw2() {
             searchSelectedWith(search_url, true);
         }
         mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
         vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
+
+        function ssw3(){
+            searchSelectedWith(search_url, false, false, "", true)
+        }
+        mapkey((search_leader_key || 's') + (background_tab_key || 'b') + alias, '', ssw3);
+        vmapkey((search_leader_key || 's') + (background_tab_key || 'b') + alias, '', ssw3);
 
         var capitalAlias = alias.toUpperCase();
         if (capitalAlias !== alias) {
@@ -419,11 +428,12 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * @param {boolean} [onlyThisSite=false] whether to search only within current site, need support from the provided search engine.
      * @param {boolean} [interactive=false] whether to search in interactive mode, in case that you need some small modification on the selected content.
      * @param {string} [alias=""] only used with interactive mode, in such case the url from `se` is ignored, SurfingKeys will construct search URL from the alias registered by `addSearchAlias`.
+     * @param {boolean} [inBackground=false] open selected text in a not focused (background) tab
      *
      * @example
      * searchSelectedWith('https://translate.google.com/?hl=en#auto/en/');
      */
-    function searchSelectedWith(se, onlyThisSite, interactive, alias) {
+    function searchSelectedWith(se, onlyThisSite, interactive, alias, inBackground=false) {
         clipboard.read(function(response) {
             var query = window.getSelection().toString() || response.data;
             if (onlyThisSite) {
@@ -432,7 +442,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             if (interactive) {
                 front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
             } else {
-                tabOpenLink(constructSearchURL(se, encodeURIComponent(query)));
+                tabOpenLink(constructSearchURL(se, encodeURIComponent(query)), 5,inBackground); // TODO
             }
         });
     }
