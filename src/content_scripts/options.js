@@ -350,6 +350,8 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
             return null;
         }
     }).filter((m) => m !== null);;
+
+    Mode.init();
 });
 
 function renderSearchAlias(front, disabledSearchAliases) {

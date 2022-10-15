@@ -195,7 +195,7 @@ window.getFrameId = function () {
     }
     return window.frameId;
 };
-Mode.init(()=> {
+Mode.init(window === top ? undefined : ()=> {
     window.addEventListener("focus", () => {
         getFrameId();
     }, {once: true});
@@ -267,13 +267,10 @@ function start(browser) {
     } else {
         // activate Modes in the frames on extension pages
         runtime.getTopURL(function(u) {
-            if (u.indexOf(chrome.extension.getURL("/")) === 0) {
+            if (u.indexOf(chrome.extension.getURL("/")) === 0 || window.location.protocol === "dictorium:") {
                 _initContent(_initModules());
             }
         });
-        if (window.location.protocol === "dictorium:") {
-            _initContent(_initModules());
-        }
     }
 }
 
