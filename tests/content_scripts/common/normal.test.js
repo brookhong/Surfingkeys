@@ -1,5 +1,5 @@
 describe('normal mode', () => {
-    let insert, normal, runtime;
+    let insert, normal, runtime, Mode;
 
     beforeAll(async () => {
         global.chrome = {
