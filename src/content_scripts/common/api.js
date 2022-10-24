@@ -344,7 +344,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * @param {string} [suggestion_url=null] the URL to fetch suggestions in omnibar when this search engine is triggered.
      * @param {function} [callback_to_parse_suggestion=null] a function to parse the response from `suggestion_url` and return a list of strings as suggestions. Receives two arguments: `response`, the first argument, is an object containing a property `text` which holds the text of the response; and `request`, the second argument, is an object containing the properties `query` which is the text of the query and `url` which is the formatted URL for the request.
      * @param {string} [only_this_site_key=o] `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`.
-     * @param {object} [options=null] `favicon_url` URL for favicon for this search engine
+     * @param {object} [options=null] `favicon_url` URL for favicon for this search engine, `skipMaps` if `true` disable creating key mappings for this search engine
      *
      * @example
      * addSearchAlias('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
@@ -356,6 +356,10 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      */
     function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
         _addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
+        const skipMaps = options?.skipMaps ?? false
+        if (skipMaps) {
+          return
+        }
         function ssw() {
             searchSelectedWith(search_url);
         }
