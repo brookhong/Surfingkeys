@@ -150,10 +150,17 @@ function createOmnibar(front, clipboard) {
             self.input.style.display = "none";
 
             const fi = self.resultsDiv.querySelector('li.focused');
-            const url = (fi && fi.url) ? fi.url : _page.map(p => {
-                return p.url;
-            }).join("\n");
-            clipboard.write(url);
+            let text;
+            if (fi && fi.copy) {
+                text = fi.copy;
+            } else if (fi && fi.url) {
+                text = fi.url;
+            } else {
+                text = _page.map(p => {
+                    return p.url;
+                }).join("\n")
+            }
+            clipboard.write(text);
 
             self.input.style.display = "";
         }
