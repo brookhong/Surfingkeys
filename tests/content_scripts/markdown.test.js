@@ -7,7 +7,7 @@ describe('markdown viewer', () => {
     let dispatchSKEvent, createClipboard, createInsert, createNormal,
         createHints, createVisual, createFront, createAPI;
 
-    let normal, clipboard, api;
+    let normal, clipboard, api, Mode;
 
     beforeAll(async () => {
         const navigator = { userAgent: "Chrome", platform: "Mac" };

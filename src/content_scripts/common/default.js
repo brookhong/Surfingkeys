@@ -57,7 +57,14 @@ module.exports = function(api) {
     });
     map('C', 'gf');
     mapkey('<Ctrl-h>', '#1Mouse over elements.', function() {
-        Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseover"]});
+        Hints.create("", (element, event) => {
+            if (chrome.surfingkeys) {
+                const r = element.getClientRects()[0];
+                chrome.surfingkeys.sendMouseEvent(2, Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2));
+            } else {
+                Hints.dispatchMouseClick(element, event);
+            }
+        }, {mouseEvents: ["mouseover"]});
     });
     mapkey('<Ctrl-j>', '#1Mouse out elements.', function() {
         Hints.create("", Hints.dispatchMouseClick, {mouseEvents: ["mouseout"]});

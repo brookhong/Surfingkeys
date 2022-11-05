@@ -83,7 +83,6 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 * Use vim editor to edit input on page
 * Dot to repeat previous action
 * `;pm` to preview markdown
-* `<Ctrl-Alt-d>` to open diagram tool
 * Emoji completion in insert mode
 * Rich hints for keystroke
 * Everything in Surfingkeys works for PDF
