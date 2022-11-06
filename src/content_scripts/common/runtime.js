@@ -52,6 +52,7 @@ var runtime = (function() {
             defaultVoice: "Daniel",
             editableBodyCare: true,
             enableAutoFocus: true,
+            enableEmojiInsertion: false,
             experiment: false,
             focusFirstCandidate: false,
             focusOnSaved: true,

@@ -166,27 +166,32 @@ function createInsert() {
         _emojiList,
         _emojiPending = -1;
 
-    self.mappings.add(":", {
-        annotation: "Input emoji",
-        feature_group: 15,
-        stopPropagation: function() {
-            return false;
-        },
-        code: function() {
-            var element = getRealEdit();
-            if (element.selectionStart !== undefined) {
-                _emojiPending = element.selectionStart + 1;
-            } else {
-                _emojiPending = document.getSelection().focusOffset + 1;
-            }
-            fetch(chrome.extension.getURL("pages/emoji.tsv"))
-                .then(res => Promise.all([res.text()]))
-                .then(res => {
-                    _emojiList = res[0].split("\n");
-                    listEmoji();
-                });
+    document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
+        if (runtime.conf.enableEmojiInsertion) {
+            self.mappings.add(":", {
+                annotation: "Input emoji",
+                feature_group: 15,
+                stopPropagation: function() {
+                    return false;
+                },
+                code: function() {
+                    var element = getRealEdit();
+                    if (element.selectionStart !== undefined) {
+                        _emojiPending = element.selectionStart + 1;
+                    } else {
+                        _emojiPending = document.getSelection().focusOffset + 1;
+                    }
+                    fetch(chrome.extension.getURL("pages/emoji.tsv"))
+                        .then(res => Promise.all([res.text()]))
+                        .then(res => {
+                            _emojiList = res[0].split("\n");
+                            listEmoji();
+                        });
+                }
+            });
         }
     });
+
 
     function listEmoji() {
         var input = getRealEdit(), query = "", isInput = true;
