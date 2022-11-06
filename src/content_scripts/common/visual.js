@@ -656,7 +656,11 @@ function createVisual(clipboard, hints) {
                         selection.setPosition(element[0], element[1]);
                         self.enter();
                         if (ex === "z") {
-                            selection.extend(element[0], element[1] + element[2].length);
+                            if (element[1] === 0) {
+                                selection.extend(element[0], element[0].textContent.length);
+                            } else {
+                                selection.extend(element[0], element[1] + element[2].length);
+                            }
                             _incState();
                         }
                         self.showCursor();
