@@ -79,14 +79,32 @@ function createClipboard() {
      * Clipboard.write(window.location.href);
      */
     self.write = function(text) {
-        navigator.clipboard.writeText(text).then(
-            () => {
-                showBanner("Copied: " + text);
-            },
-            (err) => {
-                console.log(err);
-            }
-        );
+        const cb = () => {
+            showBanner("Copied: " + text);
+        };
+        // navigator.clipboard.writeText does not work on http site, and in chrome's background script.
+        if (getBrowserName() === "Chrome") {
+            insertJS(function() {
+                window.oncopy = document.oncopy;
+                document.oncopy = null;
+            }, function() {
+                clipboardActionWithSelectionPreserved(function() {
+                    holder.value = text;
+                    holder.select();
+                    document.execCommand('copy');
+                    holder.value = '';
+                });
+                insertJS(function() {
+                    document.oncopy = window.oncopy;
+                    delete window.oncopy;
+                });
+                cb();
+            });
+        } else {
+            // works for Firefox and Safari now.
+            RUNTIME("writeClipboard", { text });
+            cb();
+        }
     };
 
     return self;
