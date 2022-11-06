@@ -11,10 +11,20 @@ import {
     getRealEdit,
     isInUIFrame,
     showPopup,
+
+    createElementWithContent,
+    getBrowserName,
+    htmlEncode,
+    initL10n,
+    reportIssue,
+    setSanitizedContent,
+    showBanner,
 } from './common/utils.js';
 import createFront from './front.js';
 import createAPI from './common/api.js';
 import createDefaultMappings from './common/default.js';
+
+import KeyboardUtils from './common/keyboardUtils';
 
 /*
  * run user snippets, and return settings updated in snippets
@@ -208,9 +218,26 @@ function start(browser) {
         readText: () => {},
     };
     if (window === top) {
-        const modes = _initModules();
-
-        document.addEventListener('DOMContentLoaded', function (e) {
+        new Promise((r, j) => {
+            if (window.location.href === chrome.extension.getURL("/pages/options.html")) {
+                import(/* webpackIgnore: true */ './pages/options.js').then((optionsLib) => {
+                    optionsLib.default(
+                        RUNTIME,
+                        KeyboardUtils,
+                        Mode,
+                        createElementWithContent,
+                        getBrowserName,
+                        htmlEncode,
+                        initL10n,
+                        reportIssue,
+                        setSanitizedContent,
+                        showBanner);
+                    r(_initModules());
+                });
+            } else {
+                r(_initModules());
+            }
+        }).then((modes) => {
             _initContent(modes);
             runtime.on('tabActivated', function() {
                 modes.front.attach();
@@ -261,9 +288,7 @@ function start(browser) {
                 }
             });
 
-            // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
-        }, {once: true});
-        return modes;
+        });
     } else {
         // activate Modes in the frames on extension pages
         runtime.getTopURL(function(u) {

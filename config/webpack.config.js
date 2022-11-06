@@ -49,9 +49,11 @@ module.exports = (env, argv) => {
         background: `./src/background/${browser}.js`,
         content: `./src/content_scripts/${browser}.js`,
         'pages/frontend': `./src/content_scripts/ui/frontend.js`,
-        'pages/options': './src/content_scripts/options.js',
         'pages/start': './src/content_scripts/start.js',
         'pages/ace': './src/content_scripts/ace.js',
+    };
+    const moduleEntries = {
+        'pages/options': './src/content_scripts/options.js',
     };
     const pagesCopyOptions = {
         ignore: [
@@ -63,6 +65,7 @@ module.exports = (env, argv) => {
         pagesCopyOptions.ignore = [];
         entry['pages/neovim'] = './src/pages/neovim.js';
         entry['pages/pdf_viewer'] = './src/content_scripts/pdf_viewer.js';
+        moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
     }
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';
@@ -152,46 +155,42 @@ module.exports = (env, argv) => {
             })
         );
     }
-    if (browser === "chrome") {
-        modules.push({
-            devtool: false,
-            output: {
-                path: buildPath,
-                filename: '[name].js',
-                libraryTarget: 'module',
-            },
-            resolve: {
-                extensions: ['.ts', '.js'],
-            },
-            target: 'web',
-            entry: {
-                'pages/neovim_lib': './src/nvim/renderer.ts',
-            },
-            module: {
-                rules: [
-                    {
-                        test: /\.ts$/,
-                        exclude: /node_modules/,
-                        loader: 'ts-loader',
-                    },
-                    {
-                        test: /\.css$/,
-                        use: [
-                            { loader: "style-loader", options: { injectType: "linkTag" } },
-                            { loader: "file-loader" },
-                        ]
-                    },
-                ],
-            },
-            optimization: {
-                minimizer: [new TerserPlugin({
-                    extractComments: false,
-                })],
-            },
-            experiments: {
-                outputModule: true,
-            }
-        });
-    }
+    modules.push({
+        devtool: false,
+        output: {
+            path: buildPath,
+            filename: '[name].js',
+            libraryTarget: 'module',
+        },
+        resolve: {
+            extensions: ['.ts', '.js'],
+        },
+        target: 'web',
+        entry: moduleEntries,
+        module: {
+            rules: [
+                {
+                    test: /\.ts$/,
+                    exclude: /node_modules/,
+                    loader: 'ts-loader',
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        { loader: "style-loader", options: { injectType: "linkTag" } },
+                        { loader: "file-loader" },
+                    ]
+                },
+            ],
+        },
+        optimization: {
+            minimizer: [new TerserPlugin({
+                extractComments: false,
+            })],
+        },
+        experiments: {
+            outputModule: true,
+        }
+    });
     return modules;
 };
