@@ -205,6 +205,14 @@ function isElementDrawn(e, rect) {
     return rect.width > min && rect.height > min;
 }
 
+/**
+ * Check whether an element is in viewport.
+ *
+ * @param {Element} el the element to be checked.
+ * @param {boolean} [ignoreSize=false] whether to ignore size of the element, otherwise the element must be with size 4*4.
+ * @returns {boolean}
+ *
+ */
 function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
