@@ -49,6 +49,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
 }
 
 start({
+    detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,
     _applyProxySettings,

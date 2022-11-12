@@ -338,6 +338,12 @@ function start(browser) {
                 _tabActivated(tabId);
             }
         }
+        if (browser.detectTabTitleChange && changeInfo.title) {
+            sendTabMessage(tabId, 0, {
+                subject: 'titleChanged',
+                changeInfo
+            });
+        }
         _setScrollPos_bg(tabId);
     });
     chrome.windows.onFocusChanged.addListener(function(w) {

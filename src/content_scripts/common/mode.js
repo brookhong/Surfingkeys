@@ -129,7 +129,11 @@ function handleStack(eventName, event, cb) {
     }
 }
 
+let eventListenerBeats = 0;
 var suppressScrollEvent = 0, _listenedEvents = {
+    "sentinel": (event) => {
+        eventListenerBeats ++;
+    },
     "keydown": function (event) {
         event.sk_keyName = KeyboardUtils.getKeyChar(event);
         handleStack("keydown", event);
@@ -309,6 +313,15 @@ Mode.handleMapKey = function(event, onNoMatched) {
         }
     }
     return actionDone;
+};
+
+Mode.checkEventListener = (onMissing) => {
+    const previousState = eventListenerBeats;
+    window.dispatchEvent(new CustomEvent("sentinel"))
+    if (previousState === eventListenerBeats) {
+        init();
+        onMissing();
+    }
 };
 
 export default Mode;

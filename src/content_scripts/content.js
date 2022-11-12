@@ -239,6 +239,14 @@ function start(browser) {
             }
         }).then((modes) => {
             _initContent(modes);
+            runtime.on('titleChanged', function() {
+                Mode.checkEventListener(() => {
+                    modes.front.detach();
+                    modes = _initModules();
+                    _initContent(modes);
+                    modes.front.attach();
+                });
+            });
             runtime.on('tabActivated', function() {
                 modes.front.attach();
             });
