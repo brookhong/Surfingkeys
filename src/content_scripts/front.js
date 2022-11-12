@@ -505,9 +505,9 @@ function createFront(insert, normal, hints, visual, browser) {
             i = (i + (response.backward ? -1 : 1)) % sel.length;
             sel = sel[i];
             scrollIntoViewIfNeeded(sel);
-            flashPressedLink(sel);
-
-            self.showEditor(sel);
+            flashPressedLink(sel, () => {
+                self.showEditor(sel);
+            });
         }
     };
 

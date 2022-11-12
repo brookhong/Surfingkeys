@@ -755,7 +755,6 @@ div.hint-scrollable {
      * }, {domain: /weibo.com/i});
      */
     self.dispatchMouseClick = function(element, event) {
-        flashPressedLink(element);
         if (isEditable(element)) {
             self.exit();
             normal.passFocus(true);
@@ -783,24 +782,26 @@ div.hint-scrollable {
                 active = true;
             }
 
-            if (tabbed) {
-                RUNTIME("openLink", {
-                    tab: {
-                        tabbed: tabbed,
-                        active: active
-                    },
-                    url: getHref(element)
-                });
-            } else {
-                self.mouseoutLastElement();
-                dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
-                dispatchSKEvent('turnOnDOMObserver');
-                lastMouseTarget = element;
-            }
+            flashPressedLink(element,() => {
+                if (tabbed) {
+                    RUNTIME("openLink", {
+                        tab: {
+                            tabbed: tabbed,
+                            active: active
+                        },
+                        url: getHref(element)
+                    });
+                } else {
+                    self.mouseoutLastElement();
+                    dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
+                    dispatchSKEvent('turnOnDOMObserver');
+                    lastMouseTarget = element;
+                }
 
-            if (behaviours.multipleHits) {
-                setTimeout(resetHints, 300);
-            }
+                if (behaviours.multipleHits) {
+                    setTimeout(resetHints, 300);
+                }
+            });
         }
     };
     self.mouseoutLastElement = function() {

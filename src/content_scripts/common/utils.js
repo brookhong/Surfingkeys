@@ -770,16 +770,19 @@ function insertJS(code, onload) {
     document.lastElementChild.appendChild(s);
 }
 
-function flashPressedLink(link) {
+const flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
+function flashPressedLink(link, cb) {
     var rect = getRealRect(link);
-    var flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
     flashElem.style.left = rect.left + 'px';
     flashElem.style.top = rect.top + 'px';
     flashElem.style.width = rect.width + 'px';
     flashElem.style.height = rect.height + 'px';
     document.body.appendChild(flashElem);
 
-    setTimeout(function () { flashElem.remove(); }, 300);
+    setTimeout(() => {
+        flashElem.remove();
+        cb();
+    }, 100);
 }
 
 function regexFromString(str, highlight) {

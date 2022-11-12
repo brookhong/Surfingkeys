@@ -280,8 +280,9 @@ function createVisual(clipboard, hints) {
         }
     });
     function clickLink(element, shiftKey) {
-        flashPressedLink(element);
-        dispatchMouseEvent(element, ['click'], shiftKey);
+        flashPressedLink(element, () => {
+            dispatchMouseEvent(element, ['click'], shiftKey);
+        });
     }
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Enter>"), {
         annotation: "Click on node under cursor.",
