@@ -296,6 +296,9 @@ div.hint-scrollable {
     }
 
     function resetHints() {
+        if (!document.documentElement.contains(hintsHost)) {
+            return;
+        }
         var start = new Date().getTime();
         var found = createHints(_cssSelector, _lastCreateAttrs);
         if (found > 0) {
