@@ -277,7 +277,12 @@ function createOmnibar(front, clipboard) {
         }
         if (fi) {
             fi.classList.add('focused');
-            scrollIntoViewIfNeeded(fi);
+            const fiRect = fi.getBoundingClientRect();
+            const resultsRect = self.resultsDiv.getBoundingClientRect();
+            if (fiRect.top < resultsRect.top || fiRect.bottom > resultsRect.bottom) {
+              const alignToTop = fiRect.top < resultsRect.top;
+              fi.scrollIntoView(alignToTop);
+            }
         }
     };
 
