@@ -580,6 +580,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 ## Other
 
 * [Anki Study Deck](https://ankiweb.net/shared/info/1195173768), Anki Study Deck (helpful for memorizing keyboard mappings) 
+* For further information check out the [FAQ](https://github.com/brookhong/Surfingkeys/wiki/FAQ) and add to the user-contributed documentation on the [Surfingkeys Wiki](https://github.com/brookhong/Surfingkeys/wiki/).
 
 ## Credits
 
