@@ -136,6 +136,15 @@ var suppressScrollEvent = 0, _listenedEvents = {
     },
     "keydown": function (event) {
         event.sk_keyName = KeyboardUtils.getKeyChar(event);
+        if (mode_stack.length === 0 && window !== top) {
+            // automatically boots iframe on demand
+            dispatchSKEvent('iframeBoot');
+            document.addEventListener("surfingkeys:userSettingsLoaded", () => {
+                // proceed to handle the key event after userSettingsLoaded.
+                handleStack("keydown", event);
+            }, {once: true});
+            return;
+        }
         handleStack("keydown", event);
     },
     "keyup": function (event) {

@@ -298,12 +298,9 @@ function start(browser) {
 
         });
     } else {
-        // activate Modes in the frames on extension pages
-        runtime.getTopURL(function(u) {
-            if (u.indexOf(chrome.extension.getURL("/")) === 0 || window.location.protocol === "dictorium:") {
-                _initContent(_initModules());
-            }
-        });
+        document.addEventListener("surfingkeys:iframeBoot", () => {
+            _initContent(_initModules());
+        }, {once: true});
     }
 }
 
