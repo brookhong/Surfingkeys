@@ -1193,7 +1193,7 @@ function SearchEngine(omnibar, front) {
     self.onEnter = function() {
         var fi = omnibar.resultsDiv.querySelector('li.focused'), url;
         if (fi) {
-            url = fi.url || constructSearchURL(self.url, (fi.query || encodeURIComponent(omnibar.input.value)));
+            url = fi.url || constructSearchURL(self.url, encodeURIComponent(fi.query || omnibar.input.value));
         } else {
             url = constructSearchURL(self.url, encodeURIComponent(omnibar.input.value));
         }
