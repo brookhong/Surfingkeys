@@ -1,3 +1,5 @@
+-- Part of this file comes from https://github.com/glacambre/firenvim
+
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
 -- encoding
 function base64_enc(data)
@@ -342,7 +344,13 @@ end
 
 local function connection_handler(server, sock, token)
     local pipe = vim.loop.new_pipe(false)
-    vim.loop.pipe_connect(pipe, os.getenv("NVIM_LISTEN_ADDRESS"), function(err)
+
+    -- https://neovim.io/doc/user/eval.html#v%3Aservername
+    local self_addr = vim.v.servername
+    if self_addr == nil then
+            self_addr = os.getenv("NVIM_LISTEN_ADDRESS")
+    end
+    vim.loop.pipe_connect(pipe, self_addr, function(err)
         assert(not err, err)
     end)
 
