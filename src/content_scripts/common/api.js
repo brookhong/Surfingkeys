@@ -575,6 +575,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     });
 
     mapkey('w', '#2Switch frames', function() {
+        // ensure frontend ready so that ui related actions can be available in iframes.
+        dispatchSKEvent('ensureFrontEnd');
         if (window !== top || !hints.create("iframe", function(element) {
             element.scrollIntoView({
                 behavior: 'auto',

@@ -253,6 +253,9 @@ function start(browser) {
             runtime.on('tabDeactivated', function() {
                 modes.front.detach();
             });
+            document.addEventListener("surfingkeys:ensureFrontEnd", function(evt) {
+                modes.front.attach();
+            });
             window._setScrollPos = function (x, y) {
                 document.scrollingElement.scrollLeft = x;
                 document.scrollingElement.scrollTop = y;
@@ -262,9 +265,6 @@ function start(browser) {
                 title: document.title,
                 url: window.location.href
             }, function (resp) {
-                if (resp.active) {
-                    modes.front.attach();
-                }
 
                 if (resp.index > 0) {
                     var showTabIndexInTitle = function () {

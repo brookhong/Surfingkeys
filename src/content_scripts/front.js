@@ -22,18 +22,23 @@ function createFront(insert, normal, hints, visual, browser) {
     var _uiUserSettings = [];
     function applyUserSettings() {
         for (var cmd of _uiUserSettings) {
-            self.command(cmd);
+            cmd.commandToFrontend = true;
+            cmd.origin = getDocumentOrigin();
+            cmd.id = generateQuickGuid();
+            runtime.postTopMessage(cmd);
         }
     }
 
-    var uiHost, _resolve;
-    var frontendPromise = new Promise(function (resolve, reject) {
-        if (window === top) {
-            _resolve = resolve;
-        } else {
-            resolve(window.location.href);
-        }
-    });
+    var frontendPromise;
+
+    function newFrontEnd() {
+        frontendPromise = new Promise(function (resolve, reject) {
+            createUiHost(browser, (res) => {
+                resolve(res);
+                applyUserSettings();
+            });
+        });
+    }
 
     var _callbacks = {};
     self.command = function(args, successById) {
@@ -44,9 +49,20 @@ function createFront(insert, normal, hints, visual, browser) {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        frontendPromise.then(function() {
+        if (window !== top) {
             runtime.postTopMessage(args);
-        });
+        } else {
+            if (!frontendPromise) {
+                // no need to create frontend iframe if the action is to hide key stroke
+                if (args.action === "hideKeystroke") {
+                    return;
+                }
+                newFrontEnd();
+            }
+            frontendPromise.then(function() {
+                runtime.postTopMessage(args);
+            });
+        }
     };
 
     document.addEventListener("surfingkeys:setUserSettings", function(evt) {
@@ -549,9 +565,13 @@ function createFront(insert, normal, hints, visual, browser) {
 
     _actions["getBackFocus"] = function(response) {
         window.focus();
-        if (window === top && uiHost && uiHost.shadowRoot.contains(document.activeElement)) {
-            // fix for Firefox, blur from iframe for frontend after Omnibar closed.
-            document.activeElement.blur();
+        if (window === top && frontendPromise) {
+            frontendPromise.then((uiHost) => {
+                if (uiHost.shadowRoot.contains(document.activeElement)) {
+                    // fix for Firefox, blur from iframe for frontend after Omnibar closed.
+                    document.activeElement.blur();
+                }
+            });
         }
     };
 
@@ -664,25 +684,23 @@ function createFront(insert, normal, hints, visual, browser) {
 
     var uiHostDetaching;
     self.attach = function() {
-        if (!uiHost) {
-            uiHost = createUiHost(browser, (res) => {
-                _resolve(res);
-                applyUserSettings();
-            });
-            document.documentElement.appendChild(uiHost);
-        }
         if (uiHostDetaching) {
             clearTimeout(uiHostDetaching);
             uiHostDetaching = undefined;
         }
+        if (!frontendPromise) {
+            newFrontEnd();
+        }
     };
 
     self.detach = function() {
-        if (uiHost) {
-            uiHostDetaching = setTimeout(function() {
-                uiHost.detach();
-                uiHost = undefined;
-            }, 3000);
+        if (frontendPromise) {
+            frontendPromise.then((uiHost) => {
+                uiHostDetaching = setTimeout(function() {
+                    uiHost.detach();
+                    frontendPromise = undefined;
+                }, 3000);
+            });
         }
     };
 

@@ -87,7 +87,7 @@ function createUiHost(browser, onload) {
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null;
     _actions['initFrontendAck'] = function(response) {
-        onload(window.location.href);
+        onload(uiHost);
     };
     _actions['setFrontFrame'] = function(response) {
         ifr.style.height = response.frameHeight;
@@ -131,7 +131,7 @@ function createUiHost(browser, onload) {
         window.removeEventListener('message', _onWindowMessage, true);
         uiHost.remove();
     };
-    return uiHost;
+    document.documentElement.appendChild(uiHost);
 }
 
 export default createUiHost;

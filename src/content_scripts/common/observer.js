@@ -15,16 +15,6 @@ function isElementPositionRelative(elm) {
 }
 
 function startScrollNodeObserver(normal) {
-    var getDocumentBody = new Promise(function(resolve, reject) {
-        if (document.body) {
-            resolve(document.body);
-        } else {
-            document.addEventListener('DOMContentLoaded', function() {
-                resolve(document.body);
-            });
-        }
-    });
-
     var pendingUpdater = undefined, DOMObserver = new MutationObserver(function (mutations) {
         var addedNodes = [];
         for (var m of mutations) {
@@ -64,10 +54,8 @@ function startScrollNodeObserver(normal) {
 
     document.addEventListener("surfingkeys:turnOnDOMObserver", function(evt) {
         if (!DOMObserver.isConnected) {
-            getDocumentBody.then(function(body) {
-                DOMObserver.observe(body, { childList: true, subtree:true });
-                DOMObserver.isConnected = true;
-            });
+            DOMObserver.observe(document, { childList: true, subtree:true });
+            DOMObserver.isConnected = true;
         }
     });
 
