@@ -13,7 +13,7 @@ import {
 function createInsert() {
     var self = new Mode("Insert");
 
-    function moveCusorEOL() {
+    function moveCursorEOL() {
         var element = getRealEdit();
         if (element.setSelectionRange !== undefined) {
             try {
@@ -46,7 +46,7 @@ function createInsert() {
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-e>"), {
         annotation: "Move the cursor to the end of the line",
         feature_group: 15,
-        code: moveCusorEOL
+        code: moveCursorEOL
     });
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-f>"), {
         annotation: "Move the cursor to the beginning of the line",
@@ -434,7 +434,7 @@ function createInsert() {
             changed = true;
         }
         if (changed && !keepCursor && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
-            moveCusorEOL();
+            moveCursorEOL();
         }
     };
 
