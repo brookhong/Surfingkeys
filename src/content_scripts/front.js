@@ -292,7 +292,12 @@ function createFront(insert, normal, hints, visual, browser) {
         } else {
             elementBehindEditor = element;
             if (elementBehindEditor.nodeName === "DIV") {
-                content = elementBehindEditor.innerText;
+                if (elementBehindEditor.className === "CodeMirror-code") {
+                    let codeMirrorLines = elementBehindEditor.querySelectorAll(".CodeMirror-line")
+                    content = Array.from(codeMirrorLines).map(el => el.innerText).join("\n")
+                } else {
+                    content = elementBehindEditor.innerText;
+                }
             } else {
                 content = elementBehindEditor.value;
             }
