@@ -295,6 +295,9 @@ function createFront(insert, normal, hints, visual, browser) {
                 if (elementBehindEditor.className === "CodeMirror-code") {
                     let codeMirrorLines = elementBehindEditor.querySelectorAll(".CodeMirror-line")
                     content = Array.from(codeMirrorLines).map(el => el.innerText).join("\n")
+                    // Remove the red dot (char code 8226) that CodeMirror uses to visualize the zero-width space.
+                    content = content.replace(/\u200B/g, "")
+
                 } else {
                     content = elementBehindEditor.innerText;
                 }
