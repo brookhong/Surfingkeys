@@ -229,11 +229,19 @@ function createFront(insert, normal, hints, visual, browser) {
         // setEditorText and setValueWithEventDispatched are experimental APIs from Brook Build of Chromium
         // https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html
         if (elementBehindEditor.nodeName === "DIV") {
-            data = data.replace(/\n+$/, '');
-            if (typeof elementBehindEditor.setEditorText === "function") {
-                elementBehindEditor.setEditorText(data);
+            if (elementBehindEditor.className === "CodeMirror-code") {
+                window.getSelection().selectAllChildren(elementBehindEditor)
+                let dataTransfer = new DataTransfer()
+                dataTransfer.items.add(data, 'text/plain')
+                elementBehindEditor.dispatchEvent(new ClipboardEvent('paste', {clipboardData: dataTransfer}))
             } else {
-                elementBehindEditor.innerText = data;
+                data = data.replace(/\n+$/, '');
+
+                if (typeof elementBehindEditor.setEditorText === "function") {
+                    elementBehindEditor.setEditorText(data);
+                } else {
+                    elementBehindEditor.innerText = data;
+                }
             }
         } else {
             if (typeof elementBehindEditor.setValueWithEventDispatched === "function") {
@@ -284,7 +292,15 @@ function createFront(insert, normal, hints, visual, browser) {
         } else {
             elementBehindEditor = element;
             if (elementBehindEditor.nodeName === "DIV") {
-                content = elementBehindEditor.innerText;
+                if (elementBehindEditor.className === "CodeMirror-code") {
+                    let codeMirrorLines = elementBehindEditor.querySelectorAll(".CodeMirror-line")
+                    content = Array.from(codeMirrorLines).map(el => el.innerText).join("\n")
+                    // Remove the red dot (char code 8226) that CodeMirror uses to visualize the zero-width space.
+                    content = content.replace(/\u200B/g, "")
+
+                } else {
+                    content = elementBehindEditor.innerText;
+                }
             } else {
                 content = elementBehindEditor.value;
             }

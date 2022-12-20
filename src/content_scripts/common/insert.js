@@ -13,7 +13,7 @@ import {
 function createInsert() {
     var self = new Mode("Insert");
 
-    function moveCusorEOL() {
+    function moveCursorEOL() {
         var element = getRealEdit();
         if (element.setSelectionRange !== undefined) {
             try {
@@ -32,7 +32,12 @@ function createInsert() {
                 if (node.nodeType === Node.TEXT_NODE) {
                     document.getSelection().setPosition(node, node.data.length);
                 } else {
-                    document.getSelection().setPosition(node, node.childNodes.length);
+                    let codeMirrorNode = node.querySelector(".CodeMirror-line")
+                    if (codeMirrorNode) {
+                        setEndOfContenteditable(element)
+                    } else {
+                        document.getSelection().setPosition(node, node.childNodes.length);
+                    }
                 }
                 // blink cursor to bring cursor into view
                 Visual.showCursor();
@@ -41,12 +46,22 @@ function createInsert() {
         }
     }
 
+    // From https://stackoverflow.com/questions/1125292/how-to-move-cursor-to-end-of-contenteditable-entity/69727327#69727327
+    function setEndOfContenteditable(contentEditableElement) {
+        let range = document.createRange();//Create a range (a range is a like the selection but invisible)
+        range.selectNodeContents(contentEditableElement);//Select the entire contents of the element with the range
+        range.collapse(false);//collapse the range to the end point. false means collapse to end rather than the start
+        let selection = window.getSelection();//get the selection object (allows you to change selection)
+        selection.removeAllRanges();//remove any selections already made
+        selection.addRange(range);//make the range you have just created the visible selection
+    }
+
     self.mappings = new Trie();
     self.map_node = self.mappings;
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-e>"), {
         annotation: "Move the cursor to the end of the line",
         feature_group: 15,
-        code: moveCusorEOL
+        code: moveCursorEOL
     });
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-f>"), {
         annotation: "Move the cursor to the beginning of the line",
@@ -434,7 +449,7 @@ function createInsert() {
             changed = true;
         }
         if (changed && !keepCursor && runtime.conf.cursorAtEndOfInput && elm.nodeName !== 'SELECT') {
-            moveCusorEOL();
+            moveCursorEOL();
         }
     };
 
