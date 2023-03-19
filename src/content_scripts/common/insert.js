@@ -443,7 +443,7 @@ function createInsert() {
         if (elm === document.body) {
             runtime.conf.showModeStatus = false;
         }
-        var changed = (_enter.call(self) === -1);
+        var changed = (_enter.call(self, 0, true) === -1);
         if (_element !== elm) {
             _element = elm;
             changed = true;

@@ -232,7 +232,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 此外，还有`sog`可以使用google在本站搜索选中文本。在这个`sog`里面，`s`是search_leader_key，`o`是only_this_site_key，`g`是搜索别名。
 
-search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以修改添加搜索内容，再用Google搜索。其它别名和你通过`addSearchAliasX`添加的别名，大写的都可以这样工作。
+search_leader_key(`s`)加上大写的别名(`G`)会打开搜索框让你可以修改添加搜索内容，再用Google搜索。其它别名和你通过`addSearchAlias`添加的别名，大写的都可以这样工作。
 
 ## 类vim标示
 

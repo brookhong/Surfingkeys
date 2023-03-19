@@ -155,7 +155,7 @@ function createOmnibar(front, clipboard) {
                 text = fi.copy;
             } else if (fi && fi.url) {
                 text = fi.url;
-            } else {
+            } else if (_page) {
                 text = _page.map(p => {
                     return p.url;
                 }).join("\n")

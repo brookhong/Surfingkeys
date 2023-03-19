@@ -245,7 +245,7 @@ The `g` in `sg` is a search alias for google, there are some other built-in sear
 
 Besides that, there is a `sog`, to search selected text only in this site with google. For `sog`, `s` is the search_leader_key, `o` is the only_this_site_key, `g` is the search alias.
 
-The search_leader_key `s` plus capital alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAliasX` work in same way.
+The search_leader_key `s` plus capital alias `G` will search selected with google interactively, all other search aliases and those you added through API `addSearchAlias` work in same way.
 
 ## Vim-like marks
 
