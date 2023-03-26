@@ -430,6 +430,12 @@ function createNormal(insert) {
                 }
             }
         }
+        if (!scrollNode && !document.scrollingElement && document.body) {
+            // to set document.body.style.overflow auto will make document.scrollingElement null
+            // set visible to bring it back.
+            document.body.style.overflow = 'visible';
+            scrollNode = document.scrollingElement;
+        }
         if (!scrollNode) {
             // scrollNode could be null on a page with frameset as its body.
             return;
