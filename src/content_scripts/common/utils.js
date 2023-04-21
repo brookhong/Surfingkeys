@@ -589,9 +589,9 @@ function getAnnotations(mappings) {
 }
 
 function constructSearchURL(se, word) {
-    if (se.indexOf("{0}") !== -1) {
+    if (se.indexOf("{0}") > 0) {
         return se.format(word);
-    } else if (se.indexOf("%s") !== -1) {
+    } else if (se.indexOf("%s") > 0) {
         return se.replace("%s", word)
     } else {
         return se + word;
