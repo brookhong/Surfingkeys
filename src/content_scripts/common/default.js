@@ -178,9 +178,16 @@ module.exports = function(api) {
     mapkey('r', '#4Reload the page', function() {
         RUNTIME("reloadTab", { nocache: false });
     });
+    mapkey('oo', '#8Open new window', function() {
+        RUNTIME('openWindow', {
+            url: window.location.href,
+            incognito: false
+        });
+    });
     mapkey('oi', '#8Open incognito window', function() {
-        RUNTIME('openIncognito', {
-            url: window.location.href
+        RUNTIME('openWindow', {
+            url: window.location.href,
+            incognito: true
         });
     });
 

@@ -1611,6 +1611,10 @@ function start(browser) {
         chrome.tts.stop();
     };
 
+    self.openWindow = function(message, sender, sendResponse) {
+        chrome.windows.create({"url": message.url, "incognito": message.incognito});
+    };
+
     self.openIncognito = function(message, sender, sendResponse) {
         chrome.windows.create({"url": message.url, "incognito": true});
     };
