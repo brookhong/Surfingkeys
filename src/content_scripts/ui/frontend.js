@@ -1023,12 +1023,14 @@ function createAceEditor(normal, front) {
         vim.defineEx("write", "w", function(cm, input) {
             _save();
         });
-        vim.defineEx("wq", "wq", function(cm, input) {
+        const wq = function(cm, input) {
             self.onExit = _closeAndSave;
             self.exit();
             // tell vim editor that command is done
             _ace.state.cm.signal('vim-command-done', '');
-        });
+        };
+        vim.defineEx("wq", "wq", wq);
+        vim.defineEx("x", "x", wq);
         vim.map('<CR>', ':wq', 'normal');
         vim.defineEx("bnext", "bn", function(cm, input) {
             front.contentCommand({
