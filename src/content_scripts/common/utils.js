@@ -827,6 +827,10 @@ function filterByTitleOrUrl(urls, query) {
     return urls;
 }
 
+function getCssSelectorsOfEditable() {
+    return "input:not([type=submit]), textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor";
+}
+
 export {
     LOG,
     actionWithSelectionPreserved,
@@ -843,6 +847,7 @@ export {
     getAnnotations,
     getBrowserName,
     getClickableElements,
+    getCssSelectorsOfEditable,
     getDocumentOrigin,
     getElements,
     getRealEdit,

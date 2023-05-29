@@ -120,14 +120,6 @@ module.exports = function(api) {
             Clipboard.write(element.innerText);
         });
     });
-    mapkey('i', '#1Go to edit box', function() {
-        Hints.create("input, textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor", Hints.dispatchMouseClick);
-    });
-    mapkey('I', '#1Go to edit box with vim editor', function() {
-        Hints.create("input, textarea, *[contenteditable=true], select", function(element) {
-            Front.showEditor(element);
-        });
-    });
 
     map('<Ctrl-i>', 'I');
     cmap('<ArrowDown>', '<Tab>');

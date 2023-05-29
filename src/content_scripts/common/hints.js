@@ -2,20 +2,21 @@ import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
+    createElementWithContent,
     dispatchMouseEvent,
-    isEditable,
+    filterInvisibleElements,
+    filterOverlapElements,
     flashPressedLink,
-    getElements,
     getBrowserName,
     getClickableElements,
+    getCssSelectorsOfEditable,
+    getElements,
     getRealRect,
     getTextNodePos,
     getVisibleElements,
+    isEditable,
     isElementClickable,
-    filterInvisibleElements,
-    filterOverlapElements,
     setSanitizedContent,
-    createElementWithContent
 } from './utils.js';
 
 function createHints(insert, normal) {
@@ -653,7 +654,8 @@ div.hint-scrollable {
     }
 
     self.createInputLayer = function() {
-        var cssSelector = "input";
+        document.documentElement.appendChild(hintsHost);
+        const cssSelector = getCssSelectorsOfEditable();
 
         var elements = getVisibleElements(function(e, v) {
             if (e.matches(cssSelector) && !e.disabled && !e.readOnly

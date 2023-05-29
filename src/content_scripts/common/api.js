@@ -8,6 +8,7 @@ import {
     constructSearchURL,
     getBrowserName,
     getClickableElements,
+    getCssSelectorsOfEditable,
     getRealEdit,
     getTextNodePos,
     getWordUnderCursor,
@@ -535,6 +536,14 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
     mapkey('gi', '#1Go to the first edit box', function() {
         hints.createInputLayer();
+    });
+    mapkey('i', '#1Go to edit box', function() {
+        hints.create(getCssSelectorsOfEditable(), hints.dispatchMouseClick);
+    });
+    mapkey('I', '#1Go to edit box with vim editor', function() {
+        hints.create(getCssSelectorsOfEditable(), function(element) {
+            front.showEditor(element);
+        });
     });
 
     mapkey('zv', '#9Enter visual mode, and select whole element', function() {
