@@ -33,6 +33,29 @@ function createDisabled(normal) {
     return self;
 }
 
+function createLurk(normal) {
+    const self = new Mode("Lurk");
+
+    // Lurk and Disabled should be mutually exclusive.
+    self.addEventListener('keydown', function(event) {
+        // prevent this event to be handled by Surfingkeys' other listeners
+        event.sk_suppressed = true;
+        if (KeyboardUtils.encodeKeystroke("<Alt-i>") === event.sk_keyName || event.sk_keyName === "p") {
+            normal.enter();
+            RUNTIME('setSurfingkeysIcon', {
+                status: "enabled"
+            });
+            if (event.sk_keyName === "p") {
+                setTimeout(() => {
+                    normal.revertToLurk();
+                }, 1000);
+            }
+            event.sk_stopPropagation = true;
+        }
+    });
+    return self;
+}
+
 function createPassThrough() {
     var self = new Mode("PassThrough");
     var _autoExit, _timeout;
@@ -89,6 +112,26 @@ function createNormal(insert) {
         _passFocus = pf;
     };
 
+    let _lurk = undefined;
+    self.startLurk = () => {
+        let state = "lurking";
+        if (!_lurk) {
+            self.exit();
+            _lurk = createLurk(self);
+            _lurk.enter(0, true);
+        } else if (Mode.getCurrent() === self) {
+            state = "enabled";
+        }
+        return state;
+    };
+    self.revertToLurk = () => {
+        // peeking exit to keep modes such hints above normal.
+        self.exit(true);
+        RUNTIME('setSurfingkeysIcon', {
+            status: "lurking"
+        });
+    };
+
     var _once = false;
     self.addEventListener('keydown', function(event) {
         var realTarget = getRealEdit(event);
@@ -136,7 +179,12 @@ function createNormal(insert) {
             Mode.finish(self);
             event.sk_stopPropagation = true;
         } else if (event.sk_keyName.length) {
-            var done = Mode.handleMapKey.call(self, event);
+            var done = Mode.handleMapKey.call(self, event, () => {
+                // revert to lurk only when Esc is not handled and lurk mode available.
+                if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName) && _lurk) {
+                    self.revertToLurk();
+                }
+            });
             if (_once && done) {
                 _once = false;
                 self.exit();
@@ -198,7 +246,7 @@ function createNormal(insert) {
             RUNTIME('toggleBlocklist', {
                 blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
             }, function(resp) {
-                if (resp.disabled) {
+                if (resp.state === "disabled") {
                     if (resp.blocklist.hasOwnProperty(".*")) {
                         showBanner('Surfingkeys is globally disabled, please enable it globally from popup menu.', 3000);
                     } else {

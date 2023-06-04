@@ -200,6 +200,20 @@ To press `Alt-i` to enter PassThrough mode gives you a chance to temporarily sup
 
 To press `p` to enter ephemeral PassThrough mode, which will automatically quit after 1 second.
 
+### Lurk mode
+
+User can specify the pages where Surfingkeys will lurk until it is called out by `Alt-i` or `p`(for ephemeral case), such as
+
+    settings.lurkingPattern = /https:\/\/github\.com|.*confluence.*/i;
+
+If the loading page matches with the `lurkingPattern`, Surfingkeys will enter `lurk` mode by default, in which mode only `Alt-i` and `p` are registered by Surfingkeys to activate `normal` mode. When user presses `Esc` or timeout, Surfingkeys reverts back to `lurk` mode.
+
+The extension icon in toolbar reflects current status of Surfingkeys,
+
+* Grey -- disabled.
+* Half Grey/Half Color -- lurking.
+* Color -- enabled.
+
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,

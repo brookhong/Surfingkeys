@@ -129,11 +129,15 @@ function applySettings(api, normal, rs) {
         dispatchSKEvent('showStatus', [3, proxyMode]);
     }
 
-    RUNTIME('getDisabled', {
-        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : ""
+    RUNTIME('getState', {
+        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : undefined,
+        lurkingPattern: runtime.conf.lurkingPattern ? runtime.conf.lurkingPattern.toJSON() : undefined
     }, function (resp) {
-        if (resp.disabled) {
+        let state = resp.state;
+        if (state === "disabled") {
             normal.disable();
+        } else if (state === "lurking") {
+            state = normal.startLurk();
         } else {
             if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
                 _browser.usePdfViewer();
@@ -144,7 +148,7 @@ function applySettings(api, normal, rs) {
 
         if (window === top) {
             RUNTIME('setSurfingkeysIcon', {
-                status: resp.disabled
+                status: state
             });
         }
     });

@@ -42,6 +42,7 @@ var runtime = (function() {
             lastKeys: "",
             // local part from settings
             blocklistPattern: undefined,
+            lurkingPattern: undefined,
             smartCase: true,
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,

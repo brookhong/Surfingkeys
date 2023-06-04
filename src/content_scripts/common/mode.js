@@ -6,6 +6,8 @@ import {
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import KeyboardUtils from './keyboardUtils';
 
+var mode_stack = [];
+
 const Mode = function(name, statusLine) {
     this.name = name;
     this.statusLine = statusLine;
@@ -81,7 +83,9 @@ const Mode = function(name, statusLine) {
     };
 };
 
-var mode_stack = [];
+Mode.getCurrent = () => {
+    return mode_stack[0];
+};
 
 Mode.specialKeys = {
     "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlocklist
