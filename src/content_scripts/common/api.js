@@ -136,7 +136,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      */
     function map(new_keystroke, old_keystroke, domain, new_annotation) {
         if (_isDomainApplicable(domain)) {
-            if (old_keystroke[0] === ':') {
+            if (old_keystroke[0] === ':' && old_keystroke.length > 1) {
                 var cmdline = old_keystroke.substr(1);
                 var keybound = createKeyTarget(function () {
                     front.executeCommand(cmdline);
