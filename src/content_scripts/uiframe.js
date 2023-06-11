@@ -34,7 +34,7 @@ function createUiHost(browser, onload) {
             // forward message to frontend
             ifr.contentWindow.postMessage({surfingkeys_data: _message}, frontEndURL);
             if (_message.commandToFrontend && event.source
-                && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder'].indexOf(_message.action) !== -1) {
+                && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder', 'chooseTab'].indexOf(_message.action) !== -1) {
                 if (!activeContent || activeContent.window !== event.source) {
                     // reset active Content
 

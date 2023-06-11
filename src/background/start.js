@@ -724,10 +724,7 @@ function start(browser) {
                     return b.title.indexOf(message.query) !== -1 || (b.url && b.url.indexOf(message.query) !== -1);
                 });
             }
-            tabs = tabs.filter(function(b) {
-                return b.id !== tab.id;
-            });
-            if (conf.tabsMRUOrder) {
+            if (tabs.length > message.tabsThreshold && conf.tabsMRUOrder) {
                 tabs.sort(function(x, y) {
                     // Shift tabs without "last access" data to the end
                     var a = tabActivated[x.id];

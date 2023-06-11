@@ -281,7 +281,7 @@ By default, pressing `T` will show all opened tabs in an overlay, then pressing 
 
 ![tabs_overlay](https://cloud.githubusercontent.com/assets/288207/10544636/245447f6-7457-11e5-8372-62b8f6337158.png)
 
-There is `settings.tabsThreshold` here. When total of opened tabs exceeds `settings.tabsThreshold`(default as 9), omnibar will be used for choosing tabs.
+There is `settings.tabsThreshold` here. When total of opened tabs exceeds `settings.tabsThreshold`, omnibar will be used for choosing tabs.
 
 ![tabs_omnibar](https://cloud.githubusercontent.com/assets/288207/10544630/1fbdd02c-7457-11e5-823c-14411311c315.png)
 
@@ -538,7 +538,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.omnibarSuggestion | false | Show suggestion URLs|
 | settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
-| settings.tabsThreshold | 9 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
+| settings.tabsThreshold | 100 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
 | settings.clickableSelector | "" | Extra CSS selector to pick elements for hints mode, such as "\*.jfk-button, \*.goog-flat-menu-button". |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | A regex to detect clickable links from text, you could use `O` to open them. |
 | settings.editableSelector | div.CodeMirror-scroll,div.ace_content | CSS selector for additional editable elements. |

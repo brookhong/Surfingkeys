@@ -237,23 +237,38 @@ const Front = (function() {
     _tabs.onShow = function(tabs) {
         setSanitizedContent(_tabs, "");
         _tabs.trie = new Trie();
-        var hintLabels = hints.genLabels(tabs.length);
+        var hintLabels = hints.genLabels(tabs.length - 1);
+        var j = 0;
+        const unitWidth = window.innerWidth / tabs.length - 2;
         tabs.forEach(function(t, i) {
             var tab = document.createElement('div');
             tab.setAttribute('class', 'sk_tab');
-            tab.style.width = '200px';
-            _tabs.trie.add(hintLabels[i].toLowerCase(), t);
-            setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[i]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img src='chrome://favicon/${t.url}'></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
-            tab.url = t.url;
+            tab.style.width = unitWidth + 'px';
+            if (t.active === false) {
+                setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[j]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
+                _tabs.trie.add(hintLabels[j].toLowerCase(), t);
+                tab.url = t.url;
+                j ++;
+            } else {
+                setSanitizedContent(tab, `<div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
+                tab.style.boxShadow = "0px 3px 7px 0px rgba(245, 245, 0, 0.9)";
+            }
+            const browserName = getBrowserName();
+            if (browserName === "Chrome") {
+                tab.querySelector("img").src = `chrome://favicon/${t.url}`;
+            } else if (browserName.startsWith("Safari")) {
+                tab.querySelector("img").src = new URL(t.url).origin + "/favicon.ico";
+            } else {
+                tab.querySelector("img").src = t.favIconUrl;
+            }
+            tab.querySelector("div.sk_tab_title").style.width = (unitWidth - 24) + 'px';
             _tabs.append(tab);
-        });
-        _tabs.querySelectorAll('div.sk_tab').forEach(function(tab) {
-            tab.append(createElementWithContent('div', tab.url, {class: "sk_tab_url"}));
         });
     };
     _actions['chooseTab'] = function() {
-        RUNTIME('getTabs', null, function(response) {
-            if (response.tabs.length > runtime.conf.tabsThreshold) {
+        const tabsThreshold = Math.min(runtime.conf.tabsThreshold, Math.ceil(window.innerWidth / 26));
+        RUNTIME('getTabs', {queryInfo: {currentWindow: true}, tabsThreshold}, function(response) {
+            if (response.tabs.length > tabsThreshold) {
                 showElement(_omnibar, {type: 'Tabs'});
             } else if (response.tabs.length > 0) {
                 showElement(_tabs, response.tabs);

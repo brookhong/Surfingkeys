@@ -60,7 +60,7 @@ module.exports = function(api) {
         Hints.create("", (element, event) => {
             if (chrome.surfingkeys) {
                 const r = element.getClientRects()[0];
-                chrome.surfingkeys.sendMouseEvent(2, Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2));
+                chrome.surfingkeys.sendMouseEvent(2, Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2), 0);
             } else {
                 Hints.dispatchMouseClick(element, event);
             }
