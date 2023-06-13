@@ -1018,8 +1018,8 @@ function createAceEditor(normal, front) {
         if (_editorType === 'select') {
             // get current line
             val = _ace.session.getLine(_ace.selection.lead.row);
-            val = val.match(/.*>< ([^<]*)$/);
-            val = val ? val[1] : "";
+            val = val.match(/^(.+ >< )?([^<>]+)$/);
+            val = val ? val[2] : "";
         }
         return val;
     }
