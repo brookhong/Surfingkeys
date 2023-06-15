@@ -1,4 +1,4 @@
-import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import {RUNTIME, dispatchSKEvent, runtime} from './runtime.js';
 import Trie from './trie';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
@@ -55,7 +55,9 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                 if (old.meta) {
                     warning = `${old.meta.word} for [${old.meta.annotation}] is overridden by [${annotation}].`;
                 } else {
-                    warning = old.getMetas(function() { return true;}).map(function(meta) {
+                    warning = old.getMetas(function () {
+                        return true;
+                    }).map(function (meta) {
                         return `${meta.word} for [${meta.annotation}] is overridden by [${annotation}].`;
                     });
                 }
@@ -71,7 +73,10 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                     p = p.substr(0, p.length - 1);
                 }
             }
-            var keybound = createKeyTarget(jscode, {annotation: annotation, feature_group: ((mode === visual) ? 9 :14)}, options.repeatIgnore);
+            var keybound = createKeyTarget(jscode, {
+                annotation: annotation,
+                feature_group: ((mode === visual) ? 9 : 14)
+            }, options.repeatIgnore);
             mode.mappings.add(keys, keybound);
         }
     }
@@ -139,7 +144,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                 var cmdline = old_keystroke.substr(1);
                 var keybound = createKeyTarget(function () {
                     front.executeCommand(cmdline);
-                }, new_annotation ? parseAnnotation({ annotation: new_annotation }) : null, false);
+                }, new_annotation ? parseAnnotation({annotation: new_annotation}) : null, false);
                 normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
             } else {
                 if (!mapInMode(normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
@@ -190,7 +195,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     function unmapAllExcept(keystrokes, domain) {
         if (_isDomainApplicable(domain)) {
             var modes = [normal, insert];
-            modes.forEach(function(mode) {
+            modes.forEach(function (mode) {
                 var _mappings = new Trie();
                 keystrokes = keystrokes || [];
                 for (var i = 0, il = keystrokes.length; i < il; i++) {
@@ -359,19 +364,23 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         _addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
         const skipMaps = options?.skipMaps ?? false
         if (skipMaps) {
-          return
+            return
         }
+
         function ssw() {
             searchSelectedWith(search_url);
         }
+
         mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
         mapkey('o' + alias, '#8Open Search with alias ' + alias, () => {
             front.openOmnibar({type: "SearchEngine", extra: alias});
         });
         vmapkey((search_leader_key || 's') + alias, '', ssw);
+
         function ssw2() {
             searchSelectedWith(search_url, true);
         }
+
         mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
         vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
 
@@ -380,11 +389,14 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             function ssw4() {
                 searchSelectedWith(search_url, false, true, alias);
             }
+
             mapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
             vmapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
+
             function ssw5() {
                 searchSelectedWith(search_url, true, true, alias);
             }
+
             mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
             vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
         }
@@ -429,11 +441,12 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * searchSelectedWith('https://translate.google.com/?hl=en#auto/en/');
      */
     function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-        clipboard.read(function(response) {
+        clipboard.read(function (response) {
             var query = window.getSelection().toString() || response.data;
+            query = query.replace(/\u200B/g, '');
             query = query.trim();
             if (onlyThisSite) {
-                query = "site:" + window.location.hostname + " " + query;
+                query = query + " " + "site:" + window.location.hostname;
             }
             if (interactive) {
                 front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
@@ -475,50 +488,52 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
     mapkey('[[', '#1Click on the previous link on current page', hints.previousPage);
     mapkey(']]', '#1Click on the next link on current page', hints.nextPage);
-    mapkey('T', '#3Choose a tab', function() {
+    mapkey('T', '#3Choose a tab', function () {
         front.chooseTab();
     });
-    mapkey('?', '#0Show usage', function() {
+    mapkey('?', '#0Show usage', function () {
         front.showUsage();
     });
-    mapkey('Q', '#8Open omnibar for word translation', function() {
+    mapkey('Q', '#8Open omnibar for word translation', function () {
         front.openOmniquery({query: getWordUnderCursor(), style: "opacity: 0.8;"});
     });
     imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
+
     function openVim(useNeovim) {
         var element = getRealEdit();
         element.blur();
         insert.exit();
         front.showEditor(element, null, null, useNeovim);
     }
-    imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
+
+    imapkey('<Ctrl-i>', '#15Open vim editor for current input', function () {
         openVim(false);
     });
     const browserName = getBrowserName();
     if (browserName === "Chrome") {
-        imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function() {
+        imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function () {
             openVim(true);
         });
-        mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
+        mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function () {
             var pdfUrl = window.location.href;
             if (pdfUrl.indexOf(chrome.extension.getURL("/pages/pdf_viewer.html")) === 0) {
                 pdfUrl = window.location.search.substr(3);
-                chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                chrome.storage.local.set({"noPdfViewer": 1}, function () {
                     window.location.replace(pdfUrl);
                 });
             } else {
                 if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
-                    chrome.storage.local.remove("noPdfViewer", function() {
+                    chrome.storage.local.remove("noPdfViewer", function () {
                         window.location.replace(pdfUrl);
                     });
                 } else {
-                    chrome.storage.local.get("noPdfViewer", function(resp) {
-                        if(!resp.noPdfViewer) {
-                            chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                    chrome.storage.local.get("noPdfViewer", function (resp) {
+                        if (!resp.noPdfViewer) {
+                            chrome.storage.local.set({"noPdfViewer": 1}, function () {
                                 showBanner("PDF viewer disabled.");
                             });
                         } else {
-                            chrome.storage.local.remove("noPdfViewer", function() {
+                            chrome.storage.local.remove("noPdfViewer", function () {
                                 showBanner("PDF viewer enabled.");
                             });
                         }
@@ -528,57 +543,57 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         });
     }
 
-    mapkey(";ql", '#0Show last action', function() {
-        showPopup(htmlEncode(runtime.conf.lastKeys.map(function(k) {
+    mapkey(";ql", '#0Show last action', function () {
+        showPopup(htmlEncode(runtime.conf.lastKeys.map(function (k) {
             return KeyboardUtils.decodeKeystroke(k);
         }).join(' → ')));
     }, {repeatIgnore: true});
 
-    mapkey('gi', '#1Go to the first edit box', function() {
+    mapkey('gi', '#1Go to the first edit box', function () {
         hints.createInputLayer();
     });
 
-    mapkey('zv', '#9Enter visual mode, and select whole element', function() {
+    mapkey('zv', '#9Enter visual mode, and select whole element', function () {
         visual.toggle("z");
     });
-    mapkey('yv', '#7Yank text of an element', function() {
+    mapkey('yv', '#7Yank text of an element', function () {
         hints.create(runtime.conf.textAnchorPat, function (element) {
             clipboard.write(element[1] === 0 ? element[0].data.trim() : element[2].trim());
         });
     });
-    mapkey('ymv', '#7Yank text of multiple elements', function() {
+    mapkey('ymv', '#7Yank text of multiple elements', function () {
         var textToYank = [];
         hints.create(runtime.conf.textAnchorPat, function (element) {
             textToYank.push(element[1] === 0 ? element[0].data.trim() : element[2].trim());
             clipboard.write(textToYank.join('\n'));
-        }, { multipleHits: true });
+        }, {multipleHits: true});
     });
 
-    mapkey('V', '#9Restore visual mode', function() {
+    mapkey('V', '#9Restore visual mode', function () {
         visual.restore();
     });
-    mapkey('*', '#9Find selected text in current page', function() {
+    mapkey('*', '#9Find selected text in current page', function () {
         visual.star();
         visual.toggle();
     });
 
-    vmapkey('<Ctrl-u>', '#9Backward 20 lines', function() {
+    vmapkey('<Ctrl-u>', '#9Backward 20 lines', function () {
         visual.feedkeys('20k');
     });
-    vmapkey('<Ctrl-d>', '#9Forward 20 lines', function() {
+    vmapkey('<Ctrl-d>', '#9Forward 20 lines', function () {
         visual.feedkeys('20j');
     });
 
     mapkey('m', '#10Add current URL to vim-like marks', normal.addVIMark);
     mapkey("'", '#10Jump to vim-like mark', normal.jumpVIMark);
-    mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
+    mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function (mark) {
         normal.jumpVIMark(mark);
     });
 
-    mapkey('w', '#2Switch frames', function() {
+    mapkey('w', '#2Switch frames', function () {
         // ensure frontend ready so that ui related actions can be available in iframes.
         dispatchSKEvent('ensureFrontEnd');
-        if (window !== top || !hints.create("iframe", function(element) {
+        if (window !== top || !hints.create("iframe", function (element) {
             element.scrollIntoView({
                 behavior: 'auto',
                 block: 'center',
@@ -591,17 +606,17 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         }
     });
 
-    mapkey('yg', '#7Capture current page', function() {
+    mapkey('yg', '#7Capture current page', function () {
         front.toggleStatus(false);
-        setTimeout(function() {
-            RUNTIME('captureVisibleTab', null, function(response) {
+        setTimeout(function () {
+            RUNTIME('captureVisibleTab', null, function (response) {
                 front.toggleStatus(true);
                 showPopup("<img src='{0}' />".format(response.dataUrl));
             });
         }, 500);
     });
 
-    mapkey('gu', '#4Go up one path in the URL', function() {
+    mapkey('gu', '#4Go up one path in the URL', function () {
         var pathname = location.pathname;
         if (pathname.length > 1) {
             pathname = pathname.endsWith('/') ? pathname.substr(0, pathname.length - 1) : pathname;
@@ -620,15 +635,15 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         window.location.href = location.origin + pathname;
     });
 
-    mapkey(';m', '#1mouse out last element', function() {
+    mapkey(';m', '#1mouse out last element', function () {
         hints.mouseoutLastElement();
     });
 
-    mapkey(';pp', '#7Paste html on current page', function() {
-        clipboard.read(function(response) {
+    mapkey(';pp', '#7Paste html on current page', function () {
+        clipboard.read(function (response) {
             document.documentElement.removeAttributes();
             document.body.removeAttributes();
-            setSanitizedContent(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
+            setSanitizedContent(document.head, "<title>" + new Date() + " updated by Surfingkeys</title>");
             setSanitizedContent(document.body, response.data);
         });
     });
@@ -640,16 +655,17 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
         }
     }
+
     mapkey(';t', 'Translate selected text with google', openGoogleTranslate);
     vmapkey('t', '#9Translate selected text with google', openGoogleTranslate);
 
-    mapkey('O', '#1Open detected links from text', function() {
-        hints.create(runtime.conf.clickablePat, function(element) {
+    mapkey('O', '#1Open detected links from text', function () {
+        hints.create(runtime.conf.clickablePat, function (element) {
             window.location.assign(element[2]);
         }, {statusLine: "Open detected links from text"});
     });
 
-    mapkey(".", '#0Repeat last action', function() {
+    mapkey(".", '#0Repeat last action', function () {
         // lastKeys in format: <keys in normal mode>[,(<mode name>\t<keys in this mode>)*], examples
         // ['se']
         // ['f', 'Hints\tBA']
@@ -661,36 +677,37 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             if (modeKey[0] === 'Hints') {
                 function closureWrapper() {
                     var hintKeys = modeKey[1];
-                    return function() {
+                    return function () {
                         hints.feedkeys(hintKeys);
                     };
                 }
-                setTimeout(closureWrapper(), 120 + i*100);
+
+                setTimeout(closureWrapper(), 120 + i * 100);
             }
         }
     }, {repeatIgnore: true});
 
-    mapkey("f", '#1Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints', function() {
+    mapkey("f", '#1Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints', function () {
         hints.create("", hints.dispatchMouseClick);
     }, {repeatIgnore: true});
 
-    mapkey("v", '#9Toggle visual mode', function() {
+    mapkey("v", '#9Toggle visual mode', function () {
         visual.toggle();
     }, {repeatIgnore: true});
 
-    mapkey("n", '#9Next found text', function() {
+    mapkey("n", '#9Next found text', function () {
         visual.next(false);
     }, {repeatIgnore: true});
 
-    mapkey("N", '#9Previous found text', function() {
+    mapkey("N", '#9Previous found text', function () {
         visual.next(true);
     }, {repeatIgnore: true});
 
-    mapkey(";fs", '#1Display hints to focus scrollable elements', function() {
+    mapkey(";fs", '#1Display hints to focus scrollable elements', function () {
         hints.create(normal.refreshScrollableElements(), hints.dispatchMouseClick);
     });
 
-    vmapkey("q", '#9Translate word under cursor', function() {
+    vmapkey("q", '#9Translate word under cursor', function () {
         var w = getWordUnderCursor();
         browser.readText(w);
         var b = visual.getCursorPixelPos();
@@ -699,7 +716,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             left: b.left,
             height: b.height,
             width: b.width
-        }, function(pos, queryResult) {
+        }, function (pos, queryResult) {
             dispatchSKEvent('showBubble', [pos, queryResult, true]);
         });
     });
@@ -707,7 +724,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     function getSentence(textNode, offset) {
         var sentence = "";
 
-        actionWithSelectionPreserved(function(sel) {
+        actionWithSelectionPreserved(function (sel) {
             sel.setPosition(textNode, offset);
             sel.modify("extend", "backward", "sentence");
             sel.collapseToStart();
@@ -719,19 +736,21 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         return sentence.replace(/\n/g, '');
     }
 
-    mapkey("cq", '#7Query word with Hints', function() {
+    mapkey("cq", '#7Query word with Hints', function () {
         hints.create(runtime.conf.textAnchorPat, function (element) {
             var word = element[2].trim().replace(/[^A-z].*$/, "");
             var b = getTextNodePos(element[0], element[1], element[2].length);
             if (document.dictEnabled !== undefined) {
                 if (document.dictEnabled) {
-                    window.postMessage({dictorium_data: {
-                        type: "OpenDictoriumQuery",
-                        word: word,
-                        sentence: getSentence(element[0], element[1]),
-                        pos: b,
-                        source: window.location.href
-                    }});
+                    window.postMessage({
+                        dictorium_data: {
+                            type: "OpenDictoriumQuery",
+                            word: word,
+                            sentence: getSentence(element[0], element[1]),
+                            pos: b,
+                            source: window.location.href
+                        }
+                    });
                 }
             } else {
                 front.performInlineQuery(word, {
