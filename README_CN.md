@@ -194,6 +194,10 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 如果当前页面匹配`lurkingPattern`，Surfingkeys自动潜伏，此时用户必须通过`Alt-i`或者`p`唤醒才能进入正常模式，如果用户在正常模式下按`Esc`或者超时，Surfingkeys会退回潜伏模式。
 
+可使用`lmap`修改默认按键，如，
+
+    api.lmap("<Alt-j>", "<Alt-i>");
+
 任务栏里的Surfingkeys图标会反应当前状态：
 
 * 灰色 -- 禁用

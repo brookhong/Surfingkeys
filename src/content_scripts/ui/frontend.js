@@ -294,6 +294,7 @@ const Front = (function() {
             'Proxy',                 // 13
             'Misc',                  // 14
             'Insert Mode',           // 15
+            'Lurk Mode',             // 16
         ];
 
         initL10n(function(locale) {

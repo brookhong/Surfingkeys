@@ -299,7 +299,7 @@ function createVisual(clipboard, hints) {
         }
     });
     self.mappings.add("zt", {
-        annotation: "make cursor at start of window.",
+        annotation: "make cursor at top of window.",
         feature_group: 9,
         code: function() {
             var offset = cursor.getBoundingClientRect().top;

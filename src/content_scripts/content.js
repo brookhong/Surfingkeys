@@ -144,6 +144,7 @@ function applySettings(api, normal, rs) {
             } else {
                 normal.enable();
             }
+            Mode.showStatus();
         }
 
         if (window === top) {
