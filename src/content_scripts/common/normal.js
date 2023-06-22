@@ -16,7 +16,10 @@ import {
 } from './utils.js';
 
 function createDisabled(normal) {
-    var self = new Mode("Disabled");
+    const self = new Mode("Disabled");
+
+    // hide status line for Disabled mode
+    self.statusLine = "";
 
     // Disabled has higher priority than others.
     self.priority = 99;
