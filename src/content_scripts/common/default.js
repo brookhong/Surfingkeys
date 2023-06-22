@@ -238,7 +238,7 @@ module.exports = function(api) {
     });
     mapkey('yY', "#7Copy all tabs's url", function() {
         RUNTIME('getTabs', null, function (response) {
-            Clipboard.write([window.location.href].concat(response.tabs.map(tab => tab.url)).join('\n'));
+            Clipboard.write(response.tabs.map(tab => tab.url).join('\n'));
         });
     });
     mapkey('yh', "#7Copy current page's host", function() {
