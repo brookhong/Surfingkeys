@@ -208,12 +208,15 @@ User can specify the pages where Surfingkeys will lurk until it is called out by
 
 If the loading page matches with the `lurkingPattern`, Surfingkeys will enter `lurk` mode by default, in which mode only `Alt-i` and `p` are registered by Surfingkeys to activate `normal` mode. When user presses `Esc` or timeout, Surfingkeys reverts back to `lurk` mode.
 
+API `lmap` can be used to change the shortcuts, for example,
+
+    api.lmap("<Alt-j>", "<Alt-i>");
+
 The extension icon in toolbar reflects current status of Surfingkeys,
 
 * Grey -- disabled.
 * Half Grey/Half Color -- lurking.
 * Color -- enabled.
-
 ## Omnibar
 
 The omnibar provides kinds of functions that need user input, for example,

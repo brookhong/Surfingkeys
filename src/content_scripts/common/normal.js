@@ -4,18 +4,22 @@ import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
     getRealEdit,
-    scrollIntoViewIfNeeded,
-    setSanitizedContent,
-    showBanner,
-    showPopup,
     isEditable,
     isElementClickable,
     isElementPartiallyInViewport,
     isInUIFrame,
+    mapInMode,
+    scrollIntoViewIfNeeded,
+    setSanitizedContent,
+    showBanner,
+    showPopup,
 } from './utils.js';
 
 function createDisabled(normal) {
-    var self = new Mode("Disabled");
+    const self = new Mode("Disabled");
+
+    // hide status line for Disabled mode
+    self.statusLine = "";
 
     // Disabled has higher priority than others.
     self.priority = 99;
@@ -36,21 +40,42 @@ function createDisabled(normal) {
 function createLurk(normal) {
     const self = new Mode("Lurk");
 
-    // Lurk and Disabled should be mutually exclusive.
-    self.addEventListener('keydown', function(event) {
-        // prevent this event to be handled by Surfingkeys' other listeners
-        event.sk_suppressed = true;
-        if (KeyboardUtils.encodeKeystroke("<Alt-i>") === event.sk_keyName || event.sk_keyName === "p") {
-            normal.enter();
+    function enterNormal() {
+        normal.enter();
+        if (window === top) {
             RUNTIME('setSurfingkeysIcon', {
                 status: "enabled"
             });
-            if (event.sk_keyName === "p") {
-                setTimeout(() => {
-                    normal.revertToLurk();
-                }, 1000);
+        }
+    }
+
+    self.mappings = new Trie();
+    self.map_node = self.mappings;
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Alt-i>"), {
+        annotation: "Enter normal mode",
+        feature_group: 16,
+        code: enterNormal
+    });
+    self.mappings.add("p", {
+        annotation: "Enter ephemeral normal mode to temporarily enable SurfingKeys",
+        feature_group: 16,
+        code: function() {
+            enterNormal();
+            setTimeout(() => {
+                normal.revertToLurk();
+            }, 1000);
+        }
+    });
+
+    // Lurk and Disabled should be mutually exclusive.
+    self.addEventListener('keydown', function(event) {
+        var realTarget = getRealEdit(event);
+        if (!isEditable(realTarget) && event.sk_keyName.length) {
+            Mode.handleMapKey.call(self, event);
+            if (event.sk_stopPropagation) {
+                // keyup event also needs to be suppressed for the key whose keydown has been suppressed.
+                Mode.suppressKeyUp(event.keyCode);
             }
-            event.sk_stopPropagation = true;
         }
     });
     return self;
@@ -118,8 +143,13 @@ function createNormal(insert) {
         if (!_lurk) {
             self.exit();
             _lurk = createLurk(self);
+            _lurkMaps.forEach((keymap) => {
+                mapInMode(_lurk, keymap[0], keymap[1]);
+                _lurk.mappings.remove(KeyboardUtils.encodeKeystroke(keymap[1]));
+            });
+            _lurkMaps = undefined;
             _lurk.enter(0, true);
-        } else if (Mode.getCurrent() === self) {
+        } else if (Mode.getCurrent() !== _lurk) {
             state = "enabled";
         }
         return state;
@@ -127,9 +157,18 @@ function createNormal(insert) {
     self.revertToLurk = () => {
         // peeking exit to keep modes such hints above normal.
         self.exit(true);
-        RUNTIME('setSurfingkeysIcon', {
-            status: "lurking"
-        });
+        if (window === top) {
+            RUNTIME('setSurfingkeysIcon', {
+                status: "lurking"
+            });
+        }
+    };
+    self.getLurkMode = () => {
+        return _lurk;
+    };
+    let _lurkMaps = [];
+    self.addLurkMap = (new_keystroke, old_keystroke) => {
+        _lurkMaps.push([new_keystroke, old_keystroke]);
     };
 
     var _once = false;

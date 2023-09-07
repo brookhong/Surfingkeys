@@ -725,6 +725,10 @@ function start(browser) {
                 });
             }
             if (tabs.length > message.tabsThreshold && conf.tabsMRUOrder) {
+                // only remove current tab when tabsMRUOrder is enabled.
+                tabs = tabs.filter(function(b) {
+                    return b.id !== tab.id;
+                });
                 tabs.sort(function(x, y) {
                     // Shift tabs without "last access" data to the end
                     var a = tabActivated[x.id];

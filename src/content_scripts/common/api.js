@@ -285,6 +285,22 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     }
 
     /**
+     * Map a key sequence to another in lurk mode.
+     *
+     * @param {string} new_keystroke a key sequence to replace
+     * @param {string} old_keystroke a key sequence to be replaced
+     * @param {regex} [domain=null] a Javascript regex pattern to identify the domains that this mapping works.
+     * @param {string} [new_annotation=null] use it instead of the annotation from old_keystroke if provided.
+     *
+     * @see map
+     */
+    function lmap(new_keystroke, old_keystroke, domain, new_annotation) {
+        if (_isDomainApplicable(domain)) {
+            normal.addLurkMap(new_keystroke, old_keystroke);
+        }
+    }
+
+    /**
      * Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
      *
      * @param {string} lhs a key sequence to replace
@@ -767,6 +783,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         getBrowserName,
         getClickableElements,
         getFormData,
+        lmap,
         map,
         unmap,
         unmapAllExcept,

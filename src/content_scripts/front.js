@@ -186,10 +186,15 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     function getAllAnnotations() {
-        return [ normal.mappings,
+        let mappings = [ normal.mappings,
             visual.mappings,
             insert.mappings
-        ].map(getAnnotations).reduce(function(a, b) {
+        ];
+        const lurk = normal.getLurkMode();
+        if (lurk) {
+            mappings.unshift(lurk.mappings);
+        }
+        return mappings.map(getAnnotations).reduce(function(a, b) {
             return a.concat(b);
         });
     }
