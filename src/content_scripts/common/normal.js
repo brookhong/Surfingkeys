@@ -764,7 +764,7 @@ function createNormal(insert) {
                             RUNTIME('captureVisibleTab', null, function(response) {
                                 img.src = response.dataUrl;
                             });
-                        }, 100);
+                        }, 1000);
                     }
                 } else {
                     lastScrollTop = elm.scrollTop;
@@ -779,7 +779,7 @@ function createNormal(insert) {
                         RUNTIME('captureVisibleTab', null, function(response) {
                             img.src = response.dataUrl;
                         });
-                    }, 500);
+                    }, 1000);
                 }
             };
 
