@@ -789,30 +789,15 @@ function flashPressedLink(link, cb) {
 
 function regexFromString(str, highlight) {
     var rxp = null;
-    if (/^\/.+\/([gimuy]*)$/.test(str)) {
-        // full regex input
-        try {
-            rxp = eval(str);
-        } catch (e) {
-            rxp = null;
-        }
-    }
-    if (!rxp) {
-        if (/^\/.+$/.test(str)) {
-            // part regex input
-            rxp = eval(str + "/i");
-        }
-        if (!rxp) {
-            str = str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
-            if (highlight) {
-                rxp = new RegExp(str.replace(/\s+/, "\|"), 'gi');
-            } else {
-                var words = str.split(/\s+/).map(function(w) {
-                    return `(?=.*${w})`;
-                }).join('');
-                rxp = new RegExp(`^${words}.*$`, "gi");
-            }
-        }
+    const flags = runtime.getCaseSensitive(str) ? "g" : "gi";
+    str = str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+    if (highlight) {
+        rxp = new RegExp(str.replace(/\s+/, "\|"), flags);
+    } else {
+        var words = str.split(/\s+/).map(function(w) {
+            return `(?=.*${w})`;
+        }).join('');
+        rxp = new RegExp(`^${words}.*$`, flags);
     }
     return rxp;
 }

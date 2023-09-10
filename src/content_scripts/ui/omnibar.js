@@ -1469,15 +1469,7 @@ function OpenUserURLs(omnibar) {
         var query = omnibar.input.value;
         var urls = [];
 
-        for (var m of _items) {
-            if (query === "" || m.title.indexOf(query) !== -1 || m.url.indexOf(query) !== -1) {
-                urls.push({
-                    title: m.title,
-                    type: '🍆',
-                    url: m.url
-                });
-            }
-        }
+        urls = filterByTitleOrUrl(_items, query);
         omnibar.listURLs(urls, false);
     };
     return self;
