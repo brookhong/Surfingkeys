@@ -16,6 +16,7 @@ import {
     getVisibleElements,
     isEditable,
     isElementClickable,
+    refreshHints,
     setSanitizedContent,
 } from './utils.js';
 
@@ -88,6 +89,9 @@ div.hint-scrollable {
                 excludedScrollKeys.push(c);
             }
         }
+    };
+    self.getCharacters = () => {
+        return characters;
     };
 
     self.addEventListener('keydown', function(event) {
@@ -195,18 +199,18 @@ div.hint-scrollable {
     }
 
     function handleHint(evt) {
-        var matches = refresh();
-        if (matches.length === 1) {
+        const hints = holder.querySelectorAll('div:not(:empty)');
+        const hintState = refreshHints(hints, prefix);
+        if (hintState.matched) {
             normal.appendKeysForRepeat("Hints", prefix);
-            var link = matches[0].link;
-            _onHintKey(link);
+            _onHintKey(hintState.matched);
             if (behaviours.multipleHits) {
                 prefix = "";
-                refresh();
+                refreshHints(hints, prefix);
             } else {
                 hide();
             }
-        } else if (matches.length === 0) {
+        } else if (hintState.candidates === 0) {
             hide();
         }
         // suppress future key handler since the event has been treated as a hint
@@ -237,26 +241,6 @@ div.hint-scrollable {
             e.label = hintLabels[i];
             setSanitizedContent(e, hintLabels[i]);
         });
-    }
-
-    function refresh() {
-        var matches = [];
-        var hints = holder.querySelectorAll('div:not(:empty)');
-        hints.forEach(function(hint) {
-            var label = hint.label;
-            if (prefix.length === 0) {
-                hint.style.opacity = 1;
-                setSanitizedContent(hint, label);
-                matches.push(hint);
-            } else if (label.indexOf(prefix) === 0) {
-                hint.style.opacity = 1;
-                setSanitizedContent(hint, `<span style="opacity: 0.2;">${prefix}</span>` + label.substr(prefix.length));
-                matches.push(hint);
-            } else {
-                hint.style.opacity = 0;
-            }
-        });
-        return matches;
     }
 
     function hide() {

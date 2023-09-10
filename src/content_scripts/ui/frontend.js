@@ -7,10 +7,10 @@ import {
     getWordUnderCursor,
     htmlEncode,
     initL10n,
+    refreshHints,
     setSanitizedContent,
     mapInMode
 } from '../common/utils.js';
-import Trie from '../common/trie';
 import { RUNTIME, runtime } from '../common/runtime.js';
 import KeyboardUtils from '../common/keyboardUtils';
 import Mode from '../common/mode';
@@ -63,24 +63,39 @@ const Front = (function() {
         top.postMessage({surfingkeys_data: args}, self.topOrigin);
     };
 
+    var pressedHintKeys = "";
     self.addEventListener('keydown', function(event) {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
             event.sk_stopPropagation = true;
-        } else {
-            if (_tabs.trie) {
-                _tabs.trie = _tabs.trie.find(event.sk_keyName);
-                if (!_tabs.trie) {
-                    self.hidePopup();
-                    _tabs.trie = null;
-                } else if (_tabs.trie.meta) {
-                    RUNTIME('focusTab', {
-                        windowId: _tabs.trie.meta.windowId,
-                        tabId: _tabs.trie.meta.id
-                    });
-                    self.hidePopup();
-                    _tabs.trie = null;
+        } else if (_tabs.style.display !== "none") {
+            const tabHints = _tabs.querySelectorAll('div.sk_tab>div.sk_tab_hint');
+            if (tabHints.length > 0) {
+                const key = event.sk_keyName;
+                const characters = hints.getCharacters().toLowerCase();
+                if (event.keyCode === KeyboardUtils.keyCodes.backspace) {
+                    if (pressedHintKeys.length > 0) {
+                        pressedHintKeys = pressedHintKeys.substr(0, pressedHintKeys.length - 1);
+                        refreshHints(tabHints, pressedHintKeys);
+                    }
+                } else if (characters.indexOf(key.toLowerCase()) !== -1) {
+                    pressedHintKeys = pressedHintKeys + key.toUpperCase();
+                    const hintState = refreshHints(tabHints, pressedHintKeys);
+                    if (hintState.matched) {
+                        RUNTIME('focusTab', {
+                            windowId: hintState.matched.windowId,
+                            tabId: hintState.matched.id
+                        });
+                        pressedHintKeys = "";
+                        self.hidePopup();
+                    } else if (hintState.candidates === 0) {
+                        pressedHintKeys = "";
+                        self.hidePopup();
+                    }
+                } else {
+                    showElement(_omnibar, {type: 'Tabs'});
                 }
+
                 event.sk_stopPropagation = true;
             }
         }
@@ -236,7 +251,6 @@ const Front = (function() {
 
     _tabs.onShow = function(tabs) {
         setSanitizedContent(_tabs, "");
-        _tabs.trie = new Trie();
         var hintLabels = hints.genLabels(tabs.length - 1);
         var j = 0;
         const unitWidth = window.innerWidth / tabs.length - 2;
@@ -246,8 +260,9 @@ const Front = (function() {
             tab.style.width = unitWidth + 'px';
             if (t.active === false) {
                 setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[j]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
-                _tabs.trie.add(hintLabels[j].toLowerCase(), t);
-                tab.url = t.url;
+                const tabHint = tab.querySelector("div.sk_tab_hint");
+                tabHint.label = hintLabels[j];
+                tabHint.link = {id: t.id, windowId: t.windowId};
                 j ++;
             } else {
                 setSanitizedContent(tab, `<div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);

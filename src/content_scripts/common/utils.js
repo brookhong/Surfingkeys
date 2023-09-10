@@ -831,6 +831,36 @@ function getCssSelectorsOfEditable() {
     return "input:not([type=submit]), textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor";
 }
 
+function refreshHints(hints, pressedKeys) {
+    const result = {candidates: 0};
+    if (pressedKeys.length > 0) {
+        for (const hint of hints) {
+            const label = hint.label;
+            if (pressedKeys === label) {
+                result.matched = hint.link;
+                break;
+            } else if (label.indexOf(pressedKeys) === 0) {
+                hint.style.opacity = 1;
+                setSanitizedContent(hint, `<span style="opacity: 0.2;">${pressedKeys}</span>` + label.substr(pressedKeys.length));
+                result.candidates ++;
+            } else {
+                hint.style.opacity = 0;
+            }
+        }
+    } else {
+        if (hints.length === 1) {
+            result.matched = hints[0].link;
+        } else {
+            for (const hint of hints) {
+                hint.style.opacity = 1;
+                setSanitizedContent(hint, hint.label);
+            }
+            result.candidates = hints.length;
+        }
+    }
+    return result;
+}
+
 export {
     LOG,
     actionWithSelectionPreserved,
@@ -868,6 +898,7 @@ export {
     listElements,
     mapInMode,
     parseAnnotation,
+    refreshHints,
     regexFromString,
     reportIssue,
     scrollIntoViewIfNeeded,
