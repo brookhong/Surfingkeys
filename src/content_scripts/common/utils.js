@@ -806,7 +806,7 @@ function filterByTitleOrUrl(urls, query) {
     if (query && query.length) {
         var rxp = regexFromString(query, false);
         urls = urls.filter(function(b) {
-            return rxp.test(b.title) || rxp.test(b.url);
+            return rxp.test(b.title) || rxp.test(decodeURI(b.url));
         });
     }
     return urls;

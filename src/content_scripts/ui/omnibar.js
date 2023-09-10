@@ -379,7 +379,7 @@ function createOmnibar(front, clipboard) {
     };
 
     self.createURLItem = function(b, rxp) {
-        b.title = (b.title && b.title !== "") ? b.title : b.url;
+        b.title = (b.title && b.title !== "") ? b.title : decodeURI(b.url);
         var type = "🔥", additional = "", uid = b.uid;
         if (b.hasOwnProperty('lastVisitTime')) {
             type = "🕜";
@@ -398,7 +398,7 @@ function createOmnibar(front, clipboard) {
             type = b.type;
         }
         var li = createElementWithContent('li',
-            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, b.url)}</div>`);
+            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, decodeURI(b.url))}</div>`);
         li.uid = uid;
         li.url = b.url;
         return li;
