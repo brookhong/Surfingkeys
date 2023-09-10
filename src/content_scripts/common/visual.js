@@ -239,7 +239,6 @@ function createVisual(clipboard, hints) {
             // sentence and paragraphboundary not support in firefox
             // document.getSelection().modify("move", "backward", "paragraphboundary")
             // gets 0x80004001 (NS_ERROR_NOT_IMPLEMENTED)
-            selection.modify("move", "backward", unit);
             selection.modify("extend", "forward", unit);
         }
     }
