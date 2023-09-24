@@ -985,6 +985,20 @@ function start(browser) {
             chrome.tabs.move(tab.id, {windowId, index: -1});
         });
     };
+
+    self.sortTabs = function(message, sender, sendResponse) {
+        const windowId = sender.tab.windowId;
+        var i=1;
+        console.log("Sorting tab")
+        message.tabs.forEach(function(tab) {
+            console.log("Sorting tab : " + i + " " + tab.url);
+            i=i+1
+            chrome.tabs.move(tab.id, {windowId, index: -1});
+            // RUNTIME('moveTab', { position: 1 });
+        
+        });
+    };
+
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
@@ -1621,6 +1635,58 @@ function start(browser) {
     self.stopReading = function(message, sender, sendResponse) {
         chrome.tts.stop();
     };
+
+    self.manageWindow = function(message, sender, sendResponse) {
+        console.log("hello");
+        var tabId;
+        // chrome.windows.getAll({
+        //     populate: false
+        // }, function(windows) {
+        //     windows.forEach(function(w) {
+        //         console.log(w.id);
+        //     });
+        // });
+
+        var wid;
+        // chrome.storage.local.set({ key: value }).then(() => {
+        //     console.log("Value is set");
+        //   });
+
+        
+
+        if (message.bookmark)
+        {
+            // console.log("bookmarking current window: " + wid);
+            // return wid;
+            chrome.windows.getCurrent({
+                populate: false
+            }, function(w) {
+                console.log("getting current window: " + w.id);
+                // return w.id
+                // chrome.tabs.getCurrent(function (tab) {
+                //     console.log(tab.id);
+                //     tabId = tab.id;
+                //     _response(message, sendResponse, {
+                //         tabs: w.id,
+                //         tabId: tab.id
+                //     });
+                //   });
+                  _response(message, sendResponse, {
+                    tabs: w.id
+                });
+              
+            });
+            return
+        }
+        else {
+            console.log("opening bookmarked window: " + message.wid);
+            chrome.windows.update(message.wid, {
+                focused: true
+              });
+              console.log("opened bookmarked window: " + message.wid);
+        }
+    };
+
 
     self.openIncognito = function(message, sender, sendResponse) {
         chrome.windows.create({"url": message.url, "incognito": true});

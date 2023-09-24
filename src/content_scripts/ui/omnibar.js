@@ -1488,9 +1488,10 @@ function OpenUserURLs(omnibar) {
         _items = args;
         self.onInput();
     };
-
+    // Fixes: https://github.com/brookhong/Surfingkeys/issues/2026
+    // Also supports any order of words
     self.onInput = function() {
-        var query = omnibar.input.value;
+        var query = omnibar.input.value.replace(/\s\s+/g, ' ').trim().toLowerCase();
         var urls = [];
 
         urls = filterByTitleOrUrl(_items, query);
