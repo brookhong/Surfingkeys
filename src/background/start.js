@@ -61,6 +61,7 @@ function _save(storage, data, cb) {
         // don't store snippets from localPath into sync storage, since sync storage has its quota.
         if (data.localPath) {
             delete data.snippets;
+            delete data.localPath;
         }
         storage.set(data, cb);
     } else {
