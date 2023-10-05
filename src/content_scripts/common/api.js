@@ -143,7 +143,17 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                 }, new_annotation ? parseAnnotation({ annotation: new_annotation }) : null, false);
                 normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
             } else {
-                if (!mapInMode(normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
+                const map = mapInMode(normal, new_keystroke, old_keystroke);
+                // update the new annotation
+                if(map && new_annotation) {
+                    const keys = KeyboardUtils.encodeKeystroke(new_keystroke);
+                    const newMap = normal.mappings.find(keys);
+                    const ano = parseAnnotation({ annotation: new_annotation });
+                    newMap.meta.annotation = ano.annotation;
+                    newMap.meta.feature_group = ano.feature_group ?? 1;
+                }
+
+                if (!map && old_keystroke in Mode.specialKeys) {
                     Mode.specialKeys[old_keystroke].push(new_keystroke);
                     dispatchSKEvent('addMapkey', ["Mode", new_keystroke, old_keystroke]);
                 } else {
