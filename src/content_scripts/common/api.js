@@ -26,7 +26,7 @@ import {
 
 function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
-    functioncreateKeyTarget(code, ag, repeatIgnore) {
+    function createKeyTarget(code, ag, repeatIgnore) {
         var keybound = {
             code: code
         };
