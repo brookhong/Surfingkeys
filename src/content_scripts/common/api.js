@@ -26,7 +26,7 @@ import {
 
 function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
 
-    function createKeyTarget(code, ag, repeatIgnore) {
+    functioncreateKeyTarget(code, ag, repeatIgnore) {
         var keybound = {
             code: code
         };
@@ -150,7 +150,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                     const newMap = normal.mappings.find(keys);
                     const ano = parseAnnotation({ annotation: new_annotation });
                     newMap.meta.annotation = ano.annotation;
-                    newMap.meta.feature_group = ano.feature_group ?? 1;
+                    newMap.meta.feature_group = ano.feature_group ?? 0;
                 }
 
                 if (!map && old_keystroke in Mode.specialKeys) {
