@@ -293,23 +293,23 @@ const Front = (function() {
 
     function buildUsage(metas, cb) {
         var feature_groups = [
-            'Help',                  // 0
-            'Mouse Click',           // 1
-            'Scroll Page / Element', // 2
-            'Tabs',                  // 3
-            'Page Navigation',       // 4
-            'Sessions',              // 5
-            'Search selected with',  // 6
-            'Clipboard',             // 7
-            'Omnibar',               // 8
-            'Visual Mode',           // 9
-            'vim-like marks',        // 10
-            'Settings',              // 11
-            'Chrome URLs',           // 12
-            'Proxy',                 // 13
-            'Misc',                  // 14
-            'Insert Mode',           // 15
-            'Lurk Mode',             // 16
+            '0 Help',
+            '1 Mouse Click',
+            '2 Scroll Page / Element',
+            '3 Tabs',
+            '4 Page Navigation',
+            '5 Sessions',
+            '6 Search selected with',
+            '7 Clipboard',
+            '8 Omnibar',
+            '9 Visual Mode',
+            '10 vim-like marks',
+            '11 Settings',
+            '12 Chrome URLs',
+            '13 Proxy',
+            '14 Misc',
+            '15 Insert Mode',
+            '16 Lurk Mode',
         ];
 
         initL10n(function(locale) {
