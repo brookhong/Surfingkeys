@@ -1,5 +1,6 @@
 import { encode } from 'js-base64';
 import {
+    attachFaviconToImgSrc,
     createElementWithContent,
     generateQuickGuid,
     getAnnotations,
@@ -268,14 +269,7 @@ const Front = (function() {
                 setSanitizedContent(tab, `<div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
                 tab.style.boxShadow = "0px 3px 7px 0px rgba(245, 245, 0, 0.9)";
             }
-            const browserName = getBrowserName();
-            if (browserName === "Chrome") {
-                tab.querySelector("img").src = `chrome://favicon/${t.url}`;
-            } else if (browserName.startsWith("Safari")) {
-                tab.querySelector("img").src = new URL(t.url).origin + "/favicon.ico";
-            } else {
-                tab.querySelector("img").src = t.favIconUrl;
-            }
+            attachFaviconToImgSrc(t, tab.querySelector("img"));
             tab.querySelector("div.sk_tab_title").style.width = (unitWidth - 24) + 'px';
             _tabs.append(tab);
         });

@@ -138,6 +138,13 @@ body {
     vertical-align: middle;
     display: table-cell;
 }
+#sk_omnibarSearchResult li.tab {
+  display: flex;
+  align-items: flex-start;
+}
+#sk_omnibarSearchResult li.tab img {
+  margin-right: 0.5rem;
+}
 #sk_omnibarSearchResult li div.title {
     text-align: left;
 }
