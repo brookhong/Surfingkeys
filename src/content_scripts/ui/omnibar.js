@@ -3,6 +3,7 @@ import KeyboardUtils from '../common/keyboardUtils';
 import Mode from '../common/mode';
 import { debounce } from 'lodash';
 import {
+    attachFaviconToImgSrc,
     constructSearchURL,
     createElementWithContent,
     filterByTitleOrUrl,
@@ -406,8 +407,14 @@ function createOmnibar(front, clipboard) {
         } else if(b.type && b.type.length === 2 && b.type.charCodeAt(0) > 255) {
             type = b.type;
         }
-        var li = createElementWithContent('li',
+        if (b.hasOwnProperty('favIconUrl')) {
+          var li = createElementWithContent('li',
+            `<img/><div class="text-container"><div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(decodeURIComponent(b.url)))}</div></div>`, { "class": "tab" });
+          attachFaviconToImgSrc(b, li.querySelector('img'));
+        } else {
+          var li = createElementWithContent('li',
             `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(decodeURIComponent(b.url)))}</div>`);
+        }
         li.uid = uid;
         li.url = b.url;
         return li;

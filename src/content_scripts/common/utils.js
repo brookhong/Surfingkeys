@@ -846,9 +846,21 @@ function refreshHints(hints, pressedKeys) {
     return result;
 }
 
+function attachFaviconToImgSrc(tab, imgEl) {
+    const browserName = getBrowserName();
+    if (browserName === "Chrome") {
+        imgEl.src = `chrome://favicon/${tab.url}`;
+    } else if (browserName.startsWith("Safari")) {
+        imgEl.src = new URL(tab.url).origin + "/favicon.ico";
+    } else {
+        imgEl.src = tab.favIconUrl;
+    }
+}
+
 export {
     LOG,
     actionWithSelectionPreserved,
+    attachFaviconToImgSrc,
     constructSearchURL,
     createElementWithContent,
     dispatchMouseEvent,
