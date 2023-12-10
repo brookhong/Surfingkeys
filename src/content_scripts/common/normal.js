@@ -933,6 +933,15 @@ function createNormal(insert) {
         }
     });
 
+    self.mappings.add("q", {
+        annotation: "Find in current page cibin",
+        feature_group: 9,
+        repeatIgnore: true,
+        code: function() {
+            dispatchSKEvent('openFinderCibin');
+        }
+    });
+
     self.mappings.add("E", {
         annotation: "Go one tab left",
         feature_group: 3,
