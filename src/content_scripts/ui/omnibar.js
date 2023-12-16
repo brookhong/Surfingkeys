@@ -1283,7 +1283,7 @@ function SearchEngine(omnibar, front) {
             url: message.url,
             suggestionURL: message.suggestionURL
         };
-        const searchEngineIconStorageKey = `surfingkeys.searchEngineIcon.${message.alias}`;
+        const searchEngineIconStorageKey = `surfingkeys.searchEngineIcon.${message.prompt}`;
         const searchEngineIcon = localStorage.getItem(searchEngineIconStorageKey);
         if (searchEngineIcon) {
             self.aliases[message.alias].prompt = `<img src="${searchEngineIcon}" alt=${message.prompt} style="width: 20px;" />`;
@@ -1300,8 +1300,10 @@ function SearchEngine(omnibar, front) {
             RUNTIME('requestImage', {
                 url: iconUrl.href,
             }, function(response) {
-                localStorage.setItem(searchEngineIconStorageKey, response.text);
-                self.aliases[message.alias].prompt = `<img src="${response.text}" alt=${message.prompt} style="width: 20px;" />`;
+                if (response) {
+                    localStorage.setItem(searchEngineIconStorageKey, response.text);
+                    self.aliases[message.alias].prompt = `<img src="${response.text}" alt=${message.prompt} style="width: 20px;" />`;
+                }
             });
         }
     };

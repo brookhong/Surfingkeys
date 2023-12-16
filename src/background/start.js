@@ -1197,7 +1197,14 @@ function start(browser) {
                 text: canvas.toDataURL()
             });
         };
-
+        img.onerror = (e) => {
+            // retry without crossOrigin
+            if (img.crossOrigin) {
+                delete img.src;
+                img.crossOrigin = null;
+                img.src = message.url;
+            }
+        };
     };
     self.nextFrame = function(message, sender, sendResponse) {
         var tid = sender.tab.id;
