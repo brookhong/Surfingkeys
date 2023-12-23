@@ -51,17 +51,17 @@ const Front = (function() {
     var _actions = self._actions,
         _callbacks = {};
     self.contentCommand = function(args, successById) {
-        args.commandToContent = true;
+        args.toContent = true;
         args.id = generateQuickGuid();
         if (successById) {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        top.postMessage({surfingkeys_data: args}, self.topOrigin);
+        top.postMessage({surfingkeys_uihost_data: args}, self.topOrigin);
     };
 
     self.postMessage = function(args) {
-        top.postMessage({surfingkeys_data: args}, self.topOrigin);
+        top.postMessage({surfingkeys_uihost_data: args}, self.topOrigin);
     };
 
     var pressedHintKeys = "";
@@ -107,7 +107,7 @@ const Front = (function() {
         this.enter = function() {
             onEnter && onEnter();
             _state = this;
-            top.postMessage({surfingkeys_data: {
+            top.postMessage({surfingkeys_uihost_data: {
                 action: 'setFrontFrame',
                 pointerEvents: pointerEvents,
                 frameHeight: frameHeight
@@ -365,9 +365,9 @@ const Front = (function() {
         // send response in callback from buildUsage
         delete message.ack;
         buildUsage(message.metas, function(usage) {
-            top.postMessage({surfingkeys_data: {
+            top.postMessage({surfingkeys_uihost_data: {
                 data: usage,
-                responseToContent: message.commandToFrontend,
+                toContent: true,
                 id: message.id
             }}, self.topOrigin);
         });
@@ -629,7 +629,10 @@ const Front = (function() {
     };
 
     window.addEventListener('message', function(event) {
-        var _message = event.data && event.data.surfingkeys_data;
+        var _message = event.data && event.data.surfingkeys_frontend_data;
+        if (_message === undefined) {
+            return;
+        }
         if (_callbacks[_message.id]) {
             var f = _callbacks[_message.id];
             // returns true to make callback stay for coming response.
@@ -639,10 +642,10 @@ const Front = (function() {
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
             var ret = _actions[_message.action](_message);
             if (_message.ack) {
-                top.postMessage({surfingkeys_data: {
+                top.postMessage({surfingkeys_uihost_data: {
                     data: ret,
                     action: _message.action + "Ack",
-                    responseToContent: _message.commandToFrontend,
+                    toContent: true,
                 }}, self.topOrigin);
             }
         }

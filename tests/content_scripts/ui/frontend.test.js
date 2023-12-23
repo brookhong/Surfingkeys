@@ -26,9 +26,9 @@ describe('ui front', () => {
         window.focus = jest.fn();
         document.dispatchEvent = jest.fn();
         await waitForEvent(window, "message", (_msg) => {
-            return _msg.surfingkeys_data.action === "initFrontendAck";
+            return _msg.surfingkeys_uihost_data && _msg.surfingkeys_uihost_data.action === "initFrontendAck";
         }, () => {
-            window.postMessage({surfingkeys_data: { action: "initFrontend", ack: true, origin: document.location.origin }}, document.location.origin);
+            window.postMessage({surfingkeys_frontend_data: { action: "initFrontend", ack: true, origin: document.location.origin }}, document.location.origin);
         });
     });
 
@@ -36,9 +36,9 @@ describe('ui front', () => {
         const elmOmnibarStyle = document.getElementById("sk_omnibar").style;
         expect(elmOmnibarStyle).toHaveProperty('display', 'none');
         await waitForEvent(window, "message", (_msg) => {
-            return _msg.surfingkeys_data.action === "setFrontFrame";
+            return _msg.surfingkeys_uihost_data && _msg.surfingkeys_uihost_data.action === "setFrontFrame";
         }, () => {
-            window.postMessage({surfingkeys_data: { action: "openOmnibar", type: "SearchEngine", extra: "b" }}, document.location.origin);
+            window.postMessage({surfingkeys_frontend_data: { action: "openOmnibar", type: "SearchEngine", extra: "b" }}, document.location.origin);
         });
         expect(elmOmnibarStyle).not.toHaveProperty('display', 'none');
     });

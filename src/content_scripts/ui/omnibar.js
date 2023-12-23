@@ -1313,7 +1313,7 @@ function SearchEngine(omnibar, front) {
     front._actions['getSearchAliases'] = function (message) {
         front.postMessage({
             aliases: self.aliases,
-            responseToContent: message.commandToFrontend,
+            toContent: true,
             id: message.id
         });
     };

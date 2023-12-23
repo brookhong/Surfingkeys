@@ -157,7 +157,7 @@ var runtime = (function() {
             if (topUrl === "null" || new URL(topUrl).origin === "file://") {
                 topUrl = "*";
             }
-            top.postMessage({surfingkeys_data: msg}, topUrl);
+            top.postMessage({surfingkeys_uihost_data: msg}, topUrl);
         });
     };
 

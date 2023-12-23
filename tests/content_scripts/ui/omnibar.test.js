@@ -21,7 +21,7 @@ describe('ui omnibar', () => {
         }
         global.DOMRect = jest.fn();
         window.focus = jest.fn();
-        window.postMessage({surfingkeys_data: { action: "initFrontend", origin: document.location.origin }}, document.location.origin);
+        window.postMessage({surfingkeys_frontend_data: { action: "initFrontend", origin: document.location.origin }}, document.location.origin);
 
         document.documentElement.innerHTML = html.toString();
         createOmnibar = require('src/content_scripts/ui/omnibar').default;
@@ -72,7 +72,7 @@ describe('ui omnibar', () => {
 
     test("toggle Omnibar's position", async () => {
         const elmOmnibarClass = document.getElementById("sk_omnibar").classList;
-        window.postMessage({surfingkeys_data: { action: "openOmnibar", type: "URLs", extra: "getAllSites" }}, document.location.origin);
+        window.postMessage({surfingkeys_frontend_data: { action: "openOmnibar", type: "URLs", extra: "getAllSites" }}, document.location.origin);
         await new Promise((r) => setTimeout(r, 100));
         expect(elmOmnibarClass.value).toContain('sk_omnibar_middle');
         Mode.handleMapKey.call(omnibar, {

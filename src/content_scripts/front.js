@@ -22,7 +22,7 @@ function createFront(insert, normal, hints, visual, browser) {
     var _uiUserSettings = [];
     function applyUserSettings() {
         for (var cmd of _uiUserSettings) {
-            cmd.commandToFrontend = true;
+            cmd.toFrontend = true;
             cmd.origin = getDocumentOrigin();
             cmd.id = generateQuickGuid();
             runtime.postTopMessage(cmd);
@@ -42,7 +42,7 @@ function createFront(insert, normal, hints, visual, browser) {
 
     var _callbacks = {};
     self.command = function(args, successById) {
-        args.commandToFrontend = true;
+        args.toFrontend = true;
         args.origin = getDocumentOrigin();
         args.id = generateQuickGuid();
         if (successById) {
@@ -372,7 +372,7 @@ function createFront(insert, normal, hints, visual, browser) {
                     if (window === top) {
                         window.location.href = query;
                     } else {
-                        window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
+                        window.postMessage({dictorium_data: { type: 'DictoriumReload', word: query }});
                     }
                 } else {
                     window.postMessage({dictorium_data: {
@@ -401,7 +401,7 @@ function createFront(insert, normal, hints, visual, browser) {
             _showQueryResult = function(result) {
                 showQueryResult(pos, result);
             };
-            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_data: {
+            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_content_data: {
                 action: "performInlineQuery",
                 pos: pos,
                 query: query
@@ -662,13 +662,13 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     window.addEventListener('message', function (event) {
-        var _message = event.data && event.data.surfingkeys_data;
+        var _message = event.data && (event.data.surfingkeys_content_data || event.data.dictorium_data);
         if (_message === undefined) {
             return;
         }
         if (_message.action === "performInlineQuery") {
             self.performInlineQuery(_message.query, _message.pos, function (pos, queryResult) {
-                event.source.postMessage({surfingkeys_data: {
+                event.source.postMessage({surfingkeys_content_data: {
                     action: "performInlineQueryResult",
                     pos: pos,
                     result: queryResult
@@ -677,19 +677,19 @@ function createFront(insert, normal, hints, visual, browser) {
         } else if (_message.action === "performInlineQueryResult") {
             _showQueryResult(_message.pos, _message.result);
         } else if (_active) {
-            if (_message.responseToContent && _callbacks[_message.id]) {
+            if (_callbacks[_message.id]) {
                 var f = _callbacks[_message.id];
                 // returns true to make callback stay for coming response.
                 if (!f(_message)) {
                     delete _callbacks[_message.id];
                 }
-            } else if (_message.commandToContent && _message.action && _actions.hasOwnProperty(_message.action)) {
+            } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
                 var ret = _actions[_message.action](_message);
                 if (_message.ack) {
                     Promise.resolve(ret).then((data) =>
                       runtime.postTopMessage({
                           data,
-                          responseToFrontend: true,
+                          toFrontend: true,
                           origin: _message.origin,
                           id: _message.id
                       }));
@@ -700,6 +700,9 @@ function createFront(insert, normal, hints, visual, browser) {
         } else if (_message.type === "DictoriumViewReady") {
             // make inline query also work on dictorium frame continuously
             _actions['activated'](_message);
+        }
+        if (!event.data.dictorium_data) {
+            event.stopImmediatePropagation();
         }
     }, true);
 
