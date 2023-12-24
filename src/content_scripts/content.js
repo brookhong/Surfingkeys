@@ -126,7 +126,7 @@ function applySettings(api, normal, rs) {
         if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
             proxyMode = "{0}: {1}".format(rs.proxyMode, rs.proxy);
         }
-        dispatchSKEvent('showStatus', [3, proxyMode]);
+        dispatchSKEvent('showStatus', [[undefined, undefined, undefined, proxyMode]]);
     }
 
     RUNTIME('getState', {

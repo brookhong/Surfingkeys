@@ -509,12 +509,11 @@ function createFront(insert, normal, hints, visual, browser) {
         self.showStatus(...evt.detail);
     });
 
-    self.showStatus = function (pos, msg, duration) {
+    self.showStatus = function (msgs, duration) {
         self.command({
             action: "showStatus",
-            content: msg,
-            duration: duration,
-            position: pos
+            contents: msgs,
+            duration: duration
         });
     };
     self.toggleStatus = function (visible) {

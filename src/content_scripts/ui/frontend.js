@@ -548,7 +548,7 @@ const Front = (function() {
     };
 
     _actions['showStatus'] = function(message) {
-        StatusBar.show(message.position, message.content, message.duration);
+        StatusBar.show(message.contents, message.duration);
     };
 
     document.addEventListener("surfingkeys:showStatus", function(evt) {
@@ -704,22 +704,21 @@ var StatusBar = (function() {
     var timerHide = null;
     var ui = Front.statusBar;
 
+    // 4 spans
     // mode: 0
     // search: 1
     // searchResult: 2
     // proxy: 3
-    self.show = function(n, content, duration) {
+    self.show = function(contents, duration) {
         if (timerHide) {
             clearTimeout(timerHide);
             timerHide = null;
         }
         var span = ui.querySelectorAll('span');
-        if (n < 0) {
-            span.forEach(function(s) {
-                setSanitizedContent(s, "");
-            });
-        } else {
-            setSanitizedContent(span[n], content);
+        for (var i = 0; i < contents.length; i++) {
+            if (contents[i] !== undefined) {
+                setSanitizedContent(span[i], contents[i]);
+            }
         }
         var lastSpan = -1;
         for (var i = 0; i < span.length; i++) {
@@ -741,7 +740,7 @@ var StatusBar = (function() {
         Front.flush();
         if (duration) {
             timerHide = setTimeout(function() {
-                self.show(n, "");
+                self.show(["", "", "", ""]);
             }, duration);
         }
     };
@@ -766,7 +765,7 @@ var Find = (function() {
     var historyInc;
     function reset() {
         input = null;
-        StatusBar.show(1, "");
+        StatusBar.show(["", ""]);
         self.exit();
     }
 
@@ -780,7 +779,7 @@ var Find = (function() {
      */
     self.open = function() {
         historyInc = -1;
-        StatusBar.show(1, '<input id="sk_find" class="sk_theme"/>');
+        StatusBar.show(["/", '<input id="sk_find" class="sk_theme"/>']);
         input = Front.statusBar.querySelector("input");
         if (!getBrowserName().startsWith("Safari")) {
             input.oninput = function() {

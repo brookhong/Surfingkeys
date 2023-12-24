@@ -243,7 +243,7 @@ Mode.showStatus = function() {
                 sl += " - frame: " + pathname[pathname.length - 1];
             }
         }
-        dispatchSKEvent('showStatus', [0, sl]);
+        dispatchSKEvent('showStatus', [[sl]]);
     }
 };
 
