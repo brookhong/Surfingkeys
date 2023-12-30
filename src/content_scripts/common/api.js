@@ -143,7 +143,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
                 }, new_annotation ? parseAnnotation({ annotation: new_annotation }) : null, false);
                 normal.mappings.add(KeyboardUtils.encodeKeystroke(new_keystroke), keybound);
             } else {
-                if (!mapInMode(normal, new_keystroke, old_keystroke) && old_keystroke in Mode.specialKeys) {
+                if (!mapInMode(normal, new_keystroke, old_keystroke, new_annotation) && old_keystroke in Mode.specialKeys) {
                     Mode.specialKeys[old_keystroke].push(new_keystroke);
                     dispatchSKEvent('addMapkey', ["Mode", new_keystroke, old_keystroke]);
                 } else {
@@ -220,7 +220,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      */
     function imap(new_keystroke, old_keystroke, domain, new_annotation) {
         if (_isDomainApplicable(domain)) {
-            mapInMode(insert, new_keystroke, old_keystroke);
+            mapInMode(insert, new_keystroke, old_keystroke, new_annotation);
         }
     }
 
@@ -266,7 +266,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      */
     function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
         if (_isDomainApplicable(domain)) {
-            mapInMode(visual, new_keystroke, old_keystroke);
+            mapInMode(visual, new_keystroke, old_keystroke, new_annotation);
         }
     }
 

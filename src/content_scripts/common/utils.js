@@ -559,7 +559,7 @@ function parseAnnotation(ag) {
     return ag;
 }
 
-function mapInMode(mode, nks, oks) {
+function mapInMode(mode, nks, oks, new_annotation) {
     oks = KeyboardUtils.encodeKeystroke(oks);
     var old_map = mode.mappings.find(oks);
     if (old_map) {
@@ -567,6 +567,9 @@ function mapInMode(mode, nks, oks) {
         mode.mappings.remove(nks);
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
+        if (new_annotation) {
+            meta = Object.assign(meta, parseAnnotation({ annotation: new_annotation }));
+        }
         mode.mappings.add(nks, meta);
         if (!isInUIFrame()) {
             dispatchSKEvent('addMapkey', [mode.name, nks, oks]);
