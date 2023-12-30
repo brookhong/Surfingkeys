@@ -231,12 +231,9 @@ Mode.init = (cb)=> {
 
 
 Mode.showStatus = function() {
-    if (runtime.conf.showModeStatus && document.hasFocus() && mode_stack.length) {
+    if (document.hasFocus() && mode_stack.length) {
         var cm = mode_stack[0];
-        var sl = cm.statusLine;
-        if (sl === undefined) {
-            sl = cm.name;
-        }
+        var sl = cm.statusLine || (runtime.conf.showModeStatus ? cm.name : "");
         if (sl !== "" && window !== top && !isInUIFrame()) {
             var pathname = window.location.pathname.split('/');
             if (pathname.length) {
