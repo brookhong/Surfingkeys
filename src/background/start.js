@@ -1595,6 +1595,9 @@ function start(browser) {
             queueURLs: _queueURLs
         };
     };
+    self.clearQueueURLs = function(message, sender, sendResponse) {
+        _queueURLs = [];
+    };
 
     self.getVoices = function(message, sender, sendResponse) {
         chrome.tts.getVoices(function(voices) {

@@ -116,6 +116,9 @@ export default (normal, command, omnibar) => {
             });
         });
     });
+    command('clearQueueURLs', 'clear URLs in queue waiting for open', function(args) {
+        RUNTIME('clearQueueURLs');
+    });
     command('timeStamp', 'print time stamp in human readable format', function(args) {
         var dt = new Date(parseInt(args[0]));
         omnibar.listWords([dt.toString()]);

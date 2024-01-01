@@ -205,6 +205,9 @@ module.exports = function(api) {
             });
         }
     });
+    mapkey(';cq', '#7Clear all URLs in queue to be opened', function() {
+        RUNTIME('clearQueueURLs');
+    });
     mapkey('ys', "#7Copy current page's source", function() {
         var aa = document.documentElement.cloneNode(true);
         Clipboard.write(aa.outerHTML);
