@@ -544,6 +544,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.omnibarSuggestionTimeout | 200 | Timeout duration before Omnibar suggestion URLs are queried, in milliseconds. Helps prevent unnecessary HTTP requests and API rate-limiting. |
 | settings.focusFirstCandidate | false | Whether to focus first candidate of matched result in Omnibar. |
 | settings.tabsThreshold | 100 | When total of opened tabs exceeds the number, Omnibar will be used for choosing tabs. |
+| settings.verticalTabs | true | Whether to show tab pickers vertically aligned. |
 | settings.clickableSelector | "" | Extra CSS selector to pick elements for hints mode, such as "\*.jfk-button, \*.goog-flat-menu-button". |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | A regex to detect clickable links from text, you could use `O` to open them. |
 | settings.editableSelector | div.CodeMirror-scroll,div.ace_content | CSS selector for additional editable elements. |

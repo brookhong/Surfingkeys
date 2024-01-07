@@ -532,6 +532,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.omnibarSuggestionTimeout | 200 | 设置触发搜索引擎提示的超时，当按键过去设定毫秒后才发起搜索引擎提示的请求，这样避免每次按键就触发请求。|
 | settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
 | settings.tabsThreshold | 100 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
+| settings.verticalTabs | true | 是否纵向排列标签选择栏。 |
 | settings.clickableSelector | "" | 自定义CSS selector用于f键选择无法检测到的可点击元素，例如"\*.jfk-button, \*.goog-flat-menu-button"。 |
 | settings.clickablePat | /(https?&#124;thunder&#124;magnet):\/\/\S+/ig | 用于检测文字中可点击链接的正则表达式，你可以按`O`打开检测到的链接。|
 | settings.editableSelector | div.CodeMirror-scroll,div.ace_content | 额外CSS selector以自定义可编辑元素。|

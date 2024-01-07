@@ -284,24 +284,45 @@ kbd {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
     background: #000;
     overflow: auto;
     z-index: 2147483000;
 }
-div.sk_tab {
+#sk_tabs.horizontal {
+    width: 100%;
+}
+#sk_tabs.horizontal div.sk_tab {
     display: inline-grid;
+}
+#sk_tabs.horizontal div.sk_tab_hint {
+    float:right;
+}
+#sk_tabs.vertical div.sk_tab_title {
+    min-width: 100pt;
+    max-width: 60vw;
+}
+#sk_tabs.vertical div.sk_tab_hint {
+    position: fixed;
+    left: 80pt;
+}
+#sk_tabs.vertical div.tab_rocket {
+    margin: 6px;
+    display: inline-block;
+    padding: 0px 2px 0px 2px;
+    opacity: 0;
+}
+div.sk_tab {
     vertical-align: bottom;
     justify-items: center;
     border-radius: 3px;
     margin: 1px;
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#DAE6F5), color-stop(100%,#B0CCEF));
     box-shadow: 0px 3px 7px 0px rgba(245, 245, 0, 0.3);
+    padding-top: 2px;
+    border-top: solid 1px black;
 }
 div.sk_tab_wrap {
     display: inline-block;
-    padding-top: 2px;
-    border-top: solid 1px black;
 }
 div.sk_tab_icon {
     display: inline-block;
@@ -330,7 +351,6 @@ div.sk_tab_url {
 }
 div.sk_tab_hint {
     display: inline-block;
-    float:right;
     font-size: 10pt;
     font-weight: bold;
     padding: 0px 2px 0px 2px;
