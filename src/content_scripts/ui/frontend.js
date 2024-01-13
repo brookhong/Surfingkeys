@@ -35,6 +35,7 @@ const Front = (function() {
 
     const self = new Mode("Front");
     self._actions = {};
+    self.topSize = [0, 0];
     const omnibar = createOmnibar(self, clipboard);
 
     createCommands(normal, omnibar.command, omnibar);
@@ -281,6 +282,9 @@ const Front = (function() {
             }
             _tabs.append(tab);
         });
+        if (_tabs.getBoundingClientRect().height > self.topSize[1]) {
+            _tabs.className = "inline";
+        }
     };
     _actions['chooseTab'] = function() {
         const tabsThreshold = Math.min(runtime.conf.tabsThreshold, Math.ceil(window.innerWidth / 26));
@@ -633,6 +637,7 @@ const Front = (function() {
 
     _actions['initFrontend'] = function(message) {
         self.topOrigin = message.origin;
+        self.topSize = message.winSize;
         return new Date().getTime();
     };
 

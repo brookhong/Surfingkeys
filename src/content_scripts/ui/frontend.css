@@ -305,7 +305,16 @@ kbd {
     position: fixed;
     left: 80pt;
 }
-#sk_tabs.vertical div.tab_rocket {
+div.tab_rocket {
+    margin: 6px;
+    display: inline-block;
+    padding: 0px 2px 0px 2px;
+    opacity: 0;
+}
+#sk_tabs.inline div.sk_tab {
+    display: inline-block;
+}
+div.tab_rocket {
     margin: 6px;
     display: inline-block;
     padding: 0px 2px 0px 2px;

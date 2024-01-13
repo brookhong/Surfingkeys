@@ -74,6 +74,7 @@ function createUiHost(browser, onload) {
         this.contentWindow.postMessage({surfingkeys_frontend_data: {
             action: 'initFrontend',
             ack: true,
+            winSize: [window.innerWidth, window.innerHeight],
             origin: getDocumentOrigin()
         }}, frontEndURL);
 
