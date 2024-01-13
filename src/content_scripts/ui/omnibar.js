@@ -405,18 +405,17 @@ function createOmnibar(front, clipboard) {
         } else if(b.hasOwnProperty('width')) {
             type = "🔖";
             uid = "T" + b.windowId + ":" + b.id;
-        // } else if(b.type && /^\p{Emoji}$/u.test(b.type)) {
+            // } else if(b.type && /^\p{Emoji}$/u.test(b.type)) {
         } else if(b.type && b.type.length === 2 && b.type.charCodeAt(0) > 255) {
             type = b.type;
         }
+        var li = createElementWithContent('li', `<div class="icon">${type}</div>`);
         if (b.hasOwnProperty('favIconUrl')) {
-          var li = createElementWithContent('li',
-            `<img/><div class="text-container"><div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div></div>`, { "class": "tab" });
-          attachFaviconToImgSrc(b, li.querySelector('img'));
-        } else {
-          var li = createElementWithContent('li',
-            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`);
+            li = createElementWithContent('li', `<img class="icon"/>`);
+            attachFaviconToImgSrc(b, li.querySelector('img'));
         }
+        li.appendChild(createElementWithContent('div',
+            `<div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`, { "class": "text-container" }));
         li.uid = uid;
         li.url = b.url;
         return li;

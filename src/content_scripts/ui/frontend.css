@@ -112,7 +112,8 @@ body {
 }
 #sk_omnibarSearchResult>ul>li {
     padding: 0.2rem 0rem;
-    display: block;
+    display: flex;
+    align-items: center;
     max-height: 600px;
     overflow-x: hidden;
     overflow-y: auto;
@@ -138,12 +139,9 @@ body {
     vertical-align: middle;
     display: table-cell;
 }
-#sk_omnibarSearchResult li.tab {
-  display: flex;
-  align-items: flex-start;
-}
-#sk_omnibarSearchResult li.tab img {
-  margin-right: 0.5rem;
+#sk_omnibarSearchResult li .icon {
+    margin-right: 0.5rem;
+    width: 16px;
 }
 #sk_omnibarSearchResult li div.title {
     text-align: left;
