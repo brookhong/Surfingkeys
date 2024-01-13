@@ -11,6 +11,8 @@ import {
     htmlEncode,
     parseAnnotation,
     regexFromString,
+    safeDecodeURI,
+    safeDecodeURIComponent,
     scrollIntoViewIfNeeded,
     setSanitizedContent,
     showBanner,
@@ -389,7 +391,7 @@ function createOmnibar(front, clipboard) {
     };
 
     self.createURLItem = function(b, rxp) {
-        b.title = (b.title && b.title !== "") ? b.title : decodeURI(b.url);
+        b.title = (b.title && b.title !== "") ? b.title : safeDecodeURI(b.url);
         var type = "🔥", additional = "", uid = b.uid;
         if (b.hasOwnProperty('lastVisitTime')) {
             type = "🕜";
@@ -409,11 +411,11 @@ function createOmnibar(front, clipboard) {
         }
         if (b.hasOwnProperty('favIconUrl')) {
           var li = createElementWithContent('li',
-            `<img/><div class="text-container"><div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(decodeURIComponent(b.url)))}</div></div>`, { "class": "tab" });
+            `<img/><div class="text-container"><div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div></div>`, { "class": "tab" });
           attachFaviconToImgSrc(b, li.querySelector('img'));
         } else {
           var li = createElementWithContent('li',
-            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(decodeURIComponent(b.url)))}</div>`);
+            `<div class="title">${type} ${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`);
         }
         li.uid = uid;
         li.url = b.url;
