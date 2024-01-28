@@ -776,7 +776,7 @@ function start(browser) {
         }
     };
     self.focusTabByIndex = function(message, sender, sendResponse) {
-        var queryInfo = message.queryInfo || {};
+        var queryInfo = message.queryInfo || {currentWindow: true};
         chrome.tabs.query(queryInfo, function(tabs) {
             if (message.repeats > 0 && message.repeats <= tabs.length) {
                 chrome.tabs.update(tabs[message.repeats - 1].id, {
