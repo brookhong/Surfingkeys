@@ -1145,6 +1145,9 @@ function start(browser) {
             message.key = "";
         }
         pf(message.key, function(data) {
+            if (message.key === undefined) {
+                data.useNeovim = !!browser.nvimServer.instance;
+            }
             _response(message, sendResponse, {
                 settings: data
             });
@@ -1672,7 +1675,7 @@ function start(browser) {
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
 
     self.connectNative = function (message, sender, sendResponse) {
-        if (browser.nvimServer) {
+        if (browser.nvimServer && browser.nvimServer.instance) {
             browser.nvimServer.instance.then(({url, nm}) => {
                 nm.postMessage({
                     mode: message.mode
