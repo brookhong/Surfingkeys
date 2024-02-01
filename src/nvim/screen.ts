@@ -47,9 +47,7 @@ type Char = {
 
 const DEFAULT_FONT_FAMILY = 'monospace';
 
-PIXI.Renderer.registerPlugin('batch', PIXI.BatchRenderer);
-PIXI.Application.registerPlugin(PIXI.TickerPlugin);
-PIXI.install({ ShaderSystem: PIXI.ShaderSystem });
+PIXI.extensions.add(PIXI.BatchRenderer, PIXI.TickerPlugin);
 
 const screen = ({
     settings,
@@ -188,7 +186,7 @@ const screen = ({
             ...windowPixelSize(),
         });
 
-        screenEl.appendChild(pixi.view);
+        screenEl.appendChild((pixi.view as unknown) as Node);
 
         screenContainer.appendChild(screenEl);
 
@@ -249,7 +247,7 @@ const screen = ({
                 charCanvas.height = charHeight;
             }
 
-            PIXI.utils.clearTextureCache();
+            PIXI.clearTextureCache();
         }
         screenEl.removeChild(char);
     };
@@ -308,7 +306,7 @@ const screen = ({
 
     const getCharTexture = (char: string, hlId: number) => {
         const key = `${char}:${hlId}`;
-        if (!PIXI.utils.TextureCache[key]) {
+        if (!PIXI.TextureCache[key]) {
             const props = highlightTable[hlId].calculated;
             // @ts-expect-error getCharBitmap returns ImageBitmap that can be used as texture
             PIXI.Texture.addToCache(PIXI.Texture.from(getCharBitmap(char, props)), key);
@@ -319,7 +317,7 @@ const screen = ({
     const getBgTexture = (bgColor: string, j: number) => {
         const isLastCol = j === cols - 1;
         const key = `bg:${bgColor}:${isLastCol}`;
-        if (!PIXI.utils.TextureCache[key]) {
+        if (!PIXI.TextureCache[key]) {
             charCtx.fillStyle = bgColor;
             if (isLastCol) {
                 charCtx.fillRect(0, 0, charWidth * 2, charHeight);
@@ -466,7 +464,7 @@ const screen = ({
             screenEl.style.background = highlightTable[0].calculated.bgColor;
         }
 
-        PIXI.utils.clearTextureCache();
+        PIXI.clearTextureCache();
         for (let i = 0; i <= rows; i += 1) {
             for (let j = 0; j <= cols; j += 1) {
                 initChar(i, j);
@@ -895,7 +893,7 @@ const screen = ({
 
         if (requireRedraw) {
             measureCharSize();
-            PIXI.utils.clearTextureCache();
+            PIXI.clearTextureCache();
             if (!isInitial) {
                 resize(true);
             }
