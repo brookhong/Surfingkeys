@@ -571,7 +571,12 @@ function createVisual(clipboard, hints) {
         });
         var scrollTop = document.scrollingElement.scrollTop;
         selection.setPosition(null, 0);
+        var lastNode = null
         while (findNextTextNodeBy(pattern.source, pattern.flags.indexOf('i') === -1, false)) {
+            if (lastNode == selection.anchorNode) {
+                break;
+            }
+            lastNode = selection.anchorNode
             if (selection.anchorNode !== selection.focusNode) {
                 createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
             }
