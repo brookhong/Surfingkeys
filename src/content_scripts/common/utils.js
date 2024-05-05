@@ -613,7 +613,7 @@ function constructSearchURL(se, word) {
  *     btn.click();
  * }, {domain: /youtube.com/i});
  */
-function tabOpenLink(str, simultaneousness) {
+function tabOpenLink(str, simultaneousness, inForeground = true) {
     simultaneousness = simultaneousness || 5;
 
     var urls;
@@ -636,7 +636,7 @@ function tabOpenLink(str, simultaneousness) {
     urls.slice(0, simultaneousness).forEach(function(url) {
         RUNTIME("openLink", {
             tab: {
-                tabbed: true
+                tabbed: inForeground
             },
             url: url
         });
