@@ -605,6 +605,7 @@ function constructSearchURL(se, word) {
  * Open links in new tabs.
  *
  * @param {string} str links to be opened, the links should be split by `\n` if there are more than one.
+ * @param {boolean} [isActive=true] whether tab should open on top your current tab or in a background tab
  * @param {number} [simultaneousness=5] how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed.
  *
  * @example
@@ -613,7 +614,7 @@ function constructSearchURL(se, word) {
  *     btn.click();
  * }, {domain: /youtube.com/i});
  */
-function tabOpenLink(str, simultaneousness, inForeground = true) {
+function tabOpenLink(str, isActive, simultaneousness) {
     simultaneousness = simultaneousness || 5;
 
     var urls;
@@ -636,7 +637,8 @@ function tabOpenLink(str, simultaneousness, inForeground = true) {
     urls.slice(0, simultaneousness).forEach(function(url) {
         RUNTIME("openLink", {
             tab: {
-                tabbed: inForeground
+                tabbed: true,
+                active: isActive
             },
             url: url
         });
