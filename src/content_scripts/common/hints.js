@@ -390,20 +390,16 @@ div.hint-scrollable {
     };
 
     self.genLabels = function(total) {
-        var ch, hint, hints, i, len, offset;
-        hints = [""];
-        offset = 0;
-        while (hints.length - offset < total || hints.length === 1) {
-            hint = hints[offset++];
-            for (i = 0, len = characters.length; i < len; i++) {
-                ch = characters[i];
-                hints.push(ch + hint);
+        let chars = characters.toUpperCase();
+        var hints = [""], offset = 0;
+        while (hints.length - offset < total || offset == 0) {
+            var prefix = hints[offset++];
+            for (var i = 0; i < chars.length; i++) {
+                hints.push(prefix + chars[i]);
             }
         }
         hints = hints.slice(offset, offset + total);
-        return hints.map(function(str) {
-            return str.reverse().toUpperCase();
-        });
+        return hints
     };
 
     self.coordinate = function() {

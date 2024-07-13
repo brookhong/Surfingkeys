@@ -12,6 +12,7 @@ import {
     getTextRect,
     getVisibleElements,
     getWordUnderCursor,
+    locateFocusNode,
     scrollIntoViewIfNeeded,
     setSanitizedContent,
     tabOpenLink,
@@ -463,27 +464,11 @@ function createVisual(clipboard, hints) {
         if (selection.focusNode && (selection.focusNode.offsetHeight > 0 || selection.focusNode.parentNode.offsetHeight > 0)) {
             // https://developer.mozilla.org/en-US/docs/Web/API/Selection
             // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-            scrollIntoViewIfNeeded(selection.focusNode.parentElement, true);
-
-            var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
-            if (!r) {
-                r = selection.focusNode.getBoundingClientRect();
-            }
+            let r = locateFocusNode(selection)
             if (r) {
                 cursor.style.position = "fixed";
                 cursor.style.left = r.left + 'px';
-                if (r.left < 0 || r.left >= window.innerWidth) {
-                    document.scrollingElement.scrollLeft += r.left - window.innerWidth / 2;
-                    cursor.style.left = window.innerWidth / 2 + 'px';
-                } else {
-                    cursor.style.left = r.left + 'px';
-                }
-                if (r.top < 0 || r.top >= window.innerHeight) {
-                    document.scrollingElement.scrollTop += r.top - window.innerHeight / 2;
-                    cursor.style.top = window.innerHeight / 2 + 'px';
-                } else {
-                    cursor.style.top = r.top + 'px';
-                }
+                cursor.style.top = r.top + 'px';
                 cursor.style.height = r.height + 'px';
             }
 

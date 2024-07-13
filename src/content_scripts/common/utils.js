@@ -446,6 +446,33 @@ function getTextRect() {
     return rects;
 }
 
+function locateFocusNode(selection) {
+    let se = selection.focusNode.parentElement
+    scrollIntoViewIfNeeded(se, true);
+    var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
+    if (!r) {
+        r = selection.focusNode.getBoundingClientRect();
+    }
+    if (r) {
+        r = {
+            left: r.left,
+            top: r.top,
+            width: r.width,
+            height: r.height
+        };
+        if (r.left < 0 || r.left >= window.innerWidth) {
+            se.scrollLeft += r.left - window.innerWidth / 2;
+            r.left = window.innerWidth / 2;
+        }
+        if (r.top < 0 || r.top >= window.innerHeight) {
+            se.scrollTop += r.top - window.innerHeight / 2;
+            r.top = window.innerHeight / 2;
+        }
+        return r;
+    }
+    return null;
+}
+
 function getNearestWord(text, offset) {
     var ret = [0, text.length];
     var nonWord = /\W/;
@@ -909,9 +936,11 @@ export {
     insertJS,
     isEditable,
     isElementClickable,
+    isElementDrawn,
     isElementPartiallyInViewport,
     isInUIFrame,
     listElements,
+    locateFocusNode,
     mapInMode,
     parseAnnotation,
     refreshHints,
