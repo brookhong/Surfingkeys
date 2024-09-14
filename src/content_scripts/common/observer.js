@@ -1,5 +1,6 @@
 import {
     getVisibleElements,
+    initSKFunctionListener,
 } from './utils.js';
 
 import Mode from './mode';
@@ -52,18 +53,19 @@ function startScrollNodeObserver(normal) {
     });
     DOMObserver.isConnected = false;
 
-    document.addEventListener("surfingkeys:turnOnDOMObserver", function(evt) {
-        if (!DOMObserver.isConnected) {
-            DOMObserver.observe(document, { childList: true, subtree:true });
-            DOMObserver.isConnected = true;
-        }
-    });
-
-    document.addEventListener("surfingkeys:turnOffDOMObserver", function(evt) {
-        if (DOMObserver.isConnected) {
-            DOMObserver.disconnect();
-            DOMObserver.isConnected = false;
-        }
+    initSKFunctionListener("observer", {
+        turnOn: () => {
+            if (!DOMObserver.isConnected) {
+                DOMObserver.observe(document, { childList: true, subtree:true });
+                DOMObserver.isConnected = true;
+            }
+        },
+        turnOff: () => {
+            if (DOMObserver.isConnected) {
+                DOMObserver.disconnect();
+                DOMObserver.isConnected = false;
+            }
+        },
     });
 }
 

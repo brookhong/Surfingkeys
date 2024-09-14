@@ -1405,10 +1405,7 @@ function Commands(omnibar, front) {
             var meta = items[cmd];
             meta.code.call(meta.code, args);
         } else {
-            front.contentCommand({
-                action: 'executeScript',
-                cmdline: cmdline
-            });
+            showBanner(`Unsupported command: ${cmdline}.`, 3000);
         }
     }
 

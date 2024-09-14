@@ -8,6 +8,7 @@ import {
     getWordUnderCursor,
     htmlEncode,
     initL10n,
+    initSKFunctionListener,
     refreshHints,
     setSanitizedContent,
     mapInMode
@@ -21,6 +22,7 @@ import createNormal from '../common/normal.js';
 import createVisual from '../common/visual.js';
 import createHints from '../common/hints.js';
 import createAPI from '../common/api.js';
+import createDefaultMappings from '../common/default.js';
 import createOmnibar from './omnibar.js';
 import createCommands from './command.js';
 
@@ -48,6 +50,7 @@ const Front = (function() {
     };
 
     const api = createAPI(clipboard, insert, normal, hints, visual, self, {});
+    createDefaultMappings(api, clipboard, insert, normal, hints, visual, self);
 
     var _actions = self._actions,
         _callbacks = {};
@@ -296,6 +299,7 @@ const Front = (function() {
             }
         });
     };
+    self.chooseTab = _actions['chooseTab'];
 
     function buildUsage(metas, cb) {
         var feature_groups = [
@@ -396,10 +400,6 @@ const Front = (function() {
         showPopup(message.content);
     };
 
-    document.addEventListener("surfingkeys:showPopup", function(evt) {
-        showPopup(...evt.detail);
-    });
-
     self.vimMappings = [];
     let _aceEditor = null;
     _editor.onShow = function(message) {
@@ -476,9 +476,6 @@ const Front = (function() {
     _actions['openFinder'] = function() {
         Find.open();
     };
-    document.addEventListener("surfingkeys:openFinder", function(evt) {
-        Find.open();
-    });
 
     function showBanner(content, linger_time) {
         _banner.style.cssText = "";
@@ -497,9 +494,6 @@ const Front = (function() {
     _actions['showBanner'] = function(message) {
         showBanner(message.content, message.linger_time);
     };
-    document.addEventListener("surfingkeys:showBanner", function(evt) {
-        showBanner(...evt.detail);
-    });
     _actions['showBubble'] = function(message) {
         var pos = message.position;
         pos.left += pos.winX;
@@ -563,8 +557,15 @@ const Front = (function() {
         StatusBar.show(message.contents, message.duration);
     };
 
-    document.addEventListener("surfingkeys:showStatus", function(evt) {
-        StatusBar.show(...evt.detail);
+    initSKFunctionListener("front", {
+        showPopup,
+        showBanner,
+        openFinder: () => {
+            Find.open();
+        },
+        showStatus: (contents, duration) => {
+            StatusBar.show(contents, duration);
+        },
     });
 
     self.toggleStatus = function(visible) {
@@ -1071,7 +1072,7 @@ function createAceEditor(normal, front) {
         };
         vim.defineEx("wq", "wq", wq);
         vim.defineEx("x", "x", wq);
-        vim.map('<CR>', ':wq', 'normal');
+        vim.map('<CR>', ':wq<CR>', 'normal');
         vim.defineEx("bnext", "bn", function(cm, input) {
             front.contentCommand({
                 action: 'nextEdit',
@@ -1159,17 +1160,17 @@ function createAceEditor(normal, front) {
                 vim.unmap('<CR>', 'insert');
                 vim.unmap('<C-CR>', 'insert');
                 if (message.type === 'url') {
-                    vim.map('<CR>', ':wq', 'insert');
+                    vim.map('<CR>', '<Esc>:wq<CR>', 'insert');
                     _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([createUrlCompleter()]);
                     _ace.container.style.height = "30%";
                 } else if (message.type === 'input') {
-                    vim.map('<CR>', ':wq', 'insert');
+                    vim.map('<CR>', '<Esc>:wq<CR>', 'insert');
                     _ace.setOption('showLineNumbers', false);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "16px";
                 } else {
-                    vim.map('<C-CR>', ':wq', 'insert');
+                    vim.map('<C-CR>', '<Esc>:wq<CR>', 'insert');
                     _ace.setOption('showLineNumbers', true);
                     _ace.language_tools.setCompleters([pageWordCompleter]);
                     _ace.container.style.height = "30%";

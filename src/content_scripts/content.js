@@ -10,7 +10,6 @@ import {
     generateQuickGuid,
     getRealEdit,
     isInUIFrame,
-    showPopup,
 
     createElementWithContent,
     getBrowserName,
@@ -25,20 +24,6 @@ import createAPI from './common/api.js';
 import createDefaultMappings from './common/default.js';
 
 import KeyboardUtils from './common/keyboardUtils';
-
-/*
- * run user snippets, and return settings updated in snippets
- */
-function runScript(api, snippets) {
-    var result = { settings: {}, error: "" };
-    try {
-        var F = new Function('settings', 'api', snippets);
-        F(result.settings, api);
-    } catch (e) {
-        result.error = e.toString();
-    }
-    return result;
-}
 
 /*
  * Apply custom key mappings for basic users, the input is like
@@ -68,13 +53,6 @@ function applyBasicMappings(api, normal, mappings) {
     }
 }
 
-function isEmptyObject(obj) {
-    for (var name in obj) {
-        return false;
-    }
-    return true;
-}
-
 function applySettings(api, normal, rs) {
     for (var k in rs) {
         if (runtime.conf.hasOwnProperty(k)) {
@@ -94,39 +72,12 @@ function applySettings(api, normal, rs) {
             }
         }
     }
-    if (rs.showAdvanced && 'snippets' in rs && rs.snippets && !isInUIFrame()) {
-        var delta = runScript(api, rs.snippets);
-        if (delta.error !== "") {
-            if (window === top) {
-                showPopup("[SurfingKeys] Error found in settings: " + delta.error);
-            } else {
-                console.log("[SurfingKeys] Error found in settings({0}): {1}".format(window.location.href, delta.error));
-            }
-        }
-        if (!isEmptyObject(delta.settings)) {
-            dispatchSKEvent('setUserSettings', JSON.parse(JSON.stringify(delta.settings)));
-            // overrides local settings from snippets
-            for (var k in delta.settings) {
-                if (runtime.conf.hasOwnProperty(k)) {
-                    runtime.conf[k] = delta.settings[k];
-                    delete delta.settings[k];
-                }
-            }
-            if (Object.keys(delta.settings).length > 0 && window === top) {
-                // left settings are for background, need not broadcast the update, neither persist into storage
-                RUNTIME('updateSettings', {
-                    scope: "snippets",
-                    settings: delta.settings
-                });
-            }
-        }
-    }
     if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
         var proxyMode = rs.proxyMode;
         if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
             proxyMode = "{0}: {1}".format(rs.proxyMode, rs.proxy);
         }
-        dispatchSKEvent('showStatus', [[undefined, undefined, undefined, proxyMode]]);
+        dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, proxyMode]]);
     }
 
     RUNTIME('getState', {
@@ -166,7 +117,7 @@ function _initModules() {
     const front = createFront(insert, normal, hints, visual, _browser);
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
-    createDefaultMappings(api);
+    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front);
     if (typeof(_browser.plugin) === "function") {
         _browser.plugin({ front });
     }
@@ -175,7 +126,10 @@ function _initModules() {
     RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
         applySettings(api, normal, rs);
-        dispatchSKEvent('userSettingsLoaded', {settings: rs, api, front});
+        const disabledSearchAliases = rs.disabledSearchAliases;
+        const getUsage = front.getUsage;
+        const frontCommand = front.command;
+        dispatchSKEvent('userSettingsLoaded', {settings: rs, disabledSearchAliases, getUsage, frontCommand});
     });
     return {
         normal,
@@ -224,7 +178,7 @@ function start(browser) {
     };
     if (window === top) {
         new Promise((r, j) => {
-            if (window.location.href === chrome.extension.getURL("/pages/options.html")) {
+            if (window.location.href === chrome.runtime.getURL("/pages/options.html")) {
                 import(/* webpackIgnore: true */ './pages/options.js').then((optionsLib) => {
                     optionsLib.default(
                         RUNTIME,
@@ -258,13 +212,18 @@ function start(browser) {
             runtime.on('tabDeactivated', function() {
                 modes.front.detach();
             });
+            runtime.on('setScrollPos', function(msg, sender, response) {
+                setTimeout(() => {
+                    document.scrollingElement.scrollLeft = msg.scrollLeft;
+                    document.scrollingElement.scrollTop = msg.scrollTop;
+                }, 1000);
+            });
+            runtime.on('showBanner', function(msg, sender, response) {
+                showBanner(msg.message, 3000);
+            });
             document.addEventListener("surfingkeys:ensureFrontEnd", function(evt) {
                 modes.front.attach();
             });
-            window._setScrollPos = function (x, y) {
-                document.scrollingElement.scrollLeft = x;
-                document.scrollingElement.scrollTop = y;
-            };
 
             RUNTIME('tabURLAccessed', {
                 title: document.title,

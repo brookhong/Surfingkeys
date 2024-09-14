@@ -1,5 +1,8 @@
-function dispatchSKEvent(type, args) {
-    document.dispatchEvent(new CustomEvent(`surfingkeys:${type}`, { 'detail': args }));
+function dispatchSKEvent(type, args, target) {
+    if (target === undefined) {
+        target = document;
+    }
+    target.dispatchEvent(new CustomEvent(`surfingkeys:${type}`, { 'detail': args }));
 }
 
 /**
@@ -31,7 +34,7 @@ function RUNTIME(action, args, callback) {
             runtime.on('onTtsEvent', callback);
         }
     } catch (e) {
-        dispatchSKEvent('showPopup', ['[runtime exception] ' + e]);
+        dispatchSKEvent("front", ['showPopup', '[runtime exception] ' + e]);
     }
 }
 

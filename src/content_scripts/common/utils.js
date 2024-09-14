@@ -21,7 +21,7 @@ function getBrowserName() {
 }
 
 function isInUIFrame() {
-    return document.location.href.indexOf(chrome.extension.getURL("/")) === 0;
+    return window !== top && document.location.href.indexOf(chrome.runtime.getURL("/")) === 0;
 }
 
 function timeStampString(t) {
@@ -93,7 +93,7 @@ function isElementClickable(e) {
  * Front.showBanner(window.location.href);
  */
 function showBanner(msg, timeout) {
-    dispatchSKEvent('showBanner', [msg, timeout])
+    dispatchSKEvent("front", ['showBanner', msg, timeout])
 }
 
 /**
@@ -106,7 +106,29 @@ function showBanner(msg, timeout) {
  * Front.showPopup(window.location.href);
  */
 function showPopup(msg) {
-    dispatchSKEvent('showPopup', [msg])
+    dispatchSKEvent("front", ['showPopup', msg])
+}
+
+function initSKFunctionListener(name, interfaces, capture) {
+    const callbacks = {};
+
+    const opts = capture ? {capture: true} : {};
+    document.addEventListener(`surfingkeys:${name}`, function(evt) {
+        let args = evt.detail;
+        const fk = args.shift();
+        if (capture) {
+            args.push(evt.target);
+        }
+
+        if (callbacks.hasOwnProperty(fk)) {
+            callbacks[fk](...args);
+            delete callbacks[fk];
+        } if (interfaces.hasOwnProperty(fk)) {
+            interfaces[fk](...args);
+        }
+    }, opts);
+
+    return callbacks;
 }
 
 function dispatchMouseEvent(element, events, shiftKey) {
@@ -537,7 +559,7 @@ function initL10n(cb) {
             return str;
         });
     } else {
-        fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
+        fetch(chrome.runtime.getURL("pages/l10n.json")).then(function(res) {
             return res.json();
         }).then(function(l10n) {
             if (typeof(l10n[lang]) === "object") {
@@ -599,7 +621,7 @@ function mapInMode(mode, nks, oks, new_annotation) {
         }
         mode.mappings.add(nks, meta);
         if (!isInUIFrame()) {
-            dispatchSKEvent('addMapkey', [mode.name, nks, oks]);
+            dispatchSKEvent("front", ['addMapkey', mode.name, nks, oks]);
         }
     }
     return old_map;
@@ -895,7 +917,7 @@ function refreshHints(hints, pressedKeys) {
 function attachFaviconToImgSrc(tab, imgEl) {
     const browserName = getBrowserName();
     if (browserName === "Chrome") {
-        imgEl.src = `chrome://favicon/${tab.url}`;
+        imgEl.src = chrome.runtime.getURL(`/_favicon/?pageUrl=${tab.url}`);
     } else if (browserName.startsWith("Safari")) {
         imgEl.src = new URL(tab.url).origin + "/favicon.ico";
     } else {
@@ -933,6 +955,7 @@ export {
     htmlEncode,
     httpRequest,
     initL10n,
+    initSKFunctionListener,
     insertJS,
     isEditable,
     isElementClickable,

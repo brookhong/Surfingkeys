@@ -349,10 +349,10 @@ export default function(
         }).filter((m) => m !== null);;
     });
 
-    function renderSearchAlias(front, disabledSearchAliases) {
+    function renderSearchAlias(frontCommand, disabledSearchAliases) {
         new Promise((r, j) => {
             const getSearchAliases = () => {
-                front.command({
+                frontCommand({
                     action: 'getSearchAliases'
                 }, function(response) {
                     if (Object.keys(response.aliases).length > 0) {
@@ -420,8 +420,8 @@ export default function(
     }
 
     document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
-        const { settings, front } = evt.detail;
-        renderSearchAlias(front, settings.disabledSearchAliases || {});
+        const { settings, disabledSearchAliases, frontCommand } = evt.detail;
+        renderSearchAlias(frontCommand, disabledSearchAliases || {});
         renderKeyMappings(settings);
     });
 

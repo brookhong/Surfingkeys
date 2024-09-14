@@ -1,5 +1,5 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "Surfingkeys",
     "short_name": "Rich shortcuts in vim spirit for productivity with keyboard.",
     "description": "Rich shortcuts to click links/switch tabs/scroll, capture pages, use your browser like vim for productivity.",
@@ -25,7 +25,7 @@
             "description": "Toggle current site in autoproxy_hosts."
         }
     },
-    "browser_action": {
+    "action": {
         "default_icon": {
             "16": "icons/16.png",
             "48": "icons/48.png"
@@ -35,8 +35,8 @@
     },
     "author": "brook hong",
     "permissions": [
+        "favicon",
         "nativeMessaging",
-        "<all_urls>",
         "tabs",
         "history",
         "bookmarks",
@@ -45,12 +45,15 @@
         "downloads",
         "topSites",
         "clipboardRead",
-        "clipboardWrite"
+        "clipboardWrite",
+        "userScripts",
+        "scripting"
+    ],
+    "host_permissions": [
+        "<all_urls>"
     ],
     "background": {
-        "scripts": [
-            "background.js"
-        ]
+        "service_worker": "background.js"
     },
     "content_scripts": [
         {
@@ -69,14 +72,21 @@
         }
     ],
     "web_accessible_resources": [
-        "pages/neovim.html",
-        "pages/default.js",
-        "pages/emoji.tsv",
-        "pages/l10n.json",
-        "pages/frontend.html",
-        "pages/pdf_viewer.html",
-        "pages/shadow.css",
-        "pages/default.css"
-    ],
-    "content_security_policy": "script-src 'self'; object-src 'self'"
+        {
+          "resources": [
+            "api.js",
+            "pages/neovim.html",
+            "pages/default.js",
+            "pages/emoji.tsv",
+            "pages/l10n.json",
+            "pages/frontend.html",
+            "pages/pdf_viewer.html",
+            "pages/shadow.css",
+            "pages/default.css"
+          ],
+          "matches": [
+            "<all_urls>"
+          ]
+        }
+    ]
 }

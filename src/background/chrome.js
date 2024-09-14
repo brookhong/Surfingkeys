@@ -1,7 +1,7 @@
 import {
     LOG,
     filterByTitleOrUrl,
-} from '../content_scripts/common/utils.js';
+} from '../common/utils.js';
 import {
     _save,
     dictFromArray,
@@ -134,7 +134,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
 
 function generatePassword() {
     const random = new Uint32Array(8);
-    window.crypto.getRandomValues(random);
+    self.crypto.getRandomValues(random);
     return Array.from(random).join("");
 }
 

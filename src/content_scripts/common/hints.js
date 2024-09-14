@@ -10,10 +10,10 @@ import {
     getBrowserName,
     getClickableElements,
     getCssSelectorsOfEditable,
-    getElements,
     getRealRect,
     getTextNodePos,
     getVisibleElements,
+    initSKFunctionListener,
     isEditable,
     isElementClickable,
     refreshHints,
@@ -171,6 +171,70 @@ div.hint-scrollable {
         }
     });
 
+    /**
+     * The default `onHintKey` implementation.
+     *
+     * @param {HTMLElement} element the element for which the pressed hint is targeted.
+     * @name Hints.dispatchMouseClick
+     * @see Hints.create
+     *
+     * @example
+     * mapkey('q', 'click on images', function() {
+     *     Hints.create("div.media_box img", Hints.dispatchMouseClick);
+     * }, {domain: /weibo.com/i});
+     */
+    self.dispatchMouseClick = function(element) {
+        if (isEditable(element)) {
+            self.exit();
+            normal.passFocus(true);
+            element.focus();
+            insert.enter(element);
+        } else {
+            if (!behaviours.multipleHits) {
+                self.exit();
+            }
+            var tabbed = behaviours.tabbed, active = behaviours.active;
+            if (behaviours.multipleHits) {
+                const href = element.getAttribute('href');
+                if (href !== null && href !== "#") {
+                    tabbed = true;
+                    active = false;
+                }
+            }
+
+            if (shiftKey && runtime.conf.hintShiftNonActive) {
+                tabbed = true;
+                active = false;
+            } else if (shiftKey && getBrowserName() === "Firefox") {
+                // mouseButton does not work for firefox in mouse event.
+                tabbed = true;
+                active = true;
+            }
+
+            flashPressedLink(element,() => {
+                if (tabbed) {
+                    RUNTIME("openLink", {
+                        tab: {
+                            tabbed: tabbed,
+                            active: active
+                        },
+                        url: getHref(element)
+                    });
+                } else {
+                    self.mouseoutLastElement();
+                    dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
+                    dispatchSKEvent("observer", ['turnOn']);
+                    lastMouseTarget = element;
+                }
+
+                if (behaviours.multipleHits) {
+                    setTimeout(resetHints, 300);
+                }
+            });
+        }
+        element.classList.remove("surfingkeys--hints--clicking");
+    };
+
     var prefix = "",
         textFilter = "",
         lastMouseTarget = null,
@@ -203,7 +267,11 @@ div.hint-scrollable {
         const hintState = refreshHints(hints, prefix);
         if (hintState.matched) {
             normal.appendKeysForRepeat("Hints", prefix);
-            _onHintKey(hintState.matched);
+            if (typeof(_onHintKey) === 'function') {
+                _onHintKey(hintState.matched);
+            } else {
+                dispatchSKEvent('user', ["onHintClicked"], hintState.matched);
+            }
             if (behaviours.multipleHits) {
                 prefix = "";
                 refreshHints(hints, prefix);
@@ -272,12 +340,6 @@ div.hint-scrollable {
                 hint.style.zIndex = hint.zIndex;
             });
         }
-    }
-
-    function onScrollStarted(evt) {
-        setSanitizedContent(holder, "");
-        holder.remove();
-        prefix = "";
     }
 
     function resetHints() {
@@ -376,18 +438,17 @@ div.hint-scrollable {
         }
     };
 
-    document.addEventListener("surfingkeys:topBoundaryHit", self.previousPage);
-    document.addEventListener("surfingkeys:bottomBoundaryHit", self.nextPage);
-
-    self.onEnter = function() {
-        document.addEventListener("surfingkeys:scrollStarted", onScrollStarted);
-        document.addEventListener("surfingkeys:scrollDone", resetHints);
-    };
-
-    self.onExit = function() {
-        document.removeEventListener("surfingkeys:scrollStarted", onScrollStarted);
-        document.removeEventListener("surfingkeys:scrollDone", resetHints);
-    };
+    initSKFunctionListener("hints", {
+        scrollStarted: () => {
+            setSanitizedContent(holder, "");
+            holder.remove();
+            prefix = "";
+        },
+        scrollDone: resetHints,
+        topBoundaryHit: self.previousPage,
+        bottomBoundaryHit: self.nextPage,
+        dispatchMouseClick: self.dispatchMouseClick,
+    }, true);
 
     self.genLabels = function(total) {
         let chars = characters.toUpperCase();
@@ -727,68 +788,6 @@ div.hint-scrollable {
         return found > 0;
     };
 
-    /**
-     * The default `onHintKey` implementation.
-     *
-     * @param {HTMLElement} element the element for which the pressed hint is targeted.
-     * @name Hints.dispatchMouseClick
-     * @see Hints.create
-     *
-     * @example
-     * mapkey('q', 'click on images', function() {
-     *     Hints.create("div.media_box img", Hints.dispatchMouseClick);
-     * }, {domain: /weibo.com/i});
-     */
-    self.dispatchMouseClick = function(element, event) {
-        if (isEditable(element)) {
-            self.exit();
-            normal.passFocus(true);
-            element.focus();
-            insert.enter(element);
-        } else {
-            if (!behaviours.multipleHits) {
-                self.exit();
-            }
-            var tabbed = behaviours.tabbed, active = behaviours.active;
-            if (behaviours.multipleHits) {
-                const href = element.getAttribute('href');
-                if (href !== null && href !== "#") {
-                    tabbed = true;
-                    active = false;
-                }
-            }
-
-            if (shiftKey && runtime.conf.hintShiftNonActive) {
-                tabbed = true;
-                active = false;
-            } else if (shiftKey && getBrowserName() === "Firefox") {
-                // mouseButton does not work for firefox in mouse event.
-                tabbed = true;
-                active = true;
-            }
-
-            flashPressedLink(element,() => {
-                if (tabbed) {
-                    RUNTIME("openLink", {
-                        tab: {
-                            tabbed: tabbed,
-                            active: active
-                        },
-                        url: getHref(element)
-                    });
-                } else {
-                    self.mouseoutLastElement();
-                    dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
-                    dispatchSKEvent('turnOnDOMObserver');
-                    lastMouseTarget = element;
-                }
-
-                if (behaviours.multipleHits) {
-                    setTimeout(resetHints, 300);
-                }
-            });
-        }
-    };
     self.mouseoutLastElement = function() {
         if (lastMouseTarget) {
             dispatchMouseEvent(lastMouseTarget, ['mouseout'], false);

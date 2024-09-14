@@ -282,7 +282,7 @@ function createNormal(insert) {
     });
 
     self.toggleBlocklist = function() {
-        if (document.location.href.indexOf(chrome.extension.getURL("/")) !== 0) {
+        if (document.location.href.indexOf(chrome.runtime.getURL("/")) !== 0) {
             RUNTIME('toggleBlocklist', {
                 blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
             }, function(resp) {
@@ -350,10 +350,10 @@ function createNormal(insert) {
             if (runtime.conf.smartPageBoundary && ((this === document.scrollingElement)
                 || scrollNodes.length === 1 && this === scrollNodes[0])) {
                 if (this.scrollTop === 0 && y < 0) {
-                    return dispatchSKEvent('topBoundaryHit');
+                    return dispatchSKEvent("hints", ['topBoundaryHit']);
                 }
                 if (this.scrollHeight - this.scrollTop <= this.clientHeight + 1 && y > 0) {
-                    return dispatchSKEvent('bottomBoundaryHit');
+                    return dispatchSKEvent("hints", ['bottomBoundaryHit']);
                 }
             }
             if (RUNTIME.repeats > 1) {
@@ -365,13 +365,13 @@ function createNormal(insert) {
                 var d = Math.max(100, 20 * Math.log(Math.abs( x || y)));
                 elm.smoothScrollBy(x, y, d);
             } else {
-                dispatchSKEvent('scrollStarted');
+                dispatchSKEvent("hints", ['scrollStarted']);
                 elm.scrollBy({
                     'behavior': 'instant',
                     'left': x,
                     'top': y,
                 });
-                dispatchSKEvent('scrollDone');
+                dispatchSKEvent("hints", ['scrollDone']);
             }
         };
         elm.safeScroll_ = (prop, value, increasing) => {
@@ -399,7 +399,7 @@ function createNormal(insert) {
                     if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
                         previousTimestamp = t;
-                        dispatchSKEvent('scrollStarted');
+                        dispatchSKEvent("hints", ['scrollStarted']);
                         return window.requestAnimationFrame(step);
                     }
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
@@ -423,7 +423,7 @@ function createNormal(insert) {
                         || stepCompleted )// distance completed
                     ) {
                         elm.style.scrollBehavior = '';
-                        dispatchSKEvent('scrollDone');
+                        dispatchSKEvent("hints", ['scrollDone']);
                     } else {
                         window.requestAnimationFrame(step);
                     }
@@ -474,7 +474,7 @@ function createNormal(insert) {
         } else {
             rc = elm.getBoundingClientRect();
         }
-        dispatchSKEvent('highlightElement', {
+        dispatchSKEvent("front", ['highlightElement', {
             duration: 200,
             rect: {
                 top: rc.top,
@@ -482,7 +482,7 @@ function createNormal(insert) {
                 width: rc.width,
                 height: rc.height
             }
-        });
+        }]);
     }
     function changeScrollTarget(silent) {
         scrollNodes = Mode.getScrollableElements();
@@ -579,7 +579,7 @@ function createNormal(insert) {
             default:
                 break;
         }
-        dispatchSKEvent('turnOffDOMObserver');
+        dispatchSKEvent("observer", ['turnOff']);
     };
 
     self.refreshScrollableElements = function () {
@@ -704,7 +704,7 @@ function createNormal(insert) {
             // hide borders
             var borderStyle = elm.style.borderStyle;
             elm.style.borderStyle = "none";
-            dispatchSKEvent('toggleStatus', [false]);
+            dispatchSKEvent("front", ['toggleStatus', false]);
 
             var dx = 0, dy = 0, sx, sy, sw, sh, ww, wh, dh = elm.scrollHeight, dw = elm.scrollWidth;
             if (elm === document.scrollingElement) {
@@ -742,7 +742,7 @@ function createNormal(insert) {
                 if (lastScrollTop === elm.scrollTop) {
                     if (lastScrollLeft === elm.scrollLeft) {
                         // done
-                        dispatchSKEvent('toggleStatus', [true]);
+                        dispatchSKEvent("front", ['toggleStatus', true]);
                         showPopup("<img src='{0}' />".format(canvas.toDataURL( "image/png" )));
                         // restore overflow
                         elm.style.overflowY = overflowY;
@@ -930,7 +930,7 @@ function createNormal(insert) {
         feature_group: 9,
         repeatIgnore: true,
         code: function() {
-            dispatchSKEvent('openFinder');
+            dispatchSKEvent("front", ['openFinder']);
         }
     });
 
@@ -958,7 +958,7 @@ function createNormal(insert) {
             // perform inline query after 1 ms
             // to avoid calling on selection collapse
             setTimeout(() => {
-                dispatchSKEvent('querySelectedWord');
+                dispatchSKEvent("front", ['querySelectedWord']);
             }, 1);
         }
     }
@@ -969,7 +969,7 @@ function createNormal(insert) {
             _disabled = createDisabled(self);
             _disabled.enter(0, true);
         }
-        dispatchSKEvent('turnOffDOMObserver');
+        dispatchSKEvent("observer", ['turnOff']);
         document.removeEventListener("mouseup", _onMouseUp);
     };
 
@@ -983,7 +983,7 @@ function createNormal(insert) {
     self.enable();
 
     self.onExit = function() {
-        dispatchSKEvent('turnOffDOMObserver');
+        dispatchSKEvent("observer", ['turnOff']);
         _nodesHasSKScroll.forEach(function(n) {
             delete n.skScrollBy;
             delete n.smoothScrollBy;
