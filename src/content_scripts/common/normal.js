@@ -284,7 +284,7 @@ function createNormal(insert) {
     self.toggleBlocklist = function() {
         if (document.location.href.indexOf(chrome.runtime.getURL("/")) !== 0) {
             RUNTIME('toggleBlocklist', {
-                blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : "")
+                blocklistPattern: (runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern : "")
             }, function(resp) {
                 if (resp.state === "disabled") {
                     if (resp.blocklist.hasOwnProperty(".*")) {

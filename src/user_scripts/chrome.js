@@ -5,6 +5,8 @@ import {
     getClickableElements,
     initSKFunctionListener,
     isElementPartiallyInViewport,
+    showBanner,
+    showPopup,
     tabOpenLink,
 } from '../content_scripts/common/utils.js';
 
@@ -99,9 +101,6 @@ function lmap(new_keystroke, old_keystroke, domain, new_annotation) {
 function vmap(new_keystroke, old_keystroke, domain, new_annotation) {
     dispatchSKEvent('api', ['vmap', new_keystroke, old_keystroke, domain, new_annotation]);
 }
-function showPopup(msg) {
-    dispatchSKEvent('front', ['showPopup', msg]);
-}
 
 const functionsToListSuggestions = {};
 
@@ -159,7 +158,7 @@ function applyUserSettings(delta) {
         }
     }
     if (!isEmptyObject(delta.settings)) {
-        dispatchSKEvent("front", ['setUserSettings', delta.settings]);
+        dispatchSKEvent("front", ['applySettingsFromSnippets', delta.settings]);
     }
 }
 
@@ -176,6 +175,7 @@ const api = {
     getClickableElements,
     lmap,
     vmap,
+    vmapkey,
     map,
     mapkey,
     unmap: (keystroke, domain) => {
@@ -236,6 +236,26 @@ const api = {
         style: (css, mode) => {
             dispatchSKEvent('api', ['hints:style', css, mode]);
         },
+        setCharacters: (chars) => {
+            dispatchSKEvent('api', ['hints:setCharacters', chars]);
+        },
+        setNumeric: () => {
+            dispatchSKEvent('api', ['hints:setNumeric']);
+        },
+    },
+    Normal: {
+        feedkeys: (keys) => {
+            dispatchSKEvent('api', ['normal:feedkeys', keys]);
+        },
+        jumpVIMark: (mark) => {
+            dispatchSKEvent('api', ['normal:jumpVIMark', mark]);
+        },
+        passThrough: (timeout) => {
+            dispatchSKEvent('api', ['normal:passThrough', timeout]);
+        },
+        scroll: (type) => {
+            dispatchSKEvent('api', ['normal:scroll', type]);
+        },
     },
     Visual: {
         style: (element, style) => {
@@ -250,6 +270,7 @@ const api = {
         openOmnibar: (args) => {
             dispatchSKEvent('api', ['front:openOmnibar', args]);
         },
+        showBanner,
         showPopup
     },
 };

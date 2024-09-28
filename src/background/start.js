@@ -462,12 +462,10 @@ function start(browser) {
         }
     }
     chrome.runtime.onMessage.addListener(handleMessage);
-
-    chrome.userScripts.configureWorld({
-        csp: 'script-src \'self\' \'unsafe-eval\'',
-        messaging: true
+    chrome.runtime.onUserScriptMessage.addListener((m, s, r) => {
+        m.fromUserScript = true;
+        handleMessage(m, s, r);
     });
-    chrome.runtime.onUserScriptMessage.addListener(handleMessage);
 
     function _updateSettings(diffSettings, afterSet) {
         diffSettings.savedAt = new Date().getTime();
@@ -1144,21 +1142,17 @@ function start(browser) {
         message.url = 'view-source:' + sender.tab.url;
         self.openLink(message, sender, sendResponse);
     };
-    self.getSettings = function(message, sender, sendResponse) {
-        var pf = loadSettings;
-        if (message.key === "RAW") {
-            pf = browser.loadRawSettings;
-            message.key = "";
-        }
-        pf(message.key, function(data) {
-            if (message.key === undefined) {
-                data.useNeovim = !!browser.nvimServer.instance;
-            }
-            if (data.showAdvanced && 'snippets' in data && data.snippets) {
-                const userScriptId = "settingsSnippets";
+    function onFullSettingsRequested(data) {
+        data.useNeovim = !!browser.nvimServer.instance;
+        data.isUserScriptsAvailable = isUserScriptsAvailable();
+        data.showAdvanced = data.isUserScriptsAvailable && data.showAdvanced;
+
+        if (data.isUserScriptsAvailable) {
+            const userScriptId = "settingsSnippets";
+            if (data.showAdvanced && data.snippets) {
                 const snippets = data.snippets;
                 chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
-                    const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}})});`;
+                    const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}\n})});`;
                     const registerSettingSnippets = () => {
                         chrome.userScripts.register([{
                             id: userScriptId,
@@ -1174,13 +1168,43 @@ function start(browser) {
                         registerSettingSnippets();
                     }
                 });
+            } else {
+                chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
+                    if (r.length > 0) {
+                        chrome.userScripts.unregister({ids:[userScriptId]});
+                    }
+                });
             }
+        }
+    }
+    self.getSettings = function(message, sender, sendResponse) {
+        var pf = loadSettings;
+        if (message.key === "RAW") {
+            pf = browser.loadRawSettings;
+            message.key = "";
+        }
+        pf(message.key, function(data) {
+            if (message.key === undefined) {
+                onFullSettingsRequested(data);
+            }
+
             _response(message, sendResponse, {
                 settings: data
             });
         });
     };
+    function isUserScriptsAvailable() {
+        try {
+            if (chrome.userScripts) {
+                return true;
+            }
+        } catch {
+            return false;
+        }
+        return false;
+    }
     self.updateSettings = function(message, sender, sendResponse) {
+        let error = "";
         if (message.scope === "snippets") {
             // For settings from snippets, don't broadcast the update
             // neither persist into storage
@@ -1190,8 +1214,21 @@ function start(browser) {
                 }
             }
         } else {
-            _updateAndPostSettings(message.settings);
+            if (message.settings.showAdvanced) {
+                if (isUserScriptsAvailable()) {
+                    chrome.userScripts.configureWorld({
+                        csp: 'script-src \'self\' \'unsafe-eval\'',
+                        messaging: true
+                    });
+                    _updateAndPostSettings(message.settings);
+                } else {
+                    error = "Advanced mode is only available when Developer mode is turned on from chrome://extensions/.";
+                }
+            } else {
+                _updateAndPostSettings(message.settings);
+            }
         }
+        return { error };
     };
     self.setSurfingkeysIcon = function(message, sender, sendResponse) {
         let icon = "icons/48.png";

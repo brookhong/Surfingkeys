@@ -218,19 +218,19 @@ export default function(
         });
     }
 
-    var basicSettingsDiv = document.getElementById("basicSettings");
-    var basicMappingsDiv = document.getElementById("basicMappings");
-    var advancedSettingDiv = document.getElementById("advancedSetting");
-    var advancedTogglerDiv = document.getElementById("advancedToggler");
+    const basicSettingsDiv = document.getElementById("basicSettings");
+    const basicMappingsDiv = document.getElementById("basicMappings");
+    const advancedSettingDiv = document.getElementById("advancedSetting");
+    const advancedToggler = document.getElementById("advancedToggler");
     function showAdvanced(flag) {
         if (flag) {
             basicSettingsDiv.hide();
             advancedSettingDiv.show();
-            advancedTogglerDiv.setAttribute('checked', 'checked');
+            advancedToggler.setAttribute('checked', 'checked');
         } else {
             basicSettingsDiv.show();
             advancedSettingDiv.hide();
-            advancedTogglerDiv.removeAttribute('checked');
+            advancedToggler.removeAttribute('checked');
         }
     }
 
@@ -238,7 +238,8 @@ export default function(
     var localPathInput = document.getElementById("localPath");
     var sample = document.getElementById("sample").innerHTML;
     function renderSettings(rs) {
-        showAdvanced(rs.showAdvanced);
+        advancedToggler.disabled = !rs.isUserScriptsAvailable;
+        showAdvanced(rs.isUserScriptsAvailable && rs.showAdvanced);
         if (rs.localPath) {
             localPathInput.value = rs.localPath;
             localPathSaved = rs.localPath;
@@ -254,20 +255,18 @@ export default function(
         renderProxySettings(rs);
     }
 
-    RUNTIME('getSettings', null, function(response) {
-        mappingsEditor = createMappingEditor('mappings');
-        renderSettings(response.settings);
-        if ('error' in response.settings) {
-            showBanner(response.settings.error, 5000);
-        }
-    });
 
-    advancedTogglerDiv.onclick = function() {
+    advancedToggler.onclick = function() {
         var newFlag = this.checked;
-        showAdvanced(newFlag);
         RUNTIME('updateSettings', {
             settings: {
                 showAdvanced: newFlag
+            }
+        }, (resp) => {
+            if (resp.error) {
+                showBanner(resp.error, 3000);
+            } else {
+                showAdvanced(newFlag);
             }
         });
     };
@@ -421,6 +420,11 @@ export default function(
 
     document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
         const { settings, disabledSearchAliases, frontCommand } = evt.detail;
+        mappingsEditor = createMappingEditor('mappings');
+        renderSettings(settings);
+        if ('error' in settings) {
+            showBanner(settings.error, 5000);
+        }
         renderSearchAlias(frontCommand, disabledSearchAliases || {});
         renderKeyMappings(settings);
     });

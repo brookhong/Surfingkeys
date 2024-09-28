@@ -82,8 +82,11 @@ settings.theme = `
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
         </div>
-        <input id="advancedToggler" type="checkbox" /> Advanced mode
-        <span class="tip">If you're an advanced user, turn on it here.</span>
+        <div id="donationDiv" class="section">
+            <h3>Support Surfingkeys with <a href="https://www.paypal.me/brookhong">paypal</a>.</h3>
+        </div>
+        <input id="advancedToggler" type="checkbox" disabled/> Advanced mode
+        <span class="tip">If you're an advanced user, please turn on Developer mode from chrome://extensions/ then the flag here.</span>
         <div id="basicSettings">
             <h3>Search Engine aliases</h3>
             <div class="section" id="searchAliases">
@@ -136,10 +139,6 @@ settings.theme = `
             <button id="addProxyPair">Add proxy pair</button>
         </div>
         <h3 id="resetSettings">Reset</h3>
-        <div id="donationDiv" class="section">
-            <h3>Thank you for donation! Support me with <a href="https://www.paypal.me/brookhong">paypal</a>, or</h3>
-            <img class="avatar" src="./donation.png" style="width: 60%; display: block;margin-left: auto;margin-right: auto;" />
-        </div>
         <script src="../content.js"></script>
     </body>
 </html>

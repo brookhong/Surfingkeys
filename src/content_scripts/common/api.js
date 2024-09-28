@@ -418,9 +418,15 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         },
         "hints:click": hints.click,
         "hints:create": hints.create,
+        "hints:setCharacters": hints.setCharacters,
+        "hints:setNumeric": hints.setNumeric,
         "hints:style": hints.style,
         "front:registerInlineQuery": front.registerInlineQuery,
         "front:openOmnibar": front.openOmnibar,
+        "normal:feedkeys": normal.feedkeys,
+        "normal:jumpVIMark": normal.jumpVIMark,
+        "normal:passThrough": normal.passThrough,
+        "normal:scroll": normal.scroll,
         "visual:style": visual.style,
         mapkey: (keys, annotation, options) => {
             mapkey(keys, annotation, () => {

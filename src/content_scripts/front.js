@@ -1,3 +1,4 @@
+import Mode from './common/mode.js';
 import {
     createElementWithContent,
     flashPressedLink,
@@ -433,7 +434,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 content: content
             });
         },
-        setUserSettings: (us) => {
+        applySettingsFromSnippets: (us) => {
             applyUICommand({
                 action: 'applyUserSettings',
                 userSettings: us
@@ -445,7 +446,7 @@ function createFront(insert, normal, hints, visual, browser) {
                     runtime.conf[k] = cloneUS[k];
                     delete cloneUS[k];
                 }
-            }
+           }
             if (runtime.conf.enableEmojiInsertion) {
                 insert.enableEmojiInsertion();
             }
@@ -456,6 +457,7 @@ function createFront(insert, normal, hints, visual, browser) {
                     settings: cloneUS
                 });
             }
+            dispatchSKEvent('settingsFromSnippetsLoaded');
         },
         querySelectedWord,
         addMapkey: (mode, new_keystroke, old_keystroke) => {

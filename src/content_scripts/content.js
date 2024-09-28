@@ -72,38 +72,41 @@ function applySettings(api, normal, rs) {
             }
         }
     }
-    if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
-        var proxyMode = rs.proxyMode;
-        if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
-            proxyMode = "{0}: {1}".format(rs.proxyMode, rs.proxy);
-        }
-        dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, proxyMode]]);
-    }
 
-    RUNTIME('getState', {
-        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : undefined,
-        lurkingPattern: runtime.conf.lurkingPattern ? runtime.conf.lurkingPattern.toJSON() : undefined
-    }, function (resp) {
-        let state = resp.state;
-        if (state === "disabled") {
-            normal.disable();
-        } else if (state === "lurking") {
-            state = normal.startLurk();
-        } else {
-            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                _browser.usePdfViewer();
-            } else {
-                normal.enable();
+    document.addEventListener("surfingkeys:settingsFromSnippetsLoaded", () => {
+        if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
+            var proxyMode = rs.proxyMode;
+            if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
+                proxyMode = "{0}: {1}".format(rs.proxyMode, rs.proxy);
             }
-            Mode.showStatus();
+            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, proxyMode]]);
         }
 
-        if (window === top) {
-            RUNTIME('setSurfingkeysIcon', {
-                status: state
-            });
-        }
-    });
+        RUNTIME('getState', {
+            blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern : undefined,
+            lurkingPattern: runtime.conf.lurkingPattern ? runtime.conf.lurkingPattern : undefined
+        }, function (resp) {
+            let state = resp.state;
+            if (state === "disabled") {
+                normal.disable();
+            } else if (state === "lurking") {
+                state = normal.startLurk();
+            } else {
+                if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
+                    _browser.usePdfViewer();
+                } else {
+                    normal.enable();
+                }
+                Mode.showStatus();
+            }
+
+            if (window === top) {
+                RUNTIME('setSurfingkeysIcon', {
+                    status: state
+                });
+            }
+        });
+    }, {once: true});
 }
 
 function _initModules() {

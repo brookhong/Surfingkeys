@@ -56,25 +56,34 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
             var pdfUrl = window.location.href;
             if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
                 pdfUrl = window.location.search.substr(3);
-                chrome.storage.local.set({"noPdfViewer": 1}, function() {
+                RUNTIME('updateSettings', {
+                    settings: {
+                        "noPdfViewer": 1
+                    }
+                }, (resp) => {
                     window.location.replace(pdfUrl);
                 });
             } else {
                 if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
-                    chrome.storage.local.remove("noPdfViewer", function() {
+                    RUNTIME('updateSettings', {
+                        settings: {
+                            "noPdfViewer": 0
+                        }
+                    }, (resp) => {
                         window.location.replace(pdfUrl);
                     });
                 } else {
-                    chrome.storage.local.get("noPdfViewer", function(resp) {
-                        if(!resp.noPdfViewer) {
-                            chrome.storage.local.set({"noPdfViewer": 1}, function() {
-                                showBanner("PDF viewer disabled.");
-                            });
-                        } else {
-                            chrome.storage.local.remove("noPdfViewer", function() {
-                                showBanner("PDF viewer enabled.");
-                            });
-                        }
+                    RUNTIME('getSettings', {
+                        key: 'noPdfViewer'
+                    }, function(resp) {
+                        const info = resp.settings.noPdfViewer ? "PDF viewer enabled." : "PDF viewer disabled.";
+                        RUNTIME('updateSettings', {
+                            settings: {
+                                "noPdfViewer": !resp.settings.noPdfViewer
+                            }
+                        }, (r) => {
+                            showBanner(info);
+                        });
                     });
                 }
             }
