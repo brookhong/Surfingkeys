@@ -169,7 +169,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 
     settings.startToShowEmoji = 0;
 
-[表情符号完整列表](https://github.com/brookhong/Surfingkeys/blob/master/pages/emoji.tsv)
+[表情符号完整列表](https://github.com/brookhong/Surfingkeys/blob/master/src/pages/emoji.tsv)
 
 ### 查找
 

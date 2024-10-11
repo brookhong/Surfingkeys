@@ -186,7 +186,7 @@ If you'd like emoji suggestions popup as soon as you input colon, use below:
 
     settings.startToShowEmoji = 0;
 
-[Complete list of Emoji](https://github.com/brookhong/Surfingkeys/blob/master/pages/emoji.tsv)
+[Complete list of Emoji](https://github.com/brookhong/Surfingkeys/blob/master/src/pages/emoji.tsv)
 
 ### Find
 
