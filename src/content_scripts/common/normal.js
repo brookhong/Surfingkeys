@@ -6,7 +6,6 @@ import {
     getRealEdit,
     isEditable,
     isElementClickable,
-    isElementDrawn,
     isElementPartiallyInViewport,
     isInUIFrame,
     mapInMode,
@@ -175,7 +174,7 @@ function createNormal(insert) {
     var _once = false;
     self.addEventListener('keydown', function(event) {
         var realTarget = getRealEdit(event);
-        if (isEditable(realTarget) && isElementDrawn(realTarget) && event.isTrusted) {
+        if (isEditable(realTarget) && event.isTrusted) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 realTarget.blur();
                 insert.exit();
