@@ -24,6 +24,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
         imapkey,
         readText,
         vmapkey,
+        searchSelectedWith,
     } = api;
 
     mapkey('[[', '#1Click on the previous link on current page', hints.previousPage);

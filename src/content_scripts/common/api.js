@@ -452,6 +452,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         imapkey,
         readText: browser.readText,
         vmapkey,
+        removeSearchAlias,
+        searchSelectedWith,
     };
 }
 
