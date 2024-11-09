@@ -72,8 +72,10 @@ function isInUIFrame() {
 const userDefinedFunctions = {};
 function mapkey(keys, annotation, jscode, options) {
     if (!options || _isDomainApplicable(options.domain)) {
+        const opt = options || {};
         userDefinedFunctions[`normal:${keys}`] = jscode;
-        dispatchSKEvent('api', ['mapkey', keys, annotation, options]);
+        opt.codeHasParameter = jscode.length;
+        dispatchSKEvent('api', ['mapkey', keys, annotation, opt]);
     }
 }
 function imapkey(keys, annotation, jscode, options) {
@@ -108,9 +110,9 @@ let inlineQuery;
 let hintsFunction;
 let onClipboardReadFn;
 initSKFunctionListener("user", {
-    callUserFunction: (keys) => {
+    callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
-            userDefinedFunctions[keys]();
+            userDefinedFunctions[keys](para);
         }
     },
     getSearchSuggestions: (url, response, request, callbackId, origin) => {

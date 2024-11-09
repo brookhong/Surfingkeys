@@ -431,9 +431,15 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         "normal:scroll": normal.scroll,
         "visual:style": visual.style,
         mapkey: (keys, annotation, options) => {
-            mapkey(keys, annotation, () => {
-                dispatchSKEvent('user', ["callUserFunction", `normal:${keys}`]);
-            }, options);
+            if (options.codeHasParameter) {
+                mapkey(keys, annotation, (key) => {
+                    dispatchSKEvent('user', ["callUserFunction", `normal:${keys}`, key]);
+                }, options);
+            } else {
+                mapkey(keys, annotation, () => {
+                    dispatchSKEvent('user', ["callUserFunction", `normal:${keys}`]);
+                }, options);
+            }
         },
         imapkey: (keys, annotation, options) => {
             imapkey(keys, annotation, () => {
