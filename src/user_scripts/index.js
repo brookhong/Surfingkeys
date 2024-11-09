@@ -196,7 +196,7 @@ const api = {
         dispatchSKEvent('api', ['removeSearchAlias', alias, search_leader_key, only_this_site_key]);
     },
     searchSelectedWith: (se, onlyThisSite, interactive, alias) => {
-        dispatchSKEvent('api', ['removeSearchAlias', se, onlyThisSite, interactive, alias]);
+        dispatchSKEvent('api', ['searchSelectedWith', se, onlyThisSite, interactive, alias]);
     },
     tabOpenLink,
     Clipboard: {
