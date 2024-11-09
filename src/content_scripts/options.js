@@ -218,19 +218,19 @@ export default function(
         });
     }
 
-    var basicSettingsDiv = document.getElementById("basicSettings");
-    var basicMappingsDiv = document.getElementById("basicMappings");
-    var advancedSettingDiv = document.getElementById("advancedSetting");
-    var advancedTogglerDiv = document.getElementById("advancedToggler");
+    const basicSettingsDiv = document.getElementById("basicSettings");
+    const basicMappingsDiv = document.getElementById("basicMappings");
+    const advancedSettingDiv = document.getElementById("advancedSetting");
+    const advancedToggler = document.getElementById("advancedToggler");
     function showAdvanced(flag) {
         if (flag) {
             basicSettingsDiv.hide();
             advancedSettingDiv.show();
-            advancedTogglerDiv.setAttribute('checked', 'checked');
+            advancedToggler.setAttribute('checked', 'checked');
         } else {
             basicSettingsDiv.show();
             advancedSettingDiv.hide();
-            advancedTogglerDiv.removeAttribute('checked');
+            advancedToggler.removeAttribute('checked');
         }
     }
 
@@ -238,7 +238,13 @@ export default function(
     var localPathInput = document.getElementById("localPath");
     var sample = document.getElementById("sample").innerHTML;
     function renderSettings(rs) {
-        showAdvanced(rs.showAdvanced);
+        if (rs.isMV3) {
+            document.getElementById("advancedTip").innerText = "If you're an advanced user, please turn on Developer mode from chrome://extensions/ then the flag here.";
+            advancedToggler.disabled = !rs.isUserScriptsAvailable;
+            showAdvanced(rs.isUserScriptsAvailable && rs.showAdvanced);
+        } else {
+            showAdvanced(rs.showAdvanced);
+        }
         if (rs.localPath) {
             localPathInput.value = rs.localPath;
             localPathSaved = rs.localPath;
@@ -254,20 +260,18 @@ export default function(
         renderProxySettings(rs);
     }
 
-    RUNTIME('getSettings', null, function(response) {
-        mappingsEditor = createMappingEditor('mappings');
-        renderSettings(response.settings);
-        if ('error' in response.settings) {
-            showBanner(response.settings.error, 5000);
-        }
-    });
 
-    advancedTogglerDiv.onclick = function() {
+    advancedToggler.onclick = function() {
         var newFlag = this.checked;
-        showAdvanced(newFlag);
         RUNTIME('updateSettings', {
             settings: {
                 showAdvanced: newFlag
+            }
+        }, (resp) => {
+            if (resp.error) {
+                showBanner(resp.error, 3000);
+            } else {
+                showAdvanced(newFlag);
             }
         });
     };
@@ -349,10 +353,10 @@ export default function(
         }).filter((m) => m !== null);;
     });
 
-    function renderSearchAlias(front, disabledSearchAliases) {
+    function renderSearchAlias(frontCommand, disabledSearchAliases) {
         new Promise((r, j) => {
             const getSearchAliases = () => {
-                front.command({
+                frontCommand({
                     action: 'getSearchAliases'
                 }, function(response) {
                     if (Object.keys(response.aliases).length > 0) {
@@ -420,8 +424,13 @@ export default function(
     }
 
     document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
-        const { settings, front } = evt.detail;
-        renderSearchAlias(front, settings.disabledSearchAliases || {});
+        const { settings, disabledSearchAliases, frontCommand } = evt.detail;
+        mappingsEditor = createMappingEditor('mappings');
+        renderSettings(settings);
+        if ('error' in settings) {
+            showBanner(settings.error, 5000);
+        }
+        renderSearchAlias(frontCommand, disabledSearchAliases || {});
         renderKeyMappings(settings);
     });
 

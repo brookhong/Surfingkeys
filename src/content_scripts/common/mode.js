@@ -240,7 +240,7 @@ Mode.showStatus = function() {
                 sl += " - frame: " + pathname[pathname.length - 1];
             }
         }
-        dispatchSKEvent('showStatus', [[sl]]);
+        dispatchSKEvent("front", ['showStatus', [sl]]);
     }
 };
 
@@ -249,7 +249,7 @@ Mode.finish = function (mode) {
     if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
         mode.map_node = mode.mappings;
         mode.pendingMap = null;
-        mode.isTrustedEvent && dispatchSKEvent('hideKeystroke');
+        mode.isTrustedEvent && dispatchSKEvent("front", ['hideKeystroke']);
         if (mode.repeats) {
             mode.repeats = "";
         }
@@ -288,7 +288,7 @@ Mode.handleMapKey = function(event, onNoMatched) {
     ) {
         // reset only after target action executed or cancelled
         this.repeats += key;
-        this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+        this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
         event.sk_stopPropagation = true;
     } else {
         var last = this.map_node;
@@ -303,7 +303,7 @@ Mode.handleMapKey = function(event, onNoMatched) {
                 if (code.length) {
                     // bound function needs arguments
                     this.pendingMap = code;
-                    this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+                    this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
                     event.sk_stopPropagation = true;
                 } else {
                     this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
@@ -317,7 +317,7 @@ Mode.handleMapKey = function(event, onNoMatched) {
                     actionDone = Mode.finish(thisMode);
                 }
             } else {
-                this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+                this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
                 event.sk_stopPropagation = true;
             }
         }

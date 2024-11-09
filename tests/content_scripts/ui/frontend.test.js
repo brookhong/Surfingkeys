@@ -13,10 +13,13 @@ describe('ui front', () => {
             runtime: {
                 onMessage: {
                     addListener: jest.fn()
-                }
-            },
-            extension: {
+                },
                 getURL: jest.fn()
+            },
+            storage: {
+                local: {
+                    get: jest.fn()
+                }
             }
         }
         global.DOMRect = jest.fn();

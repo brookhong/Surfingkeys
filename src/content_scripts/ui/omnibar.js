@@ -3,14 +3,16 @@ import KeyboardUtils from '../common/keyboardUtils';
 import Mode from '../common/mode';
 import { debounce } from 'lodash';
 import {
+    filterByTitleOrUrl,
+    regexFromString,
+} from '../../common/utils.js';
+import {
     attachFaviconToImgSrc,
     constructSearchURL,
     createElementWithContent,
-    filterByTitleOrUrl,
     getBrowserName,
     htmlEncode,
     parseAnnotation,
-    regexFromString,
     safeDecodeURI,
     safeDecodeURIComponent,
     scrollIntoViewIfNeeded,
@@ -488,7 +490,7 @@ function createOmnibar(front, clipboard) {
         var query = self.input.value.trim();
         var rxp = null;
         if (query.length) {
-            rxp = regexFromString(query, true);
+            rxp = regexFromString(query, runtime.getCaseSensitive(query), true);
         }
         self.listResults(_page, function(b) {
             var li;
@@ -686,7 +688,7 @@ function createOmnibar(front, clipboard) {
                 var results = response.tabs;
                 RUNTIME("getTopSites", null, function(response) {
                     results = results.concat(response.urls);
-                    results = filterByTitleOrUrl(results, self.input.value);
+                    results = filterByTitleOrUrl(results, self.input.value, runtime.getCaseSensitive(self.input.value));
                     self.listBookmarkFolders(function() {
                         RUNTIME('getAllURLs', {
                             maxResults: self.getHistoryCacheSize() - results.length,
@@ -703,14 +705,14 @@ function createOmnibar(front, clipboard) {
     self.addHandler('RecentlyClosed', OpenURLs(`Recently closed${separatorHtml}`, self, () => {
         return new Promise((resolve, reject) => {
             RUNTIME('getRecentlyClosed', null, function(response) {
-                resolve(filterByTitleOrUrl(response.urls, self.input.value));
+                resolve(filterByTitleOrUrl(response.urls, self.input.value, runtime.getCaseSensitive(self.input.value)));
             });
         });
     }));
     self.addHandler('TabURLs', OpenURLs(`Tab History${separatorHtml}`, self, () => {
         return new Promise((resolve, reject) => {
             RUNTIME('getTabURLs', null, function(response) {
-                resolve(filterByTitleOrUrl(response.urls, self.input.value));
+                resolve(filterByTitleOrUrl(response.urls, self.input.value, runtime.getCaseSensitive(self.input.value)));
             });
         });
     }));
@@ -1060,7 +1062,7 @@ function OpenTabs(omnibar) {
     };
     self.onInput = function() {
         omnibar.cachedPromise.then(function(cached) {
-            var filtered = filterByTitleOrUrl(cached, omnibar.input.value);
+            var filtered = filterByTitleOrUrl(cached, omnibar.input.value, runtime.getCaseSensitive(omnibar.input.value));
             omnibar.listURLs(filtered, false);
         });
     };
@@ -1105,7 +1107,7 @@ function OpenWindows(omnibar, front) {
             const query = omnibar.input.value;
             let rxp = null;
             if (query && query.length) {
-                rxp = regexFromString(query, false);
+                rxp = regexFromString(query, runtime.getCaseSensitive(query), false);
                 filtered = cached.filter(function(w) {
                     for (const t of w.tabs) {
                         if (rxp.test(t.title) || rxp.test(t.url)) {
@@ -1115,7 +1117,7 @@ function OpenWindows(omnibar, front) {
                     return false;
                 });
             }
-            rxp = regexFromString(query, true);
+            rxp = regexFromString(query, runtime.getCaseSensitive(query), true);
             omnibar.listResults(filtered, function(w) {
                 const li = createElementWithContent('li');
                 li.windowId = parseInt(w.id);
@@ -1229,7 +1231,8 @@ function SearchEngine(omnibar, front) {
     };
     function listSuggestions(suggestions) {
         omnibar.detectAndInsertURLItem(omnibar.input.value, suggestions);
-        var rxp = regexFromString(encodeURIComponent(omnibar.input.value), true);
+        const query = encodeURIComponent(omnibar.input.value);
+        var rxp = regexFromString(query, runtime.getCaseSensitive(query), true);
         omnibar.listResults(suggestions, function (w) {
             if (w.hasOwnProperty('html')) {
                 return omnibar.createItemFromRawHtml(w);
@@ -1405,10 +1408,7 @@ function Commands(omnibar, front) {
             var meta = items[cmd];
             meta.code.call(meta.code, args);
         } else {
-            front.contentCommand({
-                action: 'executeScript',
-                cmdline: cmdline
-            });
+            showBanner(`Unsupported command: ${cmdline}.`, 3000);
         }
     }
 
@@ -1496,7 +1496,7 @@ function OpenUserURLs(omnibar) {
         var query = omnibar.input.value;
         var urls = [];
 
-        urls = filterByTitleOrUrl(_items, query);
+        urls = filterByTitleOrUrl(_items, query, runtime.getCaseSensitive(query));
         omnibar.listURLs(urls, false);
     };
     return self;

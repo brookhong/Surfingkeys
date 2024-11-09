@@ -4,6 +4,9 @@ describe('background start', () => {
     beforeAll(async () => {
         global.chrome = {
             runtime: {
+                getManifest: () => {
+                    return {manifest_version: 2};
+                },
                 connectNative: () => {
                     return {
                         postMessage: jest.fn(),

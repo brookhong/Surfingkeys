@@ -5,7 +5,7 @@ import { waitForEvent } from '../utils';
 
 describe('markdown viewer', () => {
     let dispatchSKEvent, createClipboard, createInsert, createNormal,
-        createHints, createVisual, createFront, createAPI;
+        createHints, createVisual, createFront, createAPI, createDefaultMappings;
 
     let normal, clipboard, api, Mode;
 
@@ -18,6 +18,7 @@ describe('markdown viewer', () => {
 
         global.chrome = {
             runtime: {
+                getURL: jest.fn(),
                 sendMessage: jest.fn(),
                 onMessage: {
                     addListener: jest.fn()
@@ -27,9 +28,6 @@ describe('markdown viewer', () => {
                 local: {
                     get: jest.fn()
                 }
-            },
-            extension: {
-                getURL: jest.fn()
             }
         }
         global.DOMRect = jest.fn();
@@ -45,6 +43,7 @@ describe('markdown viewer', () => {
         createVisual = require('src/content_scripts/common/visual.js').default;
         createFront = require('src/content_scripts/front.js').default;
         createAPI = require('src/content_scripts/common/api.js').default;
+        createDefaultMappings = require('src/content_scripts/common/default.js').default;
         require('src/content_scripts/markdown');
 
         Mode.init();
@@ -57,6 +56,7 @@ describe('markdown viewer', () => {
         const visual = createVisual(clipboard, hints);
         const front = createFront(insert, normal, hints, visual);
         api = createAPI(clipboard, insert, normal, hints, visual, front, {});
+        createDefaultMappings(api, clipboard, insert, normal, hints, visual, front);
     });
 
     test("verify local shortcuts for markdown preview", async () => {

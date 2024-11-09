@@ -1,26 +1,26 @@
 import {
     filterByTitleOrUrl,
-} from '../content_scripts/common/utils.js';
+} from '../common/utils.js';
 function request(url, onReady, headers, data, onException) {
     headers = headers || {};
-    return new Promise(function(acc, rej) {
-        var xhr = new XMLHttpRequest();
-        var method = (data !== undefined) ? "POST" : "GET";
-        xhr.open(method, url);
-        for (var h in headers) {
-            xhr.setRequestHeader(h, headers[h]);
-        }
-        xhr.onload = function() {
-            // status from file:/// is always 0
-            if (xhr.status === 200 || xhr.status === 0) {
-                acc(xhr.responseText);
-            } else {
-                rej(xhr.status);
-            }
-        };
-        xhr.onerror = rej.bind(null, xhr);
-        xhr.send(data);
-    }).then(onReady).catch(function(exp) {
+    const CHARTSET_RE = /(?:charset|encoding)\s*=\s*['"]? *([\w\-]+)/i;
+
+    fetch(url, {
+        method: (data !== undefined) ? "POST" : "GET",
+        headers,
+        body: data,
+    }).then(res => {
+        const cs = res.headers.get('content-type') ? res.headers.get('content-type').match(CHARTSET_RE) : [];
+
+        return Promise.all([
+            Promise.resolve(cs && cs.length > 1 ? cs[1] : "utf-8"),
+            res.arrayBuffer()
+        ])
+    }).then(res => {
+        const decoder = new TextDecoder(res[0]);
+        const content = decoder.decode(res[1]);
+        onReady(content);
+    }).catch(exp => {
         onException && onException(exp);
     });
 }
@@ -63,7 +63,9 @@ function _save(storage, data, cb) {
             delete data.snippets;
             delete data.localPath;
         }
-        storage.set(data, cb);
+        if (Object.keys(data).length > 1) {
+            storage.set(data, cb);
+        }
     } else {
         if (data.localPath) {
             delete data.snippets;
@@ -196,6 +198,8 @@ var Gist = (function() {
 function start(browser) {
     var self = {};
 
+    const isMV3 = chrome.runtime.getManifest().manifest_version === 3;
+
     var tabHistory = [],
         tabHistoryIndex = 0,
         chromelikeNewTabPosition = 0,
@@ -304,9 +308,11 @@ function start(browser) {
     chrome.tabs.onRemoved.addListener(removeTab);
     function _setScrollPos_bg(tabId) {
         if (tabMessages.hasOwnProperty(tabId)) {
-            var message = tabMessages[tabId];
-            chrome.tabs.executeScript(tabId, {
-                code: "_setScrollPos(" + message.scrollLeft + ", " + message.scrollTop + ")"
+            const message = tabMessages[tabId];
+            sendTabMessage(tabId, 0, {
+                subject: "setScrollPos",
+                scrollLeft: message.scrollLeft,
+                scrollTop: message.scrollTop
             });
             delete tabMessages[tabId];
         }
@@ -345,7 +351,6 @@ function start(browser) {
                 changeInfo
             });
         }
-        _setScrollPos_bg(tabId);
     });
     chrome.windows.onFocusChanged.addListener(function(w) {
         getActiveTab(function(tab) {
@@ -354,8 +359,6 @@ function start(browser) {
     });
 
     chrome.tabs.onCreated.addListener(function(tab) {
-        _setScrollPos_bg(tab.id);
-
         _updateTabIndices();
     });
     chrome.tabs.onMoved.addListener(function() {
@@ -377,7 +380,6 @@ function start(browser) {
         historyTabAction = false;
         chromelikeNewTabPosition = 0;
 
-        _setScrollPos_bg(activeInfo.tabId);
         _updateTabIndices();
     });
     chrome.tabs.onDetached.addListener(function() {
@@ -443,7 +445,7 @@ function start(browser) {
         }
         sendResponse(result);
     }
-    chrome.runtime.onMessage.addListener(function (_message, _sender, _sendResponse) {
+    function handleMessage(_message, _sender, _sendResponse) {
         if (self.hasOwnProperty(_message.action)) {
             if (_message.repeats > conf.repeatThreshold) {
                 _message.repeats = conf.repeatThreshold;
@@ -462,7 +464,20 @@ function start(browser) {
         } else {
             console.log("[unexpected runtime message] " + JSON.stringify(_message));
         }
-    });
+    }
+    chrome.runtime.onMessage.addListener(handleMessage);
+    if (isMV3) {
+        chrome.runtime.onUserScriptMessage.addListener((m, s, r) => {
+            m.fromUserScript = true;
+            handleMessage(m, s, r);
+        });
+        chrome.runtime.onInstalled.addListener((e) => {
+            chrome.userScripts.configureWorld({
+                csp: 'script-src \'self\' \'unsafe-eval\'',
+                messaging: true
+            });
+        });
+    }
 
     function _updateSettings(diffSettings, afterSet) {
         diffSettings.savedAt = new Date().getTime();
@@ -538,7 +553,7 @@ function start(browser) {
         loadSettings('blocklist', function(data) {
             var origin = ".*";
             var senderOrigin = sender.origin || new URL(getSenderUrl(sender)).origin;
-            if (chrome.extension.getURL("/").indexOf(senderOrigin) !== 0 && senderOrigin !== "null") {
+            if (chrome.runtime.getURL("/").indexOf(senderOrigin) !== 0 && senderOrigin !== "null") {
                 origin = senderOrigin;
             }
             if (data.blocklist.hasOwnProperty(origin)) {
@@ -557,7 +572,7 @@ function start(browser) {
     };
     self.toggleMouseQuery = function(message, sender, sendResponse) {
         loadSettings('mouseSelectToQuery', function(data) {
-            if (sender.tab && sender.tab.url.indexOf(chrome.extension.getURL("/")) !== 0) {
+            if (sender.tab && sender.tab.url.indexOf(chrome.runtime.getURL("/")) !== 0) {
                 var mouseSelectToQuery = data.mouseSelectToQuery || [];
                 var idx = mouseSelectToQuery.indexOf(message.origin);
                 if (idx === -1) {
@@ -570,10 +585,12 @@ function start(browser) {
         });
     };
     self.getState = function(message, sender, sendResponse) {
-        loadSettings(['blocklist', 'noPdfViewer'], function(data) {
+        loadSettings(['blocklist', 'noPdfViewer', 'proxyMode', 'proxy'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
                     noPdfViewer: data.noPdfViewer,
+                    proxyMode: data.proxyMode,
+                    proxy: data.proxy,
                     state: _getState(data, new URL(getSenderUrl(sender)), message.blocklistPattern, message.lurkingPattern)
                 });
             }
@@ -651,7 +668,7 @@ function start(browser) {
         tabs = tabs.filter(function(b) {
             return b.url;
         });
-        return filterByTitleOrUrl(tabs, query);
+        return filterByTitleOrUrl(tabs, query, false);
     }
     self.getRecentlyClosed = function(message, sender, sendResponse) {
         chrome.sessions.getRecentlyClosed({}, function(sessions) {
@@ -1104,12 +1121,13 @@ function start(browser) {
     self.openLink = function(message, sender, sendResponse) {
         var url = normalizeURL(message.url);
         if (url.startsWith("javascript:")) {
-            chrome.tabs.executeScript(sender.tab.id, {
-                code: url.substr(11)
+            sendTabMessage(sender.tab.id, 0, {
+                subject: "showBanner",
+                message: "JavaScript URLs are not allowed in such operation."
             });
         } else {
             if (message.tab.tabbed) {
-                if (sender.frameId !== 0 && chrome.extension.getURL("pages/frontend.html") === sender.url
+                if (sender.frameId !== 0 && chrome.runtime.getURL("pages/frontend.html") === sender.url
                     || !sender.tab) {
                     // if current call was made from Omnibar, the sender.tab may be stale,
                     // as sender was bound when port was created.
@@ -1138,6 +1156,44 @@ function start(browser) {
         message.url = 'view-source:' + sender.tab.url;
         self.openLink(message, sender, sendResponse);
     };
+    function onFullSettingsRequested(data) {
+        data.isMV3 = isMV3;
+        data.useNeovim = browser.nvimServer && browser.nvimServer.instance;
+        data.isUserScriptsAvailable = isUserScriptsAvailable();
+        if (isMV3) {
+            data.showAdvanced = data.isUserScriptsAvailable && data.showAdvanced;
+        }
+
+        if (data.isUserScriptsAvailable) {
+            const userScriptId = "settingsSnippets";
+            if (data.showAdvanced && data.snippets) {
+                const snippets = data.snippets;
+                chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
+                    const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}\n})});`;
+                    const registerSettingSnippets = () => {
+                        chrome.userScripts.register([{
+                            id: userScriptId,
+                            matches: ['*://*/*'],
+                            js: [{code}]
+                        }]);
+                    };
+                    if (r.length > 0) {
+                        if (r[0].js[0].code !== code) {
+                            chrome.userScripts.unregister({ids:[userScriptId]}, registerSettingSnippets);
+                        }
+                    } else {
+                        registerSettingSnippets();
+                    }
+                });
+            } else {
+                chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
+                    if (r.length > 0) {
+                        chrome.userScripts.unregister({ids:[userScriptId]});
+                    }
+                });
+            }
+        }
+    }
     self.getSettings = function(message, sender, sendResponse) {
         var pf = loadSettings;
         if (message.key === "RAW") {
@@ -1146,14 +1202,26 @@ function start(browser) {
         }
         pf(message.key, function(data) {
             if (message.key === undefined) {
-                data.useNeovim = !!browser.nvimServer.instance;
+                onFullSettingsRequested(data);
             }
+
             _response(message, sendResponse, {
                 settings: data
             });
         });
     };
+    function isUserScriptsAvailable() {
+        try {
+            if (chrome.userScripts) {
+                return true;
+            }
+        } catch {
+            return false;
+        }
+        return false;
+    }
     self.updateSettings = function(message, sender, sendResponse) {
+        let error = "";
         if (message.scope === "snippets") {
             // For settings from snippets, don't broadcast the update
             // neither persist into storage
@@ -1163,8 +1231,21 @@ function start(browser) {
                 }
             }
         } else {
-            _updateAndPostSettings(message.settings);
+            if (message.settings.showAdvanced && isMV3) {
+                if (isUserScriptsAvailable()) {
+                    chrome.userScripts.configureWorld({
+                        csp: 'script-src \'self\' \'unsafe-eval\'',
+                        messaging: true
+                    });
+                    _updateAndPostSettings(message.settings);
+                } else {
+                    error = "Advanced mode is only available when Developer mode is turned on from chrome://extensions/.";
+                }
+            } else {
+                _updateAndPostSettings(message.settings);
+            }
         }
+        return { error };
     };
     self.setSurfingkeysIcon = function(message, sender, sendResponse) {
         let icon = "icons/48.png";
@@ -1173,7 +1254,8 @@ function start(browser) {
         } else if (message.status === "lurking") {
             icon = "icons/48-l.png";
         }
-        chrome.browserAction.setIcon({
+        const browserAction = isMV3 ? chrome.action : chrome.browserAction;
+        browserAction.setIcon({
             path: icon,
             tabId: (sender.tab ? sender.tab.id : undefined)
         });
@@ -1186,38 +1268,45 @@ function start(browser) {
         }, message.headers, message.data);
     };
     self.requestImage = function(message, sender, sendResponse) {
-        const img = document.createElement("img");
-        img.crossOrigin = "Anonymous";
-        img.src = message.url;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.height = img.naturalHeight;
-            canvas.width = img.naturalWidth;
+        fetch(message.url, {
+            method: "GET"
+        }).then(res => {
+            return res.blob()
+        }).then(blob => {
+            return createImageBitmap(blob)
+        }).then(img => {
+            const canvas = new OffscreenCanvas(img.width, img.height)
             const ctx = canvas.getContext('2d');
-
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            _response(message, sendResponse, {
-                text: canvas.toDataURL()
+            ctx.drawImage(img, 0,0, canvas.width, canvas.height);
+            canvas.convertToBlob().then(blob => {
+                const fr = new FileReader();
+                fr.onload = function(e) {
+                    _response(message, sendResponse, {
+                        text: e.target.result
+                    });
+                }
+                fr.readAsDataURL(blob);
             });
-        };
-        img.onerror = (e) => {
-            // retry without crossOrigin
-            if (img.crossOrigin) {
-                delete img.src;
-                img.crossOrigin = null;
-                img.src = message.url;
-            }
-        };
+        }).catch(exp => {
+            _response(message, sendResponse, {
+                text: ""
+            });
+        });
     };
     self.nextFrame = function(message, sender, sendResponse) {
-        var tid = sender.tab.id;
-        chrome.tabs.executeScript(tid, {
-            allFrames: true,
-            matchAboutBlank: true,
-            runAt: "document_start",
-            code: "typeof(getFrameId) === 'function' && getFrameId()"
+        const tid = sender.tab.id;
+        chrome.scripting.executeScript({
+            target: {
+                allFrames: true,
+                tabId: tid,
+            },
+            func: () => {
+                return typeof(getFrameId) === 'function' ? getFrameId() : 0;
+            },
         }, function(framesInTab) {
-            framesInTab = framesInTab.filter(function(frameId) {
+            framesInTab = framesInTab.map((res) => {
+                return res.result;
+            }).filter((frameId) => {
                 return frameId;
             });
 
@@ -1346,21 +1435,10 @@ function start(browser) {
     self.download = function(message, sender, sendResponse) {
         chrome.downloads.download({ url: message.url, saveAs: message.saveAs });
     };
-    self.executeScript = function(message, sender, sendResponse) {
-        chrome.tabs.executeScript(sender.tab.id, {
-            frameId: sender.frameId,
-            code: message.code,
-            matchAboutBlank: true,
-            file: message.file
-        }, function(result) {
-            _response(message, sendResponse, {
-                response: result
-            });
-        });
-    };
     self.tabURLAccessed = function(message, sender, sendResponse) {
         if (sender.tab) {
             var tabId = sender.tab.id;
+            _setScrollPos_bg(tabId);
             if (!tabURLs.hasOwnProperty(tabId)) {
                 tabURLs[tabId] = {};
             }
@@ -1650,17 +1728,6 @@ function start(browser) {
         return {requestHeaders: details.requestHeaders};
     }
 
-    self.setUserAgent = function (message, sender, sendResponse) {
-        if (message.userAgent) {
-            userAgent = message.userAgent;
-            chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, {
-                urls: ["<all_urls>"]
-            }, ["blocking", "requestHeaders"]);
-        } else {
-            chrome.webRequest.onBeforeSendHeaders.removeListener(onBeforeSendHeaders);
-        }
-        chrome.tabs.reload(sender.tab.id);
-    };
     self.writeClipboard = function (message, sender, sendResponse) {
         navigator.clipboard.writeText(message.text)
     };
