@@ -279,10 +279,6 @@ function actionWithSelectionPreserved(cb) {
     }
 }
 
-function last(array) {
-    return array[array.length - 1];
-}
-
 function filterAncestors(elements) {
     if (elements.length === 0) {
         return elements;

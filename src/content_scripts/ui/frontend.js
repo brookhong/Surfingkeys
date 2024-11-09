@@ -323,7 +323,11 @@ const Front = (function() {
 
         initL10n(function(locale) {
             var help_groups = feature_groups.map(function(){return [];});
-            help_groups[0].push("<div><span class=kbd-span><kbd>&lt;Alt-s&gt;</kbd></span><span class=annotation>{0}</span></div>".format(locale("Toggle SurfingKeys on current site")));
+            const lh = Mode.specialKeys["<Alt-s>"].length;
+            if (lh > 0) {
+                help_groups[0].push("<div><span class=kbd-span><kbd>{0}</kbd></span><span class=annotation>{1}</span></div>".format(
+                    htmlEncode(Mode.specialKeys["<Alt-s>"][lh - 1]), locale("Toggle SurfingKeys on current site")));
+            }
 
             metas = metas.concat(getAnnotations(omnibar.mappings));
             metas.forEach(function(meta) {
