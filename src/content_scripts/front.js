@@ -55,7 +55,8 @@ function createFront(insert, normal, hints, visual, browser) {
         } else {
             if (!frontendPromise) {
                 // no need to create frontend iframe if the action is to hide key stroke
-                if (args.action === "hideKeystroke") {
+                // and frontend UI must be created after document.body is ready(#2132)
+                if (args.action === "hideKeystroke" || document.body === null) {
                     return;
                 }
                 newFrontEnd();
