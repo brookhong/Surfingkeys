@@ -137,6 +137,7 @@ function dispatchMouseEvent(element, events, shiftKey) {
         var event = new MouseEvent(eventName, {
             bubbles: true,
             cancelable: true,
+            composed: true,
             view: window,
             button: mouseButton
         });
