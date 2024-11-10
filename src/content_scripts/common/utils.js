@@ -784,32 +784,6 @@ function httpRequest(args, onSuccess) {
     RUNTIME("request", args, onSuccess);
 }
 
-/**
- * Insert javascript code into main world context.
- *
- * @param {function | string} code a javascript function to be executed in main world context, or an URL of js file.
- * @param {function} onload a callback function after requested code executed.
- *
- */
-function insertJS(code, onload) {
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    if (typeof(code) === 'function') {
-        setSanitizedContent(s, "(" + code.toString() + ")(window);");
-        setTimeout(function() {
-            onload && onload();
-            s.remove();
-        }, 1);
-    } else {
-        s.src = code;
-        s.onload = function() {
-            onload && onload();
-            s.remove();
-        };
-    }
-    document.lastElementChild.appendChild(s);
-}
-
 const flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
 function flashPressedLink(link, cb) {
     var rect = getRealRect(link);
@@ -915,7 +889,6 @@ export {
     httpRequest,
     initL10n,
     initSKFunctionListener,
-    insertJS,
     isEditable,
     isElementClickable,
     isElementDrawn,
