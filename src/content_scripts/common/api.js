@@ -406,6 +406,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         imap,
         map,
         lmap,
+        vmap,
         unmap,
         unmapAllExcept,
         iunmap,
