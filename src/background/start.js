@@ -217,6 +217,7 @@ function start(browser) {
         repeatThreshold: 99,
         tabsMRUOrder: true,
         newTabPosition: 'default',
+        newTabPositionOmnibar: 'newTabPosition',
         showTabIndices: false,
         interceptedErrors: []
     };
@@ -1081,10 +1082,14 @@ function start(browser) {
         return url;
     }
 
-    function openUrlInNewTab(currentTab, url, message) {
+    function openUrlInNewTab(currentTab, url, message, tabPositionConfKey = "newTabPosition") {
+        if (tabPositionConfKey !== "newTabPosition" && conf[tabPositionConfKey] === "newTabPosition") {
+            tabPositionConfKey = "newTabPosition";
+        }
+
         var newTabPosition;
         if (currentTab) {
-            switch (conf.newTabPosition) {
+            switch (conf[tabPositionConfKey]) {
                 case 'left':
                     newTabPosition = currentTab.index;
                     break;
@@ -1132,7 +1137,7 @@ function start(browser) {
                     // if current call was made from Omnibar, the sender.tab may be stale,
                     // as sender was bound when port was created.
                     getActiveTab(function(tab) {
-                        openUrlInNewTab(tab, url, message);
+                        openUrlInNewTab(tab, url, message, "newTabPositionOmnibar");
                     });
                 } else {
                     openUrlInNewTab(sender.tab, url, message);
