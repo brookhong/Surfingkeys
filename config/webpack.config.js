@@ -87,7 +87,6 @@ module.exports = (env, argv) => {
     };
     const moduleEntries = {
         'pages/options': './src/content_scripts/options.js',
-        'api': './src/user_scripts/index.js'
     };
     const pagesCopyOptions = {
         ignore: [
@@ -100,6 +99,7 @@ module.exports = (env, argv) => {
         entry['pages/neovim'] = './src/pages/neovim.js';
         entry['pages/pdf_viewer'] = './src/content_scripts/pdf_viewer.js';
         moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
+        moduleEntries['api'] = './src/user_scripts/index.js';
     }
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';

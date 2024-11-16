@@ -1,8 +1,11 @@
 import { RUNTIME, dispatchSKEvent } from '../content_scripts/common/runtime.js';
 import {
-    httpRequest,
+    aceVimMap,
+    addVimMapKey,
+    applyUserSettings,
     getBrowserName,
     getClickableElements,
+    httpRequest,
     initSKFunctionListener,
     isElementPartiallyInViewport,
     showBanner,
@@ -23,50 +26,6 @@ function isInUIFrame() {
         if (_isDomainApplicable(domain)) {
             dispatchSKEvent("front", ['addMapkey', "Omnibar", new_keystroke, old_keystroke]);
         }
-    }
-
-    /**
-     * Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
-     *
-     * @param {string} lhs a key sequence to replace
-     * @param {string} rhs a key sequence to be replaced
-     * @param {string} ctx a mode such as `insert`, `normal`.
-     *
-     * @example aceVimMap('J', ':bn', 'normal');
-     */
-    function aceVimMap(lhs, rhs, ctx) {
-        dispatchSKEvent("front", ['addVimMap', lhs, rhs, ctx]);
-    }
-
-    /**
-     * Add map key in ACE editor.
-     *
-     * @param {object} objects multiple objects to define key map in ACE, see more from [ace/keyboard/vim.js](https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099)
-     *
-     * @example
-     * addVimMapKey(
-     *     {
-     *         keys: 'n',
-     *         type: 'motion',
-     *         motion: 'moveByCharacters',
-     *         motionArgs: {
-     *             forward: false
-     *         }
-     *     },
-     *
-     *     {
-     *         keys: 'e',
-     *         type: 'motion',
-     *         motion: 'moveByLines',
-     *         motionArgs: {
-     *             forward: true,
-     *             linewise: true
-     *         }
-     *     }
-     * );
-     */
-    function addVimMapKey() {
-        dispatchSKEvent("front", ['addVimKeyMap', Array.from(arguments)]);
     }
 
 const userDefinedFunctions = {};
@@ -142,26 +101,6 @@ initSKFunctionListener("user", {
 function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
     functionsToListSuggestions[suggestion_url] = callback_to_parse_suggestion;
     dispatchSKEvent('api', ['addSearchAlias', alias, prompt, search_url, search_leader_key, suggestion_url, "user", only_this_site_key, options]);
-}
-
-function isEmptyObject(obj) {
-    for (var name in obj) {
-        return false;
-    }
-    return true;
-}
-
-function applyUserSettings(delta) {
-    if (delta.error !== "") {
-        if (window === top) {
-            showPopup("[SurfingKeys] Error found in settings: " + delta.error);
-        } else {
-            console.log("[SurfingKeys] Error found in settings({0}): {1}".format(window.location.href, delta.error));
-        }
-    }
-    if (!isEmptyObject(delta.settings)) {
-        dispatchSKEvent("front", ['applySettingsFromSnippets', delta.settings]);
-    }
 }
 
 const api = {

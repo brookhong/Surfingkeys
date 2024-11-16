@@ -1,4 +1,4 @@
-import { dispatchSKEvent } from './runtime.js';
+import { RUNTIME, dispatchSKEvent } from './runtime.js';
 import Trie from './trie';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
@@ -6,11 +6,18 @@ import {
     LOG,
 } from '../../common/utils.js';
 import {
+    aceVimMap,
+    addVimMapKey,
     constructSearchURL,
+    getBrowserName,
+    getClickableElements,
     initSKFunctionListener,
+    isElementPartiallyInViewport,
     isInUIFrame,
     mapInMode,
     parseAnnotation,
+    showBanner,
+    showPopup,
     tabOpenLink,
 } from './utils.js';
 
@@ -454,16 +461,53 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         },
     });
     return {
-        Clipboard: clipboard,
+        RUNTIME,
+        aceVimMap,
+        addVimMapKey,
         addSearchAlias,
         cmap,
-        map,
-        mapkey,
+        imap,
         imapkey,
+        isElementPartiallyInViewport,
+        getBrowserName,
+        getClickableElements,
+        lmap,
+        map,
+        unmap,
+        unmapAllExcept,
+        iunmap,
+        vunmap,
+        mapkey,
         readText: browser.readText,
-        vmapkey,
         removeSearchAlias,
         searchSelectedWith,
+        tabOpenLink,
+        vmap,
+        vmapkey,
+        Clipboard: clipboard,
+        Normal: {
+            feedkeys: normal.feedkeys,
+            jumpVIMark: normal.jumpVIMark,
+            passThrough: normal.passThrough,
+            scroll: normal.scroll,
+        },
+        Hints: {
+            click: hints.click,
+            create: hints.create,
+            dispatchMouseClick: hints.dispatchMouseClick,
+            style: hints.style,
+            setNumeric: hints.setNumeric,
+            setCharacters: hints.setCharacters,
+        },
+        Visual: {
+            style: visual.style,
+        },
+        Front: {
+            openOmnibar: front.openOmnibar,
+            registerInlineQuery: front.registerInlineQuery,
+            showBanner,
+            showPopup,
+        },
     };
 }
 
