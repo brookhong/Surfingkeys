@@ -319,10 +319,11 @@ function start(browser) {
     }
 
     function sendTabMessage(tabId, frameId, message, cb) {
-        if (frameId === -1) {
-            chrome.tabs.sendMessage(tabId, message);
-        } else {
-            chrome.tabs.sendMessage(tabId, message, {frameId: frameId});
+        const opts = (frameId === -1) ? undefined : {frameId: frameId};
+        // use catch to suppress Uncaught (in promise) Error on sending message to unsupported tabs like chrome://
+        const p = chrome.tabs.sendMessage(tabId, message, opts);
+        if (p) {
+            p.catch((e) => {});
         }
     }
     var _lastActiveTabId = null;
