@@ -211,6 +211,9 @@ const api = {
         openOmnibar: (args) => {
             dispatchSKEvent('api', ['front:openOmnibar', args]);
         },
+        showEditor: (element, onWrite, type, useNeovim) => {
+            dispatchSKEvent('api', ['front:showEditor', element, onWrite, type, useNeovim]);
+        },
         showBanner,
         showPopup
     },

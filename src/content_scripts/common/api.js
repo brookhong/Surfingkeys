@@ -505,6 +505,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         Front: {
             openOmnibar: front.openOmnibar,
             registerInlineQuery: front.registerInlineQuery,
+            showEditor: front.showEditor,
             showBanner,
             showPopup,
         },
