@@ -144,7 +144,7 @@ function _initModules() {
     const front = createFront(insert, normal, hints, visual, _browser);
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
-    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front);
+    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front, _browser);
     if (typeof(_browser.plugin) === "function") {
         _browser.plugin({ front });
     }

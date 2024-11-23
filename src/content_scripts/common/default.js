@@ -15,7 +15,7 @@ import {
     toggleQuote,
 } from './utils.js';
 
-export default function(api, clipboard, insert, normal, hints, visual, front) {
+export default function(api, clipboard, insert, normal, hints, visual, front, browser) {
     const {
         addSearchAlias,
         cmap,
@@ -728,12 +728,12 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
         });
     });
 
-    const browser = getBrowserName();
-    if (browser === "Firefox") {
+    const bn = getBrowserName();
+    if (bn === "Firefox") {
         mapkey('on', '#3Open newtab', function() {
             tabOpenLink("about:blank");
         });
-    } else if (browser === "Chrome") {
+    } else if (bn === "Chrome") {
         mapkey('cp', '#13Toggle proxy for current site', function() {
             var host = window.location.host.replace(/:\d+/,'');
             if (host && host.length) {
