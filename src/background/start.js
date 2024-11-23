@@ -1266,7 +1266,11 @@ function start(browser) {
             _response(message, sendResponse, {
                 text: res
             });
-        }, message.headers, message.data);
+        }, message.headers, message.data, (e) => {
+            _response(message, sendResponse, {
+                error: e.toString()
+            });
+        });
     };
     self.requestImage = function(message, sender, sendResponse) {
         fetch(message.url, {

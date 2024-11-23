@@ -349,10 +349,10 @@ function createFront(insert, normal, hints, visual, browser) {
     var _inlineQuery = false;
     var _showQueryResult;
     self.performInlineQuery = function (query, pos, showQueryResult) {
-        if (document.dictEnabled !== undefined && document.dictEnabled) {
-            if (window.location.protocol === "dictorium:") {
+        if (document.dictEnabled !== undefined) {
+            if (window.location.href.startsWith("chrome://dictorium-query/")) {
                 if (window === top) {
-                    window.location.href = query;
+                    window.location.href = `chrome://dictorium-query/${query}`;
                 } else {
                     window.postMessage({dictorium_data: { type: 'DictoriumReload', word: query }});
                 }

@@ -81,11 +81,16 @@ initSKFunctionListener("user", {
         }
     },
     performInlineQuery: (query, callbackId, origin) => {
+        const url = (typeof(inlineQuery.url) === "function") ? inlineQuery.url(query) : inlineQuery.url + query;
         httpRequest({
-            url: (typeof(inlineQuery.url) === "function") ? inlineQuery.url(query) : inlineQuery.url + query,
+            url,
             headers: inlineQuery.headers
         }, function(res) {
-            dispatchSKEvent("front", [callbackId, inlineQuery.parseResult(res)]);
+            if (res.error) {
+                dispatchSKEvent("front", [callbackId, `${res.error} on ${url}`]);
+            } else {
+                dispatchSKEvent("front", [callbackId, inlineQuery.parseResult(res)]);
+            }
         });
     },
     onClipboardRead: (resp) => {

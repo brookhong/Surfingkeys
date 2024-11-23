@@ -1439,7 +1439,7 @@ function OmniQuery(omnibar, front) {
     }
     var _words;
     self.onOpen = function(arg) {
-        if (arg) {
+        if (arg && document.dictEnabled === undefined) {
             omnibar.input.value = arg;
             front.contentCommand({
                 action: 'omnibar_query_entered',
