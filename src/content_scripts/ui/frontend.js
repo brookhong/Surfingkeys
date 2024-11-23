@@ -300,6 +300,15 @@ const Front = (function() {
     };
     self.chooseTab = _actions['chooseTab'];
 
+    function localizeAnnotation(locale, annotation) {
+        if (annotation.constructor.name === "Array") {
+            const fmt = annotation[0];
+            return locale(fmt).format(...annotation.slice(1));
+        } else {
+            return locale(annotation);
+        }
+    }
+
     function buildUsage(metas, cb) {
         var feature_groups = [
             'Help',                  // 0
@@ -331,8 +340,9 @@ const Front = (function() {
 
             metas = metas.concat(getAnnotations(omnibar.mappings));
             metas.forEach(function(meta) {
-                var w = KeyboardUtils.decodeKeystroke(meta.word);
-                var item = `<div><span class=kbd-span><kbd>${htmlEncode(w)}</kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
+                const w = KeyboardUtils.decodeKeystroke(meta.word);
+                const annotation = localizeAnnotation(locale, meta.annotation);
+                const item = `<div><span class=kbd-span><kbd>${htmlEncode(w)}</kbd></span><span class=annotation>${annotation}</span></div>`;
                 help_groups[meta.feature_group].push(item);
             });
             help_groups = help_groups.map(function(g, i) {
@@ -601,15 +611,16 @@ const Front = (function() {
             clearPendingHint();
         }
     };
+
     function showRichHints(keyHints) {
         initL10n(function (locale) {
             var words = keyHints.accumulated;
             var cc = keyHints.candidates;
             words = Object.keys(cc).sort().map(function (w) {
-                var meta = cc[w];
-                if (meta.annotation) {
+                const annotation = localizeAnnotation(locale, cc[w].annotation);
+                if (annotation) {
                     const nextKey = w.substr(keyHints.accumulated.length);
-                    return `<div><span class=kbd-span><kbd>${htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated))}<span class=candidates>${htmlEncode(KeyboardUtils.decodeKeystroke(nextKey))}</span></kbd></span><span class=annotation>${locale(meta.annotation)}</span></div>`;
+                    return `<div><span class=kbd-span><kbd>${htmlEncode(KeyboardUtils.decodeKeystroke(keyHints.accumulated))}<span class=candidates>${htmlEncode(KeyboardUtils.decodeKeystroke(nextKey))}</span></kbd></span><span class=annotation>${annotation}</span></div>`;
                 } else {
                     return "";
                 }

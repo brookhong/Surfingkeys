@@ -104,6 +104,9 @@ initSKFunctionListener("user", {
 }, true);
 
 function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
+    if (!/^[\u0000-\u007f]*$/.test(alias)) {
+        throw `Invalid alias ${alias}, which must be ASCII characters.`;
+    }
     functionsToListSuggestions[suggestion_url] = callback_to_parse_suggestion;
     dispatchSKEvent('api', ['addSearchAlias', alias, prompt, search_url, search_leader_key, suggestion_url, "user", only_this_site_key, options]);
 }

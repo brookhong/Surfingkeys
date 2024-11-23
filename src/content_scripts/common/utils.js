@@ -604,7 +604,7 @@ DOMRect.prototype.has = function (x, y, ex, ey) {
 };
 
 function initL10n(cb) {
-    var lang = runtime.conf.language || window.navigator.language;
+    const lang = runtime.conf.language || window.navigator.language;
     if (lang === "en-US") {
         cb(function(str) {
             return str;
@@ -651,11 +651,18 @@ if (!Array.prototype.flatMap) {
 }
 
 function parseAnnotation(ag) {
-    var annotations = ag.annotation.match(/#(\d+)(.*)/);
+    let an = ag.annotation;
+    if (an.constructor.name === "String") {
+        // for parameterized annotations such as ["#6Search selected with {0}", "Google"]
+        an = [an];
+    }
+    const annotations = an[0].match(/^#(\d+)(.*)/);
     if (annotations !== null) {
         ag.feature_group = parseInt(annotations[1]);
-        ag.annotation = annotations[2];
+        an[0] = annotations[2];
     }
+    // first element must not be ""
+    ag.annotation = an[0].length === 0 ? "" : an;
     return ag;
 }
 

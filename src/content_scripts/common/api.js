@@ -318,6 +318,9 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * });
      */
     function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
+        if (!/^[\u0000-\u007f]*$/.test(alias)) {
+            throw `Invalid alias ${alias}, which must be ASCII characters.`;
+        }
         if (!isInUIFrame() && front.addSearchAlias) {
             front.addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
         }
@@ -328,8 +331,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         function ssw() {
             searchSelectedWith(search_url);
         }
-        mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
-        mapkey('o' + alias, '#8Open Search with alias ' + alias, () => {
+        mapkey((search_leader_key || 's') + alias, ['#6Search selected with {0}', prompt], ssw);
+        mapkey('o' + alias, ['#8Open Omnibar for {0} Search', prompt], () => {
             front.openOmnibar({type: "SearchEngine", extra: alias});
         });
         vmapkey((search_leader_key || 's') + alias, '', ssw);
