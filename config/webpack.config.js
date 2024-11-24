@@ -32,7 +32,6 @@ function modifyManifest(browser, mode, buffer) {
         manifest.permissions.push("downloads.shelf");
         manifest.permissions.push("favicon");
         manifest.permissions.push("userScripts");
-        manifest.permissions.push("scripting");
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";
         manifest.background = {
