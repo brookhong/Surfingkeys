@@ -6,7 +6,7 @@ import { marked } from 'marked';
 
 RUNTIME("getTopSites", null, function(response) {
     var urls = response.urls.map(function(u) {
-        const favUrl = chrome.runtime.getURL(`/_favicon/?pageUrl=${u.url}`);
+        const favUrl = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(u.url)}`);
         return `<li><a href="${u.url}"><i style="background:url(${favUrl}) no-repeat"></i>${u.title}</a></li>`;
     });
     setSanitizedContent(document.querySelector("#topSites>ul"), urls.join("\n"));

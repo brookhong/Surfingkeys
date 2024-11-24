@@ -924,7 +924,7 @@ function refreshHints(hints, pressedKeys) {
 function attachFaviconToImgSrc(tab, imgEl) {
     const browserName = getBrowserName();
     if (browserName === "Chrome") {
-        imgEl.src = chrome.runtime.getURL(`/_favicon/?pageUrl=${tab.url}`);
+        imgEl.src = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(tab.url)}`);
     } else if (browserName.startsWith("Safari")) {
         imgEl.src = new URL(tab.url).origin + "/favicon.ico";
     } else {

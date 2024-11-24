@@ -42,7 +42,9 @@ function modifyManifest(browser, mode, buffer) {
         ];
         manifest.web_accessible_resources = [
             {
+                "extension_ids": ["*"],
                 "resources": [
+                    "_favicon/*",
                     "api.js",
                     "pages/neovim.html",
                     "pages/default.js",
