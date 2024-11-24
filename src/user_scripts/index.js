@@ -68,6 +68,7 @@ const functionsToListSuggestions = {};
 let inlineQuery;
 let hintsFunction;
 let onClipboardReadFn;
+let userScriptTask = () => {};
 initSKFunctionListener("user", {
     callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
@@ -92,6 +93,9 @@ initSKFunctionListener("user", {
                 dispatchSKEvent("front", [callbackId, inlineQuery.parseResult(res)]);
             }
         });
+    },
+    runUserScript: () => {
+        userScriptTask();
     },
     onClipboardRead: (resp) => {
         onClipboardReadFn(resp);
@@ -227,11 +231,16 @@ const api = {
 export default (extensionRootUrl, uf) => {
     EXTENSION_ROOT_URL = extensionRootUrl;
     if (isInUIFrame()) return;
-    var settings = {}, error = "";
-    try {
-        uf(api, settings);
-    } catch(e) {
-        error = e.toString();
+    userScriptTask = () => {
+        var settings = {}, error = "";
+        try {
+            uf(api, settings);
+        } catch(e) {
+            error = e.toString();
+        }
+        applyUserSettings({settings, error});
+    };
+    if (window === top) {
+        userScriptTask();
     }
-    applyUserSettings({settings, error});
 };

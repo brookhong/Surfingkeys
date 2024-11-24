@@ -188,6 +188,9 @@ window.getFrameId = function () {
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
     ) {
         _initContent(_initModules());
+
+        // Only used to load user script for iframes in MV3
+        dispatchSKEvent('user', ["runUserScript"]);
     }
     return window.frameId;
 };
