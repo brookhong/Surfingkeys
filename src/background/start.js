@@ -745,8 +745,8 @@ function start(browser) {
                 });
                 tabs.sort(function(x, y) {
                     // Shift tabs without "last access" data to the end
-                    var a = tabActivated[x.id];
-                    var b = tabActivated[y.id];
+                    var a = x.lastAccessed || tabActivated[x.id];
+                    var b = y.lastAccessed || tabActivated[y.id];
 
                     if (!isFinite(a) && !isFinite(b)) {
                         return 0;
