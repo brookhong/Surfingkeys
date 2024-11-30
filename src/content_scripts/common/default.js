@@ -56,7 +56,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
             var pdfUrl = window.location.href;
             if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                pdfUrl = window.location.search.substr(3);
+                const filePos = window.location.search.indexOf("=") + 1;
+                pdfUrl = window.location.search.substr(filePos);
                 RUNTIME('updateSettings', {
                     settings: {
                         "noPdfViewer": 1
@@ -526,7 +527,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('yy', "#7Copy current page's URL", function() {
         var url = window.location.href;
         if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-            url = window.location.search.substr(3);
+            const filePos = window.location.search.indexOf("=") + 1;
+            url = window.location.search.substr(filePos);
         }
         clipboard.write(url);
     });
