@@ -445,7 +445,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('gp', '#4Go to the playing tab', function() {
         RUNTIME('getTabs', { queryInfo: {audible: true}}, response => {
             if (response.tabs?.at(0)) {
-                tab = response.tabs[0]
+                const tab = response.tabs[0]
                 RUNTIME('focusTab', {
                     windowId: tab.windowId,
                     tabId: tab.id
