@@ -68,6 +68,7 @@ const functionsToListSuggestions = {};
 let inlineQuery;
 let hintsFunction;
 let onClipboardReadFn;
+let onEditorWriteFn;
 let userScriptTask = () => {};
 initSKFunctionListener("user", {
     callUserFunction: (keys, para) => {
@@ -100,6 +101,9 @@ initSKFunctionListener("user", {
     onClipboardRead: (resp) => {
         onClipboardReadFn(resp);
     },
+    onEditorWrite: (data) => {
+        onEditorWriteFn(data);
+    },
     onHintClicked: (element) => {
         if (typeof(hintsFunction) === 'function') {
             hintsFunction(element);
@@ -113,6 +117,20 @@ function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion
     }
     functionsToListSuggestions[suggestion_url] = callback_to_parse_suggestion;
     dispatchSKEvent('api', ['addSearchAlias', alias, prompt, search_url, search_leader_key, suggestion_url, "user", only_this_site_key, options]);
+}
+
+function createCssSelectorForElements(cssSelector, elements) {
+    if (elements instanceof HTMLElement) {
+        elements = [elements];
+    } else if (elements instanceof Array) {
+        elements = elements.filter((m) => m instanceof HTMLElement);
+    } else {
+        elements = [];
+    }
+    elements.forEach((m) => {
+        m.classList.add(cssSelector);
+    });
+    return elements.length;
 }
 
 const api = {
@@ -162,20 +180,11 @@ const api = {
     Hints: {
         click: (links, force) => {
             if (typeof(links) !== 'string') {
-                if (links instanceof HTMLElement) {
-                    links = [links];
-                } else if (links instanceof Array) {
-                    links = links.filter((m) => m instanceof HTMLElement);
-                } else {
-                    links = [];
-                }
-                if (links.length === 0) {
+                const hintsClicking = "surfingkeys--hints--clicking";
+                if (createCssSelectorForElements(hintsClicking, links) === 0) {
                     return;
                 }
-                links.forEach((m) => {
-                    m.classList.add("surfingkeys--hints--clicking");
-                });
-                links = ".surfingkeys--hints--clicking";
+                links = `.${hintsClicking}`;
             }
             dispatchSKEvent('api', ['hints:click', links, force]);
         },
@@ -219,6 +228,17 @@ const api = {
         registerInlineQuery: (args) => {
             inlineQuery = args;
             dispatchSKEvent('api', ['front:registerInlineQuery']);
+        },
+        showEditor: (element, onWrite, type, useNeovim) => {
+            if (typeof(element) !== 'string') {
+                const elementEditing = "surfingkeys--element--editing";
+                if (createCssSelectorForElements(elementEditing, element) === 0) {
+                    return;
+                }
+                element = `.${elementEditing}`;
+            }
+            onEditorWriteFn = onWrite;
+            dispatchSKEvent('api', ['front:showEditor', element, type, useNeovim]);
         },
         openOmnibar: (args) => {
             dispatchSKEvent('api', ['front:openOmnibar', args]);

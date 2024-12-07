@@ -435,6 +435,11 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         "hints:setNumeric": hints.setNumeric,
         "hints:style": hints.style,
         "front:registerInlineQuery": front.registerInlineQuery,
+        "front:showEditor": (element, type, useNeovim) => {
+            front.showEditor(element, (data) => {
+                dispatchSKEvent('user', ["onEditorWrite", data]);
+            }, type, useNeovim);
+        },
         "front:openOmnibar": front.openOmnibar,
         "normal:feedkeys": normal.feedkeys,
         "normal:jumpVIMark": normal.jumpVIMark,
@@ -508,6 +513,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         Front: {
             openOmnibar: front.openOmnibar,
             registerInlineQuery: front.registerInlineQuery,
+            showEditor: front.showEditor,
             showBanner,
             showPopup,
         },
