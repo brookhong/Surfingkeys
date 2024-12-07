@@ -245,8 +245,7 @@ function createFront(insert, normal, hints, visual, browser) {
 
     var onEditorSaved, elementBehindEditor;
 
-    /* INGORE this from JSDOC
-     * Launch the vim editor.
+    /* Launch the vim editor.
      *
      * @param {HTMLElement} element the target element which the vim editor is launched for, this parameter can also be a string, which will be used as default content in vim editor.
      * @param {function} onWrite a callback function to be executed on written back from vim editor.
