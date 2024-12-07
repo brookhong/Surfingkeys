@@ -1290,7 +1290,7 @@ function SearchEngine(omnibar, front) {
         const searchEngineIconStorageKey = `surfingkeys.searchEngineIcon.${message.prompt}`;
         const searchEngineIcon = localStorage.getItem(searchEngineIconStorageKey);
         if (searchEngineIcon) {
-            self.aliases[message.alias].prompt = `<img src="${searchEngineIcon}" alt=${message.prompt} style="width: 20px;" />`;
+            self.aliases[message.alias].prompt = `<img src="${searchEngineIcon}" alt="${message.prompt}" style="width: 20px;" />`;
         } else if (front.topOrigin.startsWith("http")){
             let iconUrl;
             if (message.options?.favicon_url) {
@@ -1306,7 +1306,7 @@ function SearchEngine(omnibar, front) {
             }, function(response) {
                 if (response) {
                     localStorage.setItem(searchEngineIconStorageKey, response.text);
-                    self.aliases[message.alias].prompt = `<img src="${response.text}" alt=${message.prompt} style="width: 20px;" />`;
+                    self.aliases[message.alias].prompt = `<img src="${response.text}" alt="${message.prompt}" style="width: 20px;" />`;
                 }
             });
         }
