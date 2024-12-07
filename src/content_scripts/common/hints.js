@@ -345,7 +345,7 @@ div.hint-scrollable {
     }
 
     function resetHints() {
-        if (!document.documentElement.contains(hintsHost)) {
+        if (Mode.getCurrent() !== self || !document.documentElement.contains(hintsHost)) {
             return;
         }
         var start = new Date().getTime();
@@ -442,6 +442,9 @@ div.hint-scrollable {
 
     initSKFunctionListener("hints", {
         scrollStarted: () => {
+            if (Mode.getCurrent() !== self || !document.documentElement.contains(hintsHost)) {
+                return;
+            }
             setSanitizedContent(holder, "");
             holder.remove();
             prefix = "";
