@@ -592,7 +592,8 @@ function createOmnibar(front, clipboard) {
                     tabbed: this.tabbed,
                     active: this.activeTab
                 },
-                url: url
+                url: url,
+                tabPositionConfKey: "newTabPositionOmnibar"
             });
         }
         return this.activeTab;
