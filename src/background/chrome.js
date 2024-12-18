@@ -154,7 +154,7 @@ function startNative() {
                 nvimServer.instance = startNative();
             } else {
                 delete nvimServer.instance;
-                LOG("error", "Failed to connect neovim, please make sure your neovim version 0.5 or above.");
+                LOG("warn", "Failed to connect neovim, please make sure your neovim version 0.5 or above.");
             }
         });
         nm.onMessage.addListener(async (resp) => {

@@ -1,6 +1,6 @@
 {
   "name": "Surfingkeys",
-  "version": "1.17.4",
+  "version": "1.17.5",
   "description": "Map your keys for web surfing, expand your browser with javascript and keyboard.",
   "main": "background.js",
   "directories": {
@@ -74,6 +74,6 @@
     "js-base64": "^3.7.2",
     "lodash": "^4.17.21",
     "marked": "^4.0.10",
-    "pdfjs-dist": "^2.9.359"
+    "pdfjs-dist": "^4.2.67"
   }
 }

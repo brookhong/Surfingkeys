@@ -10,7 +10,7 @@ function LOG(level, msg) {
 
 function regexFromString(str, caseSensitive, highlight) {
     var rxp = null;
-    const flags = caseSensitive ? "g" : "gi";
+    const flags = caseSensitive ? "" : "i";
     str = str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
     if (highlight) {
         rxp = new RegExp(str.replace(/\s+/, "\|"), flags);

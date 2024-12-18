@@ -320,10 +320,11 @@ function start(browser) {
     }
 
     function sendTabMessage(tabId, frameId, message, cb) {
-        if (frameId === -1) {
-            chrome.tabs.sendMessage(tabId, message);
-        } else {
-            chrome.tabs.sendMessage(tabId, message, {frameId: frameId});
+        const opts = (frameId === -1) ? undefined : {frameId: frameId};
+        // use catch to suppress Uncaught (in promise) Error on sending message to unsupported tabs like chrome://
+        const p = chrome.tabs.sendMessage(tabId, message, opts);
+        if (p) {
+            p.catch((e) => {});
         }
     }
     var _lastActiveTabId = null;
@@ -745,8 +746,8 @@ function start(browser) {
                 });
                 tabs.sort(function(x, y) {
                     // Shift tabs without "last access" data to the end
-                    var a = tabActivated[x.id];
-                    var b = tabActivated[y.id];
+                    var a = x.lastAccessed || tabActivated[x.id];
+                    var b = y.lastAccessed || tabActivated[y.id];
 
                     if (!isFinite(a) && !isFinite(b)) {
                         return 0;
@@ -1275,7 +1276,11 @@ function start(browser) {
             _response(message, sendResponse, {
                 text: res
             });
-        }, message.headers, message.data);
+        }, message.headers, message.data, (e) => {
+            _response(message, sendResponse, {
+                error: e.toString()
+            });
+        });
     };
     self.requestImage = function(message, sender, sendResponse) {
         fetch(message.url, {

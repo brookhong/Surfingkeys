@@ -1,4 +1,4 @@
-import { dispatchSKEvent } from './runtime.js';
+import { RUNTIME, dispatchSKEvent } from './runtime.js';
 import Trie from './trie';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
@@ -6,11 +6,18 @@ import {
     LOG,
 } from '../../common/utils.js';
 import {
+    aceVimMap,
+    addVimMapKey,
     constructSearchURL,
+    getBrowserName,
+    getClickableElements,
     initSKFunctionListener,
+    isElementPartiallyInViewport,
     isInUIFrame,
     mapInMode,
     parseAnnotation,
+    showBanner,
+    showPopup,
     tabOpenLink,
 } from './utils.js';
 
@@ -311,6 +318,9 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
      * });
      */
     function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
+        if (!/^[\u0000-\u007f]*$/.test(alias)) {
+            throw `Invalid alias ${alias}, which must be ASCII characters.`;
+        }
         if (!isInUIFrame() && front.addSearchAlias) {
             front.addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
         }
@@ -321,8 +331,8 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         function ssw() {
             searchSelectedWith(search_url);
         }
-        mapkey((search_leader_key || 's') + alias, '#6Search selected with ' + prompt, ssw);
-        mapkey('o' + alias, '#8Open Search with alias ' + alias, () => {
+        mapkey((search_leader_key || 's') + alias, ['#6Search selected with {0}', prompt], ssw);
+        mapkey('o' + alias, ['#8Open Omnibar for {0} Search', prompt], () => {
             front.openOmnibar({type: "SearchEngine", extra: alias});
         });
         vmapkey((search_leader_key || 's') + alias, '', ssw);
@@ -454,16 +464,53 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         },
     });
     return {
-        Clipboard: clipboard,
+        RUNTIME,
+        aceVimMap,
+        addVimMapKey,
         addSearchAlias,
         cmap,
-        map,
-        mapkey,
+        imap,
         imapkey,
+        isElementPartiallyInViewport,
+        getBrowserName,
+        getClickableElements,
+        lmap,
+        map,
+        unmap,
+        unmapAllExcept,
+        iunmap,
+        vunmap,
+        mapkey,
         readText: browser.readText,
-        vmapkey,
         removeSearchAlias,
         searchSelectedWith,
+        tabOpenLink,
+        vmap,
+        vmapkey,
+        Clipboard: clipboard,
+        Normal: {
+            feedkeys: normal.feedkeys,
+            jumpVIMark: normal.jumpVIMark,
+            passThrough: normal.passThrough,
+            scroll: normal.scroll,
+        },
+        Hints: {
+            click: hints.click,
+            create: hints.create,
+            dispatchMouseClick: hints.dispatchMouseClick,
+            style: hints.style,
+            setNumeric: hints.setNumeric,
+            setCharacters: hints.setCharacters,
+        },
+        Visual: {
+            style: visual.style,
+        },
+        Front: {
+            openOmnibar: front.openOmnibar,
+            registerInlineQuery: front.registerInlineQuery,
+            showBanner,
+            showPopup,
+        },
     };
 }
 

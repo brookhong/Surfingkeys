@@ -32,7 +32,6 @@ function modifyManifest(browser, mode, buffer) {
         manifest.permissions.push("downloads.shelf");
         manifest.permissions.push("favicon");
         manifest.permissions.push("userScripts");
-        manifest.permissions.push("scripting");
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";
         manifest.background = {
@@ -43,7 +42,9 @@ function modifyManifest(browser, mode, buffer) {
         ];
         manifest.web_accessible_resources = [
             {
+                "extension_ids": ["*"],
                 "resources": [
+                    "_favicon/*",
                     "api.js",
                     "pages/neovim.html",
                     "pages/default.js",
@@ -51,6 +52,8 @@ function modifyManifest(browser, mode, buffer) {
                     "pages/l10n.json",
                     "pages/frontend.html",
                     "pages/pdf_viewer.html",
+                    "pages/pdf_viewer.css",
+                    "pages/pdf_viewer.mjs",
                     "pages/shadow.css",
                     "pages/default.css"
                 ],
@@ -87,7 +90,6 @@ module.exports = (env, argv) => {
     };
     const moduleEntries = {
         'pages/options': './src/content_scripts/options.js',
-        'api': './src/user_scripts/index.js'
     };
     const pagesCopyOptions = {
         ignore: [
@@ -98,8 +100,8 @@ module.exports = (env, argv) => {
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
         entry['pages/neovim'] = './src/pages/neovim.js';
-        entry['pages/pdf_viewer'] = './src/content_scripts/pdf_viewer.js';
         moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
+        moduleEntries['api'] = './src/user_scripts/index.js';
     }
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';
@@ -160,6 +162,9 @@ module.exports = (env, argv) => {
                     { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
                     { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
                     { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
+                    { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
+                    { from: 'node_modules/pdfjs-dist/build/pdf.min.mjs', to: 'pages' },
+                    { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs', to: 'pages' },
                     { from: 'src/icons', to: 'icons' },
                     { from: 'src/content_scripts/content.css', to: 'content.css' },
                     {

@@ -39,6 +39,7 @@
         "tabs",
         "history",
         "bookmarks",
+        "scripting",
         "storage",
         "sessions",
         "downloads",

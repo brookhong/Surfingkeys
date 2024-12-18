@@ -7,14 +7,14 @@ import createVisual from './common/visual.js';
 import createHints from './common/hints.js';
 import createClipboard from './common/clipboard.js';
 import {
-    generateQuickGuid,
-    getRealEdit,
-    isInUIFrame,
-
+    applyUserSettings,
     createElementWithContent,
+    generateQuickGuid,
     getBrowserName,
+    getRealEdit,
     htmlEncode,
     initL10n,
+    isInUIFrame,
     reportIssue,
     setSanitizedContent,
     showBanner,
@@ -117,16 +117,14 @@ function applySettings(api, normal, rs) {
                 api.removeSearchAlias(key);
             }
         }
-    } else if (!rs.isMV3) {
-        import(/* webpackIgnore: true */ chrome.runtime.getURL("/api.js")).then((module) => {
-            module.default(chrome.runtime.getURL("/"), (api, settings) => {
-                try {
-                    (new Function('settings', 'api', rs.snippets))(settings, api);
-                } catch (e) {
-                    showBanner(e.toString(), 3000);
-                }
-            });
-        });
+    } else if (!rs.isMV3 && rs.snippets && !document.location.href.startsWith(chrome.runtime.getURL("/"))) {
+        var settings = {}, error = "";
+        try {
+            (new Function('settings', 'api', rs.snippets))(settings, api);
+        } catch (e) {
+            error = e.toString();
+        }
+        applyUserSettings({settings, error});
     }
 
     applyRuntimeConf(normal);
@@ -146,7 +144,7 @@ function _initModules() {
     const front = createFront(insert, normal, hints, visual, _browser);
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
-    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front);
+    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front, _browser);
     if (typeof(_browser.plugin) === "function") {
         _browser.plugin({ front });
     }
@@ -190,6 +188,9 @@ window.getFrameId = function () {
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
     ) {
         _initContent(_initModules());
+
+        // Only used to load user script for iframes in MV3
+        dispatchSKEvent('user', ["runUserScript"]);
     }
     return window.frameId;
 };

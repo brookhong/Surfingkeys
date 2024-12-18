@@ -15,7 +15,7 @@ import {
     toggleQuote,
 } from './utils.js';
 
-export default function(api, clipboard, insert, normal, hints, visual, front) {
+export default function(api, clipboard, insert, normal, hints, visual, front, browser) {
     const {
         addSearchAlias,
         cmap,
@@ -56,7 +56,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
         mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
             var pdfUrl = window.location.href;
             if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                pdfUrl = window.location.search.substr(3);
+                const filePos = window.location.search.indexOf("=") + 1;
+                pdfUrl = window.location.search.substr(filePos);
                 RUNTIME('updateSettings', {
                     settings: {
                         "noPdfViewer": 1
@@ -294,26 +295,14 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
         hints.create(runtime.conf.textAnchorPat, function (element) {
             var word = element[2].trim().replace(/[^A-z].*$/, "");
             var b = getTextNodePos(element[0], element[1], element[2].length);
-            if (document.dictEnabled !== undefined) {
-                if (document.dictEnabled) {
-                    window.postMessage({dictorium_data: {
-                        type: "OpenDictoriumQuery",
-                        word: word,
-                        sentence: getSentence(element[0], element[1]),
-                        pos: b,
-                        source: window.location.href
-                    }});
-                }
-            } else {
-                front.performInlineQuery(word, {
-                    top: b.top,
-                    left: b.left,
-                    height: b.height,
-                    width: b.width
-                }, function (pos, queryResult) {
-                    dispatchSKEvent("front", ['showBubble', pos, queryResult, false]);
-                });
-            }
+            front.performInlineQuery(word, {
+                top: b.top,
+                left: b.left,
+                height: b.height,
+                width: b.width
+            }, function (pos, queryResult) {
+                dispatchSKEvent("front", ['showBubble', pos, queryResult, false]);
+            });
         });
     });
 
@@ -456,7 +445,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
     mapkey('gp', '#4Go to the playing tab', function() {
         RUNTIME('getTabs', { queryInfo: {audible: true}}, response => {
             if (response.tabs?.at(0)) {
-                tab = response.tabs[0]
+                const tab = response.tabs[0]
                 RUNTIME('focusTab', {
                     windowId: tab.windowId,
                     tabId: tab.id
@@ -538,7 +527,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
     mapkey('yy', "#7Copy current page's URL", function() {
         var url = window.location.href;
         if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-            url = window.location.search.substr(3);
+            const filePos = window.location.search.indexOf("=") + 1;
+            url = window.location.search.substr(filePos);
         }
         clipboard.write(url);
     });
@@ -728,12 +718,12 @@ export default function(api, clipboard, insert, normal, hints, visual, front) {
         });
     });
 
-    const browser = getBrowserName();
-    if (browser === "Firefox") {
+    const bn = getBrowserName();
+    if (bn === "Firefox") {
         mapkey('on', '#3Open newtab', function() {
             tabOpenLink("about:blank");
         });
-    } else if (browser === "Chrome") {
+    } else if (bn === "Chrome") {
         mapkey('cp', '#13Toggle proxy for current site', function() {
             var host = window.location.host.replace(/:\d+/,'');
             if (host && host.length) {
