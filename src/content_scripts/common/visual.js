@@ -480,6 +480,11 @@ function createVisual(clipboard, hints) {
     };
 
     function select(found) {
+        for (let el of document.getElementsByClassName("surfingkeys_match_mark")) {
+            el.classList.remove("current")
+        }
+        found[2][0].classList.add("current");
+
         self.hideCursor();
         if (selection.anchorNode && state === 2) {
             selection.extend(found[0], found[1]);
