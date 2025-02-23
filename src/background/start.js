@@ -273,7 +273,7 @@ function start(browser) {
                 set.autoproxy_hosts = [set.autoproxy_hosts];
             }
             if (set.localPath) {
-                request(set.localPath, function(resp) {
+                request(appendNonce(set.localPath), function(resp) {
                     set.snippets = resp;
                     cb(set);
                 }, undefined, undefined, function (po) {
@@ -640,8 +640,18 @@ function start(browser) {
         });
     };
 
+    function appendNonce(url) {
+        if (/https?:\/\//.test(url)) {
+            url = url.replace(/\?$/, "");
+            let u = new URL(url);
+            let con = u.search ? "&" : "?";
+            url = `${url}${con}nonce=${new Date().getTime()}`;
+        }
+        return url;
+    }
+
     function _loadSettingsFromUrl(url, cb) {
-        request(url, function(resp) {
+        request(appendNonce(url), function(resp) {
             _updateAndPostSettings({localPath: url, snippets: resp});
             cb({status: "Succeeded", snippets: resp});
         }, undefined, undefined, function (po) {
