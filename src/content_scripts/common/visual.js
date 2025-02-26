@@ -758,18 +758,18 @@ function createVisual(clipboard, hints) {
             dispatchSKEvent("front", ['showStatus', [undefined, undefined, "Pattern not found: {0}".format(query)], 1000]);
         }
         Mode.getScrollableElements().forEach(function(n) {
-            if (n !== document.scrollingElement) {
-                n.onscroll = function() {
-                    matches.forEach(function(m) {
-                        var r = getTextRect(m[0], m[1])[0];
-                        m[2].forEach((mi) => {
-                            mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-                            mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
-                        });
+            // Register both document.scrollingElement and other scrollable elements
+            const isMainScroller = n === document.scrollingElement;
+            n.onscroll = function() {
+                matches.forEach(function(m) {
+                    var r = getTextRect(m[0], m[1])[0];
+                    m[2].forEach((mi) => {
+                        mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                        mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
                     });
-                };
-                registeredScrollNodes.push(n);
-            }
+                });
+            };
+            registeredScrollNodes.push(n);
         });
     };
 
