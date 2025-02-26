@@ -206,10 +206,11 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
 
     function openGoogleTranslate() {
+        const defaultLang = runtime.conf.settings?.translationLanguage
         if (window.getSelection().toString()) {
             searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
         } else {
-            tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
+            tabOpenLink(`https://translate.google.com/translate?js=n&sl=auto&tl=${defaultLang}&u=${window.location.href}`);
         }
     }
     mapkey(';t', 'Translate selected text with google', openGoogleTranslate);
