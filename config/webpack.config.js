@@ -97,6 +97,7 @@ module.exports = (env, argv) => {
             '**/pdf_viewer.html',
         ]
     };
+    const pluginsForLastModule = [];
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
         entry['pages/neovim'] = './src/pages/neovim.js';
@@ -105,6 +106,22 @@ module.exports = (env, argv) => {
     }
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';
+        if (mode === "production") {
+            pluginsForLastModule.push(
+                new FileManagerPlugin({
+                    events: {
+                        onEnd: {
+                            archive: [
+                                {
+                                    source: buildPath,
+                                    destination: `${buildPath}/sk.zip`
+                                },
+                            ],
+                        },
+                    },
+                })
+            );
+        }
     } else {
         pagesCopyOptions.ignore.push('**/markdown.html');
         pagesCopyOptions.ignore.push('**/donation.png');
@@ -177,24 +194,7 @@ module.exports = (env, argv) => {
                 ]
             })
         ]
-    }];
-    if (browser !== "safari" && mode === "production") {
-        modules[0].plugins.push(
-            new FileManagerPlugin({
-                events: {
-                    onEnd: {
-                        archive: [
-                            {
-                                source: buildPath,
-                                destination: `${buildPath}/sk.zip`
-                            },
-                        ],
-                    },
-                },
-            })
-        );
-    }
-    modules.push({
+    }, {
         devtool: false,
         output: {
             path: buildPath,
@@ -227,9 +227,10 @@ module.exports = (env, argv) => {
                 extractComments: false,
             })],
         },
+        plugins: pluginsForLastModule,
         experiments: {
             outputModule: true,
         }
-    });
+    }];
     return modules;
 };
