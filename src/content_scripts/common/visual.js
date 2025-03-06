@@ -759,13 +759,12 @@ function createVisual(clipboard, hints) {
         }
         Mode.getScrollableElements().forEach(function(n) {
             // Register both document.scrollingElement and other scrollable elements
-            const isMainScroller = n === document.scrollingElement;
             n.onscroll = function() {
                 matches.forEach(function(m) {
                     var r = getTextRect(m[0], m[1])[0];
                     m[2].forEach((mi) => {
                         mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-                        mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                        mi.style.top  = document.scrollingElement.scrollTop  + r.top  + 'px';
                     });
                 });
             };
