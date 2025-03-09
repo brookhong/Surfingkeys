@@ -279,7 +279,7 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
 function isElementDrawn(e, rect) {
     var min = isEditable(e) ? 1 : 4;
     rect = rect || e.getBoundingClientRect();
-    return rect.width > min && rect.height > min;
+    return rect.width > min && rect.height > min && parseFloat(getComputedStyle(e).opacity) > 0.1;
 }
 
 /**
