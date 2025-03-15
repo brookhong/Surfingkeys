@@ -589,6 +589,8 @@ Some functionalities are also available when you're using original pdf viewer, b
             font-size: 20pt;
         }
     }`;
+* Notice: CSS child selector > will be normalized, please use `SPACE` instead.
+  * example: `.sk_theme #sk_omnibarSearchResult ul li:nth-child(odd)`
 
 ## API Documentation
 
