@@ -415,11 +415,16 @@ function createFront(insert, normal, hints, visual, browser) {
     };
 
     self.showStatus = function (msgs, duration) {
-        self.command({
-            action: "showStatus",
-            contents: msgs,
-            duration: duration
-        });
+        // when showModeStatus is on, showStatus will cause uiHost injected too early
+        // which could break some host scripts from sites in Firefox.
+        const waitForHostScripts = (getBrowserName() === "Firefox") ? 1000 : 0;
+        setTimeout(() => {
+            self.command({
+                action: "showStatus",
+                contents: msgs,
+                duration: duration
+            });
+        }, waitForHostScripts);
     };
     self.toggleStatus = function (visible) {
         self.command({
