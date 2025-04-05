@@ -22,8 +22,35 @@ function createUiHost(browser, onload) {
     ifr.style.width = "100%";
     ifr.style.height = 0;
     ifr.style.zIndex = 2147483647;
-    uiHost.attachShadow({ mode: 'open' });
-    uiHost.shadowRoot.appendChild(ifr);
+
+    // top -> frontend: origin
+    // frontend -> top:
+    // top -> top: apply user settings
+    ifr.addEventListener("load", function() {
+        this.contentWindow.postMessage({surfingkeys_frontend_data: {
+            action: 'initFrontend',
+            ack: true,
+            winSize: [window.innerWidth, window.innerHeight],
+            origin: getDocumentOrigin()
+        }}, frontEndURL);
+
+        window.addEventListener('message', _onWindowMessage, true);
+    }, {once: true});
+
+    const createShadowRoot = () => {
+        uiHost.attachShadow({ mode: 'open' });
+        uiHost.shadowRoot.appendChild(ifr);
+    };
+
+    if (document.readyState === 'loading') {
+        // There's no race condition here
+        // https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event#checking_whether_loading_is_already_complete
+        document.addEventListener('DOMContentLoaded', () => {
+            createShadowRoot();
+        });
+    } else {
+        createShadowRoot();
+    }
 
     function _onWindowMessage(event) {
         var _message = event.data && event.data.surfingkeys_uihost_data;
@@ -66,21 +93,6 @@ function createUiHost(browser, onload) {
         }
         event.stopImmediatePropagation();
     }
-
-    // top -> frontend: origin
-    // frontend -> top:
-    // top -> top: apply user settings
-    ifr.addEventListener("load", function() {
-        this.contentWindow.postMessage({surfingkeys_frontend_data: {
-            action: 'initFrontend',
-            ack: true,
-            winSize: [window.innerWidth, window.innerHeight],
-            origin: getDocumentOrigin()
-        }}, frontEndURL);
-
-        window.addEventListener('message', _onWindowMessage, true);
-
-    }, {once: true});
 
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null;
