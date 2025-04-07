@@ -139,7 +139,7 @@ function _initModules() {
     const normal = createNormal(insert);
     normal.enter();
     startScrollNodeObserver(normal);
-    const hints = createHints(insert, normal);
+    const hints = createHints(insert, normal, clipboard);
     const visual = createVisual(clipboard, hints);
     const front = createFront(insert, normal, hints, visual, _browser);
 

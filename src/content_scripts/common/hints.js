@@ -1,18 +1,22 @@
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
+import Trie from './trie';
 import {
     createElementWithContent,
     dispatchMouseEvent,
     filterInvisibleElements,
     filterOverlapElements,
     flashPressedLink,
+    getAnnotations,
     getBrowserName,
     getClickableElements,
+    getColor,
     getCssSelectorsOfEditable,
     getRealRect,
     getTextNodePos,
     getVisibleElements,
+    htmlEncode,
     initSKFunctionListener,
     isEditable,
     isElementClickable,
@@ -21,12 +25,132 @@ import {
     setSanitizedContent,
 } from './utils.js';
 
-function createHints(insert, normal) {
-    var self = new Mode("Hints");
-    var hintsHost = document.createElement("div");
+function placeHintsHost(host) {
+    let topLayerElement = document.querySelector("dialog");
+    if (!topLayerElement || !isElementDrawn(topLayerElement)) {
+        topLayerElement = document.documentElement;
+    }
+    topLayerElement.appendChild(host);
+}
+
+function createRegionalHints(clipboard) {
+    const self = new Mode("RegionalHints");
+
+    self.mappings = new Trie();
+    self.map_node = self.mappings;
+
+    const regionalHintsHost = document.createElement("div");
+    regionalHintsHost.className = "surfingkeys_hints_host";
+    regionalHintsHost.attachShadow({ mode: 'open' });
+    const hintsStyle = createElementWithContent('style', `
+div.menu {
+    font-size: 14px;
+    color: #fff;
+}
+div.menu-item {
+    display: inline-block;
+    padding: 4px;
+    margin: 4px;
+    background: #454545;
+    box-shadow: inset 0 -1px 0 #bbb;
+    border-radius: 3px;
+    font-size: 14px;
+}
+kbd {
+    white-space: nowrap;
+    display: inline-block;
+    padding: 3px 5px;
+    font: 14px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    line-height: 10px;
+    vertical-align: middle;
+    border: solid 1px #ccc;
+    border-bottom-color: #bbb;
+    border-radius: 3px;
+    box-shadow: inset 0 -1px 0 #bbb;
+    margin-right: 4px;
+}
+`);
+    regionalHintsHost.shadowRoot.appendChild(hintsStyle);
+
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Esc>"), {
+        annotation: "Exit regional hints mode",
+        feature_group: 17,
+        code: function() {
+            self.exit();
+        }
+    });
+
+    self.mappings.add("ct", {
+        annotation: "copy text from target element",
+        feature_group: 17,
+        code: function() {
+            clipboard.write(overlay.link.innerText);
+        }
+    });
+
+    self.mappings.add("ch", {
+        annotation: "copy html from target element",
+        feature_group: 17,
+        code: function() {
+            clipboard.write(overlay.link.innerHTML);
+        }
+    });
+
+    self.mappings.add("d", {
+        annotation: "delete target element",
+        feature_group: 17,
+        code: function() {
+            overlay.link.remove();
+            self.exit();
+        }
+    });
+
+    const menu = createElementWithContent('div', "", {class: "menu"});
+    getAnnotations(self.mappings).forEach((b) => {
+        const menuItem = createElementWithContent('div', "", {class: "menu-item"});
+        menuItem.appendChild(createElementWithContent('kbd', htmlEncode(KeyboardUtils.decodeKeystroke(b.word))));
+        menuItem.appendChild(createElementWithContent('span', b.annotation));
+        menu.appendChild(menuItem);
+    });
+
+    self.addEventListener('keydown', function(event) {
+        Mode.handleMapKey.call(self, event);
+    });
+
+    let overlay = null;
+    self.onExit = function() {
+        overlay.remove();
+        regionalHintsHost.remove();
+    };
+    self.attach = (elm) => {
+        if (overlay) overlay.remove();
+        overlay = elm;
+        regionalHintsHost.shadowRoot.appendChild(overlay);
+        placeHintsHost(regionalHintsHost);
+        overlay.appendChild(menu);
+        self.enter();
+    };
+    self.onScrollStarted = () => {
+        if (!document.documentElement.contains(regionalHintsHost)) {
+            return;
+        }
+        overlay.style.display = "none";
+    };
+    self.onScrollDone = () => {
+        const be = overlay.link.getBoundingClientRect();
+        overlay.style.top = be.top + "px";
+        overlay.style.left = be.left + "px";
+        overlay.style.display = "";
+    };
+    return self;
+}
+
+function createHints(insert, normal, clipboard) {
+    const self = new Mode("Hints");
+    const hintsHost = document.createElement("div");
     hintsHost.className = "surfingkeys_hints_host";
     hintsHost.attachShadow({ mode: 'open' });
-    var hintsStyle = createElementWithContent('style', `
+    const hintsStyle = createElementWithContent('style', `
 div {
     position: absolute;
     display: block;
@@ -52,13 +176,14 @@ div.hint-scrollable {
 [mode=text] div.begin {
     color: #00f;
 }
-[mode=input] div {
+[mode=input] mask {
     background: rgba(255, 217, 0, 0.25);
 }
-[mode=input] div.activeInput {
+[mode=input] mask.activeInput {
     background: rgba(0, 0, 255, 0.25);
 }`);
     hintsHost.shadowRoot.appendChild(hintsStyle);
+    const regionalHints = createRegionalHints(clipboard);
 
     let numeric = false;
     /**
@@ -96,19 +221,19 @@ div.hint-scrollable {
     };
 
     self.addEventListener('keydown', function(event) {
-        var hints = holder.querySelectorAll('div');
         event.sk_stopPropagation = true;
 
-        var ai = holder.querySelector('[mode=input]>div.activeInput');
+        let ai = holder.querySelector('[mode=input]>mask.activeInput');
         if (ai !== null) {
+            const masks = holder.querySelectorAll('mask');
             var elm = ai.link;
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
                 elm.blur();
                 hide();
             } else if (event.keyCode === KeyboardUtils.keyCodes.tab) {
                 ai.classList.remove('activeInput');
-                _lastCreateAttrs.activeInput = (_lastCreateAttrs.activeInput + (event.shiftKey ? -1 : 1 )) % hints.length;
-                ai = hints[_lastCreateAttrs.activeInput];
+                _lastCreateAttrs.activeInput = (_lastCreateAttrs.activeInput + (event.shiftKey ? -1 : 1 )) % masks.length;
+                ai = masks[_lastCreateAttrs.activeInput];
                 ai.classList.add('activeInput');
 
                 elm = ai.link;
@@ -121,6 +246,7 @@ div.hint-scrollable {
             return;
         }
 
+        const hints = holder.querySelectorAll('div');
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             hide();
         } else if (event.keyCode === KeyboardUtils.keyCodes.space) {
@@ -267,12 +393,21 @@ div.hint-scrollable {
     function handleHint(evt) {
         const hints = holder.querySelectorAll('div:not(:empty)');
         const hintState = refreshHints(hints, prefix);
-        if (hintState.matched) {
+        const elm = hintState.matched;
+        if (elm) {
             normal.appendKeysForRepeat("Hints", prefix);
             if (typeof(_onHintKey) === 'function') {
-                _onHintKey(hintState.matched);
+                if (behaviours.regionalHints) {
+                    setTimeout(() => {
+                        const overlay = createOverlay(elm, elm.skColorIndex, "99");
+                        overlay.link = elm;
+                        regionalHints.attach(overlay);
+                    }, 10);
+                } else {
+                    _onHintKey(elm);
+                }
             } else {
-                dispatchSKEvent('user', ["onHintClicked"], hintState.matched);
+                dispatchSKEvent('user', ["onHintClicked"], elm);
             }
             if (behaviours.multipleHits) {
                 prefix = "";
@@ -318,6 +453,7 @@ div.hint-scrollable {
         behaviours = {
             active: true,
             tabbed: false,
+            regionalHints: false,
             mouseEvents: ['mouseover', 'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'focus', 'focusin'],
             multipleHits: false
         };
@@ -440,16 +576,26 @@ div.hint-scrollable {
         }
     };
 
+    self.onScrollStarted = () => {
+        if (!document.documentElement.contains(hintsHost)) {
+            return;
+        }
+        setSanitizedContent(holder, "");
+        holder.remove();
+        prefix = "";
+    };
+
+    self.onScrollDone = resetHints;
+
     initSKFunctionListener("hints", {
         scrollStarted: () => {
-            if (Mode.getCurrent() !== self || !document.documentElement.contains(hintsHost)) {
-                return;
-            }
-            setSanitizedContent(holder, "");
-            holder.remove();
-            prefix = "";
+            const mode = Mode.getCurrent();
+            if (mode.onScrollStarted) mode.onScrollStarted();
         },
-        scrollDone: resetHints,
+        scrollDone: () => {
+            const mode = Mode.getCurrent();
+            if (mode.onScrollDone) mode.onScrollDone();
+        },
         topBoundaryHit: self.previousPage,
         bottomBoundaryHit: self.nextPage,
         dispatchMouseClick: self.dispatchMouseClick,
@@ -489,12 +635,37 @@ div.hint-scrollable {
         holder.style.display = "";
     }
 
+    function createOverlay(e, i, alpha) {
+        e.skColorIndex = i;
+
+        const be = e.getBoundingClientRect();
+        const z = getZIndex(e);
+
+        const frame = document.createElement('mask');
+        frame.style.position = "fixed";
+        frame.style.top = be.top + "px";
+        frame.style.left = be.left + "px";
+        frame.style.width = be.width - 4 + "px";
+        frame.style.height = be.height - 4 + "px";
+        frame.style.zIndex = z + 9999;
+        frame.style.background = getColor(i) + alpha;
+        frame.style.border = `2px solid ${getColor(i)}`;
+        return frame;
+    }
+
     function placeHints(elements) {
         _initHolder('click');
-        var hintLabels = self.genLabels(elements.length);
-        var bof = self.coordinate();
-        var style = createElementWithContent("style", _styleForClick);
+        const hintLabels = self.genLabels(elements.length);
+        const bof = self.coordinate();
+        const style = createElementWithContent("style", _styleForClick);
         holder.prepend(style);
+        if (behaviours.regionalHints) {
+            elements.forEach(function(e, i) {
+                holder.append(createOverlay(e, i, "33"));
+            });
+        }
+
+        let lastTop = -1, lastLeft = -1;
         var links = elements.map(function(elm, i) {
             var r = getRealRect(elm),
                 z = getZIndex(elm);
@@ -513,12 +684,24 @@ div.hint-scrollable {
             }
             var link = createElementWithContent('div', hintLabels[i]);
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
-            link.style.top = Math.max(r.top + window.pageYOffset - bof.top, 0) + "px";
+            let lTop = Math.max(r.top + window.pageYOffset - bof.top, 0);
+            if (lTop === lastTop && Math.abs(left - lastLeft) < 20) {
+                left += 20 - Math.abs(left - lastLeft);
+            } else if (left === lastLeft && Math.abs(lTop - lastTop) < 20) {
+                lTop += 20 - Math.abs(lTop - lastTop);
+            }
+            link.style.top = lTop + "px";
             link.style.left = left + "px";
             link.style.zIndex = z + 9999;
+            if (behaviours.regionalHints) {
+                link.style.background = getColor(i);
+            }
             link.zIndex = link.style.zIndex;
             link.label = hintLabels[i];
             link.link = elm;
+
+            lastTop = lTop;
+            lastLeft = left;
             return link;
         });
         links.forEach(function(link) {
@@ -689,16 +872,8 @@ div.hint-scrollable {
         return elements.length;
     }
 
-    function placeHintsHost() {
-        let topLayerElement = document.querySelector("dialog");
-        if (!topLayerElement || !isElementDrawn(topLayerElement)) {
-            topLayerElement = document.documentElement;
-        }
-        topLayerElement.appendChild(hintsHost);
-    }
-
     function createHints(cssSelector, attrs) {
-        placeHintsHost();
+        placeHintsHost(hintsHost);
         if (cssSelector.constructor.name === "RegExp") {
             return createHintsForTextNode(cssSelector, attrs);
         } else if (Array.isArray(cssSelector)) {
@@ -708,7 +883,7 @@ div.hint-scrollable {
     }
 
     self.createInputLayer = function() {
-        placeHintsHost();
+        placeHintsHost(hintsHost);
         const cssSelector = getCssSelectorsOfEditable();
 
         var elements = getVisibleElements(function(e, v) {
@@ -734,7 +909,7 @@ div.hint-scrollable {
                 var be = e.getBoundingClientRect();
                 var z = getZIndex(e);
 
-                var mask = document.createElement('div');
+                var mask = document.createElement('mask');
                 mask.style.position = "fixed";
                 mask.style.top = be.top + "px";
                 mask.style.left = be.left + "px";
@@ -742,13 +917,11 @@ div.hint-scrollable {
                 mask.style.height = be.height + "px";
                 mask.style.zIndex = z + 9999;
                 mask.link = e;
-                // prevent style from #sk_hints>div:empty
-                mask.innerText = " ";
                 holder.append(mask);
             });
             hintsHost.shadowRoot.appendChild(holder);
             _lastCreateAttrs.activeInput = 0;
-            var ai = holder.querySelector('[mode=input]>div');
+            const ai = holder.querySelector('[mode=input]>mask');
             ai.classList.add("activeInput");
             normal.passFocus(true);
             ai.link.focus();

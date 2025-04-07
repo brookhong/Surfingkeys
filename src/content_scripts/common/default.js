@@ -4,6 +4,7 @@ import {
     actionWithSelectionPreserved,
     getBrowserName,
     getCssSelectorsOfEditable,
+    getLargeElements,
     getRealEdit,
     getTextNodePos,
     getWordUnderCursor,
@@ -108,6 +109,9 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         hints.create(getCssSelectorsOfEditable(), function(element) {
             front.showEditor(element);
         });
+    });
+    mapkey('L', '#1Enter regional Hints mode', function() {
+        hints.create(getLargeElements(), (e) => { }, { regionalHints: true });
     });
 
     mapkey('zv', '#9Enter visual mode, and select whole element', function() {

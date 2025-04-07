@@ -65,6 +65,7 @@
         "Enter ephemeral PassThrough mode to temporarily suppress SurfingKeys": "短时进入PassThrough模式",
         "Enter ephemeral normal mode to temporarily enable SurfingKeys": "短时进入正常模式",
         "Enter normal mode": "进入正常模式",
+        "Enter regional Hints mode": "选择大块元素",
         "Enter visual mode, and select whole element": "进入可视模式，并全选指定文本",
         "Exit insert mode": "退出插入模式",
         "Expand selection to parent element": "选中整个父级元素",

@@ -2,6 +2,112 @@ import DOMPurify from "dompurify";
 import KeyboardUtils from './keyboardUtils';
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 
+const colors = [
+    '#4169E1', // Royal Blue
+    '#E74C3C', // Bright Red
+    '#2ECC71', // Emerald Green
+    '#9B59B6', // Amethyst Purple
+    '#F39C12', // Orange
+    '#16A085', // Teal
+    '#E67E22', // Dark Orange
+    '#3498DB', // Bright Blue
+    '#C0392B', // Dark Red
+    '#27AE60', // Forest Green
+    '#8E44AD', // Wisteria Purple
+    '#D35400', // Pumpkin Orange
+    '#2980B9', // Ocean Blue
+    '#FF5733', // Coral Red
+    '#1ABC9C', // Turquoise
+    '#8B008B', // Dark Magenta
+    '#F1C40F', // Yellow
+    '#008080', // Dark Teal
+    '#FF8C00', // Dark Orange
+    '#4682B4', // Steel Blue
+    '#8B0000', // Dark Red
+    '#32CD32', // Lime Green
+    '#9932CC', // Dark Orchid
+    '#FF4500', // Orange Red
+    '#1E90FF', // Dodger Blue
+    '#DC143C', // Crimson
+    '#20B2AA', // Light Sea Green
+    '#BA55D3', // Medium Orchid
+    '#DAA520', // Goldenrod
+    '#008B8B', // Dark Cyan
+    '#CD853F', // Peru
+    '#6495ED', // Cornflower Blue
+    '#B22222', // Fire Brick
+    '#3CB371', // Medium Sea Green
+    '#9370DB', // Medium Purple
+    '#A0522D', // Sienna
+    '#87CEEB', // Sky Blue
+    '#CD5C5C', // Indian Red
+    '#48D1CC', // Medium Turquoise
+    '#DDA0DD', // Plum
+    '#FFD700', // Gold
+    '#5F9EA0', // Cadet Blue
+    '#FFA07A', // Light Salmon
+    '#00BFFF', // Deep Sky Blue
+    '#8B4513', // Saddle Brown
+    '#90EE90', // Light Green
+    '#FF69B4', // Hot Pink
+    '#D2691E', // Chocolate
+    '#B0C4DE', // Light Steel Blue
+    '#FA8072', // Salmon
+    '#66CDAA', // Medium Aquamarine
+    '#DB7093', // Pale Violet Red
+    '#FF8C69', // Salmon Pink
+    '#556B2F', // Dark Olive Green
+    '#FF7F50', // Coral
+    '#2E8B57', // Sea Green
+    '#9400D3', // Dark Violet
+    '#B8860B', // Dark Goldenrod
+    '#FF6347', // Tomato
+    '#40E0D0', // Turquoise
+    '#DA70D6', // Orchid
+    '#BDB76B', // Dark Khaki
+    '#F4A460', // Sandy Brown
+    '#87CEFA', // Light Sky Blue
+    '#98FB98', // Pale Green
+    '#C71585', // Medium Violet Red
+    '#B0E0E6', // Powder Blue
+    '#F08080', // Light Coral
+    '#7FFFD4', // Aquamarine
+    '#FFA500', // Orange
+    '#FF6B6B', // Light Red
+    '#00CED1', // Dark Turquoise
+    '#E9967A', // Dark Salmon
+    '#4B0082', // Indigo
+    '#7B68EE', // Medium Slate Blue
+    '#6A5ACD', // Slate Blue
+    '#483D8B', // Dark Slate Blue
+    '#5D478B', // Medium Purple 4
+    '#8A2BE2', // Blue Violet
+    '#7EC0EE', // Sky Blue 2
+    '#009ACD', // Deep Sky Blue 3
+    '#00868B', // Turquoise 4
+    '#00C78C', // Medium Spring Green
+    '#00CD66', // Spring Green 3
+    '#66CD00', // Chartreuse 3
+    '#CDCD00', // Yellow 3
+    '#CD9B1D', // Goldenrod 3
+    '#CD6600', // Dark Orange 3
+    '#CD4F39', // Tomato 3
+    '#CD3278', // Violet Red 3
+    '#CD3333', // Brown 3
+    '#8B4789', // Orchid 4
+    '#8B8B00', // Yellow 4
+    '#8B7355', // Rosy Brown 4
+    '#8B636C', // Pink 4
+    '#2F4F4F', // Dark Slate Gray
+    '#FF1493', // Deep Pink
+    '#800080', // Purple
+    '#708090', // Slate Gray
+    '#6B8E23'  // Olive Drab
+];
+function getColor(i) {
+    return colors[i];
+}
+
 /**
  * Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
  *
@@ -322,6 +428,53 @@ function getVisibleElements(filter) {
         }
     }
     return visibleElements;
+}
+
+/**
+ * Get large elements that are currently visible in the viewport.
+ * A large element is defined as one that takes up a significant portion of the viewport.
+ *
+ * @param {number} [minWidth=0.3] Minimum width as a fraction of viewport width (0.0 to 1.0)
+ * @param {number} [minHeight=0.3] Minimum height as a fraction of viewport height (0.0 to 1.0)
+ * @returns {Array<Element>} Array of large visible elements
+ *
+ * @example
+ * // Get elements that are at least 30% of viewport dimensions
+ * var largeElements = getLargeElements();
+ *
+ * // Get elements that are at least 50% of viewport dimensions
+ * var veryLargeElements = getLargeElements(0.5, 0.5);
+ */
+function getLargeElements(minWidth = 0.3, minHeight = 0.3) {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const minWidthPx = viewportWidth * minWidth;
+    const minHeightPx = viewportHeight * minHeight;
+
+    let lastRect = new DOMRect(0, 0, 0, 0);
+    let elements = getVisibleElements((element, visibleElements) => {
+        if (element === document.body) return;
+        const rect = element.getBoundingClientRect();
+        const tolerance = 16;
+        if (Math.abs(rect.x - lastRect.x) < tolerance
+            && Math.abs(rect.y - lastRect.y) < tolerance
+            && Math.abs(rect.width - lastRect.width) < tolerance
+            && Math.abs(rect.height - lastRect.height) < tolerance) {
+            return;
+        }
+        if (Math.abs(viewportWidth - rect.width) < 4
+            && Math.abs(viewportHeight - rect.height) < 4) {
+            return;
+        }
+        if (rect.width < minWidthPx && rect.height < minHeightPx) return;
+        if ((rect.width / viewportWidth) * (rect.height / viewportHeight) < minWidth * minHeight / 6) return;
+        const style = getComputedStyle(element);
+        if (style.opacity > 0.1 && style.visibility !== 'hidden' && style.display !== 'none') {
+            visibleElements.push(element);
+            lastRect = rect;
+        }
+    });
+    return elements;
 }
 
 function actionWithSelectionPreserved(cb) {
@@ -950,9 +1103,11 @@ export {
     getAnnotations,
     getBrowserName,
     getClickableElements,
+    getColor,
     getCssSelectorsOfEditable,
     getDocumentOrigin,
     getElements,
+    getLargeElements,
     getRealEdit,
     getRealRect,
     getTextNodePos,

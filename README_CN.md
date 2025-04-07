@@ -91,18 +91,6 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 * `T` 切换标签页
 ![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
 
-## 打开连接
-
-默认的拨号键有`asdfgqwertzxcvb`，如果按了一个非拨号键，会自动退出拨号。下面的设置可以改成右手习惯：
-
-    Hints.characters = 'yuiophjklnm'; // for right hand
-
-当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。按住空格键可隐藏拨号盘，松开恢复。
-
-所有拨号放在目标链接的中间，你可以用下面的设置让它们靠左对齐：
-
-    settings.hintAlign = "left";
-
 ## Surfingkeys支持的模式
 
 Surfingkeys有三种模式：normal，visual和insert。
@@ -133,6 +121,29 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `F` 往后查找下一个字符。
 * `;` 重复最后的`f`/`F`操作。
 * `,` 反向重复最后的`f`/`F`操作。
+
+### Hints mode
+按`f`键进入Hints mode可以打开链接，也有其它行为不同的组合，比如`cf`可以连续打开链接，`af`指定在新标签页打开。
+
+默认的拨号键有`asdfgqwertzxcvb`，如果按了一个非拨号键，会自动退出拨号。下面的设置可以改成右手习惯：
+
+    Hints.characters = 'yuiophjklnm'; // for right hand
+
+当拨号盘有重叠上，可以按`Shift`翻转重叠的拨号盘。按住空格键可隐藏拨号盘，松开恢复。
+
+所有拨号放在目标链接的中间，你可以用下面的设置让它们靠左对齐：
+
+    settings.hintAlign = "left";
+
+#### Regional Hints mode
+
+按`L`键选择一个大块元素进入Regional Hints mode，目前自带的操作有
+
+* `ct` 复制该大块元素的文本
+* `ch` 复制该大块元素的HTML
+* `d` 删除该大块元素
+
+[Demo on YouTube](https://www.youtube.com/watch?v=pFPOzAZDO38)
 
 ### Insert mode
 

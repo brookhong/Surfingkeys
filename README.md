@@ -106,18 +106,6 @@ Try some mappings described in the usage popover. For example, press `e` to scro
 * `T` to switch tabs
 ![tabs](https://cloud.githubusercontent.com/assets/288207/10328839/f0143ffe-6ceb-11e5-8eee-962db94b2c22.png)
 
-## Follow links
-
-Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hint key is pressed. Add below line to your settings to make it right hand:
-
-    api.Hints.setCharacters('yuiophjklnm'); // for right hand
-
-When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
-
-Hints are placed in center of target links, you could add below line in your settings to let them aligned left.
-
-    settings.hintAlign = "left";
-
 ## Surfingkeys modes
 
 There are three modes in Surfingkeys: normal, visual and insert.
@@ -150,6 +138,30 @@ All mappings added with `vmapkey` work in this mode, with some built-in mappings
 * `F` backward to next char.
 * `;` repeat latest f, F.
 * `,` repeat latest f, F in opposite direction.
+
+### Hints mode
+
+Press `f` to enter Hints mode to follow links. There are several other keystrokes to enter Hints mode with some different behavior, such as `cf` for continuous following, `af` for active following.
+
+Default hint characters for links are `asdfgqwertzxcvb`, it quits when a non-hint key is pressed. Add below line to your settings to make it right hand:
+
+    api.Hints.setCharacters('yuiophjklnm'); // for right hand
+
+When hints are overlapped, press `Shift` to flip them. Hold `space` to hold hints temporarily, release `space` to restore hints.
+
+Hints are placed in center of target links, you could add below line in your settings to let them aligned left.
+
+    settings.hintAlign = "left";
+
+#### Regional Hints mode
+
+Press `L` to enter regional Hints mode by picking a visually large element. There are some built-in actions in regional Hints mode,
+
+* `ct` to copy text from target element
+* `ch` to copy HTML from target element
+* `d` to delete target element
+
+[Demo on YouTube](https://www.youtube.com/watch?v=pFPOzAZDO38)
 
 ### Insert mode
 

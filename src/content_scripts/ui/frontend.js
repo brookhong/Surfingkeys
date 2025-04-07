@@ -32,7 +32,7 @@ const Front = (function() {
     const insert = createInsert();
     const normal = createNormal(insert);
     normal.enter();
-    const hints = createHints(insert, normal);
+    const hints = createHints(insert, normal, clipboard);
     const visual = createVisual(clipboard, hints);
 
     const self = new Mode("Front");
@@ -328,6 +328,7 @@ const Front = (function() {
             'Misc',                  // 14
             'Insert Mode',           // 15
             'Lurk Mode',             // 16
+            'Regional Hints Mode',   // 17
         ];
 
         initL10n(function(locale) {
