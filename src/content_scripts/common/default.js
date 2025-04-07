@@ -216,7 +216,13 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
         }
     }
-    mapkey(';t', 'Translate selected text with google', openGoogleTranslate);
+    mapkey(';t', 'Translate selected text with google', () => {
+        if (chrome.surfingkeys) {
+            chrome.surfingkeys.translateCurrentPage();
+        } else {
+            openGoogleTranslate()
+        }
+    });
     vmapkey('t', '#9Translate selected text with google', openGoogleTranslate);
 
     mapkey('O', '#1Open detected links from text', function() {
