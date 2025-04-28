@@ -541,12 +541,13 @@ function createVisual(clipboard, hints) {
     }
 
     function highlight(pattern) {
+        const gpattern = new RegExp(pattern.source, "g" + pattern.flags);
         getTextNodes(document.body, pattern).forEach(function(node) {
             var mtches;
-            while ((mtches = pattern.exec(node.data)) !== null) {
+            while ((mtches = gpattern.exec(node.data)) !== null) {
                 var match = mtches[0];
                 if (match.length) {
-                    var pos = pattern.lastIndex - match.length;
+                    var pos = gpattern.lastIndex - match.length;
                     createMatchMark(node, pos, node, pos + match.length);
                 } else {
                     // matches like \b
@@ -557,7 +558,7 @@ function createVisual(clipboard, hints) {
         var scrollTop = document.scrollingElement.scrollTop;
         selection.setPosition(null, 0);
         var lastNode = null
-        while (findNextTextNodeBy(pattern.source, pattern.flags.indexOf('i') === -1, false)) {
+        while (findNextTextNodeBy(gpattern.source, gpattern.flags.indexOf('i') === -1, false)) {
             if (lastNode == selection.anchorNode) {
                 break;
             }
@@ -662,7 +663,7 @@ function createVisual(clipboard, hints) {
                 var pos = [selection.focusNode, selection.focusOffset];
                 runtime.updateHistory('find', query);
                 self.visualClear();
-                highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
+                highlight(new RegExp(query, runtime.getCaseSensitive(query) ? "" : "i"));
                 selection.setPosition(pos[0], pos[1]);
                 self.showCursor();
             }
@@ -679,7 +680,7 @@ function createVisual(clipboard, hints) {
             select(matches[currentOccurrence]);
             dispatchSKEvent("front", ['showStatus', [undefined, undefined, currentOccurrence + 1 + ' / ' + matches.length]]);
         } else if (runtime.conf.lastQuery) {
-            highlight(new RegExp(runtime.conf.lastQuery, "g" + (runtime.getCaseSensitive(runtime.conf.lastQuery) ? "" : "i")));
+            highlight(new RegExp(runtime.conf.lastQuery, runtime.getCaseSensitive(runtime.conf.lastQuery) ? "" : "i"));
             self.visualEnter(runtime.conf.lastQuery);
         }
     };
@@ -750,7 +751,7 @@ function createVisual(clipboard, hints) {
             return;
         }
         self.visualClear();
-        highlight(new RegExp(query, "g" + (runtime.getCaseSensitive(query) ? "" : "i")));
+        highlight(new RegExp(query, runtime.getCaseSensitive(query) ? "" : "i"));
         if (matches.length) {
             self.enter();
             select(matches[currentOccurrence]);
