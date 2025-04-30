@@ -161,6 +161,7 @@ var suppressScrollEvent = 0, _listenedEvents = {
         });
     },
     "scroll": function (event) {
+        handleStack("scroll", event);
         if (suppressScrollEvent > 0) {
             event.stopImmediatePropagation();
             event.preventDefault();

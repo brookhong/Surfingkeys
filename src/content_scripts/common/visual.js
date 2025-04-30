@@ -60,6 +60,15 @@ function createVisual(clipboard, hints) {
             }
         }
     });
+    self.addEventListener('scroll', function(event) {
+        matches.forEach(function(m) {
+            const r = getTextRect(m[0], m[1])[0];
+            m[2].forEach((mi) => {
+                mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+            });
+        });
+    });
 
     self.addEventListener('click', function(event) {
         switch (selection.type) {
@@ -555,19 +564,6 @@ function createVisual(clipboard, hints) {
                 }
             }
         });
-        var scrollTop = document.scrollingElement.scrollTop;
-        selection.setPosition(null, 0);
-        var lastNode = null
-        while (findNextTextNodeBy(gpattern.source, gpattern.flags.indexOf('i') === -1, false)) {
-            if (lastNode == selection.anchorNode) {
-                break;
-            }
-            lastNode = selection.anchorNode
-            if (selection.anchorNode !== selection.focusNode) {
-                createMatchMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
-            }
-        }
-        document.scrollingElement.scrollTop = scrollTop;
         if (matches.length) {
             currentOccurrence = 0;
             for (var i = 0; i < matches.length; i++) {
@@ -585,10 +581,6 @@ function createVisual(clipboard, hints) {
         clearSelectionMark();
         self.hideCursor();
         matches = [];
-        registeredScrollNodes.forEach(function(n) {
-            n.onscroll = null;
-        });
-        registeredScrollNodes = [];
         setSanitizedContent(markHolder_, "");
         markHolder_.remove();
         dispatchSKEvent("front", ['showStatus', [undefined, undefined, ""]]);
@@ -745,7 +737,6 @@ function createVisual(clipboard, hints) {
 
     };
 
-    var registeredScrollNodes = [];
     self.visualEnter = function (query) {
         if (query.length === 0 || query === ".") {
             return;
@@ -758,20 +749,6 @@ function createVisual(clipboard, hints) {
         } else {
             dispatchSKEvent("front", ['showStatus', [undefined, undefined, "Pattern not found: {0}".format(query)], 1000]);
         }
-        Mode.getScrollableElements().forEach(function(n) {
-            if (n !== document.scrollingElement) {
-                n.onscroll = function() {
-                    matches.forEach(function(m) {
-                        var r = getTextRect(m[0], m[1])[0];
-                        m[2].forEach((mi) => {
-                            mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-                            mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
-                        });
-                    });
-                };
-                registeredScrollNodes.push(n);
-            }
-        });
     };
 
     self.findSentenceOf = function (query) {
