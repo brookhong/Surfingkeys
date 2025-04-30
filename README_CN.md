@@ -142,7 +142,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `Ctrl - i` 打开vim编辑器。
 * `Ctrl - '` 把输入框里的内容用双引号引起来或去除双引号，方便在搜索引擎页面上搜索时使用。
 * `Ctrl-e`移动光标到行尾。
-* `Ctrl-f` 移动光标到行首。
+* `Ctrl-a` 移动光标到行首。
 * `Ctrl-u` 删除光标前所有输入。
 * `Alt-b` 移动光标到后一个词。
 * `Alt-f` 移动光标到前一个词。
