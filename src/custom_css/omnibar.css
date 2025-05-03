@@ -1,0 +1,61 @@
+/* General */
+#sk_omnibar {
+    max-height: none !important;
+}
+#sk_omnibar.sk_omnibar_middle {
+    border-radius: 10px !important;
+}
+#sk_omnibar.sk_omnibar_bottom {
+    border-radius: 10px 10px 0 0 !important;
+    border-bottom: 0 !important;
+}
+
+/* Search Area */
+#sk_omnibarSearchArea {
+    padding: 5px 0 !important;
+}
+#sk_omnibarSearchArea > * {
+    font-size: 20px !important;
+}
+#sk_omnibarSearchArea > span {
+    margin: 0 5px !important;
+}
+#sk_omnibarSearchArea .prompt::first-letter {
+    text-transform: uppercase !important;
+}
+#sk_omnibarSearchArea .prompt:has(.separator)::after {
+    content: ':' !important;
+}
+#sk_omnibarSearchArea .prompt img {
+    display: block !important;
+    margin: 0 3px !important;
+}
+#sk_omnibarSearchArea .separator {
+    display: none !important;
+}
+
+/* Search Result */
+#sk_omnibar.sk_omnibar_middle #sk_omnibarSearchResult {
+    border-top: var(--border) !important;
+}
+#sk_omnibar.sk_omnibar_bottom #sk_omnibarSearchResult {
+    border-bottom: var(--border) !important;
+}
+#sk_omnibarSearchResult {
+    max-height: none !important;
+}
+#sk_omnibarSearchResult li {
+    padding: 7px 7px !important;
+    cursor: pointer !important;
+}
+#sk_omnibarSearchResult li:hover,
+#sk_omnibarSearchResult .focused {
+    background-color: var(--selection) !important;
+}
+#sk_omnibarSearchResult .icon {
+    margin-left: 6px !important;
+    margin-right: 17px !important;
+}
+#sk_omnibarSearchResult .url {
+    font-weight: 400 !important;
+}
