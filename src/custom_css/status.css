@@ -1,0 +1,13 @@
+#sk_status {
+    bottom: 0 !important;
+    right: 150px !important;
+    border-bottom: 0 !important;
+    border-radius: 5px 5px 0 0 !important;
+}
+#sk_status::first-letter {
+    text-transform: uppercase !important;
+}
+#sk_status input {
+    font-size: 20px !important;
+    width: 350px !important;
+}
