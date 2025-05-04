@@ -17,7 +17,7 @@
 #sk_usage > div {
     background-color: var(--sk-background) !important;
     min-width: 600px !important;
-    flex-basis: 30%;
+    flex-basis: 0;
     flex-grow: 1 !important;
     padding: 10px 0 15px 0 !important;
     box-sizing: border-box !important;
