@@ -1,0 +1,8 @@
+#sk_frame {
+    border: none !important;
+    box-sizing: border-box !important;
+    background: var(--sk-background) !important;
+    opacity: 0.75 !important;
+    color: transparent !important;
+    font-size: 0 !important;
+}
