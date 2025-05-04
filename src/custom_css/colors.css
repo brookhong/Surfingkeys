@@ -1,6 +1,10 @@
 html {
-    --sk-background: #282a36;
     --sk-foreground: #f8f8f2;
-    --sk-comment:    #6272a4;
+    --sk-background: #282a36;
     --sk-selection:  #44475a;
+    --sk-comment:    #6272a4;
+    --sk-red:        #ff4064;
+    --sk-blue:       #5389fc;
+    --sk-green:      #23e863;
+    --sk-purple:     #cd29ff;
 }
