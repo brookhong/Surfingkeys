@@ -190,7 +190,9 @@ window.getFrameId = function () {
         _initContent(_initModules());
 
         // Only used to load user script for iframes in MV3
-        dispatchSKEvent('user', ["runUserScript"]);
+        setTimeout(() => {
+            dispatchSKEvent('user', ["runUserScript"]);
+        }, 100);
     }
     return window.frameId;
 };
