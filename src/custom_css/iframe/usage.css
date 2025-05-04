@@ -4,7 +4,7 @@
     flex-wrap: wrap !important;
     gap: 4px;
     border-radius: 10px !important;
-    background-color: var(--selection) !important;
+    background-color: var(--sk-selection) !important;
 }
 #sk_usage * {
     font-size: 16px !important;
@@ -15,7 +15,7 @@
 
 /* Info Block */
 #sk_usage > div {
-    background-color: var(--background) !important;
+    background-color: var(--sk-background) !important;
     min-width: 600px !important;
     flex-basis: 30%;
     flex-grow: 1 !important;

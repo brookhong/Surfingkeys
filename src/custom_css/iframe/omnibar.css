@@ -50,7 +50,7 @@
 }
 #sk_omnibarSearchResult li:hover,
 #sk_omnibarSearchResult .focused {
-    background-color: var(--selection) !important;
+    background-color: var(--sk-selection) !important;
 }
 #sk_omnibarSearchResult .icon {
     margin-left: 6px !important;
