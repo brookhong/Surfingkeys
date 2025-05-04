@@ -1,0 +1,44 @@
+/* General */
+#sk_usage {
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 4px;
+    border-radius: 10px !important;
+    background-color: var(--selection) !important;
+}
+#sk_usage * {
+    font-size: 16px !important;
+}
+#sk_usage::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* Info Block */
+#sk_usage > div {
+    background-color: var(--background) !important;
+    min-width: 600px !important;
+    flex-basis: 30%;
+    flex-grow: 1 !important;
+    padding: 10px 0 15px 0 !important;
+    box-sizing: border-box !important;
+}
+#sk_usage > div > div:not(.feature_name) {
+    display: grid !important;
+    grid-template-columns: 120px 1fr !important;
+    column-gap: 5px !important;
+    margin: 5px 50px 0 0 !important;
+}
+#sk_usage .annotation {
+    user-select: text !important;
+}
+#sk_usage .kbd-span {
+    width: 100% !important;
+}
+#sk_usage .feature_name * {
+    font-size: 20px !important;
+}
+
+/* More Help */
+#sk_usage > p {
+    display: none !important;
+}
