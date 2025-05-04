@@ -44,32 +44,30 @@ function createRegionalHints(clipboard) {
     regionalHintsHost.className = "surfingkeys_hints_host";
     regionalHintsHost.attachShadow({ mode: 'open' });
     const hintsStyle = createElementWithContent('style', `
-div.menu {
-    font-size: 14px;
-    color: #fff;
+div {
+    position: absolute;
+    display: block;
+    font-family: 'Noto Sans Mono', monospace;
+    font-weight: 600;
+    font-style: normal;
+    font-size: 15.25px;
+    color: #f8f8f2;
+    background: #282a36;
+    border: solid 2px #44475a;
+    border-radius: 5px;
+    padding: 0 0.3em 0.05em;
+    user-select: none;
+    letter-spacing: 1px;
+    width: auto;
+    height: auto;
+    box-shadow: 1px 1px 10px 2px #0005;
 }
-div.menu-item {
-    display: inline-block;
-    padding: 4px;
-    margin: 4px;
-    background: #454545;
-    box-shadow: inset 0 -1px 0 #bbb;
-    border-radius: 3px;
-    font-size: 14px;
+div > span {
+    opacity: 1 !important;
+    color: #6272a4 !important;
 }
-kbd {
-    white-space: nowrap;
-    display: inline-block;
-    padding: 3px 5px;
-    font: 14px Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    line-height: 10px;
-    vertical-align: middle;
-    border: solid 1px #ccc;
-    border-bottom-color: #bbb;
-    border-radius: 3px;
-    box-shadow: inset 0 -1px 0 #bbb;
-    margin-right: 4px;
-}
+div:empty {
+    display: none;
 `);
     regionalHintsHost.shadowRoot.appendChild(hintsStyle);
 
