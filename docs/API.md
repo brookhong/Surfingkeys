@@ -623,10 +623,7 @@ Open links in new tabs.
 ### Examples
 
 ```javascript
-mapkey("<Space>", "pause/resume on youtube", function() {
-    var btn = document.querySelector("button.ytp-ad-overlay-close-button") || document.querySelector("button.ytp-ad-skip-button") || document.querySelector('ytd-watch-flexy button.ytp-play-button');
-    btn.click();
-}, {domain: /youtube.com/i});
+tabOpenLink('https://github.com/brookhong/Surfingkeys')
 ```
 
 ## insertJS
