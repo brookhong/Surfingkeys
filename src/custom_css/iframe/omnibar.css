@@ -59,3 +59,15 @@
 #sk_omnibarSearchResult .url {
     font-weight: 400 !important;
 }
+#sk_omnibar .omnibar_timestamp {
+    display: none !important;
+}
+#sk_omnibar .omnibar_highlight {
+    color: var(--sk-red) !important;
+}
+#sk_omnibar .omnibar_folder {
+    color: var(--sk-green) !important;
+}
+#sk_omnibar .omnibar_visitcount {
+    color: var(--sk-blue) !important;
+}
