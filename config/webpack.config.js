@@ -100,6 +100,7 @@ module.exports = (env, argv) => {
     const module1Plugins = [
         new CopyWebpackPlugin({
             patterns: [
+                { from: 'src/custom_css', to: 'custom_css' },
                 { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
                 { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
                 { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
