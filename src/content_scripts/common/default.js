@@ -424,10 +424,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
 
     map('<Ctrl-i>', 'I');
-    cmap('<ArrowDown>', '<Tab>');
-    cmap('<ArrowUp>', '<Shift-Tab>');
-    cmap('<Ctrl-n>', '<Tab>');
-    cmap('<Ctrl-p>', '<Shift-Tab>');
+    cmap('<ArrowDown>', '<Ctrl-n>');
+    cmap('<ArrowUp>', '<Ctrl-p>');
     mapkey('q', '#1Click on an Image or a button', function() {
         hints.create("img, button", hints.dispatchMouseClick);
     });
@@ -486,6 +484,9 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
     mapkey(':', '#8Open commands', function() {
         front.openOmnibar({type: "Commands"});
+    });
+    mapkey('A', '#8Open llm chat', function() {
+        front.openOmnibar({type: "LLMChat"});
     });
     mapkey('yi', '#7Yank text of an input', function() {
         hints.create("input, textarea, select", function(element) {

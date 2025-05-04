@@ -22,24 +22,23 @@ div.surfingkeys_cursor:empty {
     padding: 0px 2px;
     min-height: 12px;
 }
-#sk_emoji {
+.sk_cursor_prompt {
     z-index: 2147483000;
     position: absolute;
     display: block;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
     background: white;
-    border-radius: 0px 0px 4px 4px;
 }
-#sk_emoji>div>span {
+.sk_cursor_prompt>div>span {
     padding-right: 8px;
     font-size: 18pt;
     vertical-align: middle;
 }
-#sk_emoji>div {
+.sk_cursor_prompt>div {
     border-bottom: 1px solid #eee;
     padding: 4px 8px;
 }
-#sk_emoji>div.selected {
+.sk_cursor_prompt>div.selected {
     background: #3174e2;
     color: white;
 }

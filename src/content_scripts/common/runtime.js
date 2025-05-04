@@ -38,8 +38,8 @@ function RUNTIME(action, args, callback) {
     }
 }
 
-var runtime = (function() {
-    var self = {
+const runtime = (function() {
+    const self = {
         conf: {
             autoSpeakOnInlineQuery: false,
             lastKeys: "",
@@ -52,6 +52,7 @@ var runtime = (function() {
             clickableSelector: "",
             editableSelector: "div.CodeMirror-scroll,div.ace_content",
             cursorAtEndOfInput: true,
+            defaultLLMProvider: "ollama",
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
             editableBodyCare: true,
@@ -111,33 +112,16 @@ var runtime = (function() {
     self.on = function(message, cb) {
         _handlers[message] = cb;
     };
-
-    self.updateHistory = function(type, cmd) {
-        var prop = type + 'History';
-        RUNTIME('getSettings', {
-            key: prop
-        }, function(response) {
-            var list = response.settings[prop] || [];
-            var toUpdate = {};
-            if (cmd.constructor.name === "Array") {
-                toUpdate[prop] = cmd;
-                RUNTIME('updateSettings', {
-                    settings: toUpdate
-                });
-            } else if (cmd.trim().length && cmd !== ".") {
-                list = list.filter(function(c) {
-                    return c.trim().length && c !== cmd && c !== ".";
-                });
-                list.unshift(cmd);
-                if (list.length > 50) {
-                    list.pop();
-                }
-                toUpdate[prop] = list;
-                RUNTIME('updateSettings', {
-                    settings: toUpdate
-                });
-            }
-        });
+    self.bookMessage = function(message, cb) {
+        if (_handlers[message]) {
+            return false;
+        } else {
+            _handlers[message] = cb;
+            return true;
+        }
+    };
+    self.releaseMessage = function(message) {
+        delete _handlers[message];
     };
 
     chrome.runtime.onMessage.addListener(function(msg, sender, response) {

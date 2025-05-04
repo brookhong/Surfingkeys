@@ -1,5 +1,5 @@
 import Trie from './trie';
-import { dispatchSKEvent, runtime } from './runtime.js';
+import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
@@ -653,7 +653,7 @@ function createVisual(clipboard, hints) {
             if (query.length && query !== ".") {
                 self.hideCursor();
                 var pos = [selection.focusNode, selection.focusOffset];
-                runtime.updateHistory('find', query);
+                RUNTIME('updateInputHistory', { find: query });
                 self.visualClear();
                 highlight(new RegExp(query, runtime.getCaseSensitive(query) ? "" : "i"));
                 selection.setPosition(pos[0], pos[1]);

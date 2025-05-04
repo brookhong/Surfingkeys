@@ -10,6 +10,7 @@ import {
     initL10n,
     initSKFunctionListener,
     refreshHints,
+    rotateInput,
     setSanitizedContent,
     mapInMode
 } from '../common/utils.js';
@@ -790,8 +791,9 @@ var Find = (function() {
         event.sk_suppressed = true;
     });
 
-    var input;
-    var historyInc;
+    let input;
+    let historyInc = 0;
+    let userInput = "";
     function reset() {
         input = null;
         StatusBar.show(["", ""]);
@@ -807,7 +809,6 @@ var Find = (function() {
      * @return {undefined}
      */
     self.open = function() {
-        historyInc = -1;
         StatusBar.show(["/", '<input id="sk_find" class="sk_theme"/>']);
         input = Front.statusBar.querySelector("input");
         if (!getBrowserName().startsWith("Safari")) {
@@ -828,7 +829,9 @@ var Find = (function() {
         RUNTIME('getSettings', {
             key: 'findHistory'
         }, function(response) {
+            userInput = "";
             findHistory = response.settings.findHistory;
+            historyInc = findHistory.length;
         });
         input.onkeydown = function(event) {
             if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
@@ -843,7 +846,7 @@ var Find = (function() {
                         query = '\\b' + query + '\\b';
                     }
                     reset();
-                    runtime.updateHistory('find', query);
+                    RUNTIME('updateInputHistory', { find: query });
                     Front.visualCommand({
                         action: 'visualEnter',
                         query: query
@@ -851,16 +854,16 @@ var Find = (function() {
                 }
             } else if (event.keyCode === KeyboardUtils.keyCodes.upArrow || event.keyCode === KeyboardUtils.keyCodes.downArrow) {
                 if (findHistory.length) {
-                    historyInc = (event.keyCode === KeyboardUtils.keyCodes.upArrow) ? (historyInc + 1) : (historyInc + findHistory.length - 1);
-                    historyInc = historyInc % findHistory.length;
-                    var query = findHistory[historyInc];
-                    input.value = query;
+                    [input.value, historyInc] = rotateInput(findHistory, (event.keyCode === KeyboardUtils.keyCodes.downArrow), historyInc, userInput);
                     Front.visualCommand({
                         action: 'visualUpdate',
                         query: query
                     });
                     event.preventDefault();
                 }
+            } else {
+                userInput = input.value;
+                historyInc = findHistory.length;
             }
         };
         input.focus();

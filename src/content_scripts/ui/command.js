@@ -82,7 +82,9 @@ export default (normal, command, omnibar) => {
         RUNTIME('quit');
     });
     command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
-        runtime.updateHistory(args[0], []);
+        let update = {};
+        update[args[0]] = [];
+        RUNTIME('updateInputHistory', update);
     });
     command('listSession', 'list session', function() {
         RUNTIME('getSettings', {

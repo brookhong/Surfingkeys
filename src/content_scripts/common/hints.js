@@ -21,6 +21,7 @@ import {
     isEditable,
     isElementClickable,
     isElementDrawn,
+    openOmnibar,
     refreshHints,
     setSanitizedContent,
 } from './utils.js';
@@ -101,6 +102,16 @@ kbd {
         feature_group: 17,
         code: function() {
             overlay.link.remove();
+            self.exit();
+        }
+    });
+
+    self.mappings.add("l", {
+        annotation: "learn more about target element",
+        feature_group: 17,
+        code: function() {
+            const page = overlay.link.innerText;
+            openOmnibar({type: "LLMChat", extra: {page}});
             self.exit();
         }
     });

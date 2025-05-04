@@ -1,6 +1,8 @@
 import {
     filterByTitleOrUrl,
 } from '../common/utils.js';
+import llmClients from './llm.js';
+
 function request(url, onReady, headers, data, onException) {
     headers = headers || {};
     const CHARTSET_RE = /(?:charset|encoding)\s*=\s*['"]? *([\w\-]+)/i;
@@ -213,6 +215,7 @@ function start(browser) {
     var newTabUrl = browser._setNewTabUrl();
 
     var conf = {
+        llm: { },
         focusAfterClosed: "right",
         repeatThreshold: 99,
         tabsMRUOrder: true,
@@ -1241,6 +1244,27 @@ function start(browser) {
                     conf[k] = message.settings[k];
                 }
             }
+            const llmConf = conf.llm;
+            if (llmConf.ollama && llmConf.ollama.model) {
+                llmClients.ollama.model = llmConf.ollama.model;
+            }
+            if (llmConf.deepseek && llmConf.deepseek.apiKey) {
+                llmClients.deepseek.apiKey = llmConf.deepseek.apiKey;
+                llmClients.deepseek.model = llmConf.deepseek.model;
+                delete message.settings.llm.deepseek;
+            }
+            if (llmConf.gemini && llmConf.gemini.apiKey) {
+                llmClients.gemini.apiKey = llmConf.gemini.apiKey;
+                llmClients.gemini.model = llmConf.gemini.model;
+                delete message.settings.llm.gemini;
+            }
+            if (llmConf.bedrock
+                && llmConf.bedrock.accessKeyId
+                && llmConf.bedrock.secretAccessKey
+                && llmConf.bedrock.model) {
+                llmClients.bedrock.init(llmConf.bedrock);
+                delete message.settings.llm.bedrock;
+            }
         } else {
             if (message.settings.showAdvanced && isMV3) {
                 if (isUserScriptsAvailable()) {
@@ -1257,6 +1281,37 @@ function start(browser) {
             }
         }
         return { error };
+    };
+    self.updateInputHistory = function(message, sender, sendResponse) {
+        let key = undefined, value;
+        for (var k in message) {
+            key = k + "History";
+            value = message[k];
+            break;
+        }
+        if (key) {
+            loadSettings(key, function(data) {
+                let curr = data[key] || [];
+                let toUpdate = {};
+                if (value.constructor.name === "Array") {
+                    toUpdate[key] = value;
+                    _updateAndPostSettings(toUpdate);
+                } else if (value.trim().length && value !== ".") {
+                    curr = curr.filter(function(c) {
+                        return c.trim().length && c !== value && c !== ".";
+                    });
+                    curr.unshift(value);
+                    if (curr.length > 50) {
+                        curr.pop();
+                    }
+                    toUpdate[key] = curr;
+                    _updateAndPostSettings(toUpdate);
+                }
+                _response(message, sendResponse, {
+                    history: curr
+                });
+            });
+        }
     };
     self.setSurfingkeysIcon = function(message, sender, sendResponse) {
         let icon = "icons/48.png";
@@ -1750,6 +1805,56 @@ function start(browser) {
         // only for Safari
         chrome.runtime.sendNativeMessage("application.id", {message: "Clipboard.read"}, function(response) {
             _response(message, sendResponse, response);
+        });
+    };
+    function toUTF8(str) {
+        try {
+            return decodeURIComponent(escape(str));
+        } catch {
+            return str;
+        }
+    }
+    let clientInLLMRequest = {tabId: 0, frameId: 0};
+    self.llmRequest = function (message, sender, sendResponse) {
+        clientInLLMRequest.tabId = sender.tab.id;
+        clientInLLMRequest.frameId = sender.frameId;
+
+        const decoder = new TextDecoder();
+
+        const provider = message.provider;
+        if (llmClients.hasOwnProperty(provider)) {
+            const llmClient = llmClients[provider];
+            message.messages = message.messages.filter((m) => m.content);
+            llmClient(message, {
+                onComplete: (message) => {
+                    if (message.content && message.content.constructor.name === "Array") {
+                        message.content = message.content.map((c) => {
+                            return c.type === "text" ? { type: "text", text: toUTF8(c.text) } : c;
+                        });
+                    }
+                    sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+                        subject: 'llmResponse',
+                        message,
+                        done: true
+                    });
+                },
+                onChunk: (chunk) => {
+                    sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+                        subject: 'llmResponse',
+                        chunk: toUTF8(chunk)
+                    });
+                },
+            });
+        } else {
+            sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+                subject: 'llmResponse',
+                chunk: `**Warning:** There is no LLM provider ${provider} implemented.`
+            });
+        }
+    };
+    self.getAllLlmProviders = function (message, sender, sendResponse) {
+        _response(message, sendResponse, {
+            providers: Object.keys(llmClients)
         });
     };
 

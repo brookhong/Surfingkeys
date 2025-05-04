@@ -371,7 +371,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 browser.readText(query);
             }
             query = query.toLocaleLowerCase();
-            runtime.updateHistory('OmniQuery', query);
+            RUNTIME('updateInputHistory', { OmniQuery: query });
 
             const callbackId = generateQuickGuid();
             skCallbacks[callbackId] = (res) => {
@@ -553,6 +553,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 keyHints: _keyHints
             });
         },
+        openOmnibar: self.openOmnibar,
         showStatus: self.showStatus,
         toggleStatus: self.toggleStatus,
     });
@@ -582,7 +583,7 @@ function createFront(insert, normal, hints, visual, browser) {
     };
 
     _actions["omnibar_query_entered"] = function(response) {
-        runtime.updateHistory('OmniQuery', response.query);
+        RUNTIME('updateInputHistory', { OmniQuery: response.query });
         self.performInlineQuery(response.query, {
             top: 0,
             left: 80,

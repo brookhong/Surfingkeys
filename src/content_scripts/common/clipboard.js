@@ -85,7 +85,6 @@ function createClipboard() {
         if (getBrowserName() === "Chrome") {
             clipboardActionWithSelectionPreserved(function() {
                 holder.value = text;
-                console.log(text);
                 holder.select();
                 document.execCommand('copy');
                 holder.value = '';

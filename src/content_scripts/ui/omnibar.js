@@ -23,6 +23,7 @@ import {
     toggleQuote,
 } from '../common/utils.js';
 import { RUNTIME, runtime } from '../common/runtime.js';
+import LLMChat from './llmchat';
 
 const separator = '➤';
 const separatorHtml = `<span class='separator'>${separator}</span>`;
@@ -45,6 +46,14 @@ function createOmnibar(front, clipboard) {
     self.mappings = new Trie();
     self.map_node = self.mappings;
 
+    function getPosition() {
+        let p = runtime.conf.omnibarPosition;
+        if (handler && handler.omnibarPosition) {
+            p = handler.omnibarPosition;
+        }
+        return p;
+    }
+
     var savedFocused = -1;
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-d>"), {
         annotation: "Delete focused item from bookmark or history",
@@ -56,12 +65,12 @@ function createOmnibar(front, clipboard) {
                     uid: fi.uid
                 }, function(ret) {
                     if (ret.response === "Done") {
-                        var newFI = (runtime.conf.omnibarPosition !== "bottom") ? fi.nextElementSibling : fi.previousElementSibling;
+                        var newFI = (getPosition() !== "bottom") ? fi.nextElementSibling : fi.previousElementSibling;
                         fi.remove();
                         if (newFI) {
                             self.focusItem(newFI);
                         } else {
-                            savedFocused = (runtime.conf.omnibarPosition !== "bottom") ?
+                            savedFocused = (getPosition() !== "bottom") ?
                                 self.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li').length : 0;
                             self.input.dispatchEvent(new Event('input', { bubbles: true }));
                         }
@@ -71,9 +80,9 @@ function createOmnibar(front, clipboard) {
         }
     });
 
-    function reopen(handler) {
+    function reopen(cb) {
         front.hidePopup();
-        setTimeout(handler, 100);
+        setTimeout(cb, 100);
     }
 
     const searchEngine = SearchEngine(self, front);
@@ -238,9 +247,6 @@ function createOmnibar(front, clipboard) {
 
     var lastInput = "", handler, lastHandler = null;
     var ui = document.getElementById('sk_omnibar');
-    ui.onclick = function(e) {
-        self.input.focus();
-    };
 
     self.triggerInput = function() {
         var event = new Event('input', {
@@ -331,8 +337,8 @@ function createOmnibar(front, clipboard) {
         handler.onInput && handler.onInput.call(this);
     }
     function _onKeyDown(evt) {
-        if (handler && handler.onKeydown) {
-            handler.onKeydown.call(evt.target, evt) && evt.preventDefault();
+        if (handler && handler.onKeydown && handler.onKeydown.call(evt.target, evt)) {
+            return;
         }
         if (Mode.isSpecialKeyOf("<Esc>", evt.sk_keyName)) {
             front.hidePopup();
@@ -367,14 +373,36 @@ function createOmnibar(front, clipboard) {
         annotation: "Forward cycle through the candidates.",
         feature_group: 8,
         code: function () {
-            rotateResult(runtime.conf.omnibarPosition === "bottom");
+            rotateResult(getPosition() === "bottom");
         }
     });
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Shift-Tab>"), {
         annotation: "Backward cycle through the candidates.",
         feature_group: 8,
         code: function () {
-            rotateResult(runtime.conf.omnibarPosition !== "bottom");
+            rotateResult(getPosition() !== "bottom");
+        }
+    });
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-n>"), {
+        annotation: "Forward cycle through the input history.",
+        feature_group: 8,
+        code: function () {
+            if (handler && handler.rotateInput) {
+                handler.rotateInput(getPosition() === "bottom");
+            } else {
+                rotateResult(getPosition() === "bottom");
+            }
+        }
+    });
+    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-p>"), {
+        annotation: "Backward cycle through the input history.",
+        feature_group: 8,
+        code: function () {
+            if (handler && handler.rotateInput) {
+                handler.rotateInput(getPosition() !== "bottom");
+            } else {
+                rotateResult(getPosition() !== "bottom");
+            }
         }
     });
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-'>"), {
@@ -512,6 +540,7 @@ function createOmnibar(front, clipboard) {
 
     var _savedAargs;
     ui.onShow = function(args) {
+        handler = handlers[args.type];
         if (!self.input) {
             self.input = _createInput();
             document.querySelector("#sk_omnibarSearchArea").insertBefore(self.input, resultPageSpan);
@@ -522,8 +551,8 @@ function createOmnibar(front, clipboard) {
         if (getBrowserName() === "Safari-iOS") {
             runtime.conf.omnibarPosition = "bottom";
         }
-        ui.classList.add("sk_omnibar_" + runtime.conf.omnibarPosition);
-        if (runtime.conf.omnibarPosition === "bottom") {
+        ui.classList.add("sk_omnibar_" + getPosition());
+        if (getPosition() === "bottom") {
             self.resultsDiv.remove();
             ui.insertBefore(self.resultsDiv, document.querySelector("#sk_omnibarSearchArea"));
         } else {
@@ -532,7 +561,6 @@ function createOmnibar(front, clipboard) {
         }
 
         self.tabbed = (args.tabbed !== undefined) ? args.tabbed : true;
-        handler = handlers[args.type];
         self.input.focus();
         self.enter();
         if (args.pref) {
@@ -603,7 +631,7 @@ function createOmnibar(front, clipboard) {
         if (!items || items.length === 0) {
             return;
         }
-        if (runtime.conf.omnibarPosition === "bottom") {
+        if (getPosition() === "bottom") {
             items.reverse();
         }
         var ul = document.createElement("ul");
@@ -630,10 +658,10 @@ function createOmnibar(front, clipboard) {
         self.resultsDiv.append(ul);
         items = self.resultsDiv.querySelectorAll("#sk_omnibarSearchResult>ul>li");
         if (runtime.conf.focusFirstCandidate || handler.focusFirstCandidate) {
-            var fi = (runtime.conf.omnibarPosition === "bottom") ? items.length - 1 : 0;
+            var fi = (getPosition() === "bottom") ? items.length - 1 : 0;
             items[fi].classList.add('focused');
         }
-        if (runtime.conf.omnibarPosition === "bottom" && items.length > 0) {
+        if (getPosition() === "bottom" && items.length > 0) {
             scrollIntoViewIfNeeded(items[items.length-1]);
         }
     };
@@ -723,6 +751,7 @@ function createOmnibar(front, clipboard) {
     self.addHandler('Commands', Commands(self, front));
     self.addHandler('OmniQuery', OmniQuery(self, front));
     self.addHandler('UserURLs', OpenUserURLs(self));
+    self.addHandler('LLMChat', LLMChat(self, front));
 
     front._actions['updateOmnibarResult'] = function(message) {
         self.listWords(message.words);
@@ -1373,7 +1402,7 @@ function Commands(omnibar, front) {
         var ret = false;
         var cmdline = omnibar.input.value;
         if (cmdline.length) {
-            runtime.updateHistory('cmd', cmdline);
+            RUNTIME('updateInputHistory', { cmd: cmdline });
             execute(cmdline);
             omnibar.input.value = "";
         }

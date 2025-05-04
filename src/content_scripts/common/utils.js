@@ -279,6 +279,10 @@ function showPopup(msg) {
     dispatchSKEvent("front", ['showPopup', msg])
 }
 
+function openOmnibar(args) {
+    dispatchSKEvent("front", ['openOmnibar', args])
+}
+
 function initSKFunctionListener(name, interfaces, capture) {
     const callbacks = {};
 
@@ -385,7 +389,7 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
 function isElementDrawn(e, rect) {
     var min = isEditable(e) ? 1 : 4;
     rect = rect || e.getBoundingClientRect();
-    return rect.width > min && rect.height > min && parseFloat(getComputedStyle(e).opacity) > 0.1;
+    return rect.width > min && rect.height > min && (parseFloat(getComputedStyle(e).opacity) > 0.1 || e.tagName == "INPUT" && e.type != "text");
 }
 
 /**
@@ -1074,6 +1078,20 @@ function refreshHints(hints, pressedKeys) {
     return result;
 }
 
+function rotateInput(inputs, backward, curr, str) {
+    let list = inputs;
+    if (str) {
+        list = inputs.filter((l) => l.indexOf(str) === 0 && l !== str);
+        if (curr > list.length) {
+            curr = list.length;
+        }
+    }
+    const delta = backward ? -1 : 1;
+    const length = list.length + 1; // +1 for empty input
+    curr = (curr + length + delta) % length;
+    return [curr < list.length ? list[curr] : str, curr];
+}
+
 function attachFaviconToImgSrc(tab, imgEl) {
     const browserName = getBrowserName();
     if (browserName === "Chrome") {
@@ -1127,9 +1145,11 @@ export {
     listElements,
     locateFocusNode,
     mapInMode,
+    openOmnibar,
     parseAnnotation,
     refreshHints,
     reportIssue,
+    rotateInput,
     safeDecodeURI,
     safeDecodeURIComponent,
     scrollIntoViewIfNeeded,

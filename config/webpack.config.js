@@ -97,7 +97,29 @@ module.exports = (env, argv) => {
             '**/pdf_viewer.html',
         ]
     };
-    const pluginsForLastModule = [];
+    const module1Plugins = [
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
+                { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
+                { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
+                { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
+                { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
+                { from: 'node_modules/pdfjs-dist/build/pdf.min.mjs', to: 'pages' },
+                { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs', to: 'pages' },
+                { from: 'src/icons', to: 'icons' },
+                { from: 'src/content_scripts/content.css', to: 'content.css' },
+                {
+                    from: "src/manifest.json",
+                    to:   ".",
+                    transform (content, path) {
+                        return modifyManifest(browser, mode, content)
+                    }
+                }
+            ]
+        })
+    ];
+    const module2Plugins = [];
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
         entry['pages/neovim'] = './src/pages/neovim.js';
@@ -107,20 +129,20 @@ module.exports = (env, argv) => {
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';
         if (mode === "production") {
-            pluginsForLastModule.push(
-                new FileManagerPlugin({
-                    events: {
-                        onEnd: {
-                            archive: [
-                                {
-                                    source: buildPath,
-                                    destination: `${buildPath}/sk.zip`
-                                },
-                            ],
-                        },
+            const zipPlugin = new FileManagerPlugin({
+                events: {
+                    onEnd: {
+                        archive: [
+                            {
+                                source: buildPath,
+                                destination: `${buildPath}/sk.zip`
+                            },
+                        ],
                     },
-                })
-            );
+                },
+            });
+            module1Plugins.push(zipPlugin);
+            module2Plugins.push(zipPlugin);
         }
     } else {
         pagesCopyOptions.ignore.push('**/markdown.html');
@@ -172,28 +194,7 @@ module.exports = (env, argv) => {
                 extractComments: false,
             })],
         },
-        plugins: [
-            new CopyWebpackPlugin({
-                patterns: [
-                    { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
-                    { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
-                    { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
-                    { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
-                    { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
-                    { from: 'node_modules/pdfjs-dist/build/pdf.min.mjs', to: 'pages' },
-                    { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs', to: 'pages' },
-                    { from: 'src/icons', to: 'icons' },
-                    { from: 'src/content_scripts/content.css', to: 'content.css' },
-                    {
-                        from: "src/manifest.json",
-                        to:   ".",
-                        transform (content, path) {
-                            return modifyManifest(browser, mode, content)
-                        }
-                    }
-                ]
-            })
-        ]
+        plugins: module1Plugins
     }, {
         devtool: false,
         output: {
@@ -227,7 +228,7 @@ module.exports = (env, argv) => {
                 extractComments: false,
             })],
         },
-        plugins: pluginsForLastModule,
+        plugins: module2Plugins,
         experiments: {
             outputModule: true,
         }

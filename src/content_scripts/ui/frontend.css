@@ -49,7 +49,7 @@ body {
     overflow: hidden;
     position: fixed;
     width: 80%;
-    max-height: 80%;
+    max-height: 100vh;
     left: 10%;
     text-align: left;
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.8);
@@ -104,8 +104,20 @@ body {
     overflow: hidden;
     margin: 0rem 0.6rem;
 }
+#sk_omnibarSearchResult.llmChat {
+    overflow: auto;
+    max-height: 90vh;
+    scrollbar-width: thin;
+}
 #sk_omnibarSearchResult:empty {
     display: none;
+}
+#sk_omnibarSearchResult.llmChat>h4 {
+    background-color: #1b541d;
+    border-radius: 4px;
+    padding: 4px;
+    position: absolute;
+    right: 30px;
 }
 #sk_omnibarSearchResult>ul {
     padding: 0;
@@ -117,6 +129,22 @@ body {
     max-height: 600px;
     overflow-x: hidden;
     overflow-y: auto;
+}
+#sk_omnibarSearchResult.llmChat>ul>li {
+    max-height: max-content;
+}
+#sk_omnibarSearchResult.llmChat>ul>li:before {
+    font-size: 20px;
+    padding: 5px;
+}
+#sk_omnibarSearchResult.llmChat>ul>li.role-user:before {
+    content: var(--llm-user-icon, '🐝');
+}
+#sk_omnibarSearchResult.llmChat>ul>li.role-assistant:before {
+    content: var(--llm-assistant-icon, '👩‍🎓');
+}
+#sk_omnibarSearchResult.llmChat>ul>li.role-surfingkeys:before {
+    content: var(--llm-assistant-icon, 'ℹ︎');
 }
 .sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
     background: #fafafa;

@@ -1,6 +1,6 @@
 {
   "name": "Surfingkeys",
-  "version": "1.17.7",
+  "version": "1.17.8",
   "description": "Map your keys for web surfing, expand your browser with javascript and keyboard.",
   "main": "background.js",
   "directories": {
@@ -70,6 +70,7 @@
     "@pixi/utils": "^7.4.0",
     "@pixi/extensions": "^7.4.0",
     "ace-builds": "^1.4.12",
+    "aws4fetch": "^1.0.20",
     "dompurify": "^3.2.4",
     "js-base64": "^3.7.2",
     "lodash": "^4.17.21",
