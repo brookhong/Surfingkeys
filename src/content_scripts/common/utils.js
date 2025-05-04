@@ -871,11 +871,7 @@ function constructSearchURL(se, word) {
  * @param {string} str links to be opened, the links should be split by `\n` if there are more than one.
  * @param {number} [simultaneousness=5] how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed.
  *
- * @example
- * mapkey("<Space>", "pause/resume on youtube", function() {
- *     var btn = document.querySelector("button.ytp-ad-overlay-close-button") || document.querySelector("button.ytp-ad-skip-button") || document.querySelector('ytd-watch-flexy button.ytp-play-button');
- *     btn.click();
- * }, {domain: /youtube.com/i});
+ * @example tabOpenLink('https://github.com/brookhong/Surfingkeys')
  */
 function tabOpenLink(str, simultaneousness) {
     simultaneousness = simultaneousness || 5;
