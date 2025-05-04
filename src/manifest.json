@@ -64,7 +64,7 @@
             "css": [
                 "content.css",
                 "custom_css/colors.css",
-                "custom_css/master_body/frame.css"
+                "custom_css/frame.css"
             ],
             "run_at": "document_start",
             "all_frames": true

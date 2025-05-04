@@ -1,8 +1,8 @@
 @import url('colors.css');
-@import url('iframe/general.css');
-@import url('iframe/omnibar.css');
-@import url('iframe/status.css');
-@import url('iframe/banner.css');
-@import url('iframe/popup.css');
-@import url('iframe/keystroke.css');
-@import url('iframe/usage.css');
+@import url('general.css');
+@import url('omnibar.css');
+@import url('status.css');
+@import url('banner.css');
+@import url('popup.css');
+@import url('keystroke.css');
+@import url('usage.css');
