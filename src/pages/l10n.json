@@ -316,6 +316,7 @@
         "Enter ephemeral PassThrough mode to temporarily suppress SurfingKeys": "Включить временный режим PassThrough для отключения SurfingKeys",
         "Enter ephemeral normal mode to temporarily enable SurfingKeys": "Включить временный нормальный режим для активации SurfingKeys",
         "Enter normal mode": "Переключиться в нормальный режим",
+        "Enter regional Hints mode": "Войти в режим региональных подсказок",
         "Enter visual mode, and select whole element": "Переключиться в визуальный режим и выделить целый элемент",
         "Exit insert mode": "Выйти из режима вставки",
         "Expand selection to parent element": "Расширить выделение до родительского элемента",
