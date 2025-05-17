@@ -2,7 +2,9 @@ div.surfingkeys_hints_host {
     display: block;
     opacity: 1;
     color-scheme: auto;
-    position: static;
+    position: absolute;
+    inset: 0 0 auto 0;
+    overflow: hidden;
 }
 div.surfingkeys_match_mark {
     background-color: #ff0;
