@@ -193,6 +193,10 @@ div.hint-scrollable {
 [mode=input] mask.activeInput {
     background: rgba(0, 0, 255, 0.25);
 }`);
+    /* When the <style> loaded, set host's height */
+    hintsStyle.onload = () =>
+        { hintsHost.style.height = `${window.scrollY + window.innerHeight}px`; }
+
     hintsHost.shadowRoot.appendChild(hintsStyle);
     const regionalHints = createRegionalHints(clipboard);
 
