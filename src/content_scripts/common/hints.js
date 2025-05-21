@@ -360,7 +360,8 @@ div.hint-scrollable {
                             tabbed: tabbed,
                             active: active
                         },
-                        url: getHref(element)
+                        url: getHref(element),
+                        tabPositionConfKey: "newTabPosition"
                     });
                 } else {
                     self.mouseoutLastElement();

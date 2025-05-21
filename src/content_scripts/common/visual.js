@@ -415,6 +415,7 @@ function createVisual(clipboard, hints) {
         state = 0,
         status = ['', 'Caret', 'Range'],
         mark_template = document.createElement("div"),
+        current_mark_template = document.createElement("div"),
         cursor = document.createElement("div");
     cursor.className = "surfingkeys_cursor";
     cursor.style.zIndex = 2147483299;
@@ -489,6 +490,15 @@ function createVisual(clipboard, hints) {
     };
 
     function select(found) {
+        for (let el of document.getElementsByClassName("surfingkeys_match_mark")) {
+            let positionStyles = _getMarkPositionStyles(el)
+            el.setAttribute("style", mark_template.getAttribute("style"))
+            _setMarkPositionStyles(el, positionStyles)
+        }
+        let positionStyles = _getMarkPositionStyles(found[2][0])
+        found[2][0].setAttribute("style", current_mark_template.getAttribute("style"))
+        _setMarkPositionStyles(found[2][0], positionStyles)
+
         self.hideCursor();
         if (selection.anchorNode && state === 2) {
             selection.extend(found[0], found[1]);
@@ -496,6 +506,26 @@ function createVisual(clipboard, hints) {
             selection.setPosition(found[0], found[1]);
         }
         self.showCursor();
+    }
+
+    function _getMarkPositionStyles(mark) {
+        let ret = {}
+        ret.position = mark.style.position;
+        ret.zIndex = mark.style.zIndex;
+        ret.left = mark.style.left;
+        ret.top = mark.style.top;
+        ret.width = mark.style.width;
+        ret.height = mark.style.height;
+        return ret;
+    }
+
+    function _setMarkPositionStyles(mark, styles) {
+        mark.style.position = styles.position;
+        mark.style.zIndex = styles.zIndex;
+        mark.style.left = styles.left;
+        mark.style.top = styles.top;
+        mark.style.width = styles.width;
+        mark.style.height = styles.height;
     }
 
     function modifySelection() {
@@ -788,6 +818,7 @@ function createVisual(clipboard, hints) {
 
         cursor.setAttribute('style', _style.cursor || '');
         mark_template.setAttribute('style', _style.marks || '');
+        current_mark_template.setAttribute('style', _style.current_mark || '');
     };
     return self;
 }
