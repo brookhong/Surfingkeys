@@ -1824,7 +1824,6 @@ function start(browser) {
         const provider = message.provider;
         if (llmClients.hasOwnProperty(provider)) {
             const llmClient = llmClients[provider];
-            message.messages = message.messages.filter((m) => m.content);
             llmClient(message, {
                 onComplete: (message) => {
                     if (message.content && message.content.constructor.name === "Array") {

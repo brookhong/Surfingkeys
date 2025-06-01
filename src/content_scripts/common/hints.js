@@ -110,8 +110,8 @@ kbd {
         annotation: "learn more about target element",
         feature_group: 17,
         code: function() {
-            const page = overlay.link.innerText;
-            openOmnibar({type: "LLMChat", extra: {page}});
+            const system = overlay.link.innerText;
+            openOmnibar({type: "LLMChat", extra: {system}});
             self.exit();
         }
     });

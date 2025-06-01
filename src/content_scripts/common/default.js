@@ -488,6 +488,12 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('A', '#8Open llm chat', function() {
         front.openOmnibar({type: "LLMChat"});
     });
+    vmapkey('A', '#8Open llm chat', function() {
+        const sel = window.getSelection().toString();
+        front.openOmnibar({type: "LLMChat", extra: {
+            system: sel
+        }});
+    });
     mapkey('yi', '#7Yank text of an input', function() {
         hints.create("input, textarea, select", function(element) {
             clipboard.write(element.value);
