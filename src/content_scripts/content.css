@@ -4,7 +4,7 @@ div.surfingkeys_hints_host {
     color-scheme: auto;
     position: absolute;
     inset: 0 0 auto 0;
-    overflow: hidden;
+    overflow: visible;
 }
 div.surfingkeys_match_mark {
     background-color: #ff0;

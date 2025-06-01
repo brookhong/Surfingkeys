@@ -335,7 +335,7 @@ div.hint-scrollable {
             if (!behaviours.multipleHits) {
                 self.exit();
             }
-            var tabbed = behaviours.tabbed, active = behaviours.active;
+            let tabbed = behaviours.tabbed, active = behaviours.active;
             if (behaviours.multipleHits) {
                 const href = element.getAttribute('href');
                 if (href !== null && href !== "#") {
@@ -344,30 +344,20 @@ div.hint-scrollable {
                 }
             }
 
+            const mouseEventModifiers = {shiftKey: shiftKey || active};
             if (shiftKey && runtime.conf.hintShiftNonActive) {
                 tabbed = true;
-                active = false;
-            } else if (shiftKey && getBrowserName() === "Firefox") {
-                // mouseButton does not work for firefox in mouse event.
-                tabbed = true;
-                active = true;
+                mouseEventModifiers.shiftKey = false;
             }
-
+            if (tabbed) {
+                const modKey = (navigator.platform.indexOf("Mac") !== -1) ? "metaKey" : "ctrlKey";
+                mouseEventModifiers[modKey] = true;
+            }
             flashPressedLink(element,() => {
-                if (tabbed) {
-                    RUNTIME("openLink", {
-                        tab: {
-                            tabbed: tabbed,
-                            active: active
-                        },
-                        url: getHref(element)
-                    });
-                } else {
-                    self.mouseoutLastElement();
-                    dispatchMouseEvent(element, behaviours.mouseEvents, shiftKey);
-                    dispatchSKEvent("observer", ['turnOn']);
-                    lastMouseTarget = element;
-                }
+                self.mouseoutLastElement();
+                dispatchMouseEvent(element, behaviours.mouseEvents, mouseEventModifiers);
+                dispatchSKEvent("observer", ['turnOn']);
+                lastMouseTarget = element;
 
                 if (behaviours.multipleHits) {
                     setTimeout(resetHints, 300);
@@ -466,11 +456,7 @@ div.hint-scrollable {
     function hide() {
         // To reset default behaviours here is necessary, as some hint my be hit without creation.
         behaviours = {
-            active: true,
-            tabbed: false,
-            regionalHints: false,
-            mouseEvents: ['mouseover', 'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'focus', 'focusin'],
-            multipleHits: false
+            mouseEvents: MOUSE_EVENTS
         };
         setSanitizedContent(holder, "");
         holder.remove();
@@ -736,21 +722,13 @@ div.hint-scrollable {
     }
 
     function createHintsForElements(elements, attrs) {
-        attrs = Object.assign({
-            active: true,
-            tabbed: false,
-            mouseEvents: MOUSE_EVENTS,
-            multipleHits: false,
-            filterInvisible: true
-        }, attrs || {});
+        attrs = attrs || {};
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
         self.statusLine = (attrs && attrs.statusLine) || "Hints to click";
 
-        if (attrs.filterInvisible) {
-            elements = filterInvisibleElements(elements);
-        }
+        elements = filterInvisibleElements(elements);
         if (elements.length > 0) {
             placeHints(elements);
         }
@@ -760,16 +738,11 @@ div.hint-scrollable {
     function createHintsForClick(cssSelector, attrs) {
         self.statusLine = "Hints to click";
 
-        attrs = Object.assign({
-            active: true,
-            tabbed: false,
-            mouseEvents: MOUSE_EVENTS,
-            multipleHits: false
-        }, attrs || {});
+        attrs = attrs || {};
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
-        var elements;
+        let elements;
         if (cssSelector === "") {
             elements = getVisibleElements(function(e, v) {
                 if (isElementClickable(e)) {
@@ -991,7 +964,7 @@ div.hint-scrollable {
 
     self.mouseoutLastElement = function() {
         if (lastMouseTarget) {
-            dispatchMouseEvent(lastMouseTarget, ['mouseout'], false);
+            dispatchMouseEvent(lastMouseTarget, ['mouseout'], {});
             lastMouseTarget = null;
         }
     };

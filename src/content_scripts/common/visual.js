@@ -290,7 +290,7 @@ function createVisual(clipboard, hints) {
     });
     function clickLink(element, shiftKey) {
         flashPressedLink(element, () => {
-            dispatchMouseEvent(element, ['click'], shiftKey);
+            dispatchMouseEvent(element, ['click'], {shiftKey});
         });
     }
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Enter>"), {

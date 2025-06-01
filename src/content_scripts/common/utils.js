@@ -305,15 +305,17 @@ function initSKFunctionListener(name, interfaces, capture) {
     return callbacks;
 }
 
-function dispatchMouseEvent(element, events, shiftKey) {
+function dispatchMouseEvent(element, events, modifiers) {
     events.forEach(function(eventName) {
-        var mouseButton = shiftKey ? 1 : 0;
-        var event = new MouseEvent(eventName, {
+        const event = new MouseEvent(eventName, {
             bubbles: true,
             cancelable: true,
             composed: true,
             view: window,
-            button: mouseButton
+            ctrlKey: modifiers.ctrlKey,
+            altKey: modifiers.altKey,
+            shiftKey: modifiers.shiftKey,
+            metaKey: modifiers.metaKey
         });
         element.dispatchEvent(event);
     });
