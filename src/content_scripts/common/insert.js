@@ -62,7 +62,8 @@ function createInsert() {
         feature_group: 15,
         code: moveCursorEOL
     });
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-a>"), {
+    const keyToBOL = KeyboardUtils.platform === "Windows" ? "<Ctrl-f>" : "<Ctrl-a>";
+    self.mappings.add(KeyboardUtils.encodeKeystroke(keyToBOL), {
         annotation: "Move the cursor to the beginning of the line",
         feature_group: 15,
         code: function() {

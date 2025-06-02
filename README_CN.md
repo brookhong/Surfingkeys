@@ -153,7 +153,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `Ctrl - i` 打开vim编辑器。
 * `Ctrl - '` 把输入框里的内容用双引号引起来或去除双引号，方便在搜索引擎页面上搜索时使用。
 * `Ctrl-e`移动光标到行尾。
-* `Ctrl-a` 移动光标到行首。
+* `Ctrl-a` 移动光标到行首， 在Windows下用`Ctrl-f`避免和全选冲突。
 * `Ctrl-u` 删除光标前所有输入。
 * `Alt-b` 移动光标到后一个词。
 * `Alt-f` 移动光标到前一个词。
@@ -407,17 +407,11 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
 * setProxyMode, 设置代理模式，有五种模式：direct, byhost, bypass, always, system 和 clear。
 
         direct      Chrome不使用代理访问任何网站。
-        byhost      Chrome只在访问你通过`addProxySite`命令添加过的网站时使用代理。你可以添加多条映射，让不同的网站使用不同的代理。
-        bypass      Chrome使用代理访问所有网站，除了通过`addProxySite`命令添加过的网站。
+        byhost      Chrome只在访问你添加过的网站时使用代理。你可以添加多条映射，让不同的网站使用不同的代理。
+        bypass      Chrome使用代理访问所有网站，除了添加过的网站。
         always      Chrome使用代理访问所有网站。
         system      Chrome使用操作系统设置的代理。
         clear       Surfingkeys不管代理，有其他插件管理，也就是禁用Surfingkeys的代理管理功能, 这是默认模式。
-
-* addProxySite, removeProxySite, toggleProxySite, 管理你需要通过代理访问的网站，比如：
-
-        addProxySite google.com,facebook.com,twitter.com
-
-* proxyInfo, 列出你当前的代理设置，包括用以上命令设置的信息。
 
 * `cp`, 切换当前站点的代理设置，即是否使用代理访问当前站点。
 

@@ -172,7 +172,7 @@ All mappings added with `imapkey` work in this mode.
 * `Ctrl - i` to open vim editor to edit.
 * `Ctrl - '` to toggle quotes in an input element, this is useful for search engines like google.
 * `Ctrl-e` move the cursor to the end of the line.
-* `Ctrl-a` move the cursor to the beginning of the line.
+* `Ctrl-a` move the cursor to the beginning of the line, use `Ctrl-f` in Windows to avoid conflict with select all.
 * `Ctrl-u` delete all entered characters before the cursor.
 * `Alt-b` move the cursor Backward 1 word.
 * `Alt-f` move the cursor Forward 1 word.
@@ -421,17 +421,11 @@ To avoid manually editing PAC script and reloading/switching profile by clicking
 * setProxyMode, to set proxy mode, there are five modes: direct, byhost, bypass, always, system and clear.
 
         direct      Chrome will connect to all sites directly.
-        byhost      Chrome will only connect to sites added by `addProxySite` through related proxy. You could add multiple pairs of `proxy` and `hosts`, for hosts matched with `hosts` `proxy` will be used.
+        byhost      Chrome will only connect to sites added in settings through related proxy. You could add multiple pairs of `proxy` and `hosts`, for hosts matched with `hosts` `proxy` will be used.
         bypass      Chrome will connect to all sites through proxy, with specified hosts excluded.
         always      Chrome will connect to all sites through proxy.
         system      Use proxy configuration taken from the operating system.
         clear       Surfingkeys will not take control of proxy settings, this is the default mode.
-
-* addProxySite, removeProxySite, toggleProxySite, to make Chrome connect to site through proxy or not, examples:
-
-        addProxySite google.com,facebook.com,twitter.com
-
-* proxyInfo, to list proxy you set by `setProxy`, proxy mode you set by `setProxyMode` and sites you add/remove by `addProxySite`/`removeProxySite`/`toggleProxySite`.
 
 * `cp`, toggle proxy for current site.
 
