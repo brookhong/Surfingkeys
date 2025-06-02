@@ -86,6 +86,7 @@ const runtime = (function() {
             smoothScroll: true,
             startToShowEmoji: 2,
             stealFocusOnLoad: true,
+            tabIndicesSeparator: "|",
             tabsThreshold: 100,
             verticalTabs: true,
             textAnchorPat: /(^[\n\r\s]*\S{3,}|\b\S{4,})/g,

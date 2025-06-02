@@ -354,10 +354,20 @@ div.hint-scrollable {
                 mouseEventModifiers[modKey] = true;
             }
             flashPressedLink(element,() => {
-                self.mouseoutLastElement();
-                dispatchMouseEvent(element, behaviours.mouseEvents, mouseEventModifiers);
-                dispatchSKEvent("observer", ['turnOn']);
-                lastMouseTarget = element;
+                if (tabbed && getBrowserName().startsWith("Safari")) {
+                    RUNTIME("openLink", {
+                        tab: {
+                            tabbed: tabbed,
+                            active: mouseEventModifiers.shiftKey
+                        },
+                        url: getHref(element)
+                    });
+                } else {
+                    self.mouseoutLastElement();
+                    dispatchMouseEvent(element, behaviours.mouseEvents, mouseEventModifiers);
+                    dispatchSKEvent("observer", ['turnOn']);
+                    lastMouseTarget = element;
+                }
 
                 if (behaviours.multipleHits) {
                     setTimeout(resetHints, 300);

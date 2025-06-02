@@ -228,7 +228,7 @@ export default function (omnibar, front) {
         messages[0].content = opts && opts.system || "";
         omnibar.resultsDiv.className = "llmChat";
         if (!provider) {
-            provider = opts.provider || runtime.conf.defaultLLMProvider;
+            provider = opts && opts.provider || runtime.conf.defaultLLMProvider;
         }
         omnibar.resultsDiv.append(createElementWithContent('h4', provider));
         renderMessages();

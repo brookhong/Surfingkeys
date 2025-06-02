@@ -572,6 +572,8 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.caretViewport | null | 按`[top, left, bottom, right]`格式设置，可以限制按`v`进入可视模式时的选择范围。比如`[window.innerHeight / 2 - 10, 0, window.innerHeight / 2 + 10, window.innerWidth]`会使Surfingkeys只会为显示在窗口中间的文字生成拨号盘字符。|
 | settings.mouseSelectToQuery | [] | 所有启用鼠标选择查询功能的网站列表。 |
 | settings.autoSpeakOnInlineQuery | false | 是否在使用inline query时自动发声。 |
+| settings.showTabIndices | false | 是否在标签页标题上显示当前标签页的编号。 |
+| settings.tabIndicesSeparator | "\|" | 标签页编号与标签页原始标题之间的分隔符。 |
 
 ### settings.theme示例，修改状态栏字体
 
