@@ -1603,7 +1603,11 @@ function start(browser) {
         var tabId = sender.tab.id;
         var zoomFactor = message.zoomFactor * message.repeats;
         if (zoomFactor == 0) {
-            chrome.tabs.setZoom(tabId, 1);
+            chrome.tabs.getZoomSettings(tabId, function(settings) {
+                const defaultZoom = settings.defaultZoomFactor ?
+                    settings.defaultZoomFactor : 1;
+                chrome.tabs.setZoom(tabId, defaultZoom);
+            });
         } else {
             chrome.tabs.getZoom(tabId, function(zf) {
                 chrome.tabs.setZoom(tabId, zf + zoomFactor);
