@@ -68,6 +68,8 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 * 插入模式下的表情下拉选项
 * 按键实时提示
 * 所有按键对PDF适用
+* Regional Hints mode
+* 大语言模型对话
 
 ## 快速上手
 
@@ -139,9 +141,11 @@ Surfingkeys有三种模式：normal，visual和insert。
 
 按`L`键选择一个大块元素进入Regional Hints mode，目前自带的操作有
 
+* `Esc` 退出Regional Hints mode
 * `ct` 复制该大块元素的文本
 * `ch` 复制该大块元素的HTML
 * `d` 删除该大块元素
+* `l` 与大语言模型讨论选中文本
 
 [Demo on YouTube](https://www.youtube.com/watch?v=pFPOzAZDO38)
 
@@ -582,6 +586,65 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
             font-size: 20pt;
         }
     }`;
+
+## 大语言模型对话
+目前集成了比较常用的几个大语言模型，可用`A`调出对话窗口，
+
+* Ollama
+* Bedrock
+* DeepSeek
+* Gemini
+
+使用之前，必须设置相应的密钥或者API key，比如
+
+        settings.defaultLLMProvider = "bedrock";
+        settings.llm = {
+            bedrock: {
+                accessKeyId: '********************',
+                secretAccessKey: '****************************************',
+                // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+                model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+            },
+            gemini: {
+                apiKey: '***************************************',
+            },
+            ollama: {
+                model: 'qwen2.5-coder:32b',
+            },
+            deepseek: {
+                apiKey: '***********************************',
+                model: 'deepseek-chat',
+            }
+        };
+
+你也可以在Visual mode下使用大语言模型对话。按`v`或`V`进入Visual mode，再按`v`选中你关注的文本，最后`A`按调出对话窗口，开始和AI就选中文本进行探讨。
+另一个方式是使用Regional Hints mode选择需要与AI进行探讨的内容。按`L`选择一个区域，再按`l`调出对话窗口。
+
+### 指定系统提示词
+
+比如，你可以这样限定你的AI只做中英文互译
+
+    api.mapkey('A', '#8Open llm chat', function() {
+        api.Front.openOmnibar({type: "LLMChat", extra: {
+            system: "You're a translator, whenever you got a message in Chinese, please just translate it into English, and if you got a message in English, please translate it to Chinese. You don't need to answer any question, just TRANSLATE."
+        }});
+    });
+
+### 403 Forbidden with Ollama
+
+在Chrome扩展中使用Ollama，你需要在启动ollama时指定`OLLAMA_ORIGINS`
+
+Windows下
+
+    OLLAMA_ORIGINS=chrome-extension://* ollama serve
+
+Mac下
+
+    launchctl setenv OLLAMA_ORIGINS chrome-extension://gfbliohnnapiefjpjlpjnehglfpaknnc
+
+Mac下同时允许在Chrome和Firefox里使用
+
+    launchctl setenv OLLAMA_ORIGINS "chrome-extension://gfbliohnnapiefjpjlpjnehglfpaknnc,moz-extension://*"
 
 ## 编译
 
