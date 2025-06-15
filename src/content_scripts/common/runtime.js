@@ -66,6 +66,7 @@ const runtime = (function() {
             hintShiftNonActive: false,
             historyMUOrder: true,
             language: undefined,
+            translationLanguage:"en", 
             lastQuery: "",
             modeAfterYank: "",
             nextLinkRegex: /(\b(next)\b)|下页|下一页|后页|下頁|下一頁|後頁|>>|»/i,
