@@ -193,9 +193,18 @@ div.hint-scrollable {
 [mode=input] mask.activeInput {
     background: rgba(0, 0, 255, 0.25);
 }`);
-    /* When the <style> loaded, set host's height */
-    hintsStyle.onload = () =>
-        { hintsHost.style.height = `${window.scrollY + window.innerHeight}px`; }
+    /* When the <style> loaded, set hints host's size */
+    hintsStyle.onload = () => {
+        /* Get height and width in integers */
+        const height = Math.floor(document.documentElement.scrollTop +
+            document.documentElement.clientHeight) - 1;
+        const width = Math.floor(document.documentElement.scrollLeft +
+            document.documentElement.clientWidth) - 1;
+
+        /* Set height and width */
+        hintsHost.style.height = `${height}px`;
+        hintsHost.style.width = `${width}px`;
+    }
 
     hintsHost.shadowRoot.appendChild(hintsStyle);
     const regionalHints = createRegionalHints(clipboard);

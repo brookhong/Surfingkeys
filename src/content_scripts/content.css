@@ -3,8 +3,10 @@ div.surfingkeys_hints_host {
     opacity: 1;
     color-scheme: auto;
     position: absolute;
-    inset: 0 0 auto 0;
-    overflow: visible;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    pointer-events: none;
 }
 div.surfingkeys_match_mark {
     background-color: #ff0;
