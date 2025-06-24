@@ -1130,7 +1130,7 @@ function createAceEditor(normal, front) {
         _ace.$emacsModeHandler.bindKey("C-x C-s", "closeAndSave");
         return _ace.$emacsModeHandler;
     }
-    _ace.setTheme("ace/theme/chrome");
+    _ace.setTheme(`ace/theme/${runtime.conf.aceTheme}`);
     var keybindingsDeferred = new Promise(function(resolve, reject) {
         var aceKeyboardLoaded = aceKeyboardVimLoaded;
         if (runtime.conf.aceKeybindings === "emacs") {
@@ -1142,7 +1142,6 @@ function createAceEditor(normal, front) {
             resolve(aceKeyboardLoaded());
         });
     });
-    _ace.container.style.background = "#f1f1f1";
     _ace.$blockScrolling = Infinity;
 
     self.show = function(message) {
