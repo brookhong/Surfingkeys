@@ -93,39 +93,46 @@ module.exports = (env, argv) => {
     };
     const pagesCopyOptions = {
         ignore: [
+            '**/images/*',
             '**/neovim.*',
-            '**/pdf_viewer.html',
+            '**/pdf_viewer.*',
         ]
     };
-    const module1Plugins = [
-        new CopyWebpackPlugin({
-            patterns: [
-                { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
-                { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
-                { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
-                { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
-                { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
-                { from: 'node_modules/pdfjs-dist/build/pdf.min.mjs', to: 'pages' },
-                { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs', to: 'pages' },
-                { from: 'src/icons', to: 'icons' },
-                { from: 'src/content_scripts/content.css', to: 'content.css' },
-                {
-                    from: "src/manifest.json",
-                    to:   ".",
-                    transform (content, path) {
-                        return modifyManifest(browser, mode, content)
-                    }
-                }
-            ]
-        })
+    const copyPatterns = [
+        { from: 'src/pages', to: 'pages', globOptions: pagesCopyOptions },
+        { from: 'src/content_scripts/ui/frontend.html', to: 'pages' },
+        { from: 'src/content_scripts/ui/frontend.css', to: 'pages' },
+        { from: 'node_modules/ace-builds/src-noconflict/worker-javascript.js', to: 'pages' },
+        { from: 'src/icons', to: 'icons' },
+        { from: 'src/content_scripts/content.css', to: 'content.css' },
+        {
+            from: "src/manifest.json",
+            to:   ".",
+            transform (content, path) {
+                return modifyManifest(browser, mode, content)
+            }
+        }
     ];
-    const module2Plugins = [];
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
         entry['pages/neovim'] = './src/pages/neovim.js';
         moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
         moduleEntries['api'] = './src/user_scripts/index.js';
+        const chromeOnlyCopyPatterns = [
+            { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
+            { from: 'node_modules/pdfjs-dist/build/pdf.min.mjs', to: 'pages' },
+            { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs', to: 'pages' },
+        ];
+        copyPatterns.push(...chromeOnlyCopyPatterns);
     }
+
+    const module1Plugins = [
+        new CopyWebpackPlugin({
+            patterns: copyPatterns
+        })
+    ];
+    const module2Plugins = [];
+
     if (browser !== "safari") {
         entry['pages/markdown'] = './src/content_scripts/markdown.js';
         if (mode === "production") {
