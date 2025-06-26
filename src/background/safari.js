@@ -47,6 +47,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
 }
 
 start({
+    name: "Safari",
     getLatestHistoryItem,
     loadRawSettings,
     _applyProxySettings,

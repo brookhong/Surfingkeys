@@ -177,6 +177,7 @@ function startNative() {
 nvimServer.instance = startNative();
 
 start({
+    name: "Chrome",
     detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,

@@ -321,7 +321,7 @@ function start(browser) {
         }
     }
 
-    function sendTabMessage(tabId, frameId, message, cb) {
+    function sendTabMessage(tabId, frameId, message) {
         const opts = (frameId === -1) ? undefined : {frameId: frameId};
         // use catch to suppress Uncaught (in promise) Error on sending message to unsupported tabs like chrome://
         const p = chrome.tabs.sendMessage(tabId, message, opts);
@@ -1819,6 +1819,14 @@ function start(browser) {
         }
     }
     let clientInLLMRequest = {tabId: 0, frameId: 0};
+    const sendLLMessage = (tabId, frameId, message) => {
+        if (browser.name === "Safari") {
+            chrome.runtime.sendMessage(message);
+        } else {
+            sendTabMessage(tabId, frameId, message);
+        }
+    };
+
     self.llmRequest = function (message, sender, sendResponse) {
         clientInLLMRequest.tabId = sender.tab.id;
         clientInLLMRequest.frameId = sender.frameId;
@@ -1835,21 +1843,21 @@ function start(browser) {
                             return c.type === "text" ? { type: "text", text: toUTF8(c.text) } : c;
                         });
                     }
-                    sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+                    sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
                         subject: 'llmResponse',
                         message,
                         done: true
                     });
                 },
                 onChunk: (chunk) => {
-                    sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+                    sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
                         subject: 'llmResponse',
                         chunk: toUTF8(chunk)
                     });
                 },
             });
         } else {
-            sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
+            sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
                 subject: 'llmResponse',
                 chunk: `**Warning:** There is no LLM provider ${provider} implemented.`
             });
