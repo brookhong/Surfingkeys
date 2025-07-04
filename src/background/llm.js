@@ -416,7 +416,7 @@ function deepseek(req, opts) {
 function gemini(req, opts) {
     const decoder = new TextDecoder();
     if (!gemini.apiKey) {
-        opts.onChunk("Please set api key for DeepSeek correctly.");
+        opts.onChunk("Please set api key for Gemini correctly.");
         opts.onComplete({});
         return;
     }
