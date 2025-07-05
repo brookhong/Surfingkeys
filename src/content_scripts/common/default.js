@@ -33,6 +33,9 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('T', '#3Choose a tab', function() {
         front.chooseTab();
     });
+    mapkey(';G', '#3Group this tab', function() {
+        front.groupTab();
+    });
     mapkey('?', '#0Show usage', function() {
         front.showUsage();
     });

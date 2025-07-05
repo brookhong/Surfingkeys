@@ -41,6 +41,7 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 | Capture page | Y | Y | Y |
 | PDF viewer | Y | N | N |
 | Sync across devices | Y | N | Y |
+| Tab Groups | Y | N | N |
 | Proxy | Y | N | N |
 | Markdown preview |Y  | Y | N |
 

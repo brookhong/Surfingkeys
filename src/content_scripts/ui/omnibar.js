@@ -566,6 +566,7 @@ function createOmnibar(front, clipboard) {
         if (args.pref) {
             self.input.value = args.pref;
         }
+        self.resultsDiv.className = "";
         handler.onOpen && handler.onOpen(args.extra);
         lastHandler = handler;
         handler = handler;
@@ -1356,13 +1357,20 @@ function SearchEngine(omnibar, front) {
 
 function Commands(omnibar, front) {
     var self = {
-        focusFirstCandidate: true,
+        focusFirstCandidate: false,
         prompt: ':',
     }, items = {};
 
     var historyInc = 0;
 
     self.onOpen = function() {
+        omnibar.resultsDiv.className = "commands";
+
+        if (omnibar.input.value.length) {
+            omnibar.triggerInput();
+            return;
+        }
+
         historyInc = -1;
         RUNTIME('getSettings', {
             key: 'cmdHistory'

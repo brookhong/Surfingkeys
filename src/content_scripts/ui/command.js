@@ -121,6 +121,9 @@ export default (normal, command, omnibar) => {
     command('clearQueueURLs', 'clear URLs in queue waiting for open', function(args) {
         RUNTIME('clearQueueURLs');
     });
+    command('createTabGroup', 'group all tabs by domain: createTabGroup [title] [grey|blue|red|yellow|green|pink|purple|cyan|orange]', function(args) {
+        RUNTIME('createTabGroup', {title: args[0], color: args[1]});
+    });
     command('timeStamp', 'print time stamp in human readable format', function(args) {
         var dt = new Date(parseInt(args[0]));
         omnibar.listWords([dt.toString()]);

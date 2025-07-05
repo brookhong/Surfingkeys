@@ -190,6 +190,9 @@ body {
     margin: 5px;
     box-shadow: 0px 2px 10px rgb(0 0 0 / 88%);
 }
+#sk_omnibarSearchResult.commands>ul>li {
+    justify-content: space-between;
+}
 #sk_status {
     position: fixed;
     bottom: 0;
@@ -310,7 +313,7 @@ kbd {
     position: fixed;
     top: 0;
     left: 0;
-    background: #000;
+    background: #00000085;
     overflow: auto;
     z-index: 2147483000;
 }
@@ -395,6 +398,23 @@ div.sk_tab_hint {
     border: solid 1px #C38A22;
     border-radius: 3px;
     box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.3);
+}
+div.sk_tab_group {
+    font-size: large;
+    color: #e1e1e1;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin: 10px;
+    display: inline-block;
+    background: #000;
+}
+div.sk_tab_group_header {
+    display: flex;
+    justify-content: space-between;
+}
+div.sk_tab_group_header>div {
+    display: inline-flex;
 }
 #sk_bubble {
     position: absolute;

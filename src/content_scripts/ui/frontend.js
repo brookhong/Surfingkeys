@@ -75,7 +75,7 @@ const Front = (function() {
             self.hidePopup();
             event.sk_stopPropagation = true;
         } else if (_tabs.style.display !== "none") {
-            const tabHints = _tabs.querySelectorAll('div.sk_tab>div.sk_tab_hint');
+            const tabHints = _tabs.querySelectorAll('div>div.sk_tab_hint');
             if (tabHints.length > 0) {
                 const key = event.sk_keyName;
                 const characters = hints.getCharacters().toLowerCase();
@@ -88,10 +88,7 @@ const Front = (function() {
                     pressedHintKeys = pressedHintKeys + key.toUpperCase();
                     const hintState = refreshHints(tabHints, pressedHintKeys);
                     if (hintState.matched) {
-                        RUNTIME('focusTab', {
-                            windowId: hintState.matched.windowId,
-                            tabId: hintState.matched.id
-                        });
+                        _tabs.onHit(hintState.matched);
                         pressedHintKeys = "";
                         self.hidePopup();
                     } else if (hintState.candidates === 0) {
@@ -99,7 +96,9 @@ const Front = (function() {
                         self.hidePopup();
                     }
                 } else {
-                    showElement(_omnibar, {type: 'Tabs'});
+                    showElement(_omnibar, () => {
+                        _omnibar.onShow({type: 'Tabs'});
+                    });
                 }
 
                 event.sk_stopPropagation = true;
@@ -237,69 +236,134 @@ const Front = (function() {
     };
     self.hidePopup = _actions['hidePopup'];
 
-    function setDisplay(td, args) {
+    function setDisplay(td, render) {
         if (_display && _display.style.display !== "none") {
             _display.style.display = "none";
             _display.onHide && _display.onHide();
         }
         _display = td;
         _display.style.display = "";
-        _display.onShow && _display.onShow(args);
+        render && render();
         self.startInputGuard();
     }
 
-    function showElement(td, args) {
+    function showElement(td, render, onHit) {
         self.enter(0, true);
-        setDisplay(td, args);
+        td.onHit = onHit;
+        setDisplay(td, render);
         self.flush();
     }
 
-    _tabs.onShow = function(tabs) {
-        setSanitizedContent(_tabs, "");
-        var hintLabels = hints.genLabels(tabs.length - 1);
-        var j = 0;
-        const unitWidth = window.innerWidth / tabs.length - 2;
-        const verticalTabs = runtime.conf.verticalTabs;
-        _tabs.className = verticalTabs ? "vertical" : "horizontal";
+    function renderTabTitles(container, tabs) {
         tabs.forEach(function(t, i) {
-            var tab = document.createElement('div');
-            tab.setAttribute('class', 'sk_tab');
-            if (!verticalTabs) {
-                tab.style.width = unitWidth + 'px';
-            }
-            if (t.active === false) {
-                setSanitizedContent(tab, `<div class=sk_tab_hint>${hintLabels[j]}</div><div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
-                const tabHint = tab.querySelector("div.sk_tab_hint");
-                tabHint.label = hintLabels[j];
-                tabHint.link = {id: t.id, windowId: t.windowId};
-                j ++;
-            } else {
-                setSanitizedContent(tab, `<div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`);
-                tab.style.boxShadow = "0px 3px 7px 0px rgba(245, 245, 0, 0.9)";
+            const tab = createElementWithContent('div', `<div class=sk_tab_wrap><div class=sk_tab_icon><img/></div><div class=sk_tab_title>${htmlEncode(t.title)}</div></div>`, { "class": 'sk_tab' });
+            if (t.active) {
+                tab.classList.add("active");
             }
             attachFaviconToImgSrc(t, tab.querySelector("img"));
-            if (verticalTabs) {
-                tab.append(createElementWithContent('div', '🚀', {class: "tab_rocket"}));
-            } else {
-                tab.querySelector("div.sk_tab_title").style.width = (unitWidth - 24) + 'px';
-            }
-            _tabs.append(tab);
+            container.append(tab);
         });
-        if (_tabs.getBoundingClientRect().height > self.topSize[1]) {
-            _tabs.className = "inline";
+    }
+    function renderTabs(container, tabs) {
+        setSanitizedContent(container, "");
+        var hintLabels = hints.genLabels(tabs.length - 1);
+        const unitWidth = window.innerWidth / tabs.length - 2;
+        const verticalTabs = runtime.conf.verticalTabs;
+        container.className = verticalTabs ? "vertical" : "horizontal";
+        renderTabTitles(container, tabs);
+        if (verticalTabs) {
+            container.querySelectorAll("div.sk_tab").forEach((tab) => {
+                tab.append(createElementWithContent('div', '🚀', {class: "tab_rocket"}));
+            });
+        } else {
+            container.querySelectorAll("div.sk_tab").forEach((tab) => {
+                tab.querySelector("div.sk_tab_title").style.width = (unitWidth - 24) + 'px';
+                tab.style.width = unitWidth + 'px';
+            });
         }
-    };
+        const tabsNeedHint = tabs.filter((t) => !t.active);
+        container.querySelectorAll("div.sk_tab:not(.active)").forEach((tab, i) => {
+            const tabHint = createElementWithContent('div', hintLabels[i], { "class": 'sk_tab_hint' });
+            const tabData = tabsNeedHint[i];
+            tabHint.label = hintLabels[i];
+            tabHint.link = {id: tabData.id, windowId: tabData.windowId};
+            tab.prepend(tabHint);
+        });
+        if (container.getBoundingClientRect().height > self.topSize[1]) {
+            container.className = "inline";
+        }
+    }
     _actions['chooseTab'] = function() {
         const tabsThreshold = Math.min(runtime.conf.tabsThreshold, Math.ceil(window.innerWidth / 26));
         RUNTIME('getTabs', {queryInfo: {currentWindow: true}, tabsThreshold}, function(response) {
             if (response.tabs.length > tabsThreshold) {
-                showElement(_omnibar, {type: 'Tabs'});
+                showElement(_omnibar, () => {
+                    _omnibar.onShow({type: 'Tabs'});
+                });
             } else if (response.tabs.length > 0) {
-                showElement(_tabs, response.tabs);
+                showElement(_tabs, () => {
+                    renderTabs(_tabs, response.tabs);
+                }, (matched) => {
+                    RUNTIME('focusTab', {
+                        windowId: matched.windowId,
+                        tabId: matched.id
+                    });
+                });
             }
         });
     };
     self.chooseTab = _actions['chooseTab'];
+    _actions['groupTab'] = function() {
+        RUNTIME('getTabGroups', {}, function(response) {
+            const groups = response.groups;
+            if (groups.length === 0) {
+                self.openOmnibar({type: "Commands", pref: "createTabGroup"});
+                return;
+            }
+
+            showElement(_tabs, () => {
+                setSanitizedContent(_tabs, "");
+                _tabs.className = "";
+                const hintLabels = hints.genLabels(groups.length*2 + 1);
+                groups.forEach(function(g, i) {
+                    const group = document.createElement('div');
+                    group.setAttribute('class', 'sk_tab_group');
+                    const labels = [hintLabels[2*i],hintLabels[2*i + 1]];
+                    setSanitizedContent(group, `<div class=sk_tab_group_header><div><div class=sk_tab_hint>${labels[0]}</div><span class=sk_tab_group_title></span></div><div><div class=sk_tab_hint>${labels[1]}</div><span class=sk_tab_group_state></span></div></div><div class=sk_tab_group_details></div>`);
+                    renderTabTitles(group.querySelector("div.sk_tab_group_details"), g.tabs);
+                    const activeState = g.active ? '☑' : '☐';
+                    setSanitizedContent(group.querySelector("span.sk_tab_group_title"), activeState + htmlEncode(g.title));
+                    const collapsedState = g.collapsed ? '☑' : '☐';
+                    setSanitizedContent(group.querySelector("span.sk_tab_group_state"), collapsedState + "Collapsed");
+                    const tabHints = group.querySelectorAll("div.sk_tab_hint");
+                    tabHints[0].label = labels[0];
+                    tabHints[0].link = {id: g.id, active: g.active, action: "group"};
+                    tabHints[1].label = labels[1];
+                    tabHints[1].link = {id: g.id, collapsed: g.collapsed, action: "collapse"};
+                    _tabs.append(group);
+                });
+                const newTabGroup = createElementWithContent('div', `<div class=sk_tab_hint>${hintLabels[groups.length*2]}</div> New tab group`, { "class": 'sk_tab_group' });
+                const tabHint = newTabGroup.querySelector("div.sk_tab_hint");
+                tabHint.label = hintLabels[groups.length*2];
+                tabHint.link = {action: "new"};
+                _tabs.append(newTabGroup);
+            }, (matched) => {
+                if (matched.action === "collapse") {
+                    RUNTIME('collapseGroup', {groupId: matched.id, collapsed: !matched.collapsed});
+                } else if (matched.action === "new") {
+                    setTimeout(() => {
+                        self.openOmnibar({type: "Commands", pref: "createTabGroup"});
+                    }, 10);
+                } else {
+                    if (matched.active) {
+                        RUNTIME('ungroupTab');
+                    } else {
+                        RUNTIME('createTabGroup', {groupId: matched.id});
+                    }
+                }
+            });
+        });
+    };
 
     function localizeAnnotation(locale, annotation) {
         if (annotation.constructor.name === "Array") {
@@ -360,14 +424,12 @@ const Front = (function() {
         });
     }
 
-    _usage.onShow = function(message) {
-        buildUsage(message.metas, function(usage) {
-            setSanitizedContent(_usage, usage);
-        });
-    };
-
     _actions['showUsage'] = function(message) {
-        showElement(_usage, message);
+        showElement(_usage, () => {
+            buildUsage(message.metas, function(usage) {
+                setSanitizedContent(_usage, usage);
+            });
+        });
     };
     _actions['applyUserSettings'] = function (message) {
         for (var k in message.userSettings) {
@@ -417,7 +479,7 @@ const Front = (function() {
 
     self.vimMappings = [];
     let _aceEditor = null;
-    _editor.onShow = function(message) {
+    function renderAceEditor(message) {
         if (!_aceEditor) {
             _aceEditor = new Promise((resolve, reject) => {
                 import(/* webpackIgnore: true */ './ace.js').then(() => {
@@ -428,9 +490,9 @@ const Front = (function() {
         _aceEditor.then((editor) => {
             editor.show(message);
         });
-    };
+    }
     let _neovim = null;
-    _nvim.onShow = function(message) {
+    function renderNvim(message) {
         if (!_neovim) {
             _neovim  = new Promise((resolve, reject) => {
                 import(/* webpackIgnore: true */ './neovim_lib.js').then((nvimlib) => {
@@ -470,22 +532,28 @@ const Front = (function() {
                 });
             });
         });
-    };
+    }
     _actions['showEditor'] = function(message) {
         if (message.onEditorSaved) {
             self.onEditorSaved = message.onEditorSaved;
         }
         if (message.file_name) {
-            showElement(_nvim, message);
+            showElement(_nvim, () => {
+                renderNvim(message);
+            });
         } else {
-            showElement(_editor, message);
+            showElement(_editor, () => {
+                renderAceEditor(message);
+            });
         }
     };
     self.showEditor = _actions['showEditor'];
     _actions['openOmnibar'] = function(message) {
-        showElement(_omnibar, message);
-        var style = message.style || "";
-        setSanitizedContent(_omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
+        showElement(_omnibar, () => {
+            _omnibar.onShow(message);
+            const style = message.style || "";
+            setSanitizedContent(_omnibar.querySelector('style'), `#sk_omnibar {${style}}`);
+        });
     };
     self.openOmnibar = _actions['openOmnibar'];
     _actions['openFinder'] = function() {

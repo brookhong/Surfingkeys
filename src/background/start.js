@@ -781,6 +781,58 @@ function start(browser) {
             });
         });
     };
+    self.createTabGroup = function(message, sender, sendResponse) {
+        chrome.tabs.group({tabIds: [sender.tab.id], groupId: message.groupId}, function(groupId) {
+            if (message.title || message.color) {
+                chrome.tabGroups.update(groupId, {
+                    title: message.title,
+                    color: message.color
+                });
+            }
+        });
+    };
+    self.ungroupTab = function(message, sender, sendResponse) {
+        chrome.tabs.ungroup([sender.tab.id]);
+    };
+    self.collapseGroup = function(message, sender, sendResponse) {
+        chrome.tabGroups.update(message.groupId, {collapsed: message.collapsed});
+    };
+    self.getTabGroups = function(message, sender, sendResponse) {
+        chrome.tabGroups.query({}, function(groups) {
+            let activeGroup = -1;
+            // retrieve all tabs of each group
+            chrome.tabs.query({}, function(tabs) {
+                const tabsInGroup = {};
+                tabs.forEach(function(tab) {
+                    if (tab.groupId && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+                        if (!tabsInGroup[tab.groupId]) {
+                            tabsInGroup[tab.groupId] = [];
+                        }
+                        if (tab.id === sender.tab.id) {
+                            activeGroup = tab.groupId;
+                        }
+                        tabsInGroup[tab.groupId].push({
+                            id: tab.id,
+                            title: tab.title,
+                            url: tab.url,
+                            active: tab.active,
+                            index: tab.index
+                        });
+                    }
+                });
+
+                groups = groups.filter((g) => !g.hermit);
+                groups.forEach(function(group) {
+                    group.tabs = tabsInGroup[group.id] || [];
+                    group.active = group.id === activeGroup;
+                });
+
+                _response(message, sendResponse, {
+                    groups: groups
+                });
+            });
+        });
+    };
     self.togglePinTab = function(message, sender, sendResponse) {
         getActiveTab(function(tab) {
             return chrome.tabs.update(tab.id, {
