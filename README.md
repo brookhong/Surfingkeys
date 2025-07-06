@@ -2,9 +2,9 @@
 
 [![Node CI](https://github.com/brookhong/Surfingkeys/workflows/Node%20CI/badge.svg?branch=master)](https://github.com/brookhong/Surfingkeys/actions?query=workflow%3A%22Node+CI%22+branch%3Amaster)
 
-Surfingkeys is another web browser(including Google Chrome, Chromium based browsers, Firefox, Safari) extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to his/her own functions.
+Surfingkeys is another web browser(including Google Chrome, Chromium based browsers, Firefox, Safari) extension that provides keyboard-based navigation and control of the web in the spirit of the VIM editor. But it's not for VIM users only, it's for anyone who just needs some more shortcuts to their own functions.
 
-Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to his/her own defined Javascript function. For example,
+Surfingkeys is created with all settings described in Javascript, so it's easy for anyone to map any keystrokes to their own defined Javascript function. For example,
 
     api.mapkey('<Ctrl-y>', 'Show me the money', function() {
         api.Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
