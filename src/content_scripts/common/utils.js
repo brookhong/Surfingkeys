@@ -1053,6 +1053,7 @@ function refreshHints(hints, pressedKeys) {
             const label = hint.label;
             if (pressedKeys === label) {
                 result.matched = hint.link;
+                result.matchedType = hint.linkedType;
                 break;
             } else if (label.indexOf(pressedKeys) === 0) {
                 hint.style.opacity = 1;
