@@ -431,7 +431,13 @@ div.hint-scrollable {
                     _onHintKey(elm);
                 }
             } else {
-                dispatchSKEvent('user', ["onHintClicked"], elm);
+                if (hintState.matchedType === "position") {
+                    // Handle position hints
+                    const target = elm.shift();
+                    dispatchSKEvent('user', ["onHintClicked", ...elm], target);
+                } else {
+                    dispatchSKEvent('user', ["onHintClicked"], elm);
+                }
             }
             if (behaviours.multipleHits) {
                 prefix = "";
@@ -853,6 +859,7 @@ div.hint-scrollable {
                 link.style.zIndex = z + 9999;
                 link.zIndex = link.style.zIndex;
                 link.link = e;
+                link.linkedType = "position";
                 return link;
             }
         }).filter(function(e) {
