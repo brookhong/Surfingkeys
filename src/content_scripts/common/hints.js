@@ -436,7 +436,13 @@ div.hint-scrollable {
                     _onHintKey(elm);
                 }
             } else {
-                dispatchSKEvent('user', ["onHintClicked"], elm);
+                if (elm.constructor.name === "Array") {
+                    // remove Text Node from elm as it cannot be transitted across JS scope
+                    elm[0] = null;
+                    dispatchSKEvent('user', ["onHintClicked", elm]);
+                } else {
+                    dispatchSKEvent('user', ["onHintClicked"], elm);
+                }
             }
             if (behaviours.multipleHits) {
                 prefix = "";
