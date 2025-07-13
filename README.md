@@ -594,6 +594,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.autoSpeakOnInlineQuery | false | Whether to automatically speak the query string with TTS on inline query. |
 | settings.showTabIndices | false | Whether to show tab numbers (indices) in the tab titles. |
 | settings.tabIndicesSeparator | "\|" | The separator between index and original title of a tab. |
+| settings.disabledOnActiveElementPattern | undefined | Automatically disable this extension when the active element matches with this pattern and reactivate the extension when the active element changes, one useful case is to enable user to type to locate an option in a large dropdown, such as `settings.disabledOnActiveElementPattern = "ul.select-dropdown-options";` |
 
 ### Example of settings.theme, below is to set font size of status bar
 

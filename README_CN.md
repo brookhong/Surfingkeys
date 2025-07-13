@@ -578,6 +578,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.autoSpeakOnInlineQuery | false | 是否在使用inline query时自动发声。 |
 | settings.showTabIndices | false | 是否在标签页标题上显示当前标签页的编号。 |
 | settings.tabIndicesSeparator | "\|" | 标签页编号与标签页原始标题之间的分隔符。 |
+| settings.disabledOnActiveElementPattern | undefined | 当活动元素匹配这个设置时自动停用Surfingkeys，当活动元素变了继续启用，一个比较有用的场景是可以通过这个设置允许用户在一个大的下拉列表中通过按键快速定位选项，比如 `settings.disabledOnActiveElementPattern = "ul.select-dropdown-options";` |
 
 ### settings.theme示例，修改状态栏字体
 

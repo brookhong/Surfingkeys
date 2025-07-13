@@ -46,6 +46,7 @@ const runtime = (function() {
             // local part from settings
             blocklistPattern: undefined,
             lurkingPattern: undefined,
+            disabledOnActiveElementPattern: undefined,
             smartCase: true,
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,

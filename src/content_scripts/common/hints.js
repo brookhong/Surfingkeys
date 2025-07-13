@@ -376,6 +376,11 @@ div.hint-scrollable {
                     dispatchMouseEvent(element, behaviours.mouseEvents, mouseEventModifiers);
                     dispatchSKEvent("observer", ['turnOn']);
                     lastMouseTarget = element;
+                    if (document.activeElement.matches(runtime.conf.disabledOnActiveElementPattern)) {
+                        setTimeout(() => {
+                            normal.disable(true);
+                        }, 100);
+                    }
                 }
 
                 if (behaviours.multipleHits) {

@@ -24,10 +24,14 @@ function createDisabled(normal) {
     // Disabled has higher priority than others.
     self.priority = 99;
 
+    self.activatedOnElement = false;
     self.addEventListener('keydown', function(event) {
         // prevent this event to be handled by Surfingkeys' other listeners
         event.sk_suppressed = true;
-        if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
+        if (self.activatedOnElement && !document.activeElement.matches(runtime.conf.disabledOnActiveElementPattern)) {
+            normal.enable();
+            self.activatedOnElement = false;
+        } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             normal.toggleBlocklist();
             self.exit();
             event.sk_stopPropagation = true;
@@ -963,11 +967,12 @@ function createNormal(insert) {
     }
 
     var _disabled = null;
-    self.disable = function() {
+    self.disable = function(onElement) {
         if (!_disabled) {
             _disabled = createDisabled(self);
             _disabled.enter(0, true);
         }
+        _disabled.activatedOnElement = onElement;
         dispatchSKEvent("observer", ['turnOff']);
         document.removeEventListener("mouseup", _onMouseUp);
     };
