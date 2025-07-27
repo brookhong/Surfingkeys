@@ -821,6 +821,10 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
     }
 
+    mapkey('X', '#3Restore closed tab', function() {
+        RUNTIME("openLast");
+    });
+
     if (!getBrowserName().startsWith("Safari")) {
         mapkey('t', '#8Open a URL', function() {
             front.openOmnibar({type: "URLs"});
@@ -830,9 +834,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
         mapkey('ox', '#8Open recently closed URL', function() {
             front.openOmnibar({type: "RecentlyClosed"});
-        });
-        mapkey('X', '#3Restore closed tab', function() {
-            RUNTIME("openLast");
         });
         mapkey('b', '#8Open a bookmark', function() {
             front.openOmnibar(({type: "Bookmarks"}));

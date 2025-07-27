@@ -1015,7 +1015,13 @@ function start(browser) {
         });
     };
     self.openLast = function(message, sender, sendResponse) {
-        chrome.sessions.restore();
+        if (browser.name === "Safari") {
+            chrome.runtime.sendNativeMessage("application.id", {command: "reopenLastTab"}, function(response) {
+                _response(message, sendResponse, response);
+            });
+        } else {
+            chrome.sessions.restore();
+        }
     };
     self.duplicateTab = function(message, sender, sendResponse) {
         chrome.tabs.duplicate(sender.tab.id, function() {
@@ -1859,7 +1865,7 @@ function start(browser) {
     };
     self.readClipboard = function (message, sender, sendResponse) {
         // only for Safari
-        chrome.runtime.sendNativeMessage("application.id", {message: "Clipboard.read"}, function(response) {
+        chrome.runtime.sendNativeMessage("application.id", {command: "Clipboard.read"}, function(response) {
             _response(message, sendResponse, response);
         });
     };
