@@ -880,7 +880,7 @@ function constructSearchURL(se, word) {
  *
  * @example tabOpenLink('https://github.com/brookhong/Surfingkeys')
  */
-function tabOpenLink(str, simultaneousness) {
+function tabOpenLink(str, simultaneousness, tabPosition) {
     simultaneousness = simultaneousness || 5;
 
     var urls;
@@ -905,7 +905,8 @@ function tabOpenLink(str, simultaneousness) {
             tab: {
                 tabbed: true
             },
-            url: url
+            url: url,
+            tabPosition: tabPosition
         });
     });
     // queue the left for later opening when there is one tab closed.
