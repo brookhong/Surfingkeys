@@ -1244,6 +1244,7 @@ function start(browser) {
                     const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}\n})});`;
                     const registerSettingSnippets = () => {
                         chrome.userScripts.register([{
+                            allFrames: true,
                             id: userScriptId,
                             matches: ['*://*/*', 'file:///*'],
                             js: [{code}]
