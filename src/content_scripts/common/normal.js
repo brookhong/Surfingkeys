@@ -108,6 +108,7 @@ function createPassThrough() {
         event.sk_suppressed = true;
     });
     self.addEventListener('focus', function(event) {
+        Mode.showStatus();
         event.sk_suppressed = true;
     });
 

@@ -250,6 +250,7 @@ function createInsert() {
         event.sk_suppressed = true;
     });
     self.addEventListener('focus', function(event) {
+        Mode.showStatus();
         var realTarget = getRealEdit(event);
         // We get a focus event with target = window when the browser window looses focus.
         // Ignore this event.
