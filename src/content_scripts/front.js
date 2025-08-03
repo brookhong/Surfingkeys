@@ -747,6 +747,7 @@ function createFront(insert, normal, hints, visual, browser) {
         if (!frontendPromise) {
             newFrontEnd();
         }
+        Mode.showStatus();
     };
 
     self.detach = function() {
