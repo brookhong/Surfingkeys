@@ -239,7 +239,7 @@ export default function(
     var sample = document.getElementById("sample").innerHTML;
     function renderSettings(rs) {
         if (rs.isMV3) {
-            document.getElementById("advancedTip").innerText = "If you're an advanced user, please turn on Developer mode from chrome://extensions/ then the flag here.";
+            document.getElementById("advancedTip").innerText = "First turn on 'Developer mode' in chrome://extensions/, then turn on 'Allow User Scripts' in Surfingkeys extension details, then toggle the 'Advanced mode' flag here.";
             advancedToggler.disabled = !rs.isUserScriptsAvailable;
             showAdvanced(rs.isUserScriptsAvailable && rs.showAdvanced);
         } else {
