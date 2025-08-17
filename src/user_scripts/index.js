@@ -161,6 +161,9 @@ const api = {
     unmapAllExcept: (keystrokes, domain) => {
         dispatchSKEvent('api', ['unmapAllExcept', keystrokes, domain]);
     },
+    readText: (text, options) => {
+        dispatchSKEvent('api', ['readText', text, options]);
+    },
     removeSearchAlias: (alias, search_leader_key, only_this_site_key) => {
         dispatchSKEvent('api', ['removeSearchAlias', alias, search_leader_key, only_this_site_key]);
     },
