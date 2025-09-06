@@ -48,15 +48,13 @@ function modifyManifest(browser, mode, buffer) {
                     "_favicon/*",
                     "api.js",
                     "pages/neovim.html",
-                    "pages/default.js",
                     "pages/emoji.tsv",
                     "pages/l10n.json",
                     "pages/frontend.html",
                     "pages/pdf_viewer.html",
                     "pages/pdf_viewer.css",
                     "pages/pdf_viewer.mjs",
-                    "pages/shadow.css",
-                    "pages/default.css"
+                    "pages/shadow.css"
                 ],
                 "matches": [
                     "<all_urls>"
