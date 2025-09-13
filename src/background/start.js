@@ -220,6 +220,7 @@ function start(browser) {
         repeatThreshold: 99,
         tabsMRUOrder: true,
         newTabPosition: 'default',
+        newTabPositionOmnibar: 'newTabPosition',
         showTabIndices: false,
         interceptedErrors: []
     };
@@ -1154,9 +1155,18 @@ function start(browser) {
     }
 
     function openUrlInNewTab(currentTab, url, message) {
+        let tabPositionConfKey = message.tabPositionConfKey || "newTabPosition";
+        let tabPosition = message.tabPosition;
+
+        if (tabPositionConfKey !== "newTabPosition" && conf[tabPositionConfKey] === "newTabPosition") {
+            tabPositionConfKey = "newTabPosition";
+        }
+
+        tabPosition = tabPosition || conf[tabPositionConfKey];
+
         var newTabPosition;
         if (currentTab) {
-            switch (conf.newTabPosition) {
+            switch (tabPosition) {
                 case 'left':
                     newTabPosition = currentTab.index;
                     break;
