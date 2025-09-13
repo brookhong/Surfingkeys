@@ -498,9 +498,101 @@ function gemini(req, opts) {
     }).catch(error => console.error('Error:', error));
 }
 
+function custom(req, opts) {
+    const decoder = new TextDecoder();
+    const abortCtrl = new AbortController();
+
+    if (!custom.serviceUrl) {
+        opts.onChunk('Please set service URL correctly.');
+        opts.onComplete({});
+        return;
+    }
+    if (!custom.apiKey) {
+        opts.onChunk('Please set API key correctly.');
+        opts.onComplete({});
+        return;
+    }
+    if (!custom.model) {
+        opts.onChunk('Please set model correctly.');
+        opts.onComplete({});
+        return;
+    }
+
+    const transformMessages = msgs => msgs.map(m =>
+        typeof m.content === 'string' ? m : { role: m.role, content: m.content[0].text }
+    );
+
+    fetch(custom.serviceUrl, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${custom.apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: custom.model,
+            stream: true,
+            messages: transformMessages(req.messages),
+        }),
+        signal: abortCtrl.signal,
+    })
+        .then(resp => {
+            const reader = resp.body.getReader();
+            let contentBlock = { type: 'text', text: '' };
+
+            const readStream = () => {
+                reader.read()
+                    .then(({ done, value }) => {
+                        if (done) {
+                            return;
+                        }
+                        const chunk = decoder.decode(value);
+                        try {
+                            const lines = chunk.trim().split('\n\n');
+                            const dataPat = /^data: /;
+                            for (const line of lines) {
+                                if (!dataPat.test(line)) {
+                                    continue;
+                                }
+                                const data = line.replace(dataPat, '');
+                                if (data === '[DONE]') {
+                                    opts.onComplete({ role: 'assistant', content: [contentBlock] });
+                                    return;
+                                }
+                                const o = JSON.parse(data);
+                                if (o.choices?.[0]?.delta?.content) {
+                                    const txt = o.choices[0].delta.content;
+                                    opts.onChunk(txt);
+                                    contentBlock.text += txt;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing chunk:', e);
+                        }
+
+                        readStream();
+                    })
+                    .catch(err => {
+                        if (err.name !== 'AbortError') {
+                            console.error('Stream error:', err);
+                        }
+                    });
+            };
+
+            readStream();
+        })
+        .catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error('Fetch error:', err);
+            }
+        });
+
+    return () => abortCtrl.abort();
+}
+
 export default {
     bedrock,
     deepseek,
     gemini,
     ollama,
+    custom,
 }
