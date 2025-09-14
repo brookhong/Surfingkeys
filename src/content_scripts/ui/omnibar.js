@@ -593,6 +593,20 @@ function createOmnibar(front, clipboard) {
         handler = null;
     };
 
+    self.isUrl = function (input) {
+      if (input.match(/\s+/)) {
+        return false;
+      }
+
+      if (input.match(/^https?:\/\//)) {
+        return true;
+      }
+
+      var regex = /^(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
+
+      return input.match(regex);
+    }
+
     self.openFocused = function() {
         var ret = false, fi = self.resultsDiv.querySelector('li.focused');
         var url;
@@ -600,7 +614,7 @@ function createOmnibar(front, clipboard) {
             url = fi.url;
         } else {
             url = self.input.value;
-            if (url.indexOf(':') === -1) {
+            if (!self.isUrl(url)) {
                 url = searchEngine.aliases[runtime.conf.defaultSearchEngine].url + url;
             }
         }
