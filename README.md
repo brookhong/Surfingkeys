@@ -611,28 +611,34 @@ There are several LLM providers integrated into Surfingkeys now, use `A` to call
 * Bedrock
 * DeepSeek
 * Gemini
+* Custom LLM provider (e.g.: SiliconFlow and OpenRouter; other OpenAI API compatible services should also work)
 
 To use the feature, you need set up your credentials/API keys first, like
 
-        settings.defaultLLMProvider = "bedrock";
-        settings.llm = {
-            bedrock: {
-                accessKeyId: '********************',
-                secretAccessKey: '****************************************',
-                // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-                model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-            },
-            gemini: {
-                apiKey: '***************************************',
-            },
-            ollama: {
-                model: 'qwen2.5-coder:32b',
-            },
-            deepseek: {
-                apiKey: '***********************************',
-                model: 'deepseek-chat',
-            }
-        };
+    settings.defaultLLMProvider = "bedrock";
+    settings.llm = {
+        bedrock: {
+            accessKeyId: '********************',
+            secretAccessKey: '****************************************',
+            // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+            model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+        },
+        gemini: {
+            apiKey: '***************************************',
+        },
+        ollama: {
+            model: 'qwen2.5-coder:32b',
+        },
+        deepseek: {
+            apiKey: '***********************************',
+            model: 'deepseek-chat',
+        },
+        custom: {
+            serviceUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+            apiKey: '***********************************',
+            model: 'deepseek-ai/DeepSeek-V3.1',
+        }
+    };
 
 You can also use `A` in visual mode. Press `v` or `V` to enter visual mode, then `v` again to select the text you'd like to chat with AI about, then `A` to call out the LLM chat box. Now start to chat with AI about the selected text.
 

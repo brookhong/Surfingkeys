@@ -595,28 +595,34 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 * Bedrock
 * DeepSeek
 * Gemini
+* 自定义模型(例如：SiliconFlow 和 OpenRouter, 其他和OpenAI API兼容的服务应该也可以)
 
 使用之前，必须设置相应的密钥或者API key，比如
 
-        settings.defaultLLMProvider = "bedrock";
-        settings.llm = {
-            bedrock: {
-                accessKeyId: '********************',
-                secretAccessKey: '****************************************',
-                // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-                model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-            },
-            gemini: {
-                apiKey: '***************************************',
-            },
-            ollama: {
-                model: 'qwen2.5-coder:32b',
-            },
-            deepseek: {
-                apiKey: '***********************************',
-                model: 'deepseek-chat',
-            }
-        };
+    settings.defaultLLMProvider = "bedrock";
+    settings.llm = {
+        bedrock: {
+            accessKeyId: '********************',
+            secretAccessKey: '****************************************',
+            // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+            model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+        },
+        gemini: {
+            apiKey: '***************************************',
+        },
+        ollama: {
+            model: 'qwen2.5-coder:32b',
+        },
+        deepseek: {
+            apiKey: '***********************************',
+            model: 'deepseek-chat',
+        },
+        custom: {
+            serviceUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+            apiKey: '***********************************',
+            model: 'deepseek-ai/DeepSeek-V3.1',
+        }
+    };
 
 你也可以在Visual mode下使用大语言模型对话。按`v`或`V`进入Visual mode，再按`v`选中你关注的文本，最后`A`按调出对话窗口，开始和AI就选中文本进行探讨。
 另一个方式是使用Regional Hints mode选择需要与AI进行探讨的内容。按`L`选择一个区域，再按`l`调出对话窗口。

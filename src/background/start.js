@@ -1324,6 +1324,12 @@ function start(browser) {
                 llmClients.bedrock.init(llmConf.bedrock);
                 delete message.settings.llm.bedrock;
             }
+            if (llmConf.custom && llmConf.custom.serviceUrl && llmConf.custom.apiKey && llmConf.custom.model) {
+                llmClients.custom.serviceUrl = llmConf.custom.serviceUrl;
+                llmClients.custom.apiKey = llmConf.custom.apiKey;
+                llmClients.custom.model = llmConf.custom.model;
+                delete message.settings.llm.custom;
+            }
         } else {
             if (message.settings.showAdvanced && isMV3) {
                 if (isUserScriptsAvailable()) {
