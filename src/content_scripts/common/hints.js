@@ -442,7 +442,7 @@ div.hint-scrollable {
                     elm[0] = "__EVENT_TARGET__";
                     dispatchSKEvent('user', ["onHintClicked", elm], target);
                 } else {
-                    dispatchSKEvent('user', ["onHintClicked"], elm);
+                    dispatchSKEvent('user', ["onHintClicked", shiftKey], elm);
                 }
             }
             if (behaviours.multipleHits) {
