@@ -1046,6 +1046,9 @@ function OpenURLs(prompt, omnibar, queryFn) {
         });
     };
     self.onOpen = function(arg) {
+        if (arg) {
+            omnibar.input.value = arg;
+        }
         sequenceNumber = 0;
         queryAndList();
     };
