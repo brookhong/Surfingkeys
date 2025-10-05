@@ -348,7 +348,10 @@ function createOmnibar(front, clipboard) {
             handler.tabbed = self.tabbed ^ evt.shiftKey;
             handler.onEnter() && front.hidePopup();
         } else if (evt.keyCode === KeyboardUtils.keyCodes.space) {
-            self.expandAlias(self.input.value, '') && evt.preventDefault();
+            const cursor = self.input.selectionStart;
+            const textBeforeCursor = self.input.value.substring(0, cursor);
+            const newQuery = self.input.value.substring(cursor);
+            self.expandAlias(textBeforeCursor, newQuery) && evt.preventDefault();
         } else if (evt.keyCode === KeyboardUtils.keyCodes.backspace) {
             self.collapseAlias() && evt.preventDefault();
         }
