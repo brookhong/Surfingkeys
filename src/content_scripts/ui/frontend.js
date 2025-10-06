@@ -454,6 +454,16 @@ const Front = (function() {
     _actions['addVimKeyMap'] = function (message) {
         self.vimKeyMap = message.vimKeyMap;
     };
+    _actions['addCommand'] = function(message) {
+        const proxyAction = (...args) => {
+            self.contentCommand({
+                action: 'executeUserCommand',
+                name: message.name,
+                args: args
+            });
+        };
+        omnibar.command(message.name, message.description, proxyAction);
+    };
     _actions['getUsage'] = function (message) {
         // send response in callback from buildUsage
         delete message.ack;

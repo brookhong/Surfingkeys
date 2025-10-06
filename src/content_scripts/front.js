@@ -494,6 +494,13 @@ function createFront(insert, normal, hints, visual, browser) {
                 vimKeyMap
             });
         },
+        addCommand: (name, description) => {
+            applyUICommand({
+                action: 'addCommand',
+                name: name,
+                description: description
+            });
+        },
         highlightElement,
         hidePopup,
         openFinder: () => {
@@ -659,6 +666,10 @@ function createFront(insert, normal, hints, visual, browser) {
 
     _actions["emptySelection"] = function(message) {
         visual.emptySelection();
+    };
+
+    _actions["executeUserCommand"] = function(message) {
+        dispatchSKEvent('user', ['executeUserCommand', message.name, message.args]);
     };
 
     var _active = window === top;
