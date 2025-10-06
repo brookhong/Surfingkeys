@@ -104,6 +104,9 @@
 *   [RUNTIME][100]
     *   [Parameters][101]
     *   [Examples][102]
+*   [addCommand][103]
+    *   [Parameters][104]
+    *   [Examples][105]
 
 ## mapkey
 
@@ -702,6 +705,24 @@ RUNTIME('getTabs', {queryInfo: {currentWindow: true}}, response => {
 });
 ```
 
+## addCommand
+
+Add a command into Omnibar.
+
+### Parameters
+
+*   `name` **[string][103]** the name of the command, used as command name in omnibar.
+*   `description` **[string][103]** a help message to describe the command.
+*   `jscode` **[function][104]** a Javascript function to be bound. If the command receives an argument, the argument will be passed to the function.
+
+### Examples
+
+```javascript
+addCommand("example", "An example command", function(arg) {
+    console.log("You entered: " + arg);
+});
+```
+
 [1]: #mapkey
 
 [2]: #parameters
@@ -906,22 +927,28 @@ RUNTIME('getTabs', {queryInfo: {currentWindow: true}}, response => {
 
 [102]: #examples-23
 
-[103]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[103]: #addcommand
 
-[104]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[104]: #parameters-38
 
-[105]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[105]: #examples-24
 
-[106]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[106]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[107]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[107]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
 
-[108]: https://developer.mozilla.org/docs/Web/HTML/Element
+[108]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[109]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[109]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[110]: https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query
+[110]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[111]: https://developer.mozilla.org/docs/Web/API/Element
+[111]: https://developer.mozilla.org/docs/Web/HTML/Element
 
-[112]: https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099
+[112]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[113]: https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query
+
+[114]: https://developer.mozilla.org/docs/Web/API/Element
+
+[115]: https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099
