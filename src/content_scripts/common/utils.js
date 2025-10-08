@@ -899,19 +899,31 @@ function tabOpenLink(str, simultaneousness) {
     }).filter(function(u) {
         return u.length > 0;
     });
-    // open the first batch links immediately
-    urls.slice(0, simultaneousness).forEach(function(url) {
-        RUNTIME("openLink", {
-            tab: {
-                tabbed: true
-            },
-            url: url
-        });
-    });
-    // queue the left for later opening when there is one tab closed.
+
     if (urls.length > simultaneousness) {
-        RUNTIME("queueURLs", {
-            urls: urls.slice(simultaneousness)
+        dispatchSKEvent("front", ['showDialog', `Do you really want to open all these ${urls.length} links?`, () => {
+            // open the first batch links immediately
+            urls.slice(0, simultaneousness).forEach(function(url) {
+                RUNTIME("openLink", {
+                    tab: {
+                        tabbed: true
+                    },
+                    url: url
+                });
+            });
+            // queue the left for later opening when there is one tab closed.
+            RUNTIME("queueURLs", {
+                urls: urls.slice(simultaneousness)
+            });
+        }]);
+    } else {
+        urls.forEach(function(url) {
+            RUNTIME("openLink", {
+                tab: {
+                    tabbed: true
+                },
+                url: url
+            });
         });
     }
 }
