@@ -439,12 +439,28 @@ function createFront(insert, normal, hints, visual, browser) {
         });
     };
 
+    let onDialogResponseOk = null;
+    _actions["dialogResponse"] = function (message) {
+        if (message.result === "Ok" && onDialogResponseOk) {
+            onDialogResponseOk();
+        } else {
+            onDialogResponseOk = null;
+        }
+    };
+
     skCallbacks = initSKFunctionListener("front", {
         showPopup: (content) => {
             self.command({
                 action: 'showPopup',
-                content: content
+                content
             });
+        },
+        showDialog: (question, onOk) => {
+            self.command({
+                action: 'showDialog',
+                question
+            });
+            onDialogResponseOk = onOk;
         },
         applySettingsFromSnippets: (us) => {
             applyUICommand({

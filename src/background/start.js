@@ -217,7 +217,6 @@ function start(browser) {
     var conf = {
         llm: { },
         focusAfterClosed: "right",
-        repeatThreshold: 99,
         tabsMRUOrder: true,
         newTabPosition: 'default',
         showTabIndices: false,
@@ -451,9 +450,6 @@ function start(browser) {
     }
     function handleMessage(_message, _sender, _sendResponse) {
         if (self.hasOwnProperty(_message.action)) {
-            if (_message.repeats > conf.repeatThreshold) {
-                _message.repeats = conf.repeatThreshold;
-            }
             var result = self[_message.action](_message, _sender, _sendResponse);
             if (_message.needResponse) {
                 if (result) {

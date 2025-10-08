@@ -571,7 +571,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.defaultSearchEngine | "g" | The default search engine used in Omnibar. |
 | settings.blocklistPattern | undefined | A regex to match the sites that will have Surfingkeys disabled. |
 | settings.focusAfterClosed | "right" | Which tab will be focused after the current tab is closed. ["left", "right", "last"] |
-| settings.repeatThreshold | 99 | The maximum of actions to be repeated. |
+| settings.repeatThreshold | 9 | The maximum of actions to be repeated. |
 | settings.tabsMRUOrder | true | Whether to list opened tabs in order of most recently used beneath Omnibar. |
 | settings.historyMUOrder | true | Whether to list history in order of most used beneath Omnibar. |
 | settings.newTabPosition | 'default' | Where to new tab. ["left", "right", "first", "last", "default"] |

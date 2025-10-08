@@ -70,12 +70,13 @@ const Front = (function() {
     };
 
     var pressedHintKeys = "";
+    var _display;
     self.addEventListener('keydown', function(event) {
         if (Mode.isSpecialKeyOf("<Esc>", event.sk_keyName)) {
             self.hidePopup();
             event.sk_stopPropagation = true;
-        } else if (_tabs.style.display !== "none") {
-            const tabHints = _tabs.querySelectorAll('div>div.sk_tab_hint');
+        } else if (_display && _display.style.display !== "none") {
+            const tabHints = _display.querySelectorAll('div>div.sk_tab_hint');
             if (tabHints.length > 0) {
                 const key = event.sk_keyName;
                 const characters = hints.getCharacters().toLowerCase();
@@ -88,7 +89,7 @@ const Front = (function() {
                     pressedHintKeys = pressedHintKeys + key.toUpperCase();
                     const hintState = refreshHints(tabHints, pressedHintKeys);
                     if (hintState.matched) {
-                        _tabs.onHit(hintState.matched);
+                        _display.onHit(hintState.matched);
                         pressedHintKeys = "";
                         self.hidePopup();
                     } else if (hintState.candidates === 0) {
@@ -203,7 +204,6 @@ const Front = (function() {
     };
     var keystroke = document.getElementById('sk_keystroke');
 
-    var _display;
     self.startInputGuard = () => {
         if (getBrowserName().startsWith("Safari")) {
             var inputGuard = setInterval(() => {
@@ -485,6 +485,24 @@ const Front = (function() {
 
     _actions['showPopup'] = function(message) {
         showPopup(message.content);
+    };
+
+    _actions['showDialog'] = function(message) {
+        showElement(_popup, () => {
+            const hintLabels = hints.genLabels(2);
+            setSanitizedContent(_popup, `<div>${message.question}</div><div><div class=sk_tab_hint>${hintLabels[0]}</div><span class=sk_tab_group_title>Ok</span><div class=sk_tab_hint>${hintLabels[1]}</div><span class=sk_tab_group_title>Cancel</span></div>`);
+            const tabHints = _popup.querySelectorAll("div.sk_tab_hint");
+            _popup.style.textAlign = "center";
+            tabHints[0].link = "Ok";
+            tabHints[0].label = hintLabels[0];
+            tabHints[1].link = "Cancel";
+            tabHints[1].label = hintLabels[1];
+        }, (matched) => {
+            self.contentCommand({
+                action: 'dialogResponse',
+                result: matched
+            });
+        });
     };
 
     self.vimMappings = [];

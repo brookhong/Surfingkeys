@@ -555,7 +555,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.defaultSearchEngine | "g" | 搜索栏里的默认搜索引擎。 |
 | settings.blocklistPattern | undefined | 如果当前访问的网站匹配设定的正则表达式，则禁用Surfingkeys。 |
 | settings.focusAfterClosed | "right" | 关掉当前标签页后，切换到哪一侧的标签页。["left", "right"] |
-| settings.repeatThreshold | 99 | 操作可重复最多次数。 |
+| settings.repeatThreshold | 9 | 操作可重复最多次数。 |
 | settings.tabsMRUOrder | true | 查找打开标签页时，是否按最近访问顺序列出所有标签页。 |
 | settings.historyMUOrder | true | 查找访问记录时，是否按最常访问顺序列出所有访问记录。 |
 | settings.newTabPosition | 'default' | 在哪个位置创建新标签页。["left", "right", "first", "default"] |

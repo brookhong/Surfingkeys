@@ -311,9 +311,18 @@ Mode.handleMapKey = function(event, onNoMatched) {
                     RUNTIME.repeats = parseInt(this.repeats) || 1;
                     event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
                         || this.map_node.meta.stopPropagation(key));
-                    while(RUNTIME.repeats > 0) {
-                        code();
-                        RUNTIME.repeats--;
+                    if (RUNTIME.repeats > runtime.conf.repeatThreshold) {
+                        dispatchSKEvent("front", ['showDialog', `Do you really want to repeat this action (${this.map_node.meta.annotation}) ${RUNTIME.repeats} times?`, () => {
+                            while(RUNTIME.repeats > 0) {
+                                code();
+                                RUNTIME.repeats--;
+                            }
+                        }]);
+                    } else {
+                        while(RUNTIME.repeats > 0) {
+                            code();
+                            RUNTIME.repeats--;
+                        }
                     }
                     actionDone = Mode.finish(thisMode);
                 }
