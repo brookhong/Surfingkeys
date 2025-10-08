@@ -50,6 +50,12 @@ function vmapkey(keys, annotation, jscode, options) {
    }
 }
 
+const userDefinedCommands = {};
+function addCommand(name, description, action) {
+    userDefinedCommands[name] = action;
+    dispatchSKEvent('front', ['addCommand', name, description]);
+}
+
 function map(new_keystroke, old_keystroke, domain, new_annotation) {
     dispatchSKEvent('api', ['map', new_keystroke, old_keystroke, domain, new_annotation]);
 }
@@ -74,6 +80,11 @@ initSKFunctionListener("user", {
     callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
             userDefinedFunctions[keys](para);
+        }
+    },
+    executeUserCommand: (name, args) => {
+        if (userDefinedCommands.hasOwnProperty(name)) {
+            userDefinedCommands[name](...args);
         }
     },
     getSearchSuggestions: (url, response, request, callbackId, origin) => {
@@ -138,6 +149,7 @@ const api = {
     aceVimMap,
     addVimMapKey,
     addSearchAlias,
+    addCommand,
     cmap,
     imap,
     imapkey,
