@@ -115,9 +115,9 @@ initSKFunctionListener("user", {
     onEditorWrite: (data) => {
         onEditorWriteFn(data);
     },
-    onHintClicked: (element) => {
+    onHintClicked: (shiftKey, element) => {
         if (typeof(hintsFunction) === 'function') {
-            hintsFunction(element);
+            hintsFunction(element, shiftKey);
         }
     },
 }, true);
