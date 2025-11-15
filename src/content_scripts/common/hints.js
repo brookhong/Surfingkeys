@@ -489,6 +489,10 @@ div.hint-scrollable {
         behaviours = {
             mouseEvents: MOUSE_EVENTS
         };
+        // Clean up temporary class added for array-based hint creation
+        document.querySelectorAll('.surfingkeys--hints--creating').forEach(function(el) {
+            el.classList.remove('surfingkeys--hints--creating');
+        });
         setSanitizedContent(holder, "");
         holder.remove();
         hintsHost.remove();

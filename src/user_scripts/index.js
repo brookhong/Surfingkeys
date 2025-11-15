@@ -204,6 +204,13 @@ const api = {
             dispatchSKEvent('api', ['hints:click', links, force]);
         },
         create: (cssSelector, onHintKey, attrs) => {
+            if (typeof(cssSelector) !== 'string') {
+                const hintsCreating = "surfingkeys--hints--creating";
+                if (createCssSelectorForElements(hintsCreating, cssSelector) === 0) {
+                    return false;
+                }
+                cssSelector = `.${hintsCreating}`;
+            }
             hintsFunction = onHintKey;
             dispatchSKEvent('api', ['hints:create', cssSelector, "user", attrs]);
         },
