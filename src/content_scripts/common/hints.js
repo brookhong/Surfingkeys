@@ -363,7 +363,7 @@ div.hint-scrollable {
                 mouseEventModifiers[modKey] = true;
             }
             flashPressedLink(element,() => {
-                if (tabbed && getBrowserName().startsWith("Safari")) {
+                if (tabbed) {
                     RUNTIME("openLink", {
                         tab: {
                             tabbed: tabbed,
