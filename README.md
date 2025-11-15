@@ -563,6 +563,7 @@ Some functionalities are also available when you're using original pdf viewer, b
 | settings.modeAfterYank | "" | Which mode to fall back after yanking text in visual mode. Value could be one of ["", "Caret", "Normal"], default is "", which means no action after yank.|
 | settings.scrollStepSize | 70 | A step size for each move by `j`/`k` |
 | settings.scrollFriction | 0 | A force that is needed to start continuous scrolling after initial scroll step. A bigger number will cause a flicker after initial step, but help to keep the first step precise. |
+| settings.scrollFallback | false | Fallback to document-level scrolling when the focused element cannot scroll in the requested direction. |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | A regex to match links that indicate next page. |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| A regex to match links that indicate previous page. |
 | settings.hintAlign | "center" | Alignment of hints on their target elements. ["left", "center", "right"] |
