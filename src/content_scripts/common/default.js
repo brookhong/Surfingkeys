@@ -157,15 +157,21 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('w', '#2Switch frames', function() {
         // ensure frontend ready so that ui related actions can be available in iframes.
         dispatchSKEvent('ensureFrontEnd');
-        if (window !== top || !hints.create("iframe", function(element) {
-            element.scrollIntoView({
-                behavior: 'auto',
-                block: 'center',
-                inline: 'center'
+        if (window === top) {
+            hints.create("iframe", function(element) {
+                element.scrollIntoView({
+                    behavior: 'auto',
+                    block: 'center',
+                    inline: 'center'
+                });
+                normal.highlightElement(element);
+                element.contentWindow.focus();
+            }).then((hintsTotal) => {
+                if (hintsTotal === 0) {
+                    normal.rotateFrame();
+                }
             });
-            normal.highlightElement(element);
-            element.contentWindow.focus();
-        })) {
+        } else {
             normal.rotateFrame();
         }
     });

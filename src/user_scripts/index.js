@@ -76,6 +76,7 @@ let hintsFunction;
 let onClipboardReadFn;
 let onEditorWriteFn;
 let userScriptTask = () => {};
+let hintsCreationResolve;
 initSKFunctionListener("user", {
     callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
@@ -118,6 +119,12 @@ initSKFunctionListener("user", {
     onHintClicked: (shiftKey, element) => {
         if (typeof(hintsFunction) === 'function') {
             hintsFunction(element, shiftKey);
+        }
+    },
+    onHintCreated: (found) => {
+        if (hintsCreationResolve) {
+            hintsCreationResolve(found);
+            hintsCreationResolve = null;
         }
     },
 }, true);
@@ -212,7 +219,11 @@ const api = {
                 cssSelector = `.${hintsCreating}`;
             }
             hintsFunction = onHintKey;
+            const promise = new Promise((resolve, reject) => {
+                hintsCreationResolve = resolve;
+            });
             dispatchSKEvent('api', ['hints:create', cssSelector, "user", attrs]);
+            return promise;
         },
         dispatchMouseClick: (element) => {
             dispatchSKEvent('hints', ['dispatchMouseClick'], element);
