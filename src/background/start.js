@@ -1564,7 +1564,11 @@ function start(browser) {
         });
     };
     self.download = function(message, sender, sendResponse) {
-        chrome.downloads.download({ url: message.url, saveAs: message.saveAs });
+        chrome.downloads.download({
+            url: message.url,
+            filename: message.filename,
+            saveAs: message.saveAs
+        });
     };
     self.tabURLAccessed = function(message, sender, sendResponse) {
         if (sender.tab) {
