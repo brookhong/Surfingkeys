@@ -174,14 +174,15 @@ function createInsert() {
         }
     });
 
+    const emojiURL = chrome.runtime.getURL("pages/emoji.tsv");
     const emojiPrompt = new CursorPrompt((c) => {
         const ee = c.split("\t");
         const parsedUnicodeEmoji = String.fromCodePoint.apply(null, ee[0].split(','));
         return "<div><span>{0}</span>{1}</div>".format(parsedUnicodeEmoji, ee[1]);
     }, (elm) => {
         return elm.firstElementChild.innerText;
-    }, new Promise((r) => {
-        fetch(chrome.runtime.getURL("pages/emoji.tsv"))
+    }, () => new Promise((r) => {
+        fetch(emojiURL)
             .then(res => Promise.all([res.text()]))
             .then(res => {
                 r(res[0].split("\n"));

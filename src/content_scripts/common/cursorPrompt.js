@@ -64,7 +64,7 @@ class CursorPrompt {
         if (this.data) {
             this.#render();
         } else if (this.fetcher) {
-            this.fetcher.then((res) => {
+            this.fetcher().then((res) => {
                 this.data = res;
                 this.#render();
             });
