@@ -507,7 +507,12 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             dispatchMouseClick: hints.dispatchMouseClick,
             style: hints.style,
             setNumeric: hints.setNumeric,
-            setCharacters: hints.setCharacters,
+            setCharacters: function(chars) {
+                hints.setCharacters(chars);
+                if (front.setHintsCharacters) {
+                    front.setHintsCharacters(chars);
+                }
+            },
         },
         Visual: {
             style: visual.style,
