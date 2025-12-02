@@ -96,6 +96,12 @@ function createFront(insert, normal, hints, visual, browser) {
             alias: alias
         });
     };
+    self.setHintsCharacters = function (chars) {
+        applyUICommand({
+            action: 'setHintsCharacters',
+            characters: chars
+        });
+    };
 
     var _actions = {};
     var skCallbacks = {};

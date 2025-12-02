@@ -441,6 +441,9 @@ const Front = (function() {
             setSanitizedContent(document.getElementById("sk_theme"), message.userSettings.theme);
         }
     };
+    _actions['setHintsCharacters'] = function (message) {
+        hints.setCharacters(message.characters);
+    };
     _actions['addMapkey'] = function (message) {
         if (message.old_keystroke in Mode.specialKeys) {
             Mode.specialKeys[message.old_keystroke].push(message.new_keystroke);
