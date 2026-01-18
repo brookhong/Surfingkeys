@@ -282,6 +282,12 @@ function createNormal(insert) {
         } else {
             insert.exit();
         }
+
+        if (document.activeElement.matches(runtime.conf.disabledOnActiveElementPattern)) {
+            setTimeout(() => {
+                self.disable(true);
+            }, 100);
+        }
     });
 
     self.toggleBlocklist = function() {
