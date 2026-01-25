@@ -49,6 +49,8 @@ function getLatestHistoryItem(text, maxResults, cb) {
 }
 
 start({
+    name: "Firefox",
+    detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,
     _applyProxySettings,

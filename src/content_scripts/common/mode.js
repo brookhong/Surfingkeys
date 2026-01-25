@@ -6,6 +6,8 @@ import {
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import KeyboardUtils from './keyboardUtils';
 
+var mode_stack = [];
+
 const Mode = function(name, statusLine) {
     this.name = name;
     this.statusLine = statusLine;
@@ -81,7 +83,9 @@ const Mode = function(name, statusLine) {
     };
 };
 
-var mode_stack = [];
+Mode.getCurrent = () => {
+    return mode_stack[0];
+};
 
 Mode.specialKeys = {
     "<Alt-s>": ["<Alt-s>"],       // hotkey to toggleBlocklist
@@ -129,9 +133,22 @@ function handleStack(eventName, event, cb) {
     }
 }
 
+let eventListenerBeats = 0;
 var suppressScrollEvent = 0, _listenedEvents = {
+    "sentinel": (event) => {
+        eventListenerBeats ++;
+    },
     "keydown": function (event) {
         event.sk_keyName = KeyboardUtils.getKeyChar(event);
+        if (mode_stack.length === 0 && window !== top) {
+            // automatically boots iframe on demand
+            dispatchSKEvent('iframeBoot');
+            document.addEventListener("surfingkeys:userSettingsLoaded", () => {
+                // proceed to handle the key event after userSettingsLoaded.
+                handleStack("keydown", event);
+            }, {once: true});
+            return;
+        }
         handleStack("keydown", event);
     },
     "keyup": function (event) {
@@ -144,6 +161,7 @@ var suppressScrollEvent = 0, _listenedEvents = {
         });
     },
     "scroll": function (event) {
+        handleStack("scroll", event);
         if (suppressScrollEvent > 0) {
             event.stopImmediatePropagation();
             event.preventDefault();
@@ -152,10 +170,12 @@ var suppressScrollEvent = 0, _listenedEvents = {
     }
 };
 
-function init() {
+function init(cb) {
+    mode_stack = [];
     for (var evtName in _listenedEvents) {
         window.addEventListener(evtName, _listenedEvents[evtName], true);
     }
+    cb && cb();
 }
 
 Mode.hasScroll = function (el, direction, barSize) {
@@ -193,36 +213,35 @@ Mode.getScrollableElements = function () {
     return nodes;
 };
 
-// For blank page in frames, we defer init to page loaded
-// as document.write will clear added eventListeners.
-if (window.location.href === "about:blank" && window.frameElement &&
-    (!document.body || document.body.childElementCount === 0)) {
-    window.frameElement.addEventListener("load", function(evt) {
-        try {
-            init();
-        } catch (e) {
-            console.log("Error on blank iframe loaded: " + e);
-        }
-    });
-} else {
-    init();
-}
+Mode.init = (cb)=> {
+    // For blank page in frames, we defer init to page loaded
+    // as document.write will clear added eventListeners.
+    if (window.location.href === "about:blank" && window.frameElement &&
+        (!document.body || document.body.childElementCount === 0)) {
+        window.frameElement.addEventListener("load", function(evt) {
+            try {
+                init(cb);
+            } catch (e) {
+                console.log("Error on blank iframe loaded: " + e);
+            }
+        });
+    } else {
+        init(cb);
+    }
+};
 
 
 Mode.showStatus = function() {
     if (document.hasFocus() && mode_stack.length) {
         var cm = mode_stack[0];
-        var sl = cm.statusLine;
-        if (sl === undefined) {
-            sl = runtime.conf.showModeStatus ? cm.name :  "";
-        }
+        var sl = cm.statusLine || (runtime.conf.showModeStatus ? cm.name : "");
         if (sl !== "" && window !== top && !isInUIFrame()) {
             var pathname = window.location.pathname.split('/');
             if (pathname.length) {
                 sl += " - frame: " + pathname[pathname.length - 1];
             }
         }
-        dispatchSKEvent('showStatus', [0, sl]);
+        dispatchSKEvent("front", ['showStatus', [sl]]);
     }
 };
 
@@ -231,7 +250,7 @@ Mode.finish = function (mode) {
     if (mode.map_node !== mode.mappings || mode.pendingMap != null || mode.repeats) {
         mode.map_node = mode.mappings;
         mode.pendingMap = null;
-        mode.isTrustedEvent && dispatchSKEvent('hideKeystroke');
+        mode.isTrustedEvent && dispatchSKEvent("front", ['hideKeystroke']);
         if (mode.repeats) {
             mode.repeats = "";
         }
@@ -270,7 +289,7 @@ Mode.handleMapKey = function(event, onNoMatched) {
     ) {
         // reset only after target action executed or cancelled
         this.repeats += key;
-        this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+        this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
         event.sk_stopPropagation = true;
     } else {
         var last = this.map_node;
@@ -285,26 +304,44 @@ Mode.handleMapKey = function(event, onNoMatched) {
                 if (code.length) {
                     // bound function needs arguments
                     this.pendingMap = code;
-                    this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+                    this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
                     event.sk_stopPropagation = true;
                 } else {
                     this.setLastKeys && this.setLastKeys(this.map_node.meta.word);
                     RUNTIME.repeats = parseInt(this.repeats) || 1;
                     event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
                         || this.map_node.meta.stopPropagation(key));
-                    while(RUNTIME.repeats > 0) {
-                        code();
-                        RUNTIME.repeats--;
+                    if (RUNTIME.repeats > runtime.conf.repeatThreshold) {
+                        dispatchSKEvent("front", ['showDialog', `Do you really want to repeat this action (${this.map_node.meta.annotation}) ${RUNTIME.repeats} times?`, () => {
+                            while(RUNTIME.repeats > 0) {
+                                code();
+                                RUNTIME.repeats--;
+                            }
+                        }]);
+                    } else {
+                        while(RUNTIME.repeats > 0) {
+                            code();
+                            RUNTIME.repeats--;
+                        }
                     }
                     actionDone = Mode.finish(thisMode);
                 }
             } else {
-                this.isTrustedEvent && dispatchSKEvent('showKeystroke', [key, this]);
+                this.isTrustedEvent && dispatchSKEvent("front", ['showKeystroke', key, this]);
                 event.sk_stopPropagation = true;
             }
         }
     }
     return actionDone;
+};
+
+Mode.checkEventListener = (onMissing) => {
+    const previousState = eventListenerBeats;
+    window.dispatchEvent(new CustomEvent("sentinel"))
+    if (previousState === eventListenerBeats) {
+        init();
+        onMissing();
+    }
 };
 
 export default Mode;

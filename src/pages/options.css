@@ -50,11 +50,22 @@ div.aphost>span.remove {
     cursor: pointer;
 }
 
-#basicMappings>div {
+#searchAliases>div, #basicMappings>div {
     display: inline-block;
     padding: 1px 20px;
     border-left: 1px solid #ccc;
 }
+#searchAliases div.remove {
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    height: 32px;
+    padding-right: 10px;
+}
+#searchAliases span.prompt {
+    font-size: 24px;
+}
+
 span.annotation {
     width: 240px;
     display: inline-block;
@@ -116,4 +127,16 @@ div.deleteProxyPair {
 }
 #addProxyPair {
     float: right;
+}
+.proxyPair input, #localPath {
+    width: 520px;
+}
+@media only screen and (max-width: 767px) {
+    body {
+        margin: 0px 8px;
+        width: initial;
+    }
+    .proxyPair input, #localPath {
+        width: initial;
+    }
 }

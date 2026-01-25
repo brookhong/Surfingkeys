@@ -6,7 +6,8 @@ import { marked } from 'marked';
 
 RUNTIME("getTopSites", null, function(response) {
     var urls = response.urls.map(function(u) {
-        return `<li><a href="${u.url}"><i style="background:url('chrome://favicon/${u.url}') no-repeat"></i>${u.title}</a></li>`;
+        const favUrl = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(u.url)}`);
+        return `<li><a href="${u.url}"><i style="background:url(${favUrl}) no-repeat"></i>${u.title}</a></li>`;
     });
     setSanitizedContent(document.querySelector("#topSites>ul"), urls.join("\n"));
     var source = document.getElementById('quickIntroSource').innerHTML;
@@ -44,8 +45,8 @@ RUNTIME("getTopSites", null, function(response) {
 });
 
 document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
-    const { api } = evt.detail;
-    api.Front.getUsage(function(usage) {
+    const { getUsage } = evt.detail;
+    getUsage(function(usage) {
         var _usage = document.getElementById('sk_usage');
         setSanitizedContent(_usage, usage);
         var keys = Array.from(_usage.querySelectorAll('div')).filter(function(d) {

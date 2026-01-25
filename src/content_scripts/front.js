@@ -1,3 +1,4 @@
+import Mode from './common/mode.js';
 import {
     createElementWithContent,
     flashPressedLink,
@@ -5,9 +6,12 @@ import {
     getAnnotations,
     getBrowserName,
     getDocumentOrigin,
+    getElements,
     httpRequest,
+    initSKFunctionListener,
     isEditable,
     isInUIFrame,
+    scrollIntoViewIfNeeded,
     tabOpenLink,
 } from './common/utils.js';
 import { RUNTIME, dispatchSKEvent, runtime } from './common/runtime.js';
@@ -22,67 +26,91 @@ function createFront(insert, normal, hints, visual, browser) {
     var _uiUserSettings = [];
     function applyUserSettings() {
         for (var cmd of _uiUserSettings) {
-            frontendCommand(cmd);
+            self.command(cmd);
         }
     }
 
-    var uiHost, _resolve;
-    var frontendPromise = new Promise(function (resolve, reject) {
-        if (window === top) {
-            _resolve = resolve;
-        } else {
-            resolve(window.location.href);
-        }
-    });
+    var frontendPromise;
+
+    function newFrontEnd() {
+        frontendPromise = new Promise(function (resolve, reject) {
+            createUiHost(browser, (res) => {
+                resolve(res);
+                applyUserSettings();
+            });
+        });
+    }
 
     var _callbacks = {};
-    function frontendCommand(args, successById) {
-        args.commandToFrontend = true;
+    self.command = function(args, successById) {
+        args.toFrontend = true;
         args.origin = getDocumentOrigin();
         args.id = generateQuickGuid();
         if (successById) {
             args.ack = true;
             _callbacks[args.id] = successById;
         }
-        frontendPromise.then(function() {
+        if (window !== top) {
             runtime.postTopMessage(args);
-        });
+        } else {
+            if (!frontendPromise) {
+                // no need to create frontend iframe if the action is to hide key stroke
+                // and frontend UI must be created after document.body is ready(#2132)
+                if (args.action === "hideKeystroke" || document.body === null) {
+                    return;
+                }
+                newFrontEnd();
+            }
+            frontendPromise.then(function() {
+                runtime.postTopMessage(args);
+            });
+        }
+    };
+
+    function applyUICommand(cmd) {
+        _uiUserSettings.push(cmd);
+        if (frontendPromise) {
+            frontendPromise.then(function() {
+                self.command(cmd);
+            });
+        }
     }
 
-    document.addEventListener("surfingkeys:setUserSettings", function(evt) {
-        _uiUserSettings.push({
-            action: 'applyUserSettings',
-            userSettings: evt.detail
-        });
-    });
-
     var _listSuggestions = {};
-    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion) {
+    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion, options) {
         if (suggestionURL && listSuggestion) {
             _listSuggestions[suggestionURL] = listSuggestion;
         }
-        _uiUserSettings.push({
+        applyUICommand({
             action: 'addSearchAlias',
             alias: alias,
             prompt: prompt,
             url: url,
-            suggestionURL: suggestionURL
+            suggestionURL: suggestionURL,
+            options: options,
         });
     };
     self.removeSearchAlias = function (alias) {
-        _uiUserSettings.push({
+        applyUICommand({
             action: 'removeSearchAlias',
             alias: alias
         });
     };
+    self.setHintsCharacters = function (chars) {
+        applyUICommand({
+            action: 'setHintsCharacters',
+            characters: chars
+        });
+    };
 
     var _actions = {};
+    var skCallbacks = {};
 
     self.performInlineQueryOnSelection = function(word) {
         var b = document.getSelection().getRangeAt(0).getClientRects()[0];
         self.performInlineQuery(word, b, function(pos, queryResult) {
             if (queryResult) {
-                dispatchSKEvent('showBubble', [{
+                dispatchSKEvent("front", ['showBubble', {
                     top: pos.top,
                     left: pos.left,
                     height: pos.height,
@@ -98,7 +126,6 @@ function createFront(insert, normal, hints, visual, browser) {
             self.performInlineQueryOnSelection(word);
         }
     }
-    document.addEventListener("surfingkeys:querySelectedWord", querySelectedWord);
 
     _actions["updateInlineQuery"] = function (message) {
         if (message.word) {
@@ -111,41 +138,35 @@ function createFront(insert, normal, hints, visual, browser) {
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
         if (_listSuggestions.hasOwnProperty(message.url)) {
-            ret = _listSuggestions[message.url](message.response);
+            const listSuggestion = _listSuggestions[message.url];
+            if (typeof listSuggestion === "function") {
+                ret = listSuggestion(message.response, {
+                    url: message.requestUrl,
+                    query: message.query,
+                });
+            } else {
+                ret = new Promise((resolve, reject) => {
+                    const callbackId = generateQuickGuid();
+                    skCallbacks[callbackId] = (res) => {
+                        resolve(res);
+                    };
+
+                    dispatchSKEvent('user', ["getSearchSuggestions", message.url, message.response, {
+                        url: message.requestUrl,
+                        query: message.query,
+                    }, callbackId]);
+                });
+            }
         }
         return ret;
     };
 
     self.executeCommand = function (cmd) {
-        frontendCommand({
+        self.command({
             action: 'executeCommand',
             cmdline: cmd
         });
     };
-    document.addEventListener("surfingkeys:addMapkey", function(evt) {
-        const [ mode, new_keystroke, old_keystroke ] = evt.detail;
-        _uiUserSettings.push({
-            action: 'addMapkey',
-            mode: mode,
-            new_keystroke: new_keystroke,
-            old_keystroke: old_keystroke
-        });
-    });
-    document.addEventListener("surfingkeys:addVimMap", function(evt) {
-        const [ lhs, rhs, ctx ] = evt.detail;
-        _uiUserSettings.push({
-            action: 'addVimMap',
-            lhs: lhs,
-            rhs: rhs,
-            ctx: ctx
-        });
-    });
-    document.addEventListener("surfingkeys:addVimKeyMap", function(evt) {
-        _uiUserSettings.push({
-            action: 'addVimKeyMap',
-            vimKeyMap: evt.detail
-        });
-    });
 
     var frameElement = createElementWithContent('div', 'Hi, I\'m here now!', {id: "sk_frame"});
     frameElement.fromSurfingKeys = true;
@@ -161,28 +182,30 @@ function createFront(insert, normal, hints, visual, browser) {
             frameElement.remove();
         }, sn.duration);
     }
-    document.addEventListener("surfingkeys:highlightElement", function(evt) {
-        highlightElement(evt.detail);
-    });
 
     function getAllAnnotations() {
-        return [ normal.mappings,
+        let mappings = [ normal.mappings,
             visual.mappings,
             insert.mappings
-        ].map(getAnnotations).reduce(function(a, b) {
+        ];
+        const lurk = normal.getLurkMode();
+        if (lurk) {
+            mappings.unshift(lurk.mappings);
+        }
+        return mappings.map(getAnnotations).reduce(function(a, b) {
             return a.concat(b);
         });
     }
 
     self.showUsage = function() {
-        frontendCommand({
+        self.command({
             action: 'showUsage',
             metas: getAllAnnotations()
         });
     };
 
     self.getUsage = function(cb) {
-        frontendCommand({
+        self.command({
             action: 'getUsage',
             metas: getAllAnnotations()
         }, function(response) {
@@ -190,30 +213,29 @@ function createFront(insert, normal, hints, visual, browser) {
         });
     };
 
-    document.addEventListener("surfingkeys:showPopup", function(evt) {
-        const [ content ] = evt.detail;
-        frontendCommand({
-            action: 'showPopup',
-            content: content
-        });
-    });
-
     function hidePopup() {
-        frontendCommand({
+        self.command({
             action: 'hidePopup'
         });
     }
-    document.addEventListener("surfingkeys:hidePopup", hidePopup);
 
     function updateElementBehindEditor(data) {
         // setEditorText and setValueWithEventDispatched are experimental APIs from Brook Build of Chromium
         // https://brookhong.github.io/2021/04/18/brook-build-of-chromium.html
         if (elementBehindEditor.nodeName === "DIV") {
-            data = data.replace(/\n+$/, '');
-            if (typeof elementBehindEditor.setEditorText === "function") {
-                elementBehindEditor.setEditorText(data);
+            if (elementBehindEditor.className === "CodeMirror-code") {
+                window.getSelection().selectAllChildren(elementBehindEditor)
+                let dataTransfer = new DataTransfer()
+                dataTransfer.items.add(data, 'text/plain')
+                elementBehindEditor.dispatchEvent(new ClipboardEvent('paste', {clipboardData: dataTransfer}))
             } else {
-                elementBehindEditor.innerText = data;
+                data = data.replace(/\n+$/, '');
+
+                if (typeof elementBehindEditor.setEditorText === "function") {
+                    elementBehindEditor.setEditorText(data);
+                } else {
+                    elementBehindEditor.innerText = data;
+                }
             }
         } else {
             if (typeof elementBehindEditor.setValueWithEventDispatched === "function") {
@@ -264,7 +286,15 @@ function createFront(insert, normal, hints, visual, browser) {
         } else {
             elementBehindEditor = element;
             if (elementBehindEditor.nodeName === "DIV") {
-                content = elementBehindEditor.innerText;
+                if (elementBehindEditor.className === "CodeMirror-code") {
+                    let codeMirrorLines = elementBehindEditor.querySelectorAll(".CodeMirror-line")
+                    content = Array.from(codeMirrorLines).map(el => el.innerText).join("\n")
+                    // Remove the red dot (char code 8226) that CodeMirror uses to visualize the zero-width space.
+                    content = content.replace(/\u200B/g, "")
+
+                } else {
+                    content = elementBehindEditor.innerText;
+                }
             } else {
                 content = elementBehindEditor.value;
             }
@@ -279,17 +309,23 @@ function createFront(insert, normal, hints, visual, browser) {
         if (useNeovim || runtime.conf.useNeovim) {
             cmd.file_name = `${new URL(window.location.origin).host}/${elementBehindEditor.nodeName.toLowerCase()}`;
         }
-        frontendCommand(cmd);
+        self.command(cmd);
     };
 
     self.chooseTab = function() {
         if (normal.repeats !== "") {
             RUNTIME('focusTabByIndex');
         } else {
-            frontendCommand({
+            self.command({
                 action: 'chooseTab'
             });
         }
+    };
+
+    self.groupTab = function() {
+        self.command({
+            action: 'groupTab'
+        });
     };
 
     /**
@@ -319,21 +355,21 @@ function createFront(insert, normal, hints, visual, browser) {
      */
     self.openOmnibar = function(args) {
         args.action = 'openOmnibar';
-        frontendCommand(args);
+        self.command(args);
     };
 
-    var _inlineQuery;
+    var _inlineQuery = false;
     var _showQueryResult;
     self.performInlineQuery = function (query, pos, showQueryResult) {
         if (document.dictEnabled !== undefined) {
-            if (window.location.protocol === "dictorium:") {
+            if (window.location.href.startsWith("chrome://dictorium-query/")) {
                 if (window === top) {
-                    window.location.href = query;
+                    window.location.href = `chrome://dictorium-query/${query}`;
                 } else {
-                    window.postMessage({surfingkeys_data: { type: 'DictoriumReload', word: query }});
+                    window.postMessage({dictorium_data: { type: 'DictoriumReload', word: query }});
                 }
             } else {
-                window.postMessage({surfingkeys_data: {
+                window.postMessage({dictorium_data: {
                     type: "OpenDictoriumQuery",
                     word: query,
                     sentence: "",
@@ -347,18 +383,18 @@ function createFront(insert, normal, hints, visual, browser) {
                 browser.readText(query);
             }
             query = query.toLocaleLowerCase();
-            runtime.updateHistory('OmniQuery', query);
-            httpRequest({
-                url: (typeof(_inlineQuery.url) === "function") ? _inlineQuery.url(query) : _inlineQuery.url + query,
-                headers: _inlineQuery.headers
-            }, function(res) {
-                showQueryResult(pos, _inlineQuery.parseResult(res));
-            });
+            RUNTIME('updateInputHistory', { OmniQuery: query });
+
+            const callbackId = generateQuickGuid();
+            skCallbacks[callbackId] = (res) => {
+                showQueryResult(pos, res);
+            };
+            dispatchSKEvent('user', ["performInlineQuery", query, callbackId]);
         } else if (isInUIFrame()) {
             _showQueryResult = function(result) {
                 showQueryResult(pos, result);
             };
-            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_data: {
+            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_content_data: {
                 action: "performInlineQuery",
                 pos: pos,
                 query: query
@@ -377,53 +413,12 @@ function createFront(insert, normal, hints, visual, browser) {
      *
      * @see [example](https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query).
      */
-    self.registerInlineQuery = function(args) {
-        _inlineQuery = args;
+    self.registerInlineQuery = function() {
+        _inlineQuery = true;
     };
     self.openOmniquery = function(args) {
         self.openOmnibar(({type: "OmniQuery", extra: args.query, style: args.style}));
     };
-
-    document.addEventListener("surfingkeys:openFinder", function(evt) {
-        frontendCommand({
-            action: "openFinder"
-        });
-    });
-
-    document.addEventListener("surfingkeys:showBanner", function(evt) {
-        const [ msg, linger_time ] = evt.detail;
-        frontendCommand({
-            action: "showBanner",
-            content: msg,
-            linger_time: linger_time
-        });
-    });
-
-    document.addEventListener("surfingkeys:showBubble", function(evt) {
-        const [ pos, msg, noPointerEvents ] = evt.detail;
-        if (msg.length > 0) {
-            pos.winWidth = window.innerWidth;
-            pos.winHeight = window.innerHeight;
-            pos.winX = 0;
-            pos.winY = 0;
-            if (window.frameElement) {
-                pos.winX = window.frameElement.offsetLeft;
-                pos.winY = window.frameElement.offsetTop;
-            }
-            frontendCommand({
-                action: "showBubble",
-                content: msg,
-                position: pos,
-                noPointerEvents: noPointerEvents
-            });
-        }
-    });
-
-    document.addEventListener("surfingkeys:hideBubble", function(evt) {
-        frontendCommand({
-            action: 'hideBubble'
-        });
-    });
 
     var _keyHints = {
         accumulated: "",
@@ -431,55 +426,172 @@ function createFront(insert, normal, hints, visual, browser) {
         key: ""
     };
 
-    document.addEventListener("surfingkeys:hideKeystroke", function(evt) {
-        _keyHints.accumulated = "";
-        _keyHints.candidates = {};
-        frontendCommand({
-            action: 'hideKeystroke'
-        });
-    });
-
-    document.addEventListener("surfingkeys:showKeystroke", function(evt) {
-        const [ key, mode ] = evt.detail;
-        _keyHints.accumulated += key;
-        _keyHints.key = key;
-        _keyHints.candidates = {};
-
-        var root = mode.mappings.find(_keyHints.accumulated);
-        if (root) {
-            root.getMetas(function(m) {
-                return true;
-            }).forEach(function(m) {
-                _keyHints.candidates[m.word] = {
-                    annotation: m.annotation
-                };
+    self.showStatus = function (msgs, duration) {
+        // when showModeStatus is on, showStatus will cause uiHost injected too early
+        // which could break some host scripts from sites in Firefox.
+        const waitForHostScripts = (getBrowserName() === "Firefox") ? 1000 : 0;
+        setTimeout(() => {
+            self.command({
+                action: "showStatus",
+                contents: msgs,
+                duration: duration
             });
-        }
-
-        frontendCommand({
-            action: 'showKeystroke',
-            keyHints: _keyHints
-        });
-    });
-
-    document.addEventListener("surfingkeys:showStatus", function(evt) {
-        self.showStatus(...evt.detail);
-    });
-
-    self.showStatus = function (pos, msg, duration) {
-        frontendCommand({
-            action: "showStatus",
-            content: msg,
-            duration: duration,
-            position: pos
-        });
+        }, waitForHostScripts);
     };
     self.toggleStatus = function (visible) {
-        frontendCommand({
+        self.command({
             action: "toggleStatus",
             visible: visible
         });
     };
+
+    let onDialogResponseOk = null;
+    _actions["dialogResponse"] = function (message) {
+        if (message.result === "Ok" && onDialogResponseOk) {
+            onDialogResponseOk();
+        } else {
+            onDialogResponseOk = null;
+        }
+    };
+
+    skCallbacks = initSKFunctionListener("front", {
+        showPopup: (content) => {
+            self.command({
+                action: 'showPopup',
+                content
+            });
+        },
+        showDialog: (question, onOk) => {
+            self.command({
+                action: 'showDialog',
+                question
+            });
+            onDialogResponseOk = onOk;
+        },
+        applySettingsFromSnippets: (us) => {
+            applyUICommand({
+                action: 'applyUserSettings',
+                userSettings: us
+            });
+            const cloneUS = JSON.parse(JSON.stringify(us));
+            // overrides local settings from snippets
+            for (var k in cloneUS) {
+                if (runtime.conf.hasOwnProperty(k)) {
+                    runtime.conf[k] = cloneUS[k];
+                    delete cloneUS[k];
+                }
+           }
+            if (runtime.conf.enableEmojiInsertion) {
+                insert.enableEmojiInsertion();
+            }
+            if (Object.keys(cloneUS).length > 0 && window === top) {
+                // left settings are for background, need not broadcast the update, neither persist into storage
+                RUNTIME('updateSettings', {
+                    scope: "snippets",
+                    settings: cloneUS
+                });
+            }
+            dispatchSKEvent('settingsFromSnippetsLoaded');
+        },
+        querySelectedWord,
+        addMapkey: (mode, new_keystroke, old_keystroke) => {
+            applyUICommand({
+                action: 'addMapkey',
+                mode: mode,
+                new_keystroke: new_keystroke,
+                old_keystroke: old_keystroke
+            });
+        },
+        addVimMap: (lhs, rhs, ctx) => {
+            applyUICommand({
+                action: 'addVimMap',
+                lhs: lhs,
+                rhs: rhs,
+                ctx: ctx
+            });
+        },
+        addVimKeyMap: (vimKeyMap) => {
+            applyUICommand({
+                action: 'addVimKeyMap',
+                vimKeyMap
+            });
+        },
+        addCommand: (name, description) => {
+            applyUICommand({
+                action: 'addCommand',
+                name: name,
+                description: description
+            });
+        },
+        highlightElement,
+        hidePopup,
+        openFinder: () => {
+            self.command({
+                action: "openFinder"
+            });
+        },
+        showBanner: (msg, linger_time) => {
+            self.command({
+                action: "showBanner",
+                content: msg,
+                linger_time: linger_time
+            });
+        },
+        showBubble: (pos, msg, noPointerEvents) => {
+            if (msg.length > 0) {
+                pos.winWidth = window.innerWidth;
+                pos.winHeight = window.innerHeight;
+                pos.winX = 0;
+                pos.winY = 0;
+                if (window.frameElement) {
+                    pos.winX = window.frameElement.offsetLeft;
+                    pos.winY = window.frameElement.offsetTop;
+                }
+                self.command({
+                    action: "showBubble",
+                    content: msg,
+                    position: pos,
+                    noPointerEvents: noPointerEvents
+                });
+            }
+        },
+        hideBubble: () => {
+            self.command({
+                action: 'hideBubble'
+            });
+        },
+        hideKeystroke: () => {
+            _keyHints.accumulated = "";
+            _keyHints.candidates = {};
+            self.command({
+                action: 'hideKeystroke'
+            });
+        },
+        showKeystroke: (key, mode) => {
+            _keyHints.accumulated += key;
+            _keyHints.key = key;
+            _keyHints.candidates = {};
+
+            var root = mode.mappings.find(_keyHints.accumulated);
+            if (root) {
+                root.getMetas(function(m) {
+                    return true;
+                }).forEach(function(m) {
+                    _keyHints.candidates[m.word] = {
+                        annotation: m.annotation
+                    };
+                });
+            }
+
+            self.command({
+                action: 'showKeystroke',
+                keyHints: _keyHints
+            });
+        },
+        openOmnibar: self.openOmnibar,
+        showStatus: self.showStatus,
+        toggleStatus: self.toggleStatus,
+    });
 
     _actions["ace_editor_saved"] = function(response) {
         if (response.data !== undefined) {
@@ -499,14 +611,14 @@ function createFront(insert, normal, hints, visual, browser) {
             i = (i + (response.backward ? -1 : 1)) % sel.length;
             sel = sel[i];
             scrollIntoViewIfNeeded(sel);
-            flashPressedLink(sel);
-
-            self.showEditor(sel);
+            flashPressedLink(sel, () => {
+                self.showEditor(sel);
+            });
         }
     };
 
     _actions["omnibar_query_entered"] = function(response) {
-        runtime.updateHistory('OmniQuery', response.query);
+        RUNTIME('updateInputHistory', { OmniQuery: response.query });
         self.performInlineQuery(response.query, {
             top: 0,
             left: 80,
@@ -523,29 +635,22 @@ function createFront(insert, normal, hints, visual, browser) {
                 }
             }
 
-            frontendCommand({
+            self.command({
                 action: 'updateOmnibarResult',
                 words: queryResult
             });
         });
     };
 
-    _actions["executeScript"] = function(message) {
-        RUNTIME('executeScript', {
-            code: message.cmdline
-        }, function (response) {
-            frontendCommand({
-                action: 'updateOmnibarResult',
-                words: response.response
-            });
-        });
-    };
-
     _actions["getBackFocus"] = function(response) {
         window.focus();
-        if (window === top && uiHost && uiHost.shadowRoot.contains(document.activeElement)) {
-            // fix for Firefox, blur from iframe for frontend after Omnibar closed.
-            document.activeElement.blur();
+        if (window === top && frontendPromise) {
+            frontendPromise.then((uiHost) => {
+                if (uiHost.shadowRoot.contains(document.activeElement)) {
+                    // fix for Firefox, blur from iframe for frontend after Omnibar closed.
+                    document.activeElement.blur();
+                }
+            });
         }
     };
 
@@ -565,7 +670,7 @@ function createFront(insert, normal, hints, visual, browser) {
         clearPendingQuery();
         _pendingQuery = setTimeout(function() {
             visual.visualUpdate(message.query);
-            frontendCommand({
+            self.command({
                 action: "visualUpdated"
             });
         }, 500);
@@ -583,6 +688,10 @@ function createFront(insert, normal, hints, visual, browser) {
 
     _actions["emptySelection"] = function(message) {
         visual.emptySelection();
+    };
+
+    _actions["executeUserCommand"] = function(message) {
+        dispatchSKEvent('user', ['executeUserCommand', message.name, message.args]);
     };
 
     var _active = window === top;
@@ -615,13 +724,13 @@ function createFront(insert, normal, hints, visual, browser) {
     });
 
     window.addEventListener('message', function (event) {
-        var _message = event.data && event.data.surfingkeys_data;
+        var _message = event.data && (event.data.surfingkeys_content_data || event.data.dictorium_data);
         if (_message === undefined) {
             return;
         }
         if (_message.action === "performInlineQuery") {
             self.performInlineQuery(_message.query, _message.pos, function (pos, queryResult) {
-                event.source.postMessage({surfingkeys_data: {
+                event.source.postMessage({surfingkeys_content_data: {
                     action: "performInlineQueryResult",
                     pos: pos,
                     result: queryResult
@@ -630,21 +739,25 @@ function createFront(insert, normal, hints, visual, browser) {
         } else if (_message.action === "performInlineQueryResult") {
             _showQueryResult(_message.pos, _message.result);
         } else if (_active) {
-            if (_message.responseToContent && _callbacks[_message.id]) {
+            if (_callbacks[_message.id]) {
                 var f = _callbacks[_message.id];
                 // returns true to make callback stay for coming response.
                 if (!f(_message)) {
                     delete _callbacks[_message.id];
                 }
-            } else if (_message.commandToContent && _message.action && _actions.hasOwnProperty(_message.action)) {
+            } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
                 var ret = _actions[_message.action](_message);
-                if (_message.ack) {
-                    runtime.postTopMessage({
-                        data: ret,
-                        responseToFrontend: true,
-                        origin: _message.origin,
-                        id: _message.id
-                    });
+                if (_message.ack && ret) {
+                    if (!ret.then) {
+                        ret = Promise.resolve(ret);
+                    }
+                    ret.then((data) =>
+                      runtime.postTopMessage({
+                          data,
+                          toFrontend: true,
+                          origin: _message.origin,
+                          id: _message.id
+                      }));
                 }
             }
         } else if (_message.action === "activated") {
@@ -653,29 +766,31 @@ function createFront(insert, normal, hints, visual, browser) {
             // make inline query also work on dictorium frame continuously
             _actions['activated'](_message);
         }
+        if (!event.data.dictorium_data) {
+            event.stopImmediatePropagation();
+        }
     }, true);
 
     var uiHostDetaching;
     self.attach = function() {
-        if (!uiHost) {
-            uiHost = createUiHost(browser, (res) => {
-                _resolve(res);
-                applyUserSettings();
-            });
-            document.documentElement.appendChild(uiHost);
-        }
         if (uiHostDetaching) {
             clearTimeout(uiHostDetaching);
             uiHostDetaching = undefined;
         }
+        if (!frontendPromise) {
+            newFrontEnd();
+        }
+        Mode.showStatus();
     };
 
     self.detach = function() {
-        if (uiHost) {
-            uiHostDetaching = setTimeout(function() {
-                uiHost.detach();
-                uiHost = undefined;
-            }, 3000);
+        if (frontendPromise) {
+            frontendPromise.then((uiHost) => {
+                uiHostDetaching = setTimeout(function() {
+                    uiHost.detach();
+                    frontendPromise = undefined;
+                }, 3000);
+            });
         }
     };
 

@@ -1,5 +1,6 @@
 import {
     getVisibleElements,
+    initSKFunctionListener,
 } from './utils.js';
 
 import Mode from './mode';
@@ -15,16 +16,6 @@ function isElementPositionRelative(elm) {
 }
 
 function startScrollNodeObserver(normal) {
-    var getDocumentBody = new Promise(function(resolve, reject) {
-        if (document.body) {
-            resolve(document.body);
-        } else {
-            document.addEventListener('DOMContentLoaded', function() {
-                resolve(document.body);
-            });
-        }
-    });
-
     var pendingUpdater = undefined, DOMObserver = new MutationObserver(function (mutations) {
         var addedNodes = [];
         for (var m of mutations) {
@@ -62,20 +53,19 @@ function startScrollNodeObserver(normal) {
     });
     DOMObserver.isConnected = false;
 
-    document.addEventListener("surfingkeys:turnOnDOMObserver", function(evt) {
-        if (!DOMObserver.isConnected) {
-            getDocumentBody.then(function(body) {
-                DOMObserver.observe(body, { childList: true, subtree:true });
+    initSKFunctionListener("observer", {
+        turnOn: () => {
+            if (!DOMObserver.isConnected) {
+                DOMObserver.observe(document, { childList: true, subtree:true });
                 DOMObserver.isConnected = true;
-            });
-        }
-    });
-
-    document.addEventListener("surfingkeys:turnOffDOMObserver", function(evt) {
-        if (DOMObserver.isConnected) {
-            DOMObserver.disconnect();
-            DOMObserver.isConnected = false;
-        }
+            }
+        },
+        turnOff: () => {
+            if (DOMObserver.isConnected) {
+                DOMObserver.disconnect();
+                DOMObserver.isConnected = false;
+            }
+        },
     });
 }
 

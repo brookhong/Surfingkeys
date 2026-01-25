@@ -7,7 +7,7 @@ function createUiHost(browser, onload) {
     var uiHost = document.createElement("div");
     uiHost.style.display = "block";
     uiHost.style.opacity = 1;
-    uiHost.style.colorScheme = "auto";
+    uiHost.style.colorScheme = "light";
     var frontEndURL = chrome.runtime.getURL('pages/frontend.html');
     var ifr = document.createElement("iframe");
     ifr.setAttribute('allowtransparency', true);
@@ -26,24 +26,22 @@ function createUiHost(browser, onload) {
     uiHost.shadowRoot.appendChild(ifr);
 
     function _onWindowMessage(event) {
-        var _message = event.data && event.data.surfingkeys_data;
+        var _message = event.data && event.data.surfingkeys_uihost_data;
         if (_message === undefined) {
             return;
         }
-        if (_message.commandToFrontend || _message.responseToFrontend) {
+        if (_message.toFrontend) {
             // forward message to frontend
-            ifr.contentWindow.postMessage({surfingkeys_data: _message}, frontEndURL);
-            if (_message.commandToFrontend && event.source
-                && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder'].indexOf(_message.action) !== -1) {
+            ifr.contentWindow.postMessage({surfingkeys_frontend_data: _message}, frontEndURL);
+            if (_message.toFrontend && event.source
+                && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder', 'chooseTab'].indexOf(_message.action) !== -1) {
                 if (!activeContent || activeContent.window !== event.source) {
                     // reset active Content
 
                     if (activeContent) {
-                        activeContent.window.postMessage({surfingkeys_data: {
+                        activeContent.window.postMessage({surfingkeys_content_data: {
                             action: 'deactivated',
-                            direct: true,
-                            reason: `${_message.action}@${event.timeStamp}`,
-                            commandToContent: true
+                            reason: `${_message.action}@${event.timeStamp}`
                         }}, activeContent.origin);
                     }
 
@@ -52,31 +50,31 @@ function createUiHost(browser, onload) {
                         origin: _message.origin
                     };
 
-                    activeContent.window.postMessage({surfingkeys_data: {
+                    activeContent.window.postMessage({surfingkeys_content_data: {
                         action: 'activated',
-                        direct: true,
-                        reason: `${_message.action}@${event.timeStamp}`,
-                        commandToContent: true
+                        reason: `${_message.action}@${event.timeStamp}`
                     }}, activeContent.origin);
                 }
             }
         } else if (_message.action && _actions.hasOwnProperty(_message.action)) {
             _actions[_message.action](_message);
-        } else if (_message.commandToContent || _message.responseToContent) {
+        } else if (_message.toContent) {
             // forward message to content
-            if (activeContent && !_message.direct && activeContent.window !== top) {
-                activeContent.window.postMessage({surfingkeys_data: _message}, activeContent.origin);
+            if (activeContent) {
+                activeContent.window.postMessage({surfingkeys_content_data: _message}, activeContent.origin);
             }
         }
+        event.stopImmediatePropagation();
     }
 
     // top -> frontend: origin
     // frontend -> top:
     // top -> top: apply user settings
     ifr.addEventListener("load", function() {
-        this.contentWindow.postMessage({surfingkeys_data: {
+        this.contentWindow.postMessage({surfingkeys_frontend_data: {
             action: 'initFrontend',
             ack: true,
+            winSize: [window.innerWidth, window.innerHeight],
             origin: getDocumentOrigin()
         }}, frontEndURL);
 
@@ -87,7 +85,7 @@ function createUiHost(browser, onload) {
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null;
     _actions['initFrontendAck'] = function(response) {
-        onload(window.location.href);
+        onload(uiHost);
     };
     _actions['setFrontFrame'] = function(response) {
         ifr.style.height = response.frameHeight;
@@ -102,9 +100,8 @@ function createUiHost(browser, onload) {
                 if (browser.getBackFocusFromFrontend) {
                     browser.getBackFocusFromFrontend();
                 } else {
-                    activeContent.window.postMessage({surfingkeys_data: {
-                        action: 'getBackFocus',
-                        commandToContent: true
+                    activeContent.window.postMessage({surfingkeys_content_data: {
+                        action: 'getBackFocus'
                     }}, activeContent.origin);
                 }
             }
@@ -131,7 +128,7 @@ function createUiHost(browser, onload) {
         window.removeEventListener('message', _onWindowMessage, true);
         uiHost.remove();
     };
-    return uiHost;
+    document.documentElement.appendChild(uiHost);
 }
 
 export default createUiHost;

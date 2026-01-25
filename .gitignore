@@ -6,3 +6,5 @@ coverage/
 package-lock.json
 jsconfig.json
 src/content_scripts/safari.js
+*~
+.idea

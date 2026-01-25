@@ -4,6 +4,9 @@ describe('background start', () => {
     beforeAll(async () => {
         global.chrome = {
             runtime: {
+                getManifest: () => {
+                    return {manifest_version: 2};
+                },
                 connectNative: () => {
                     return {
                         postMessage: jest.fn(),
@@ -56,6 +59,7 @@ describe('background start', () => {
                 }
             },
         }
+        global.DOMRect = jest.fn();
 
         start = require('src/background/start.js').start;
         window.crypto = {

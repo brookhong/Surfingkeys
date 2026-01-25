@@ -6,18 +6,19 @@
         <link rel="stylesheet" href="../content.css">
         <link rel="stylesheet" href="options.css">
         <script src="ace.js" type="text/javascript" charset="utf-8"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <template id="sample">// an example to create a new mapping `ctrl-y`
-mapkey('<Ctrl-y>', 'Show me the money', function() {
-    Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
+        <script type="text/plain" id="sample">// an example to create a new mapping `ctrl-y`
+api.mapkey('<Ctrl-y>', 'Show me the money', function() {
+    api.Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
 });
 
 // an example to replace `T` with `gt`, click `Default mappings` to see how `T` works.
-map('gt', 'T');
+api.map('gt', 'T');
 
 // an example to remove mapkey `Ctrl-i`
-unmap('<Ctrl-i>');
+api.unmap('<Ctrl-i>');
 
 // set theme
 settings.theme = `
@@ -57,25 +58,23 @@ settings.theme = `
 #sk_status, #sk_find {
     font-size: 20pt;
 }`;
-// click `Save` button to make above settings to take effect.</template>
+// click `Save` button to make above settings to take effect.</script>
         <template id="templateProxyPair">
             <div class="deleteProxyPair">🗑️</div>
             <div class="proxy">
                 Proxy:
-                <input type="text" value="" placeholder="192.168.1.100:8080" size=72>
+                <input type="text" value="" placeholder="192.168.1.100:8080" size=40>
                 Proxy Type:
                 <select value="PROXY">
                     <option value="PROXY" selected="selected">PROXY</option>
                     <option value="SOCKS5">SOCKS5</option>
-                    <option value="HTTP">HTTP</option>
                     <option value="HTTPS">HTTPS</option>
                     <option value="SOCKS4">SOCKS4</option>
-                    <option value="SOCKS">SOCKS</option>
                 </select>
             </div>
             <div class="autoproxy_hosts">
                 <h3>For below hosts, above proxy will be used, click ❌ to remove one.</h3>
-                <input type="text" value="" placeholder="google.*, youtube.com" size=72> <button>Add New</button>
+                <input type="text" value="" placeholder="google.*, youtube.com" size=40> <button>Add New</button>
                 <div></div>
             </div>
         </template>
@@ -83,18 +82,26 @@ settings.theme = `
             <h3>Pick up a new key, <kbd>Backsapce</kbd> to del backward, <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</h3>
             <div class='pressedKey'><kbd id="inputKey">&nbsp;</kbd></div>
         </div>
-        <h3>Key mappings</h3>
-        <input id="advancedToggler" type="checkbox" /> Advanced mode
-        <span class="tip">If you're an advanced user, turn on it here.</span>
-        <div class="section" id="basicMappings">
+        <div id="donationDiv" class="section">
+            <h3>Support Surfingkeys with <a href="https://www.paypal.me/brookhong">paypal</a>.</h3>
+        </div>
+        <input id="advancedToggler" type="checkbox"/> Advanced mode
+        <span id="advancedTip" class="tip">If you're an advanced user, turn on it here.</span>
+        <div id="basicSettings">
+            <h3>Search Engine aliases</h3>
+            <div class="section" id="searchAliases">
+            </div>
+            <h3>Key mappings</h3>
+            <div class="section" id="basicMappings">
+            </div>
         </div>
 
         <div id="advancedSetting" class="section" style="display: none;">
             <div id="localPathForSettings" style="display: inline-block;">
                 <label for="localPath">Load settings from:</label>
-                <input type="text" value="" id="localPath" name="localPath" size=72>
+                <input type="text" value="" id="localPath" name="localPath" size=40>
                 <span class=infoPointer for=localPathHelp>?</span>
-                <div class=info id='localPathHelp' style="display: none;">You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt">https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/777f62deb54098d82070e1e05dc86f9a798a29a1/gistfile1.txt</a>. If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</div>
+                <div class=info id='localPathHelp' style="display: none;">You can load settings from URLs in scheme http/https, for example, <a href="https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/83bdfdfa3a4fd2d07328dd4bb4f897150f531d74/gistfile1.txt">https://gist.githubusercontent.com/brookhong/755982e0014004207849f6e357af56f3/raw/83bdfdfa3a4fd2d07328dd4bb4f897150f531d74/gistfile1.txt</a>. <p id='localPathHelpForFile'>If you want to load settings from local file, please check <b>Allow access to file URLs</b> in <a href="chrome://extensions/">chrome://extensions/</a> for this extension, and specify the full path of your settings file, for example, /home/brook/.surfingkeys.js.</p></div>
             </div>
             <div id="save_container">
                 <a href="https://github.com/brookhong/Surfingkeys/issues" target="_blank">Report issues</a>
@@ -132,11 +139,6 @@ settings.theme = `
             <button id="addProxyPair">Add proxy pair</button>
         </div>
         <h3 id="resetSettings">Reset</h3>
-        <div id="donationDiv" class="section">
-            <h3>Thank you for donation! Support me with <a href="https://www.paypal.me/brookhong">paypal</a>, or</h3>
-            <img class="avatar" src="./donation.png" style="width: 60%; display: block;margin-left: auto;margin-right: auto;" />
-        </div>
-        <script src="options.js"></script>
         <script src="../content.js"></script>
     </body>
 </html>

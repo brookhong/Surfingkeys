@@ -5,7 +5,7 @@ import { dispatchSKEvent, runtime, RUNTIME } from './common/runtime.js';
 import { start } from './content.js';
 
 function usePdfViewer() {
-    window.location.replace(chrome.extension.getURL("/pages/pdf_viewer.html") + "?r=" + document.URL);
+    window.location.replace(chrome.runtime.getURL("/pages/pdf_viewer.html") + "?file=" + document.URL);
 }
 
 function readText(text, options) {
@@ -43,7 +43,7 @@ function readText(text, options) {
                 }
                 showPopup(updated);
             } else if (res.ttsEvent.type === "end") {
-                dispatchSKEvent('hidePopup');
+                dispatchSKEvent("front", ['hidePopup']);
             }
         }
         if (onEnd && (res.ttsEvent.type === "end" || res.ttsEvent.type === "interrupted")) {

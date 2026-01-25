@@ -1,6 +1,176 @@
-import * as DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 import KeyboardUtils from './keyboardUtils';
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+
+const colors = [
+    '#4169E1', // Royal Blue
+    '#E74C3C', // Bright Red
+    '#2ECC71', // Emerald Green
+    '#9B59B6', // Amethyst Purple
+    '#F39C12', // Orange
+    '#16A085', // Teal
+    '#E67E22', // Dark Orange
+    '#3498DB', // Bright Blue
+    '#C0392B', // Dark Red
+    '#27AE60', // Forest Green
+    '#8E44AD', // Wisteria Purple
+    '#D35400', // Pumpkin Orange
+    '#2980B9', // Ocean Blue
+    '#FF5733', // Coral Red
+    '#1ABC9C', // Turquoise
+    '#8B008B', // Dark Magenta
+    '#F1C40F', // Yellow
+    '#008080', // Dark Teal
+    '#FF8C00', // Dark Orange
+    '#4682B4', // Steel Blue
+    '#8B0000', // Dark Red
+    '#32CD32', // Lime Green
+    '#9932CC', // Dark Orchid
+    '#FF4500', // Orange Red
+    '#1E90FF', // Dodger Blue
+    '#DC143C', // Crimson
+    '#20B2AA', // Light Sea Green
+    '#BA55D3', // Medium Orchid
+    '#DAA520', // Goldenrod
+    '#008B8B', // Dark Cyan
+    '#CD853F', // Peru
+    '#6495ED', // Cornflower Blue
+    '#B22222', // Fire Brick
+    '#3CB371', // Medium Sea Green
+    '#9370DB', // Medium Purple
+    '#A0522D', // Sienna
+    '#87CEEB', // Sky Blue
+    '#CD5C5C', // Indian Red
+    '#48D1CC', // Medium Turquoise
+    '#DDA0DD', // Plum
+    '#FFD700', // Gold
+    '#5F9EA0', // Cadet Blue
+    '#FFA07A', // Light Salmon
+    '#00BFFF', // Deep Sky Blue
+    '#8B4513', // Saddle Brown
+    '#90EE90', // Light Green
+    '#FF69B4', // Hot Pink
+    '#D2691E', // Chocolate
+    '#B0C4DE', // Light Steel Blue
+    '#FA8072', // Salmon
+    '#66CDAA', // Medium Aquamarine
+    '#DB7093', // Pale Violet Red
+    '#FF8C69', // Salmon Pink
+    '#556B2F', // Dark Olive Green
+    '#FF7F50', // Coral
+    '#2E8B57', // Sea Green
+    '#9400D3', // Dark Violet
+    '#B8860B', // Dark Goldenrod
+    '#FF6347', // Tomato
+    '#40E0D0', // Turquoise
+    '#DA70D6', // Orchid
+    '#BDB76B', // Dark Khaki
+    '#F4A460', // Sandy Brown
+    '#87CEFA', // Light Sky Blue
+    '#98FB98', // Pale Green
+    '#C71585', // Medium Violet Red
+    '#B0E0E6', // Powder Blue
+    '#F08080', // Light Coral
+    '#7FFFD4', // Aquamarine
+    '#FFA500', // Orange
+    '#FF6B6B', // Light Red
+    '#00CED1', // Dark Turquoise
+    '#E9967A', // Dark Salmon
+    '#4B0082', // Indigo
+    '#7B68EE', // Medium Slate Blue
+    '#6A5ACD', // Slate Blue
+    '#483D8B', // Dark Slate Blue
+    '#5D478B', // Medium Purple 4
+    '#8A2BE2', // Blue Violet
+    '#7EC0EE', // Sky Blue 2
+    '#009ACD', // Deep Sky Blue 3
+    '#00868B', // Turquoise 4
+    '#00C78C', // Medium Spring Green
+    '#00CD66', // Spring Green 3
+    '#66CD00', // Chartreuse 3
+    '#CDCD00', // Yellow 3
+    '#CD9B1D', // Goldenrod 3
+    '#CD6600', // Dark Orange 3
+    '#CD4F39', // Tomato 3
+    '#CD3278', // Violet Red 3
+    '#CD3333', // Brown 3
+    '#8B4789', // Orchid 4
+    '#8B8B00', // Yellow 4
+    '#8B7355', // Rosy Brown 4
+    '#8B636C', // Pink 4
+    '#2F4F4F', // Dark Slate Gray
+    '#FF1493', // Deep Pink
+    '#800080', // Purple
+    '#708090', // Slate Gray
+    '#6B8E23'  // Olive Drab
+];
+function getColor(i) {
+    return colors[i];
+}
+
+/**
+ * Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
+ *
+ * @param {string} lhs a key sequence to replace
+ * @param {string} rhs a key sequence to be replaced
+ * @param {string} ctx a mode such as `insert`, `normal`.
+ *
+ * @example aceVimMap('J', ':bn', 'normal');
+ */
+function aceVimMap(lhs, rhs, ctx) {
+    dispatchSKEvent("front", ['addVimMap', lhs, rhs, ctx]);
+}
+
+/**
+ * Add map key in ACE editor.
+ *
+ * @param {object} objects multiple objects to define key map in ACE, see more from [ace/keyboard/vim.js](https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099)
+ *
+ * @example
+ * addVimMapKey(
+ *     {
+ *         keys: 'n',
+ *         type: 'motion',
+ *         motion: 'moveByCharacters',
+ *         motionArgs: {
+ *             forward: false
+ *         }
+ *     },
+ *
+ *     {
+ *         keys: 'e',
+ *         type: 'motion',
+ *         motion: 'moveByLines',
+ *         motionArgs: {
+ *             forward: true,
+ *             linewise: true
+ *         }
+ *     }
+ * );
+ */
+function addVimMapKey() {
+    dispatchSKEvent("front", ['addVimKeyMap', Array.from(arguments)]);
+}
+
+function isEmptyObject(obj) {
+    for (var name in obj) {
+        return false;
+    }
+    return true;
+}
+
+function applyUserSettings(delta) {
+    if (delta.error !== "") {
+        if (window === top) {
+            showPopup("[SurfingKeys] Error found in settings: " + delta.error);
+        } else {
+            console.log("[SurfingKeys] Error found in settings({0}): {1}".format(window.location.href, delta.error));
+        }
+    }
+    if (!isEmptyObject(delta.settings)) {
+        dispatchSKEvent("front", ['applySettingsFromSnippets', delta.settings]);
+    }
+}
 
 /**
  * Get current browser name
@@ -21,7 +191,7 @@ function getBrowserName() {
 }
 
 function isInUIFrame() {
-    return document.location.href.indexOf(chrome.extension.getURL("/")) === 0;
+    return window !== top && document.location.href.indexOf(chrome.runtime.getURL("/")) === 0;
 }
 
 function timeStampString(t) {
@@ -93,7 +263,7 @@ function isElementClickable(e) {
  * Front.showBanner(window.location.href);
  */
 function showBanner(msg, timeout) {
-    dispatchSKEvent('showBanner', [msg, timeout])
+    dispatchSKEvent("front", ['showBanner', msg, timeout])
 }
 
 /**
@@ -106,17 +276,51 @@ function showBanner(msg, timeout) {
  * Front.showPopup(window.location.href);
  */
 function showPopup(msg) {
-    dispatchSKEvent('showPopup', [msg])
+    dispatchSKEvent("front", ['showPopup', msg])
 }
 
-function dispatchMouseEvent(element, events, shiftKey) {
+function openOmnibar(args) {
+    dispatchSKEvent("front", ['openOmnibar', args])
+}
+
+function initSKFunctionListener(name, interfaces, capture) {
+    const callbacks = {};
+
+    const opts = capture ? {capture: true} : {};
+    document.addEventListener(`surfingkeys:${name}`, function(evt) {
+        let args = evt.detail;
+        const fk = args.shift();
+        if (capture) {
+            if (args.length > 0 && args[0].constructor.name === "Array" && args[0][0] === "__EVENT_TARGET__") {
+                // restore args from evt.target, see src/content_scripts/common/hints.js:442
+                args[0][0] = evt.target;
+            } else {
+                args.push(evt.target);
+            }
+        }
+
+        if (callbacks.hasOwnProperty(fk)) {
+            callbacks[fk](...args);
+            delete callbacks[fk];
+        } if (interfaces.hasOwnProperty(fk)) {
+            interfaces[fk](...args);
+        }
+    }, opts);
+
+    return callbacks;
+}
+
+function dispatchMouseEvent(element, events, modifiers) {
     events.forEach(function(eventName) {
-        var mouseButton = shiftKey ? 1 : 0;
-        var event = new MouseEvent(eventName, {
+        const event = new MouseEvent(eventName, {
             bubbles: true,
             cancelable: true,
+            composed: true,
             view: window,
-            button: mouseButton
+            ctrlKey: modifiers.ctrlKey,
+            altKey: modifiers.altKey,
+            shiftKey: modifiers.shiftKey,
+            metaKey: modifiers.metaKey
         });
         element.dispatchEvent(event);
     });
@@ -155,7 +359,7 @@ function isEditable(element) {
         && !element.disabled && (element.localName === 'textarea'
         || element.localName === 'select'
         || element.isContentEditable
-        || element.matches(runtime.conf.editableSelector)
+        || (element.matches && element.matches(runtime.conf.editableSelector))
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
 }
 
@@ -192,9 +396,17 @@ function scrollIntoViewIfNeeded(elm, ignoreSize) {
 function isElementDrawn(e, rect) {
     var min = isEditable(e) ? 1 : 4;
     rect = rect || e.getBoundingClientRect();
-    return rect.width > min && rect.height > min;
+    return rect.width > min && rect.height > min && (parseFloat(getComputedStyle(e).opacity) > 0.1 || e.tagName == "INPUT" && e.type != "text");
 }
 
+/**
+ * Check whether an element is in viewport.
+ *
+ * @param {Element} el the element to be checked.
+ * @param {boolean} [ignoreSize=false] whether to ignore size of the element, otherwise the element must be with size 4*4.
+ * @returns {boolean}
+ *
+ */
 function isElementPartiallyInViewport(el, ignoreSize) {
     var rect = el.getBoundingClientRect();
     var windowHeight = (window.innerHeight || document.documentElement.clientHeight);
@@ -229,6 +441,53 @@ function getVisibleElements(filter) {
     return visibleElements;
 }
 
+/**
+ * Get large elements that are currently visible in the viewport.
+ * A large element is defined as one that takes up a significant portion of the viewport.
+ *
+ * @param {number} [minWidth=0.3] Minimum width as a fraction of viewport width (0.0 to 1.0)
+ * @param {number} [minHeight=0.3] Minimum height as a fraction of viewport height (0.0 to 1.0)
+ * @returns {Array<Element>} Array of large visible elements
+ *
+ * @example
+ * // Get elements that are at least 30% of viewport dimensions
+ * var largeElements = getLargeElements();
+ *
+ * // Get elements that are at least 50% of viewport dimensions
+ * var veryLargeElements = getLargeElements(0.5, 0.5);
+ */
+function getLargeElements(minWidth = 0.3, minHeight = 0.3) {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const minWidthPx = viewportWidth * minWidth;
+    const minHeightPx = viewportHeight * minHeight;
+
+    let lastRect = new DOMRect(0, 0, 0, 0);
+    let elements = getVisibleElements((element, visibleElements) => {
+        if (element === document.body) return;
+        const rect = element.getBoundingClientRect();
+        const tolerance = 16;
+        if (Math.abs(rect.x - lastRect.x) < tolerance
+            && Math.abs(rect.y - lastRect.y) < tolerance
+            && Math.abs(rect.width - lastRect.width) < tolerance
+            && Math.abs(rect.height - lastRect.height) < tolerance) {
+            return;
+        }
+        if (Math.abs(viewportWidth - rect.width) < 4
+            && Math.abs(viewportHeight - rect.height) < 4) {
+            return;
+        }
+        if (rect.width < minWidthPx && rect.height < minHeightPx) return;
+        if ((rect.width / viewportWidth) * (rect.height / viewportHeight) < minWidth * minHeight / 6) return;
+        const style = getComputedStyle(element);
+        if (style.opacity > 0.1 && style.visibility !== 'hidden' && style.display !== 'none') {
+            visibleElements.push(element);
+            lastRect = rect;
+        }
+    });
+    return elements;
+}
+
 function actionWithSelectionPreserved(cb) {
     var selection = document.getSelection();
     var pos = [selection.type, selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
@@ -249,10 +508,6 @@ function actionWithSelectionPreserved(cb) {
     }
 }
 
-function last(array) {
-    return array[array.length - 1];
-}
-
 function filterAncestors(elements) {
     if (elements.length === 0) {
         return elements;
@@ -266,7 +521,9 @@ function filterAncestors(elements) {
         } else {
             for (var j = 0; j < result.length; j++) {
                 if (result[j].contains(e)) {
-                    result[j] = e;
+                    if (result[j].tagName !== 'A' || !result[j].href) {
+                        result[j] = e;
+                    }
                     return;
                 } else if (result[j].shadowRoot && result[j].shadowRoot.contains(e)) {
                     // skip child from shadowRoot of a selected element.
@@ -297,7 +554,7 @@ function getRealRect(elm) {
         }
     } else if (elm.childElementCount === 1 && elm.firstElementChild.textContent) {
         var r = elm.firstElementChild.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) {
+        if (r.width < 4 || r.height < 4) {
             r = elm.getBoundingClientRect();
         }
         return r;
@@ -317,11 +574,12 @@ function filterOverlapElements(elements) {
         var be = getRealRect(e);
         if (e.disabled || e.readOnly || !isElementDrawn(e, be)) {
             return false;
-        } else if (e.matches("input, textarea, select, form") || e.contentEditable === "true") {
+        } else if (e.matches("input, textarea, select, form")
+            || e.contentEditable === "true" || isExplicitlyRequested(e)) {
             return true;
         } else {
-            var el = document.elementFromPoint(be.left + be.width/2, be.top + be.height/2);
-            return !el || el.shadowRoot && el.childElementCount === 0 || el.contains(e) || e.contains(el);
+            var el = e.getRootNode().elementFromPoint(be.left + be.width/2, be.top + be.height/2);
+            return !el || el.shadowRoot && (el.childElementCount === 0 || el.shadowRoot.contains(e)) || el.contains(e) || e.contains(el);
         }
     });
 
@@ -388,7 +646,7 @@ function getTextNodes(root, pattern, flag) {
 function getTextNodePos(node, offset, length) {
     var selection = document.getSelection();
     selection.setBaseAndExtent(node, offset, node, length ? (offset + length) : node.data.length);
-    var br = selection.getRangeAt(0).getClientRects()[0];
+    var br = selection.rangeCount > 0 ? selection.getRangeAt(0).getClientRects()[0] : null;
     var pos = {
         left: -1,
         top: -1
@@ -423,6 +681,33 @@ function getTextRect() {
         return [];
     }
     return rects;
+}
+
+function locateFocusNode(selection) {
+    let se = selection.focusNode.parentElement
+    scrollIntoViewIfNeeded(se, true);
+    var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
+    if (!r) {
+        r = selection.focusNode.getBoundingClientRect();
+    }
+    if (r) {
+        r = {
+            left: r.left,
+            top: r.top,
+            width: r.width,
+            height: r.height
+        };
+        if (r.left < 0 || r.left >= window.innerWidth) {
+            se.scrollLeft += r.left - window.innerWidth / 2;
+            r.left = window.innerWidth / 2;
+        }
+        if (r.top < 0 || r.top >= window.innerHeight) {
+            se.scrollTop += r.top - window.innerHeight / 2;
+            r.top = window.innerHeight / 2;
+        }
+        return r;
+    }
+    return null;
 }
 
 function getNearestWord(text, offset) {
@@ -483,13 +768,13 @@ DOMRect.prototype.has = function (x, y, ex, ey) {
 };
 
 function initL10n(cb) {
-    var lang = runtime.conf.language || window.navigator.language;
+    const lang = runtime.conf.language || window.navigator.language;
     if (lang === "en-US") {
         cb(function(str) {
             return str;
         });
     } else {
-        fetch(chrome.extension.getURL("pages/l10n.json")).then(function(res) {
+        fetch(chrome.runtime.getURL("pages/l10n.json")).then(function(res) {
             return res.json();
         }).then(function(l10n) {
             if (typeof(l10n[lang]) === "object") {
@@ -530,15 +815,22 @@ if (!Array.prototype.flatMap) {
 }
 
 function parseAnnotation(ag) {
-    var annotations = ag.annotation.match(/#(\d+)(.*)/);
+    let an = ag.annotation;
+    if (an.constructor.name === "String") {
+        // for parameterized annotations such as ["#6Search selected with {0}", "Google"]
+        an = [an];
+    }
+    const annotations = an[0].match(/^#(\d+)(.*)/);
     if (annotations !== null) {
         ag.feature_group = parseInt(annotations[1]);
-        ag.annotation = annotations[2];
+        an[0] = annotations[2];
     }
+    // first element must not be ""
+    ag.annotation = an[0].length === 0 ? "" : an;
     return ag;
 }
 
-function mapInMode(mode, nks, oks) {
+function mapInMode(mode, nks, oks, new_annotation) {
     oks = KeyboardUtils.encodeKeystroke(oks);
     var old_map = mode.mappings.find(oks);
     if (old_map) {
@@ -546,9 +838,12 @@ function mapInMode(mode, nks, oks) {
         mode.mappings.remove(nks);
         // meta.word need to be new
         var meta = Object.assign({}, old_map.meta);
+        if (new_annotation) {
+            meta = Object.assign(meta, parseAnnotation({ annotation: new_annotation }));
+        }
         mode.mappings.add(nks, meta);
         if (!isInUIFrame()) {
-            dispatchSKEvent('addMapkey', [mode.name, nks, oks]);
+            dispatchSKEvent("front", ['addMapkey', mode.name, nks, oks]);
         }
     }
     return old_map;
@@ -570,6 +865,8 @@ function getAnnotations(mappings) {
 function constructSearchURL(se, word) {
     if (se.indexOf("{0}") > 0) {
         return se.format(word);
+    } else if (se.indexOf("%s") > 0) {
+        return se.replace("%s", word)
     } else {
         return se + word;
     }
@@ -581,11 +878,7 @@ function constructSearchURL(se, word) {
  * @param {string} str links to be opened, the links should be split by `\n` if there are more than one.
  * @param {number} [simultaneousness=5] how many tabs will be opened simultaneously, the rest will be queued and opened later whenever a tab is closed.
  *
- * @example
- * mapkey("<Space>", "pause/resume on youtube", function() {
- *     var btn = document.querySelector("button.ytp-ad-overlay-close-button") || document.querySelector("button.ytp-ad-skip-button") || document.querySelector('ytd-watch-flexy button.ytp-play-button');
- *     btn.click();
- * }, {domain: /youtube.com/i});
+ * @example tabOpenLink('https://github.com/brookhong/Surfingkeys')
  */
 function tabOpenLink(str, simultaneousness) {
     simultaneousness = simultaneousness || 5;
@@ -606,19 +899,31 @@ function tabOpenLink(str, simultaneousness) {
     }).filter(function(u) {
         return u.length > 0;
     });
-    // open the first batch links immediately
-    urls.slice(0, simultaneousness).forEach(function(url) {
-        RUNTIME("openLink", {
-            tab: {
-                tabbed: true
-            },
-            url: url
-        });
-    });
-    // queue the left for later opening when there is one tab closed.
+
     if (urls.length > simultaneousness) {
-        RUNTIME("queueURLs", {
-            urls: urls.slice(simultaneousness)
+        dispatchSKEvent("front", ['showDialog', `Do you really want to open all these ${urls.length} links?`, () => {
+            // open the first batch links immediately
+            urls.slice(0, simultaneousness).forEach(function(url) {
+                RUNTIME("openLink", {
+                    tab: {
+                        tabbed: true
+                    },
+                    url: url
+                });
+            });
+            // queue the left for later opening when there is one tab closed.
+            RUNTIME("queueURLs", {
+                urls: urls.slice(simultaneousness)
+            });
+        }]);
+    } else {
+        urls.forEach(function(url) {
+            RUNTIME("openLink", {
+                tab: {
+                    tabbed: true
+                },
+                url: url
+            });
         });
     }
 }
@@ -684,6 +989,24 @@ HTMLElement.prototype.removeAttributes = function () {
         this.removeAttribute(this.attributes[0].name);
     }
 };
+HTMLElement.prototype.containsWithShadow = function (e) {
+    const roots = [this];
+    while (roots.length) {
+        const root = roots.shift();
+        if (root.contains(e)) {
+            return true;
+        }
+        roots.push(...root.children);
+        if (root.shadowRoot) {
+            if (root.shadowRoot.contains(e)) {
+                return true;
+            }
+            roots.push(...root.shadowRoot.children);
+        }
+    }
+    return false;
+};
+
 NodeList.prototype.remove = function() {
     this.forEach(function(node) {
         node.remove();
@@ -705,46 +1028,102 @@ function httpRequest(args, onSuccess) {
     RUNTIME("request", args, onSuccess);
 }
 
-/**
- * Insert javascript code into main world context.
- *
- * @param {function | string} code a javascript function to be executed in main world context, or an URL of js file.
- * @param {function} onload a callback function after requested code executed.
- *
- */
-function insertJS(code, onload) {
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    if (typeof(code) === 'function') {
-        setSanitizedContent(s, "(" + code.toString() + ")(window);");
-        setTimeout(function() {
-            onload && onload();
-            s.remove();
-        }, 1);
-    } else {
-        s.src = code;
-        s.onload = function() {
-            onload && onload();
-            s.remove();
-        };
-    }
-    document.lastElementChild.appendChild(s);
-}
-
-function flashPressedLink(link) {
+const flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
+function flashPressedLink(link, cb) {
     var rect = getRealRect(link);
-    var flashElem = createElementWithContent('div', '', {style: "position: fixed; box-shadow: 0px 0px 4px 2px #63b2ff; background: transparent; z-index: 2140000000"});
     flashElem.style.left = rect.left + 'px';
     flashElem.style.top = rect.top + 'px';
     flashElem.style.width = rect.width + 'px';
     flashElem.style.height = rect.height + 'px';
     document.body.appendChild(flashElem);
 
-    setTimeout(function () { flashElem.remove(); }, 300);
+    setTimeout(() => {
+        flashElem.remove();
+        cb();
+    }, 100);
+}
+
+function safeDecodeURI(url) {
+    try {
+        return decodeURI(url);
+    } catch (e) {
+        return url;
+    }
+}
+
+function safeDecodeURIComponent(url) {
+    try {
+        return decodeURIComponent(url);
+    } catch (e) {
+        return url;
+    }
+}
+
+function getCssSelectorsOfEditable() {
+    return "input:not([type=submit]), textarea, *[contenteditable=true], *[role=textbox], select, div.ace_cursor";
+}
+
+function refreshHints(hints, pressedKeys) {
+    const result = {candidates: 0};
+    if (pressedKeys.length > 0) {
+        for (const hint of hints) {
+            const label = hint.label;
+            if (pressedKeys === label) {
+                result.matched = hint.link;
+                break;
+            } else if (label.indexOf(pressedKeys) === 0) {
+                hint.style.opacity = 1;
+                setSanitizedContent(hint, `<span style="opacity: 0.2;">${pressedKeys}</span>` + label.substr(pressedKeys.length));
+                result.candidates ++;
+            } else {
+                hint.style.opacity = 0;
+            }
+        }
+    } else {
+        if (hints.length === 1) {
+            result.matched = hints[0].link;
+        } else {
+            for (const hint of hints) {
+                hint.style.opacity = 1;
+                setSanitizedContent(hint, hint.label);
+            }
+            result.candidates = hints.length;
+        }
+    }
+    return result;
+}
+
+function rotateInput(inputs, backward, curr, str) {
+    let list = inputs;
+    if (str) {
+        list = inputs.filter((l) => l.indexOf(str) === 0 && l !== str);
+        if (curr > list.length) {
+            curr = list.length;
+        }
+    }
+    const delta = backward ? -1 : 1;
+    const length = list.length + 1; // +1 for empty input
+    curr = (curr + length + delta) % length;
+    return [curr < list.length ? list[curr] : str, curr];
+}
+
+function attachFaviconToImgSrc(tab, imgEl) {
+    const browserName = getBrowserName();
+    if (browserName === "Chrome") {
+        imgEl.src = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(tab.url)}`);
+    } else if (browserName.startsWith("Safari")) {
+        imgEl.src = new URL(tab.url).origin + "/favicon.ico";
+    } else {
+        imgEl.src = tab.favIconUrl;
+    }
 }
 
 export {
+    aceVimMap,
     actionWithSelectionPreserved,
+    addVimMapKey,
+    applyUserSettings,
+    attachFaviconToImgSrc,
     constructSearchURL,
     createElementWithContent,
     dispatchMouseEvent,
@@ -757,8 +1136,11 @@ export {
     getAnnotations,
     getBrowserName,
     getClickableElements,
+    getColor,
+    getCssSelectorsOfEditable,
     getDocumentOrigin,
     getElements,
+    getLargeElements,
     getRealEdit,
     getRealRect,
     getTextNodePos,
@@ -769,15 +1151,22 @@ export {
     htmlEncode,
     httpRequest,
     initL10n,
-    insertJS,
+    initSKFunctionListener,
     isEditable,
     isElementClickable,
+    isElementDrawn,
     isElementPartiallyInViewport,
     isInUIFrame,
     listElements,
+    locateFocusNode,
     mapInMode,
+    openOmnibar,
     parseAnnotation,
+    refreshHints,
     reportIssue,
+    rotateInput,
+    safeDecodeURI,
+    safeDecodeURIComponent,
     scrollIntoViewIfNeeded,
     setSanitizedContent,
     showBanner,
