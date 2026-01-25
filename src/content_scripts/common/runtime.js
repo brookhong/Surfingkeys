@@ -1,5 +1,8 @@
-function dispatchSKEvent(type, args) {
-    document.dispatchEvent(new CustomEvent(`surfingkeys:${type}`, { 'detail': args }));
+function dispatchSKEvent(type, args, target) {
+    if (target === undefined) {
+        target = document;
+    }
+    target.dispatchEvent(new CustomEvent(`surfingkeys:${type}`, { 'detail': args }));
 }
 
 /**
@@ -31,27 +34,31 @@ function RUNTIME(action, args, callback) {
             runtime.on('onTtsEvent', callback);
         }
     } catch (e) {
-        dispatchSKEvent('showPopup', ['[runtime exception] ' + e]);
+        dispatchSKEvent("front", ['showPopup', '[runtime exception] ' + e]);
     }
 }
 
-var runtime = (function() {
-    var self = {
+const runtime = (function() {
+    const self = {
         conf: {
             autoSpeakOnInlineQuery: false,
             lastKeys: "",
             // local part from settings
             blocklistPattern: undefined,
+            lurkingPattern: undefined,
+            disabledOnActiveElementPattern: undefined,
             smartCase: true,
             caseSensitive: false,
             clickablePat: /(https?:\/\/|thunder:\/\/|magnet:)\S+/ig,
             clickableSelector: "",
             editableSelector: "div.CodeMirror-scroll,div.ace_content",
             cursorAtEndOfInput: true,
+            defaultLLMProvider: "ollama",
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
             editableBodyCare: true,
             enableAutoFocus: true,
+            enableEmojiInsertion: false,
             experiment: false,
             focusFirstCandidate: false,
             focusOnSaved: true,
@@ -72,6 +79,7 @@ var runtime = (function() {
             omnibarTabsQuery: {},
             pageUrlRegex: [],
             prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|前页|上頁|上一頁|前頁|<<|«/i,
+            repeatThreshold: 9,
             richHintsForKeystroke: 1000,
             scrollStepSize: 70,
             showModeStatus: false,
@@ -80,7 +88,9 @@ var runtime = (function() {
             smoothScroll: true,
             startToShowEmoji: 2,
             stealFocusOnLoad: true,
-            tabsThreshold: 9,
+            tabIndicesSeparator: "|",
+            tabsThreshold: 100,
+            verticalTabs: true,
             textAnchorPat: /(^[\n\r\s]*\S{3,}|\b\S{4,})/g,
             ignoredFrameHosts: ["https://tpc.googlesyndication.com"],
             scrollFriction: 0,
@@ -92,7 +102,7 @@ var runtime = (function() {
         },
     }, _handlers = {};
 
-    var getTopURLPromise = new Promise(function(resolve, reject) {
+    const getTopURLPromise = new Promise(function(resolve, reject) {
         if (window === top) {
             resolve(window.location.href);
         } else {
@@ -105,33 +115,16 @@ var runtime = (function() {
     self.on = function(message, cb) {
         _handlers[message] = cb;
     };
-
-    self.updateHistory = function(type, cmd) {
-        var prop = type + 'History';
-        RUNTIME('getSettings', {
-            key: prop
-        }, function(response) {
-            var list = response.settings[prop] || [];
-            var toUpdate = {};
-            if (cmd.constructor.name === "Array") {
-                toUpdate[prop] = cmd;
-                RUNTIME('updateSettings', {
-                    settings: toUpdate
-                });
-            } else if (cmd.trim().length && cmd !== ".") {
-                list = list.filter(function(c) {
-                    return c.trim().length && c !== cmd && c !== ".";
-                });
-                list.unshift(cmd);
-                if (list.length > 50) {
-                    list.pop();
-                }
-                toUpdate[prop] = list;
-                RUNTIME('updateSettings', {
-                    settings: toUpdate
-                });
-            }
-        });
+    self.bookMessage = function(message, cb) {
+        if (_handlers[message]) {
+            return false;
+        } else {
+            _handlers[message] = cb;
+            return true;
+        }
+    };
+    self.releaseMessage = function(message) {
+        delete _handlers[message];
     };
 
     chrome.runtime.onMessage.addListener(function(msg, sender, response) {
@@ -155,7 +148,7 @@ var runtime = (function() {
             if (topUrl === "null" || new URL(topUrl).origin === "file://") {
                 topUrl = "*";
             }
-            top.postMessage({surfingkeys_data: msg}, topUrl);
+            top.postMessage({surfingkeys_uihost_data: msg}, topUrl);
         });
     };
 

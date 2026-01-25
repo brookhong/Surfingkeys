@@ -1,7 +1,6 @@
 import { RUNTIME } from './runtime.js';
 import {
     actionWithSelectionPreserved,
-    insertJS,
     getBrowserName,
     setSanitizedContent,
     showBanner,
@@ -82,23 +81,15 @@ function createClipboard() {
         const cb = () => {
             showBanner("Copied: " + text);
         };
+        // navigator.clipboard.writeText does not work on http site, and in chrome's background script.
         if (getBrowserName() === "Chrome") {
-            insertJS(function() {
-                window.oncopy = document.oncopy;
-                document.oncopy = null;
-            }, function() {
-                clipboardActionWithSelectionPreserved(function() {
-                    holder.value = text;
-                    holder.select();
-                    document.execCommand('copy');
-                    holder.value = '';
-                });
-                insertJS(function() {
-                    document.oncopy = window.oncopy;
-                    delete window.oncopy;
-                });
-                cb();
+            clipboardActionWithSelectionPreserved(function() {
+                holder.value = text;
+                holder.select();
+                document.execCommand('copy');
+                holder.value = '';
             });
+            cb();
         } else {
             // works for Firefox and Safari now.
             RUNTIME("writeClipboard", { text });

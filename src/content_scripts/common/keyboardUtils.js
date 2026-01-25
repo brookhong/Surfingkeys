@@ -69,12 +69,12 @@ const KeyboardUtils = {
     },
 };
 
-var _platform = "Windows";
+KeyboardUtils.platform = "Windows";
 if (typeof(navigator) !== 'undefined') {
     if (navigator.platform.indexOf("Mac") !== -1) {
-        _platform = "Mac";
+        KeyboardUtils.platform = "Mac";
     } else if (navigator.userAgent.indexOf("Linux") !== -1) {
-        _platform = "Linux";
+        KeyboardUtils.platform = "Linux";
     }
 }
 
@@ -97,7 +97,7 @@ KeyboardUtils.getKeyChar = function(event) {
                         character = "{0}".format(event.keyIdentifier);
                     } else {
                         var keyIdentifier = event.keyIdentifier;
-                        if ((_platform === "Windows" || _platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
+                        if ((KeyboardUtils.platform === "Windows" || KeyboardUtils.platform === "Linux") && this.keyIdentifierCorrectionMap[keyIdentifier]) {
                             var correctedIdentifiers = this.keyIdentifierCorrectionMap[keyIdentifier];
                             keyIdentifier = event.shiftKey ? correctedIdentifiers[1] : correctedIdentifiers[0];
                         }

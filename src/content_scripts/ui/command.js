@@ -82,7 +82,9 @@ export default (normal, command, omnibar) => {
         RUNTIME('quit');
     });
     command('clearHistory', 'clearHistory <find|cmd|...>', function(args) {
-        runtime.updateHistory(args[0], []);
+        let update = {};
+        update[args[0]] = [];
+        RUNTIME('updateInputHistory', update);
     });
     command('listSession', 'list session', function() {
         RUNTIME('getSettings', {
@@ -116,14 +118,14 @@ export default (normal, command, omnibar) => {
             });
         });
     });
+    command('clearQueueURLs', 'clear URLs in queue waiting for open', function(args) {
+        RUNTIME('clearQueueURLs');
+    });
+    command('createTabGroup', 'group all tabs by domain: createTabGroup [title] [grey|blue|red|yellow|green|pink|purple|cyan|orange]', function(args) {
+        RUNTIME('createTabGroup', {title: args[0], color: args[1]});
+    });
     command('timeStamp', 'print time stamp in human readable format', function(args) {
         var dt = new Date(parseInt(args[0]));
         omnibar.listWords([dt.toString()]);
-    });
-    command('userAgent', 'set user agent', function(args) {
-        // 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
-        RUNTIME('setUserAgent', {
-            userAgent: args.join(' ')
-        });
     });
 }

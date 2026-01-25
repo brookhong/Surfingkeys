@@ -1,4 +1,8 @@
 import {
+    LOG,
+    filterByTitleOrUrl,
+} from '../common/utils.js';
+import {
     _save,
     dictFromArray,
     extendObject,
@@ -22,6 +26,8 @@ function loadRawSettings(keys, cb, defaultSet) {
                     cb(subset);
                 });
             } else if (localSavedAt < syncSavedAt) {
+                // don't sync local path
+                delete syncSet.localPath;
                 extendObject(rawSet, syncSet);
                 cb(getSubSettings(rawSet, keys));
                 _save(chrome.storage.local, syncSet);
@@ -113,11 +119,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
             text: "",
             maxResults: prefetch
         }, function(items) {
-            const filtered = items.filter((item) => {
-                const title = caseSensitive ? item.title : item.title.toLowerCase();
-                const url = caseSensitive ? item.url : item.url.toLowerCase();
-                return title.indexOf(text) !== -1 || url.indexOf(text) !== -1;
-            });
+            const filtered = filterByTitleOrUrl(items, text, false);
             results = [...results, ...filtered];
             if (items.length < maxResults || results.length >= maxResults) {
                 // all items are scanned or we have got what we want
@@ -134,7 +136,7 @@ function getLatestHistoryItem(text, maxResults, cb) {
 
 function generatePassword() {
     const random = new Uint32Array(8);
-    window.crypto.getRandomValues(random);
+    self.crypto.getRandomValues(random);
     return Array.from(random).join("");
 }
 
@@ -151,7 +153,8 @@ function startNative() {
             if (nativeConnected) {
                 nvimServer.instance = startNative();
             } else {
-                reject("Failed to connect neovim, please make sure your neovim version 0.5 or above.");
+                delete nvimServer.instance;
+                LOG("warn", "Failed to connect neovim, please make sure your neovim version 0.5 or above.");
             }
         });
         nm.onMessage.addListener(async (resp) => {
@@ -162,7 +165,7 @@ function startNative() {
                     resolve({url, nm});
                 }
             } else if (resp.err) {
-                console.log(resp.err);
+                LOG("error", resp.err);
             }
         });
         nm.postMessage({
@@ -174,6 +177,8 @@ function startNative() {
 nvimServer.instance = startNative();
 
 start({
+    name: "Chrome",
+    detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,
     nvimServer,

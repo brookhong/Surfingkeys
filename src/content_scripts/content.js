@@ -1,4 +1,5 @@
 import { RUNTIME, dispatchSKEvent, runtime } from './common/runtime.js';
+import Mode from './common/mode.js';
 import createNormal from './common/normal.js';
 import startScrollNodeObserver from './common/observer.js';
 import createInsert from './common/insert.js';
@@ -6,28 +7,23 @@ import createVisual from './common/visual.js';
 import createHints from './common/hints.js';
 import createClipboard from './common/clipboard.js';
 import {
+    applyUserSettings,
+    createElementWithContent,
     generateQuickGuid,
+    getBrowserName,
     getRealEdit,
+    htmlEncode,
+    initL10n,
     isInUIFrame,
-    showPopup,
+    reportIssue,
+    setSanitizedContent,
+    showBanner,
 } from './common/utils.js';
 import createFront from './front.js';
 import createAPI from './common/api.js';
 import createDefaultMappings from './common/default.js';
 
-/*
- * run user snippets, and return settings updated in snippets
- */
-function runScript(api, snippets) {
-    var result = { settings: {}, error: "" };
-    try {
-        var F = new Function('settings', 'api', snippets);
-        F(result.settings, api);
-    } catch (e) {
-        result.error = e.toString();
-    }
-    return result;
-}
+import KeyboardUtils from './common/keyboardUtils';
 
 /*
  * Apply custom key mappings for basic users, the input is like
@@ -57,12 +53,57 @@ function applyBasicMappings(api, normal, mappings) {
     }
 }
 
-function isEmptyObject(obj) {
-    for (var name in obj) {
-        return false;
+function ensureRegex(regexName) {
+    const r = runtime.conf[regexName]
+    if (r && r.source && !(r instanceof RegExp)) {
+        runtime.conf[regexName] = new RegExp(r.source, r.flags);
     }
-    return true;
 }
+
+function applyRuntimeConf(normal) {
+    ensureRegex("prevLinkRegex");
+    ensureRegex("nextLinkRegex");
+    ensureRegex("clickablePat");
+    RUNTIME('getState', {
+        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern : undefined,
+        lurkingPattern: runtime.conf.lurkingPattern ? runtime.conf.lurkingPattern : undefined
+    }, function (resp) {
+        let state = resp.state;
+        if (state === "disabled") {
+            normal.disable();
+            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, ""]]);
+        } else if (state === "lurking") {
+            state = normal.startLurk();
+        } else {
+            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
+                _browser.usePdfViewer();
+            } else {
+                normal.enable();
+            }
+            Mode.showStatus();
+        }
+
+        if (window === top) {
+            RUNTIME('setSurfingkeysIcon', {
+                status: state
+            });
+            var proxyMode = "";
+            if (state === "enabled" && runtime.conf.showProxyInStatusBar && resp.proxyMode) {
+                proxyMode = resp.proxyMode;
+                if (["byhost", "always"].indexOf(resp.proxyMode) !== -1) {
+                    proxyMode = "{0}: {1}".format(resp.proxyMode, resp.proxy);
+                }
+            }
+            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, proxyMode]]);
+        }
+    });
+}
+
+const userConfPromise = new Promise(function (resolve, reject) {
+    document.addEventListener("surfingkeys:settingsFromSnippetsLoaded", () => {
+        resolve(runtime.conf);
+    }, {once: true});
+});
 
 function applySettings(api, normal, rs) {
     for (var k in rs) {
@@ -73,63 +114,29 @@ function applySettings(api, normal, rs) {
     if ('findHistory' in rs) {
         runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
     }
-    if (!rs.showAdvanced && rs.basicMappings) {
-        applyBasicMappings(api, normal, rs.basicMappings);
-    }
-    if (rs.showAdvanced && 'snippets' in rs && rs.snippets && !isInUIFrame()) {
-        var delta = runScript(api, rs.snippets);
-        if (delta.error !== "") {
-            if (window === top) {
-                showPopup("[SurfingKeys] Error found in settings: " + delta.error);
-            } else {
-                console.log("[SurfingKeys] Error found in settings({0}): {1}".format(window.location.href, delta.error));
+    if (!rs.showAdvanced) {
+        if (rs.basicMappings) {
+            applyBasicMappings(api, normal, rs.basicMappings);
+        }
+        if (rs.disabledSearchAliases) {
+            for (const key in rs.disabledSearchAliases) {
+                api.removeSearchAlias(key);
             }
         }
-        if (!isEmptyObject(delta.settings)) {
-            dispatchSKEvent('setUserSettings', JSON.parse(JSON.stringify(delta.settings)));
-            // overrides local settings from snippets
-            for (var k in delta.settings) {
-                if (runtime.conf.hasOwnProperty(k)) {
-                    runtime.conf[k] = delta.settings[k];
-                    delete delta.settings[k];
-                }
-            }
-            if (Object.keys(delta.settings).length > 0 && window === top) {
-                // left settings are for background, need not broadcast the update, neither persist into storage
-                RUNTIME('updateSettings', {
-                    scope: "snippets",
-                    settings: delta.settings
-                });
-            }
+    } else if (!rs.isMV3 && rs.snippets && !document.location.href.startsWith(chrome.runtime.getURL("/"))) {
+        var settings = {}, error = "";
+        try {
+            (new Function('settings', 'api', rs.snippets))(settings, api);
+        } catch (e) {
+            error = e.toString();
         }
-    }
-    if (runtime.conf.showProxyInStatusBar && 'proxyMode' in rs) {
-        var proxyMode = rs.proxyMode;
-        if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
-            proxyMode = "{0}: {1}".format(rs.proxyMode, rs.proxy);
-        }
-        dispatchSKEvent('showStatus', [3, proxyMode]);
+        applyUserSettings({settings, error});
     }
 
-    RUNTIME('getDisabled', {
-        blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern.toJSON() : ""
-    }, function (resp) {
-        if (resp.disabled) {
-            normal.disable();
-        } else {
-            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                _browser.usePdfViewer();
-            } else {
-                normal.enable();
-            }
-        }
-
-        if (window === top) {
-            RUNTIME('setSurfingkeysIcon', {
-                status: resp.disabled
-            });
-        }
-    });
+    applyRuntimeConf(normal);
+    document.addEventListener("surfingkeys:settingsFromSnippetsLoaded", () => {
+        applyRuntimeConf(normal);
+    }, {once: true});
 }
 
 function _initModules() {
@@ -138,18 +145,24 @@ function _initModules() {
     const normal = createNormal(insert);
     normal.enter();
     startScrollNodeObserver(normal);
-    const hints = createHints(insert, normal);
+    const hints = createHints(insert, normal, clipboard);
     const visual = createVisual(clipboard, hints);
     const front = createFront(insert, normal, hints, visual, _browser);
 
     const api = createAPI(clipboard, insert, normal, hints, visual, front, _browser);
-    createDefaultMappings(api);
+    createDefaultMappings(api, clipboard, insert, normal, hints, visual, front, _browser);
+    if (typeof(_browser.plugin) === "function") {
+        _browser.plugin({ front });
+    }
 
     dispatchSKEvent('defaultSettingsLoaded', {normal, api});
     RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
         applySettings(api, normal, rs);
-        dispatchSKEvent('userSettingsLoaded', {settings: rs, api});
+        const disabledSearchAliases = rs.disabledSearchAliases;
+        const getUsage = front.getUsage;
+        const frontCommand = front.command;
+        dispatchSKEvent('userSettingsLoaded', {settings: rs, disabledSearchAliases, getUsage, frontCommand});
     });
     return {
         normal,
@@ -181,9 +194,19 @@ window.getFrameId = function () {
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
     ) {
         _initContent(_initModules());
+
+        // Only used to load user script for iframes in MV3
+        setTimeout(() => {
+            dispatchSKEvent('user', ["runUserScript"]);
+        }, 100);
     }
     return window.frameId;
 };
+Mode.init(window === top ? undefined : ()=> {
+    window.addEventListener("focus", () => {
+        getFrameId();
+    }, {once: true});
+});
 
 let _browser;
 function start(browser) {
@@ -192,33 +215,65 @@ function start(browser) {
         readText: () => {},
     };
     if (window === top) {
-        const modes = _initModules();
-
-        document.addEventListener('DOMContentLoaded', function (e) {
+        new Promise((r, j) => {
+            if (window.location.href === chrome.runtime.getURL("/pages/options.html")) {
+                import(/* webpackIgnore: true */ './pages/options.js').then((optionsLib) => {
+                    optionsLib.default(
+                        RUNTIME,
+                        KeyboardUtils,
+                        Mode,
+                        createElementWithContent,
+                        getBrowserName,
+                        htmlEncode,
+                        initL10n,
+                        reportIssue,
+                        setSanitizedContent,
+                        showBanner);
+                    r(_initModules());
+                });
+            } else {
+                r(_initModules());
+            }
+        }).then((modes) => {
             _initContent(modes);
+            runtime.on('titleChanged', function() {
+                Mode.checkEventListener(() => {
+                    modes.front.detach();
+                    modes = _initModules();
+                    _initContent(modes);
+                    modes.front.attach();
+                });
+            });
             runtime.on('tabActivated', function() {
                 modes.front.attach();
             });
             runtime.on('tabDeactivated', function() {
                 modes.front.detach();
             });
-            window._setScrollPos = function (x, y) {
-                document.scrollingElement.scrollLeft = x;
-                document.scrollingElement.scrollTop = y;
-            };
+            runtime.on('setScrollPos', function(msg, sender, response) {
+                setTimeout(() => {
+                    document.scrollingElement.scrollLeft = msg.scrollLeft;
+                    document.scrollingElement.scrollTop = msg.scrollTop;
+                }, 1000);
+            });
+            runtime.on('showBanner', function(msg, sender, response) {
+                showBanner(msg.message, 3000);
+            });
+            document.addEventListener("surfingkeys:ensureFrontEnd", function(evt) {
+                modes.front.attach();
+            });
 
             RUNTIME('tabURLAccessed', {
                 title: document.title,
                 url: window.location.href
             }, function (resp) {
-                if (resp.active) {
-                    modes.front.attach();
-                }
 
                 if (resp.index > 0) {
                     var showTabIndexInTitle = function () {
                         skipObserver = true;
-                        document.title = myTabIndex + " " + originalTitle;
+                        userConfPromise.then(function(conf) {
+                            document.title = myTabIndex + conf.tabIndicesSeparator + originalTitle;
+                        });
                     };
 
                     var myTabIndex = resp.index,
@@ -245,25 +300,11 @@ function start(browser) {
                 }
             });
 
-            // There is some site firing DOMContentLoaded twice, such as http://www.423down.com/
-        }, {once: true});
-        return modes;
-    } else {
-        // activate Modes in the frames on extension pages
-        runtime.getTopURL(function(u) {
-            if (u.indexOf(chrome.extension.getURL("/")) === 0) {
-                _initContent(_initModules());
-            }
         });
-        if (window.location.protocol === "dictorium:") {
+    } else {
+        document.addEventListener("surfingkeys:iframeBoot", () => {
             _initContent(_initModules());
-        } else {
-            setTimeout(function () {
-                document.addEventListener('click', function (e) {
-                    getFrameId();
-                }, { once: true });
-            }, 1);
-        }
+        }, {once: true});
     }
 }
 
