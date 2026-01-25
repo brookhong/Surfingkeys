@@ -756,6 +756,12 @@ const Front = (function() {
         self.topSize = message.winSize;
         return new Date().getTime();
     };
+    _actions['destroyFrontend'] = function(message) {
+        if (_display && _display.style.display !== "none") {
+            return false;
+        }
+        return true;
+    };
 
     window.addEventListener('message', function(event) {
         var _message = event.data && event.data.surfingkeys_frontend_data;

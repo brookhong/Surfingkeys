@@ -1,3 +1,5 @@
+import { LOG } from '../common/utils.js';
+import { runtime } from './common/runtime.js';
 import {
     getBrowserName,
     getDocumentOrigin
@@ -124,9 +126,23 @@ function createUiHost(browser, onload) {
         lastStateOfPointerEvents = response.pointerEvents;
     };
 
-    uiHost.detach = function() {
-        window.removeEventListener('message', _onWindowMessage, true);
-        uiHost.remove();
+    uiHost.tryDetach = function() {
+        ifr.contentWindow.postMessage({surfingkeys_frontend_data: {
+            action: 'destroyFrontend',
+            ack: true,
+            origin: getDocumentOrigin()
+        }}, frontEndURL);
+    };
+    _actions['destroyFrontendAck'] = function(response) {
+        if (response.data === true) {
+            runtime.postTopMessage({surfingkeys_content_data: {
+                action: 'frontendDestroyed',
+            }});
+            window.removeEventListener('message', _onWindowMessage, true);
+            uiHost.remove();
+        } else {
+            LOG("warn", "frontend in use");
+        }
     };
     document.documentElement.appendChild(uiHost);
 }
