@@ -652,7 +652,9 @@ function start(browser) {
     function _loadSettingsFromUrl(url, cb) {
         request(appendNonce(url), function(resp) {
             _updateAndPostSettings({localPath: url, snippets: resp});
-            cb({status: "Succeeded", snippets: resp});
+            registerUserScript(resp, () => {
+                cb({status: "Succeeded", snippets: resp});
+            });
         }, undefined, undefined, function (po) {
             cb({status: "Failed"});
         });
@@ -1224,7 +1226,61 @@ function start(browser) {
         message.url = 'view-source:' + sender.tab.url;
         self.openLink(message, sender, sendResponse);
     };
-    function onFullSettingsRequested(data) {
+    function registerUserScript(snippets, callback) {
+        if (!isUserScriptsAvailable()) {
+            callback && callback();
+            return;
+        }
+        const userScriptId = "settingsSnippets";
+        const invokeCallback = () => {
+            if (chrome.runtime.lastError) {
+                console.error("userScripts API error:", chrome.runtime.lastError);
+            }
+            callback && callback();
+        };
+        if (snippets) {
+            chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
+                if (chrome.runtime.lastError) {
+                    console.error("userScripts.getScripts error:", chrome.runtime.lastError);
+                    callback && callback();
+                    return;
+                }
+                const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}\n})});`;
+                const registerSettingSnippets = () => {
+                    chrome.userScripts.register([{
+                        allFrames: true,
+                        id: userScriptId,
+                        matches: ['*://*/*', 'file:///*'],
+                        js: [{code}]
+                    }], invokeCallback);
+                };
+                if (r.length > 0) {
+                    if (r[0].js[0].code !== code) {
+                        chrome.userScripts.unregister({ids:[userScriptId]}, registerSettingSnippets);
+                    } else {
+                        callback && callback();
+                    }
+                } else {
+                    registerSettingSnippets();
+                }
+            });
+        } else {
+            chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
+                if (chrome.runtime.lastError) {
+                    console.error("userScripts.getScripts error:", chrome.runtime.lastError);
+                    callback && callback();
+                    return;
+                }
+                if (r.length > 0) {
+                    chrome.userScripts.unregister({ids:[userScriptId]}, invokeCallback);
+                } else {
+                    callback && callback();
+                }
+            });
+        }
+    }
+
+    function onFullSettingsRequested(data, callback) {
         data.isMV3 = isMV3;
         data.useNeovim = browser.nvimServer && browser.nvimServer.instance;
         data.isUserScriptsAvailable = isUserScriptsAvailable();
@@ -1232,35 +1288,12 @@ function start(browser) {
             data.showAdvanced = data.isUserScriptsAvailable && data.showAdvanced;
         }
 
-        if (data.isUserScriptsAvailable) {
-            const userScriptId = "settingsSnippets";
-            if (data.showAdvanced && data.snippets) {
-                const snippets = data.snippets;
-                chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
-                    const code = `import('./api.js').then((module) => {module.default("${chrome.runtime.getURL("/")}", (api, settings) => {${snippets}\n})});`;
-                    const registerSettingSnippets = () => {
-                        chrome.userScripts.register([{
-                            allFrames: true,
-                            id: userScriptId,
-                            matches: ['*://*/*', 'file:///*'],
-                            js: [{code}]
-                        }]);
-                    };
-                    if (r.length > 0) {
-                        if (r[0].js[0].code !== code) {
-                            chrome.userScripts.unregister({ids:[userScriptId]}, registerSettingSnippets);
-                        }
-                    } else {
-                        registerSettingSnippets();
-                    }
-                });
-            } else {
-                chrome.userScripts.getScripts({ids:[userScriptId]}, (r) => {
-                    if (r.length > 0) {
-                        chrome.userScripts.unregister({ids:[userScriptId]});
-                    }
-                });
-            }
+        if (data.isUserScriptsAvailable && data.showAdvanced) {
+            registerUserScript(data.snippets, callback);
+        } else if (data.isUserScriptsAvailable) {
+            registerUserScript(null, callback);
+        } else {
+            callback && callback();
         }
     }
     self.getSettings = function(message, sender, sendResponse) {
@@ -1326,6 +1359,7 @@ function start(browser) {
                 llmClients.custom.model = llmConf.custom.model;
                 delete message.settings.llm.custom;
             }
+            return { error };
         } else {
             if (message.settings.showAdvanced && isMV3) {
                 if (isUserScriptsAvailable()) {
@@ -1334,6 +1368,10 @@ function start(browser) {
                         messaging: true
                     });
                     _updateAndPostSettings(message.settings);
+                    registerUserScript(message.settings.snippets, () => {
+                        _response(message, sendResponse, { error });
+                    });
+                    return;
                 } else {
                     error = "Advanced mode is only available when Developer mode is turned on from chrome://extensions/.";
                 }
