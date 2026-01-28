@@ -79,7 +79,7 @@ function createFront(insert, normal, hints, visual, browser) {
     var _listSuggestions = {};
     self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion, options) {
         if (suggestionURL && listSuggestion) {
-            _listSuggestions[suggestionURL] = listSuggestion;
+            _listSuggestions[alias] = listSuggestion;
         }
         applyUICommand({
             action: 'addSearchAlias',
@@ -137,8 +137,8 @@ function createFront(insert, normal, hints, visual, browser) {
 
     _actions["getSearchSuggestions"] = function (message) {
         var ret = null;
-        if (_listSuggestions.hasOwnProperty(message.url)) {
-            const listSuggestion = _listSuggestions[message.url];
+        if (_listSuggestions.hasOwnProperty(message.alias)) {
+            const listSuggestion = _listSuggestions[message.alias];
             if (typeof listSuggestion === "function") {
                 ret = listSuggestion(message.response, {
                     url: message.requestUrl,
@@ -151,7 +151,7 @@ function createFront(insert, normal, hints, visual, browser) {
                         resolve(res);
                     };
 
-                    dispatchSKEvent('user', ["getSearchSuggestions", message.url, message.response, {
+                    dispatchSKEvent('user', ["getSearchSuggestions", message.alias, message.response, {
                         url: message.requestUrl,
                         query: message.query,
                     }, callbackId]);

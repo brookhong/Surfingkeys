@@ -1231,6 +1231,7 @@ function OpenVIMarks(omnibar) {
 
 function SearchEngine(omnibar, front) {
     var self = {};
+    self.alias = undefined;
     self.aliases = {};
 
     var _pendingRequest = undefined; // timeout ID
@@ -1316,7 +1317,7 @@ function SearchEngine(omnibar, front) {
             }, function (resp) {
                 front.contentCommand({
                     action: 'getSearchSuggestions',
-                    url: self.suggestionURL,
+                    alias: self.alias,
                     query: omnibar.input.value,
                     requestUrl,
                     response: resp
@@ -1333,6 +1334,7 @@ function SearchEngine(omnibar, front) {
 
     front._actions['addSearchAlias'] = function (message) {
         self.aliases[message.alias] = {
+            alias: message.alias,
             prompt: '' + message.prompt + separatorHtml,
             url: message.url,
             suggestionURL: message.suggestionURL

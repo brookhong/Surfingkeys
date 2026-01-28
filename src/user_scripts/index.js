@@ -88,10 +88,10 @@ initSKFunctionListener("user", {
             userDefinedCommands[name](...args);
         }
     },
-    getSearchSuggestions: async (url, response, request, callbackId, origin) => {
-        if (functionsToListSuggestions.hasOwnProperty(url)) {
+    getSearchSuggestions: async (alias, response, request, callbackId, origin) => {
+        if (functionsToListSuggestions.hasOwnProperty(alias)) {
             try {
-                const ret = await functionsToListSuggestions[url](response, request);
+                const ret = await functionsToListSuggestions[alias](response, request);
                 dispatchSKEvent("front", [callbackId, ret]);
             } catch (e) {
                 console.error("Search suggestion callback error:", e);
@@ -138,7 +138,7 @@ function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion
     if (!/^[\u0000-\u007f]*$/.test(alias)) {
         throw `Invalid alias ${alias}, which must be ASCII characters.`;
     }
-    functionsToListSuggestions[suggestion_url] = callback_to_parse_suggestion;
+    functionsToListSuggestions[alias] = callback_to_parse_suggestion;
     dispatchSKEvent('api', ['addSearchAlias', alias, prompt, search_url, search_leader_key, suggestion_url, "user", only_this_site_key, options]);
 }
 
