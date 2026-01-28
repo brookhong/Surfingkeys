@@ -88,9 +88,9 @@ initSKFunctionListener("user", {
             userDefinedCommands[name](...args);
         }
     },
-    getSearchSuggestions: (url, response, request, callbackId, origin) => {
+    getSearchSuggestions: async (url, response, request, callbackId, origin) => {
         if (functionsToListSuggestions.hasOwnProperty(url)) {
-            const ret = functionsToListSuggestions[url](response, request);
+            const ret = await functionsToListSuggestions[url](response, request);
             dispatchSKEvent("front", [callbackId, ret]);
         }
     },
