@@ -88,10 +88,15 @@ initSKFunctionListener("user", {
             userDefinedCommands[name](...args);
         }
     },
-    getSearchSuggestions: (url, response, request, callbackId, origin) => {
+    getSearchSuggestions: async (url, response, request, callbackId, origin) => {
         if (functionsToListSuggestions.hasOwnProperty(url)) {
-            const ret = functionsToListSuggestions[url](response, request);
-            dispatchSKEvent("front", [callbackId, ret]);
+            try {
+                const ret = await functionsToListSuggestions[url](response, request);
+                dispatchSKEvent("front", [callbackId, ret]);
+            } catch (e) {
+                console.error("Search suggestion callback error:", e);
+                dispatchSKEvent("front", [callbackId, []]);
+            }
         }
     },
     performInlineQuery: (query, callbackId, origin) => {
