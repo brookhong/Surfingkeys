@@ -505,6 +505,37 @@ function createNormal(insert) {
         }
     }
 
+    const scrollTypeDirections = new Map([
+        ['down', 'vertical'],
+        ['up', 'vertical'],
+        ['pageDown', 'vertical'],
+        ['fullPageDown', 'vertical'],
+        ['pageUp', 'vertical'],
+        ['fullPageUp', 'vertical'],
+        ['top', 'vertical'],
+        ['bottom', 'vertical'],
+        ['byRatio', 'vertical'],
+        ['left', 'horizontal'],
+        ['right', 'horizontal'],
+        ['leftmost', 'horizontal'],
+        ['rightmost', 'horizontal']
+    ]);
+
+    function canScrollInDirection(elm, direction) {
+        const isMainPage = elm === document.scrollingElement || elm === document.body;
+        const clientHeight = isMainPage ? window.innerHeight : elm.clientHeight;
+        const clientWidth = isMainPage ? window.innerWidth : elm.clientWidth;
+
+        switch (direction) {
+            case 'vertical':
+                return elm.scrollHeight > clientHeight + 1;
+            case 'horizontal':
+                return elm.scrollWidth > clientWidth + 1;
+            default:
+                return false;
+        }
+    }
+
     /**
      * Scroll within current target.
      *
@@ -537,6 +568,22 @@ function createNormal(insert) {
             // scrollNode could be null on a page with frameset as its body.
             return;
         }
+
+        // Fall back to document scrolling if enabled and current element can't scroll in requested direction
+        if (runtime.conf.scrollFallback &&
+            scrollNode !== document.scrollingElement &&
+            scrollNode !== document.body) {
+            const direction = scrollTypeDirections.get(type);
+
+            if (direction && !canScrollInDirection(scrollNode, direction)) {
+                scrollNode = document.scrollingElement;
+                if (!scrollNode && document.body) {
+                    document.body.style.overflow = 'visible';
+                    scrollNode = document.scrollingElement;
+                }
+            }
+        }
+
         if (!scrollNode.skScrollBy) {
             initScroll(scrollNode);
         }
