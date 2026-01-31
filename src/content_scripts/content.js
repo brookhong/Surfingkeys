@@ -259,6 +259,10 @@ function start(browser) {
             runtime.on('showBanner', function(msg, sender, response) {
                 showBanner(msg.message, 3000);
             });
+            runtime.on('chooseTab', function() {
+                modes.front.attach();
+                modes.front.chooseTab();
+            });
             document.addEventListener("surfingkeys:ensureFrontEnd", function(evt) {
                 modes.front.attach();
             });
