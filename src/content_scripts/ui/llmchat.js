@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import { RUNTIME, runtime } from '../common/runtime.js';
 import {
     createElementWithContent,
+    hashString,
     setSanitizedContent,
     rotateInput,
 } from '../common/utils.js';
@@ -144,6 +145,9 @@ export default function (omnibar, front) {
 
     const clear = () => {
         messages = messages.slice(0, RESERVED_MESSAGE_COUNT);
+        hashString(currentUrl).then(hash => {
+            localStorage.removeItem(hash);
+        });
         omnibar.resultsDiv.querySelector('ul')?.remove();
         renderMessages();
     };
@@ -224,27 +228,36 @@ export default function (omnibar, front) {
         }
     }
 
+    let currentUrl;
     self.onOpen = function(opts) {
-        messages[0].content = opts && opts.system || "";
-        omnibar.resultsDiv.className = "llmChat";
-        if (!provider) {
-            provider = opts && opts.provider || runtime.conf.defaultLLMProvider;
-        }
-        omnibar.resultsDiv.append(createElementWithContent('h4', provider));
-        renderMessages();
+        currentUrl = opts.url;
+        hashString(currentUrl).then(hash => {
+            let last = localStorage.getItem(hash);
+            if (last) {
+                messages = JSON.parse(last);
+            }
 
-        userInput = "";
-        RUNTIME('getSettings', {
-            key: 'llmChatHistory'
-        }, function(resp) {
-            inputs = resp.settings.llmChatHistory;
-            curInputIdx = inputs.length;
-        });
-        RUNTIME('getAllLlmProviders', { }, function(resp) {
-            providers = resp.providers;
-        });
+            messages[0].content = opts && opts.system || "";
+            omnibar.resultsDiv.className = "llmChat";
+            if (!provider) {
+                provider = opts && opts.provider || runtime.conf.defaultLLMProvider;
+            }
+            omnibar.resultsDiv.append(createElementWithContent('h4', provider));
+            renderMessages();
 
+            userInput = "";
+            RUNTIME('getSettings', {
+                key: 'llmChatHistory'
+            }, function(resp) {
+                inputs = resp.settings.llmChatHistory;
+                curInputIdx = inputs.length;
+            });
+            RUNTIME('getAllLlmProviders', { }, function(resp) {
+                providers = resp.providers;
+            });
+        });
     };
+
     self.onInput = function() {
         userInput = omnibar.input.value;
         curInputIdx = inputs.length;
@@ -324,5 +337,12 @@ export default function (omnibar, front) {
         lastResponseItem.firstElementChild.scrollIntoView({ behavior: 'instant', block: 'end', });
     }
 
+    front.addDestroyListener(() => {
+        if (currentUrl && messages.length > 1) {
+            hashString(currentUrl).then(hash => {
+                localStorage.setItem(hash, JSON.stringify(messages));
+            });
+        }
+    });
     return self;
 };

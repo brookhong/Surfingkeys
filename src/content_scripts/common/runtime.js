@@ -81,6 +81,7 @@ const runtime = (function() {
             prevLinkRegex: /(\b(prev|previous)\b)|上页|上一页|前页|上頁|上一頁|前頁|<<|«/i,
             repeatThreshold: 9,
             richHintsForKeystroke: 1000,
+            scrollFallback: false,
             scrollStepSize: 70,
             showModeStatus: false,
             showProxyInStatusBar: false,
@@ -148,7 +149,7 @@ const runtime = (function() {
             if (topUrl === "null" || new URL(topUrl).origin === "file://") {
                 topUrl = "*";
             }
-            top.postMessage({surfingkeys_uihost_data: msg}, topUrl);
+            top.postMessage(msg, topUrl);
         });
     };
 
