@@ -1118,6 +1118,18 @@ function attachFaviconToImgSrc(tab, imgEl) {
     }
 }
 
+async function hashString(str, algorithm = 'SHA-256') {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest(algorithm, data);
+
+    // Convert to hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+}
+
 export {
     aceVimMap,
     actionWithSelectionPreserved,
@@ -1148,6 +1160,7 @@ export {
     getTextRect,
     getVisibleElements,
     getWordUnderCursor,
+    hashString,
     htmlEncode,
     httpRequest,
     initL10n,
