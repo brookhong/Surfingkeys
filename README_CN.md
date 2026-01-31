@@ -74,7 +74,7 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 ## 快速上手
 
 * [Chrome插件安装地址](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
-* [Firefox插件安装地址](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
+* [Firefox插件安装地址](https://addons.mozilla.org/firefox/addon/surfingkeys_ff/)
 
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
 
