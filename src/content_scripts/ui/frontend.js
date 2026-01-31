@@ -39,6 +39,10 @@ const Front = (function() {
     const self = new Mode("Front");
     self._actions = {};
     self.topSize = [0, 0];
+    let destroyListeners = [];
+    self.addDestroyListener = (task) => {
+        destroyListeners.push(task);
+    };
     const omnibar = createOmnibar(self, clipboard);
 
     createCommands(normal, omnibar.command, omnibar);
@@ -755,6 +759,15 @@ const Front = (function() {
         self.topOrigin = message.origin;
         self.topSize = message.winSize;
         return new Date().getTime();
+    };
+    _actions['destroyFrontend'] = function(message) {
+        if (_display && _display.style.display !== "none") {
+            return false;
+        }
+        for (const task of destroyListeners) {
+            task();
+        }
+        return true;
     };
 
     window.addEventListener('message', function(event) {

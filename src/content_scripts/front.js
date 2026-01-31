@@ -51,7 +51,7 @@ function createFront(insert, normal, hints, visual, browser) {
             _callbacks[args.id] = successById;
         }
         if (window !== top) {
-            runtime.postTopMessage(args);
+            runtime.postTopMessage({surfingkeys_uihost_data: args});
         } else {
             if (!frontendPromise) {
                 // no need to create frontend iframe if the action is to hide key stroke
@@ -62,7 +62,7 @@ function createFront(insert, normal, hints, visual, browser) {
                 newFrontEnd();
             }
             frontendPromise.then(function() {
-                runtime.postTopMessage(args);
+                runtime.postTopMessage({surfingkeys_uihost_data: args});
             });
         }
     };
@@ -355,6 +355,9 @@ function createFront(insert, normal, hints, visual, browser) {
      */
     self.openOmnibar = function(args) {
         args.action = 'openOmnibar';
+        if (args.type === "LLMChat") {
+            args.extra.url = window.location.href.replace(/\#[^\#]*$/, '');
+        }
         self.command(args);
     };
 
@@ -738,6 +741,8 @@ function createFront(insert, normal, hints, visual, browser) {
             });
         } else if (_message.action === "performInlineQueryResult") {
             _showQueryResult(_message.pos, _message.result);
+        } else if (_message.action === "frontendDestroyed") {
+            frontendPromise = undefined;
         } else if (_active) {
             if (_callbacks[_message.id]) {
                 var f = _callbacks[_message.id];
@@ -752,12 +757,12 @@ function createFront(insert, normal, hints, visual, browser) {
                         ret = Promise.resolve(ret);
                     }
                     ret.then((data) =>
-                      runtime.postTopMessage({
+                      runtime.postTopMessage({surfingkeys_uihost_data: {
                           data,
                           toFrontend: true,
                           origin: _message.origin,
                           id: _message.id
-                      }));
+                      }}));
                 }
             }
         } else if (_message.action === "activated") {
@@ -787,8 +792,7 @@ function createFront(insert, normal, hints, visual, browser) {
         if (frontendPromise) {
             frontendPromise.then((uiHost) => {
                 uiHostDetaching = setTimeout(function() {
-                    uiHost.detach();
-                    frontendPromise = undefined;
+                    uiHost.tryDetach();
                 }, 3000);
             });
         }
