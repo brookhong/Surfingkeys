@@ -944,8 +944,12 @@ function start(browser) {
                 var tabIds = tabs.map(function(e) {
                     return e.id;
                 });
+                var tabIndex = tabIds.indexOf(tab.id);
+                if (tabIndex === -1) {
+                    return;
+                }
                 repeats = _fixTo(repeats, tabs.length);
-                var base = _roundBase(tab.index, repeats, tabs.length);
+                var base = _roundBase(tabIndex, repeats, tabs.length);
                 operation(tabIds.slice(base, base + repeats));
             });
         } else {
