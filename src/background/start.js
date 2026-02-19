@@ -914,12 +914,17 @@ function start(browser) {
             chrome.tabs.query({
                 windowId: tab.windowId
             }, function(tabs) {
-                if (tab.index == 0 && step == -1) {
+                var tabIds = tabs.map(function(e) { return e.id; });
+                var tabIndex = tabIds.indexOf(tab.id);
+                if (tabIndex === -1) {
+                    return;
+                }
+                if (tabIndex == 0 && step == -1) {
                     step = tabs.length -1 ;
-                } else if (tab.index == tabs.length -1 && step == 1 ) {
+                } else if (tabIndex == tabs.length -1 && step == 1 ) {
                     step = 1 - tabs.length ;
                 }
-                var to = _fixTo(tab.index + step, tabs.length - 1);
+                var to = _fixTo(tabIndex + step, tabs.length - 1);
                 chrome.tabs.update(tabs[to].id, {
                     active: true
                 });
@@ -944,8 +949,12 @@ function start(browser) {
                 var tabIds = tabs.map(function(e) {
                     return e.id;
                 });
+                var tabIndex = tabIds.indexOf(tab.id);
+                if (tabIndex === -1) {
+                    return;
+                }
                 repeats = _fixTo(repeats, tabs.length);
-                var base = _roundBase(tab.index, repeats, tabs.length);
+                var base = _roundBase(tabIndex, repeats, tabs.length);
                 operation(tabIds.slice(base, base + repeats));
             });
         } else {
