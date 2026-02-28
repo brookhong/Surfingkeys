@@ -657,7 +657,7 @@ const Front = (function() {
         }
         self.flush();
         if (!_bubble.noPointerEvents) {
-            setDisplay(_bubble, {});
+            setDisplay(_bubble);
             self.enter(0, true);
         }
     };
