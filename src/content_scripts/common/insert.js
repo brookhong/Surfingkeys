@@ -263,7 +263,7 @@ function createInsert() {
 
     function nextNonWord(str, dir, cur) {
         var nonWord = /\W/;
-        cur = dir > 0 ? cur : cur + dir;
+        cur = cur + dir;
         for ( ; ; ) {
             if (cur < 0) {
                 cur = 0;
