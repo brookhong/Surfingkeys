@@ -553,7 +553,7 @@ function start(browser) {
         loadSettings('blocklist', function(data) {
             var origin = ".*";
             var senderOrigin = sender.origin || new URL(getSenderUrl(sender)).origin;
-            if (chrome.runtime.getURL("/").indexOf(senderOrigin) !== 0 && senderOrigin !== "null") {
+            if (chrome.runtime.getURL("/").toLowerCase().indexOf(senderOrigin.toLowerCase()) !== 0 && senderOrigin !== "null") {
                 origin = senderOrigin;
             }
             if (data.blocklist.hasOwnProperty(origin)) {
