@@ -909,13 +909,16 @@ function start(browser) {
         }
         return base;
     }
+    function _getTabIndex(tabs, tabId) {
+        var tabIds = tabs.map(function(e) { return e.id; });
+        return tabIds.indexOf(tabId);
+    }
     function _nextTab(tab, step) {
         if (tab) {
             chrome.tabs.query({
                 windowId: tab.windowId
             }, function(tabs) {
-                var tabIds = tabs.map(function(e) { return e.id; });
-                var tabIndex = tabIds.indexOf(tab.id);
+                var tabIndex = _getTabIndex(tabs, tab.id);
                 if (tabIndex === -1) {
                     return;
                 }
@@ -946,15 +949,13 @@ function start(browser) {
             chrome.tabs.query({
                 windowId: tab.windowId
             }, function(tabs) {
-                var tabIds = tabs.map(function(e) {
-                    return e.id;
-                });
-                var tabIndex = tabIds.indexOf(tab.id);
+                var tabIndex = _getTabIndex(tabs, tab.id);
                 if (tabIndex === -1) {
                     return;
                 }
                 repeats = _fixTo(repeats, tabs.length);
                 var base = _roundBase(tabIndex, repeats, tabs.length);
+                var tabIds = tabs.map(function(e) { return e.id; });
                 operation(tabIds.slice(base, base + repeats));
             });
         } else {
