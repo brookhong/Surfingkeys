@@ -356,6 +356,7 @@ function createFront(insert, normal, hints, visual, browser) {
     self.openOmnibar = function(args) {
         args.action = 'openOmnibar';
         if (args.type === "LLMChat") {
+            args.extra = args.extra || {};
             args.extra.url = window.location.href.replace(/\#[^\#]*$/, '');
         }
         self.command(args);
