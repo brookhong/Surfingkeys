@@ -145,6 +145,11 @@ function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion
 function createCssSelectorForElements(cssSelector, elements) {
     if (elements instanceof HTMLElement) {
         elements = [elements];
+    } else if (
+        elements instanceof NodeList ||
+        elements instanceof HTMLCollection
+    ) { // resolve querySelectorAll and element.children
+        elements = Array.from(elements);
     } else if (elements instanceof Array) {
         elements = elements.filter((m) => m instanceof HTMLElement);
     } else {
@@ -216,7 +221,10 @@ const api = {
             dispatchSKEvent('api', ['hints:click', links, force]);
         },
         create: (cssSelector, onHintKey, attrs) => {
-            if (typeof(cssSelector) !== 'string') {
+            if (
+                typeof cssSelector !== "string" &&
+                cssSelector.constructor.name !== "RegExp"
+            ) {
                 const hintsCreating = "surfingkeys--hints--creating";
                 if (createCssSelectorForElements(hintsCreating, cssSelector) === 0) {
                     return false;

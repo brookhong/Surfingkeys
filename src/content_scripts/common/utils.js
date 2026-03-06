@@ -294,6 +294,8 @@ function initSKFunctionListener(name, interfaces, capture) {
             if (args.length > 0 && args[0].constructor.name === "Array" && args[0][0] === "__EVENT_TARGET__") {
                 // restore args from evt.target, see src/content_scripts/common/hints.js:442
                 args[0][0] = evt.target;
+                // make args[0] as the target
+                args.push(args.shift());
             } else {
                 args.push(evt.target);
             }
