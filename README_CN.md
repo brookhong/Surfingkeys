@@ -20,7 +20,7 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 
 ## 安装
 
-* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Surfingkeys - Chrome Web Store](https://chromewebstore.google.com/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
 * [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
 * [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
 * [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1609752330)
@@ -73,7 +73,7 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 
 ## 快速上手
 
-* [Chrome插件安装地址](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
+* [Chrome插件安装地址](https://chromewebstore.google.com/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
 * [Firefox插件安装地址](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
 
 安装本插件以后，打开你要访问的站点。先按`?`或者`u`看看帮助信息，按`Esc`可以关掉帮助信息。
