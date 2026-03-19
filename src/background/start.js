@@ -802,7 +802,7 @@ function start(browser) {
             chrome.tabs.query({}, function(tabs) {
                 const tabsInGroup = {};
                 tabs.forEach(function(tab) {
-                    if (tab.groupId && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+                    if (tab.groupId && tab.groupId !== (chrome.tabGroups?.TAB_GROUP_ID_NONE ?? -1)) {
                         if (!tabsInGroup[tab.groupId]) {
                             tabsInGroup[tab.groupId] = [];
                         }
