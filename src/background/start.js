@@ -813,6 +813,7 @@ function start(browser) {
                             id: tab.id,
                             title: tab.title,
                             url: tab.url,
+                            favIconUrl: tab.favIconUrl,
                             active: tab.active,
                             index: tab.index
                         });
