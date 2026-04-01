@@ -526,12 +526,28 @@ function start(browser) {
         // use the tab's url if sender is a frame with blank url.
         return (sender.frameId !== 0 && sender.url === "about:blank") ? sender.tab.url : sender.url;
     }
+    function _matchBlocklist(blocklist, url) {
+        var hrefNoQuery = url.origin + url.pathname;
+        for (var pattern in blocklist) {
+            if (pattern.indexOf('*') !== -1) {
+                var regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+                if (regex.test(hrefNoQuery) || regex.test(url.origin)) {
+                    return true;
+                }
+            } else if (hrefNoQuery === pattern || url.origin === pattern) {
+                return true;
+            } else if (hrefNoQuery.indexOf(pattern) === 0) {
+                return true;
+            }
+        }
+        return false;
+    }
     function _getState(set, url, blocklistPattern, lurkingPattern) {
         if (set.blocklist['.*']) {
             return "disabled";
         }
         if (url) {
-            if (set.blocklist[url.origin]) {
+            if (_matchBlocklist(set.blocklist, url)) {
                 return "disabled";
             }
             if (blocklistPattern) {

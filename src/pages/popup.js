@@ -8,6 +8,8 @@ String.prototype.format = function() {
 };
 
 var disableAll = document.getElementById('disableAll'),
+    addToBlocklist = document.getElementById('addToBlocklist'),
+    editBlocklist = document.getElementById('editBlocklist'),
     version = "Surfingkeys " + chrome.runtime.getManifest().version;
 
 function RUNTIME(action, args, callback) {
@@ -24,10 +26,41 @@ function updateStatus(blocklist) {
     });
 }
 
+function updateSiteStatus(blocklist) {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        if (tabs[0]) {
+            try {
+                var origin = new URL(tabs[0].url).origin;
+                var isBlocked = _matchBlocklist(blocklist, new URL(tabs[0].url));
+                addToBlocklist.textContent = isBlocked ? 'Enable for this site' : 'Disable for this site';
+                addToBlocklist.dataset.url = tabs[0].url;
+                addToBlocklist.dataset.origin = origin;
+            } catch (e) {
+                addToBlocklist.textContent = 'Disable for this site';
+            }
+        }
+    });
+}
+
+function _matchBlocklist(blocklist, url) {
+    for (var pattern in blocklist) {
+        if (pattern.indexOf('*') !== -1) {
+            var regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+            if (regex.test(url.href) || regex.test(url.origin)) {
+                return true;
+            }
+        } else if (url.href === pattern || url.origin === pattern) {
+            return true;
+        }
+    }
+    return false;
+}
+
 RUNTIME('getSettings', {
     key: 'blocklist'
 }, function(response) {
     updateStatus(response.settings.blocklist);
+    updateSiteStatus(response.settings.blocklist);
 });
 
 disableAll.addEventListener('click', function() {
@@ -35,6 +68,41 @@ disableAll.addEventListener('click', function() {
         domain: ".*"
     }, function(response) {
         updateStatus(response.blocklist);
+        updateSiteStatus(response.blocklist);
+    });
+});
+
+addToBlocklist.addEventListener('click', function() {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        if (tabs[0]) {
+            try {
+                var url = new URL(tabs[0].url);
+                var urlWithoutQuery = url.origin + url.pathname;
+                RUNTIME('getSettings', { key: 'blocklist' }, function(response) {
+                    var blocklist = response.settings.blocklist;
+                    if (_matchBlocklist(blocklist, url)) {
+                        for (var pattern in blocklist) {
+                            if (pattern === urlWithoutQuery || pattern === url.href || pattern === url.origin) {
+                                delete blocklist[pattern];
+                            } else if (pattern.indexOf('*') !== -1) {
+                                var regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+                                if (regex.test(url.href) || regex.test(url.origin)) {
+                                    delete blocklist[pattern];
+                                }
+                            }
+                        }
+                    } else {
+                        blocklist[urlWithoutQuery] = 1;
+                    }
+                    RUNTIME('updateSettings', {
+                        settings: { blocklist: blocklist }
+                    }, function() {
+                        updateStatus(blocklist);
+                        updateSiteStatus(blocklist);
+                    });
+                });
+            } catch (e) {}
+        }
     });
 });
 
