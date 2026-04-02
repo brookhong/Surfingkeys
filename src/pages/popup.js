@@ -43,13 +43,16 @@ function updateSiteStatus(blocklist) {
 }
 
 function _matchBlocklist(blocklist, url) {
+    var hrefNoQuery = url.origin + url.pathname;
     for (var pattern in blocklist) {
         if (pattern.indexOf('*') !== -1) {
             var regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
-            if (regex.test(url.href) || regex.test(url.origin)) {
+            if (regex.test(hrefNoQuery) || regex.test(url.origin)) {
                 return true;
             }
-        } else if (url.href === pattern || url.origin === pattern) {
+        } else if (hrefNoQuery === pattern || url.origin === pattern) {
+            return true;
+        } else if (hrefNoQuery.indexOf(pattern) === 0) {
             return true;
         }
     }
@@ -77,22 +80,24 @@ addToBlocklist.addEventListener('click', function() {
         if (tabs[0]) {
             try {
                 var url = new URL(tabs[0].url);
-                var urlWithoutQuery = url.origin + url.pathname;
+                var hrefNoQuery = url.origin + url.pathname;
                 RUNTIME('getSettings', { key: 'blocklist' }, function(response) {
                     var blocklist = response.settings.blocklist;
                     if (_matchBlocklist(blocklist, url)) {
                         for (var pattern in blocklist) {
-                            if (pattern === urlWithoutQuery || pattern === url.href || pattern === url.origin) {
+                            if (pattern === hrefNoQuery || pattern === url.origin) {
                                 delete blocklist[pattern];
                             } else if (pattern.indexOf('*') !== -1) {
                                 var regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
-                                if (regex.test(url.href) || regex.test(url.origin)) {
+                                if (regex.test(hrefNoQuery) || regex.test(url.origin)) {
                                     delete blocklist[pattern];
                                 }
+                            } else if (hrefNoQuery.indexOf(pattern) === 0) {
+                                delete blocklist[pattern];
                             }
                         }
                     } else {
-                        blocklist[urlWithoutQuery] = 1;
+                        blocklist[hrefNoQuery] = 1;
                     }
                     RUNTIME('updateSettings', {
                         settings: { blocklist: blocklist }
