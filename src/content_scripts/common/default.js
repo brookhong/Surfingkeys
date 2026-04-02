@@ -844,6 +844,9 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         mapkey('b', '#8Open a bookmark', function() {
             front.openOmnibar(({type: "Bookmarks"}));
         });
+        mapkey(';x', '#3Close tabs by URL', function() {
+            front.openOmnibar({type: "CloseTabs"});
+        });
         mapkey('ab', '#8Bookmark current page to selected folder', function() {
             var page = {
                 url: window.location.href,

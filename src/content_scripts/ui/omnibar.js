@@ -763,6 +763,7 @@ function createOmnibar(front, clipboard) {
         });
     }));
     self.addHandler('Tabs', OpenTabs(self));
+    self.addHandler('CloseTabs', CloseTabs(self));
     self.addHandler('Windows', OpenWindows(self, front));
     self.addHandler('VIMarks', OpenVIMarks(self));
     self.addHandler('SearchEngine', searchEngine);
@@ -1115,6 +1116,49 @@ function OpenTabs(omnibar) {
             var filtered = filterByTitleOrUrl(cached, omnibar.input.value, runtime.getCaseSensitive(omnibar.input.value));
             omnibar.listURLs(filtered, false);
         });
+    };
+    return self;
+}
+
+function CloseTabs(omnibar) {
+    var self = {
+        focusFirstCandidate: true,
+    };
+
+    self.onOpen = function() {
+        self.prompt = `close tabs${separatorHtml}`;
+        omnibar.cachedPromise = new Promise(function(resolve) {
+            RUNTIME('getTabs', {queryInfo: {currentWindow: true}}, function(response) {
+                resolve(response.tabs);
+            });
+        });
+        self.onInput();
+    };
+    self.onInput = function() {
+        omnibar.cachedPromise.then(function(cached) {
+            var filtered = filterByTitleOrUrl(cached, omnibar.input.value, runtime.getCaseSensitive(omnibar.input.value));
+            filtered.forEach(function(tab) {
+                try {
+                    var u = new URL(tab.url);
+                    tab.url = u.origin + u.pathname;
+                } catch (e) {}
+            });
+            omnibar.listURLs(filtered, false);
+        });
+    };
+    self.onEnter = function() {
+        var items = omnibar.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li');
+        var tabIds = [];
+        items.forEach(function(li) {
+            if (li.uid && li.uid[0] === 'T') {
+                var parts = li.uid.substr(1).split(":");
+                tabIds.push(parseInt(parts[1]));
+            }
+        });
+        if (tabIds.length > 0) {
+            RUNTIME('closeTabByIds', {tabIds: tabIds});
+        }
+        return true;
     };
     return self;
 }
