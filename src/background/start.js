@@ -829,9 +829,7 @@ function start(browser) {
                 sortedTabs = sortedTabs.concat(groups[domain]);
             });
 
-            sortedTabs.forEach(function(tab, index) {
-                chrome.tabs.move(tab.id, {index: pinnedTabs.length + index});
-            });
+            chrome.tabs.move(sortedTabs.map(function(t) { return t.id; }), {index: pinnedTabs.length});
 
             _response(message, sendResponse, {domains: sortedDomains.length});
         });
@@ -863,9 +861,7 @@ function start(browser) {
                 sortedTabs = sortedTabs.concat(clusters[base]);
             });
 
-            sortedTabs.forEach(function(tab, index) {
-                chrome.tabs.move(tab.id, {index: pinnedTabs.length + index});
-            });
+            chrome.tabs.move(sortedTabs.map(function(t) { return t.id; }), {index: pinnedTabs.length});
 
             _response(message, sendResponse, {clusters: sortedBases.length});
         });

@@ -124,12 +124,6 @@ export default (normal, command, omnibar) => {
     command('createTabGroup', 'group all tabs by domain: createTabGroup [title] [grey|blue|red|yellow|green|pink|purple|cyan|orange]', function(args) {
         RUNTIME('createTabGroup', {title: args[0], color: args[1]});
     });
-    command('sortTabsByDomain', 'sort all tabs in current window by domain', function() {
-        RUNTIME('sortTabsByDomain');
-    });
-    command('clusterTabsByDomain', 'cluster all tabs in current window by base domain', function() {
-        RUNTIME('clusterTabsByDomain');
-    });
     command('timeStamp', 'print time stamp in human readable format', function(args) {
         var dt = new Date(parseInt(args[0]));
         omnibar.listWords([dt.toString()]);
