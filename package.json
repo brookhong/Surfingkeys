@@ -32,6 +32,7 @@
     "@babel/plugin-transform-runtime": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@babel/preset-typescript": "^7.15.0",
+    "@babel/runtime": "^7.15.0",
     "@types/events": "^3.0.0",
     "@types/jest-image-snapshot": "^4.3.1",
     "@types/lodash": "^4.14.172",
