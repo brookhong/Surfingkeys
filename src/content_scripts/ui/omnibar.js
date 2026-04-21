@@ -452,6 +452,7 @@ function createOmnibar(front, clipboard) {
             `<div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`, { "class": "text-container" }));
         li.uid = uid;
         li.url = b.url;
+        li._item = b;
         return li;
     };
 
@@ -770,7 +771,7 @@ function createOmnibar(front, clipboard) {
     self.addHandler('SearchEngine', searchEngine);
     self.addHandler('Commands', Commands(self, front));
     self.addHandler('OmniQuery', OmniQuery(self, front));
-    self.addHandler('UserURLs', OpenUserURLs(self));
+    self.addHandler('UserURLs', OpenUserURLs(self, front));
     self.addHandler('LLMChat', LLMChat(self, front));
 
     front._actions['updateOmnibarResult'] = function(message) {
@@ -1582,7 +1583,7 @@ function OmniQuery(omnibar, front) {
     return self;
 }
 
-function OpenUserURLs(omnibar) {
+function OpenUserURLs(omnibar, front) {
     var self = {
         focusFirstCandidate: true,
         prompt: `UserURLs${separatorHtml}`
@@ -1600,6 +1601,17 @@ function OpenUserURLs(omnibar) {
 
         urls = filterByTitleOrUrl(_items, query, runtime.getCaseSensitive(query));
         omnibar.listURLs(urls, false);
+    };
+    self.onEnter = function() {
+        var fi = omnibar.resultsDiv.querySelector('li.focused');
+        front.contentCommand({
+            action: 'userURLs_entered',
+            item: fi ? fi._item : { url: omnibar.input.value },
+            tabbed: this.tabbed,
+            ctrlKey: !this.activeTab,
+            shiftKey: omnibar.tabbed ^ this.tabbed,
+        });
+        return this.activeTab;
     };
     return self;
 }
