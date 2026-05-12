@@ -67,6 +67,7 @@ Surfingkeys is doing its best to make full use of keyboard for web browsing, but
 * [Markdown preview](#markdown-preview)
 * [Capture page](#capture-page)
 * [PDF viewer](#pdf-viewer)
+* [Managed settings by browser policy (Firefox/LibreWolf)](#managed-settings-by-browser-policy-firefoxlibrewolf)
 * [Edit your own settings](#edit-your-own-settings)
 * [License](#license)
 
@@ -493,6 +494,27 @@ Remember that in insert mode, press `Ctrl-i` to open the vim editor.
 ### Edit settings
 
 `;e` to open settings editor, `:w` to save settings.
+
+### Managed settings by browser policy (Firefox/LibreWolf)
+
+Surfingkeys can read managed config from `browser.storage.managed`.
+This enables declarative setup through Firefox/LibreWolf enterprise policy.
+
+Managed keys (minimal schema):
+
+- `snippets`: inline JavaScript settings string.
+- `localPath`: URL or filesystem path to a settings file.
+  - plain paths are normalized to `file:///...`.
+
+Behavior:
+
+- managed values act as fallback defaults.
+- if user saves `snippets` or `localPath`, user values win.
+- loading settings from URL in the UI is always allowed.
+
+If both `snippets` and `localPath` exist in managed policy, `snippets` wins.
+
+See [docs/managed_settings.md](docs/managed_settings.md) for examples.
 
 ## Dot to repeat previous action
 

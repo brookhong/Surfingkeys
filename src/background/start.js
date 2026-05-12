@@ -257,6 +257,110 @@ function start(browser) {
         }
     }
 
+    // Cached copy of policy-managed settings for this extension session.
+    var managedSettings = null;
+    var managedSettingsLoaded = false;
+
+    // Normalize plain filesystem paths so Surfingkeys can read local files
+    // consistently in Firefox (file:///...).
+    function normalizeSettingsPath(path) {
+        path = path || "";
+        if (typeof(browser.normalizeSettingsPath) === "function") {
+            return browser.normalizeSettingsPath(path);
+        }
+        if (path.length && !/^\w+:\/\/\w+/i.test(path) && path.indexOf('file:///') === -1) {
+            path = path.replace(/\\/g, '/');
+            if (path[0] === '/') {
+                path = path.substr(1);
+            }
+            path = "file:///" + path;
+        }
+        return path;
+    }
+
+    // Load managed policy settings once per extension startup.
+    // The Firefox backend provides browser.loadManagedSettings.
+    function loadManagedSettings(cb) {
+        if (managedSettingsLoaded) {
+            cb(managedSettings);
+            return;
+        }
+
+        if (typeof(browser.loadManagedSettings) === "function") {
+            browser.loadManagedSettings(function(nextManagedSettings) {
+                managedSettingsLoaded = true;
+                managedSettings = nextManagedSettings || null;
+                cb(managedSettings);
+            });
+            return;
+        }
+
+        // Non-Firefox backends: no managed settings support.
+        managedSettingsLoaded = true;
+        cb(null);
+    }
+
+    // If localPath is set, fetch snippet text from that path.
+    // This is shared by user-defined localPath and managed localPath.
+    function resolveSnippetsFromPath(set, cb) {
+        if (!set.localPath) {
+            cb(set);
+            return;
+        }
+
+        request(appendNonce(set.localPath), function(resp) {
+            set.snippets = resp;
+            cb(set);
+        }, undefined, undefined, function () {
+            set.error = "Failed to read snippets from " + set.localPath;
+            cb(set);
+        });
+    }
+
+    // Apply managed policy for snippets/localPath as fallback defaults.
+    // User-saved snippets/localPath always win.
+    function applyManagedSettings(set, cb) {
+        loadManagedSettings(function(currentManagedSettings) {
+            if (!currentManagedSettings) {
+                resolveSnippetsFromPath(set, cb);
+                return;
+            }
+
+            const hasUserSnippets = set.snippets !== undefined;
+            const hasUserLocalPath = set.localPath !== undefined;
+            const hasManagedSnippets = currentManagedSettings.hasOwnProperty("snippets");
+            const hasManagedLocalPath = currentManagedSettings.hasOwnProperty("localPath");
+
+            set.managedSettings = {
+                snippets: hasManagedSnippets,
+                localPath: hasManagedLocalPath,
+                applied: null
+            };
+
+            if (hasUserSnippets || hasUserLocalPath) {
+                resolveSnippetsFromPath(set, cb);
+                return;
+            }
+
+            // Prefer managed snippets over managed localPath when both exist.
+            if (hasManagedSnippets) {
+                set.snippets = currentManagedSettings.snippets;
+                set.managedSettings.applied = "snippets";
+                cb(set);
+                return;
+            }
+
+            if (hasManagedLocalPath) {
+                set.localPath = currentManagedSettings.localPath;
+                set.managedSettings.applied = "localPath";
+                resolveSnippetsFromPath(set, cb);
+                return;
+            }
+
+            resolveSnippetsFromPath(set, cb);
+        });
+    }
+
     function loadSettings(keys, cb) {
         var tmpSet = {
             blocklist: {},
@@ -274,15 +378,18 @@ function start(browser) {
                 set.proxy = [set.proxy];
                 set.autoproxy_hosts = [set.autoproxy_hosts];
             }
-            if (set.localPath) {
-                request(appendNonce(set.localPath), function(resp) {
-                    set.snippets = resp;
-                    cb(set);
-                }, undefined, undefined, function (po) {
-                    // failed to read snippets from localPath
-                    set.error = "Failed to read snippets from " + set.localPath;
-                    cb(set);
-                });
+
+            // Resolve snippets when callers request snippet sources or managed status.
+            const shouldResolveSnippets = !keys
+                || keys === "localPath"
+                || keys === "snippets"
+                || (keys instanceof Array
+                    && (keys.indexOf("localPath") !== -1
+                        || keys.indexOf("snippets") !== -1
+                        || keys.indexOf("managedSettings") !== -1));
+
+            if (shouldResolveSnippets) {
+                applyManagedSettings(set, cb);
             } else {
                 cb(set);
             }
@@ -650,6 +757,7 @@ function start(browser) {
     }
 
     function _loadSettingsFromUrl(url, cb) {
+        url = normalizeSettingsPath(url);
         request(appendNonce(url), function(resp) {
             _updateAndPostSettings({localPath: url, snippets: resp});
             registerUserScript(resp, () => {
@@ -1328,6 +1436,8 @@ function start(browser) {
     }
     self.updateSettings = function(message, sender, sendResponse) {
         let error = "";
+        message.settings = message.settings || {};
+
         if (message.scope === "snippets") {
             // For settings from snippets, don't broadcast the update
             // neither persist into storage
@@ -1365,6 +1475,10 @@ function start(browser) {
             }
             return { error };
         } else {
+            if (Object.keys(message.settings).length === 0) {
+                return { error };
+            }
+
             if (message.settings.showAdvanced && isMV3) {
                 if (isUserScriptsAvailable()) {
                     chrome.userScripts.configureWorld({
@@ -1372,12 +1486,21 @@ function start(browser) {
                         messaging: true
                     });
                     _updateAndPostSettings(message.settings);
-                    registerUserScript(message.settings.snippets, () => {
-                        _response(message, sendResponse, { error });
-                    });
+                    if (message.settings.hasOwnProperty("snippets")) {
+                        registerUserScript(message.settings.snippets, () => {
+                            _response(message, sendResponse, { error });
+                        });
+                    } else {
+                        loadSettings(["snippets"], function(data) {
+                            registerUserScript(data.snippets, () => {
+                                _response(message, sendResponse, { error });
+                            });
+                        });
+                    }
                     return;
                 } else {
-                    error = "Advanced mode is only available when Developer mode is turned on from chrome://extensions/.";
+                    const advancedError = "Advanced mode is only available when Developer mode is turned on from chrome://extensions/.";
+                    error = error ? `${error} ${advancedError}` : advancedError;
                 }
             } else {
                 _updateAndPostSettings(message.settings);
