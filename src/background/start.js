@@ -1788,15 +1788,20 @@ function start(browser) {
         });
     };
     self.getCaptureSize = function(message, sender, sendResponse) {
-        var img = document.createElement( "img" );
-        img.onload = function() {
-            _response(message, sendResponse, {
-                width: img.width,
-                height: img.height
-            });
-        };
         chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
-            img.src = dataUrl;
+            fetch(dataUrl)
+                .then(function(res) {
+                    return res.blob();
+                })
+                .then(function(blob) {
+                    return createImageBitmap(blob);
+                })
+                .then(function(img) {
+                    _response(message, sendResponse, {
+                        width: img.width,
+                        height: img.height
+                    });
+                });
         });
     };
     self.deleteHistoryOlderThan = function(message, sender, sendResponse) {
