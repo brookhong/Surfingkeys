@@ -440,7 +440,7 @@ div.hint-scrollable {
                     const target = elm[0];
                     // remove Text Node from elm as it cannot be transitted across JS scope
                     elm[0] = "__EVENT_TARGET__";
-                    dispatchSKEvent('user', ["onHintClicked", elm], target);
+                    dispatchSKEvent('user', ["onHintClicked", elm, shiftKey], target);
                 } else {
                     dispatchSKEvent('user', ["onHintClicked", shiftKey], elm);
                 }
