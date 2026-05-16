@@ -417,6 +417,13 @@ function start(browser) {
                     });
                 });
                 break;
+            case 'chooseTab':
+                getActiveTab(function(tab) {
+                    sendTabMessage(tab.id, 0, {
+                        subject: 'chooseTab'
+                    });
+                });
+                break;
             case 'closeTab':
                 getActiveTab(function(tab) {
                     chrome.tabs.remove(tab.id);
