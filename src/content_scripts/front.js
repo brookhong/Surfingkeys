@@ -280,7 +280,12 @@ function createFront(insert, normal, hints, visual, browser) {
                 if (n.value === selected) {
                     initial_line = i;
                 }
-                return n.innerText.trim() + " >< " + n.value;
+                var text = n.innerText.trim();
+                if (text == n.value) {
+                    return text;
+                } else {
+                    return text + " >< " + n.value;
+                }
             }).join('\n');
             elementBehindEditor = element;
         } else {
