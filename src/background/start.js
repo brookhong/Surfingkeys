@@ -913,17 +913,25 @@ function start(browser) {
         }
         return base;
     }
+    function _getTabIndex(tabs, tabId) {
+        var tabIds = tabs.map(function(e) { return e.id; });
+        return tabIds.indexOf(tabId);
+    }
     function _nextTab(tab, step) {
         if (tab) {
             chrome.tabs.query({
                 windowId: tab.windowId
             }, function(tabs) {
-                if (tab.index == 0 && step == -1) {
+                var tabIndex = _getTabIndex(tabs, tab.id);
+                if (tabIndex === -1) {
+                    return;
+                }
+                if (tabIndex == 0 && step == -1) {
                     step = tabs.length -1 ;
-                } else if (tab.index == tabs.length -1 && step == 1 ) {
+                } else if (tabIndex == tabs.length -1 && step == 1 ) {
                     step = 1 - tabs.length ;
                 }
-                var to = _fixTo(tab.index + step, tabs.length - 1);
+                var to = _fixTo(tabIndex + step, tabs.length - 1);
                 chrome.tabs.update(tabs[to].id, {
                     active: true
                 });
@@ -945,11 +953,13 @@ function start(browser) {
             chrome.tabs.query({
                 windowId: tab.windowId
             }, function(tabs) {
-                var tabIds = tabs.map(function(e) {
-                    return e.id;
-                });
+                var tabIndex = _getTabIndex(tabs, tab.id);
+                if (tabIndex === -1) {
+                    return;
+                }
                 repeats = _fixTo(repeats, tabs.length);
-                var base = _roundBase(tab.index, repeats, tabs.length);
+                var base = _roundBase(tabIndex, repeats, tabs.length);
+                var tabIds = tabs.map(function(e) { return e.id; });
                 operation(tabIds.slice(base, base + repeats));
             });
         } else {
