@@ -789,6 +789,83 @@ function start(browser) {
             }
         });
     };
+    function _getBaseDomain(hostname) {
+        if (!hostname) return hostname;
+        var parts = hostname.split(".");
+        if (parts.length <= 2) return hostname;
+        var isNumericTld = /^\d+$/.test(parts[parts.length - 1]);
+        if (isNumericTld) return hostname;
+        var commonTlds = ["co.uk", "com.au", "com.br", "co.jp", "co.kr", "com.cn", "com.ru", "org.uk", "net.au", "ac.uk"];
+        var lastTwo = parts.slice(-2).join(".");
+        if (commonTlds.indexOf(lastTwo) !== -1) {
+            return parts.slice(-3).join(".");
+        }
+        return parts.slice(-2).join(".");
+    }
+
+    self.sortTabsByDomain = function(message, sender, sendResponse) {
+        const windowId = sender.tab.windowId;
+        chrome.tabs.query({windowId: windowId}, function(tabs) {
+            var pinnedTabs = tabs.filter(function(t) { return t.pinned; });
+            var unpinnedTabs = tabs.filter(function(t) { return !t.pinned; });
+
+            var groups = {};
+            unpinnedTabs.forEach(function(tab) {
+                var domain;
+                try {
+                    domain = new URL(tab.url).hostname || new URL(tab.url).protocol;
+                } catch (e) {
+                    domain = "misc";
+                }
+                if (!groups[domain]) {
+                    groups[domain] = [];
+                }
+                groups[domain].push(tab);
+            });
+
+            var sortedDomains = Object.keys(groups).sort();
+            var sortedTabs = [];
+            sortedDomains.forEach(function(domain) {
+                sortedTabs = sortedTabs.concat(groups[domain]);
+            });
+
+            chrome.tabs.move(sortedTabs.map(function(t) { return t.id; }), {index: pinnedTabs.length});
+
+            _response(message, sendResponse, {domains: sortedDomains.length});
+        });
+    };
+    self.clusterTabsByDomain = function(message, sender, sendResponse) {
+        const windowId = sender.tab.windowId;
+        chrome.tabs.query({windowId: windowId}, function(tabs) {
+            var pinnedTabs = tabs.filter(function(t) { return t.pinned; });
+            var unpinnedTabs = tabs.filter(function(t) { return !t.pinned; });
+
+            var clusters = {};
+            unpinnedTabs.forEach(function(tab) {
+                var base;
+                try {
+                    var hostname = new URL(tab.url).hostname;
+                    base = hostname ? _getBaseDomain(hostname) : new URL(tab.url).protocol;
+                } catch (e) {
+                    base = "misc";
+                }
+                if (!clusters[base]) {
+                    clusters[base] = [];
+                }
+                clusters[base].push(tab);
+            });
+
+            var sortedBases = Object.keys(clusters).sort();
+            var sortedTabs = [];
+            sortedBases.forEach(function(base) {
+                sortedTabs = sortedTabs.concat(clusters[base]);
+            });
+
+            chrome.tabs.move(sortedTabs.map(function(t) { return t.id; }), {index: pinnedTabs.length});
+
+            _response(message, sendResponse, {clusters: sortedBases.length});
+        });
+    };
     self.ungroupTab = function(message, sender, sendResponse) {
         chrome.tabs.ungroup([sender.tab.id]);
     };
