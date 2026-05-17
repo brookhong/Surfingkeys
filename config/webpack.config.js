@@ -48,7 +48,6 @@ function modifyManifest(browser, mode, buffer) {
                 "resources": [
                     "_favicon/*",
                     "api.js",
-                    "pages/neovim.html",
                     "pages/emoji.tsv",
                     "pages/l10n.json",
                     "pages/frontend.html",
@@ -94,7 +93,6 @@ module.exports = (env, argv) => {
     const pagesCopyOptions = {
         ignore: [
             '**/images/*',
-            '**/neovim.*',
             '**/pdf_viewer.*',
         ]
     };
@@ -115,8 +113,6 @@ module.exports = (env, argv) => {
     ];
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
-        entry['pages/neovim'] = './src/pages/neovim.js';
-        moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
         moduleEntries['api'] = './src/user_scripts/index.js';
         const chromeOnlyCopyPatterns = [
             { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },
