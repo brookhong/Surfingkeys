@@ -19,6 +19,7 @@ function modifyManifest(browser, mode, buffer) {
         manifest.permissions.push("cookies");
         manifest.permissions.push("contextualIdentities");
         manifest.permissions.push("<all_urls>");
+        manifest.permissions.push("tabGroups");
     } else if (browser === "safari") {
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";

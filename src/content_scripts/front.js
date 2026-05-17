@@ -353,13 +353,31 @@ function createFront(insert, normal, hints, visual, browser) {
      *     Front.openOmnibar({type: "UserURLs", extra: services});
      * }, {domain: /console.amazonaws|console.aws.amazon.com/i});
      */
+    var _userURLsHasCustomOnEnter = false;
     self.openOmnibar = function(args) {
         args.action = 'openOmnibar';
+        _userURLsHasCustomOnEnter = false;
         if (args.type === "LLMChat") {
             args.extra = args.extra || {};
             args.extra.url = window.location.href.replace(/\#[^\#]*$/, '');
         }
+        if (args._hasCustomOnEnter) {
+            _userURLsHasCustomOnEnter = true;
+            delete args._hasCustomOnEnter;
+        }
         self.command(args);
+    };
+
+    _actions['userURLs_entered'] = function(message) {
+        if (_userURLsHasCustomOnEnter) {
+            _userURLsHasCustomOnEnter = false;
+            dispatchSKEvent('user', ['userURLs_onEnter', message.item, message.ctrlKey, message.shiftKey]);
+        } else {
+            RUNTIME('openLink', {
+                tab: { tabbed: message.tabbed, active: !message.ctrlKey },
+                url: message.item.url
+            });
+        }
     };
 
     var _inlineQuery = false;

@@ -328,12 +328,22 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         RUNTIME("duplicateTab", {active: false});
     });
     mapkey('yy', "#7Copy current page's URL", function() {
-        var url = window.location.href;
-        if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-            const filePos = window.location.search.indexOf("=") + 1;
-            url = window.location.search.substr(filePos);
+        if (RUNTIME.repeats > 1) {
+            const num = RUNTIME.repeats;
+            RUNTIME('getTabs', null, function (response) {
+                const start = response.tabs.findIndex((t) => t.active);
+                const range = response.tabs.slice(start, start + num);
+                clipboard.write(range.map(tab => tab.url).join('\n'));
+            });
+            RUNTIME.repeats = 1;
+        } else {
+            var url = window.location.href;
+            if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
+                const filePos = window.location.search.indexOf("=") + 1;
+                url = window.location.search.substr(filePos);
+            }
+            clipboard.write(url);
         }
-        clipboard.write(url);
     });
 
     function getFormData(form, format) {

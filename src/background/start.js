@@ -802,7 +802,7 @@ function start(browser) {
             chrome.tabs.query({}, function(tabs) {
                 const tabsInGroup = {};
                 tabs.forEach(function(tab) {
-                    if (tab.groupId && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+                    if (tab.groupId && tab.groupId !== (chrome.tabGroups?.TAB_GROUP_ID_NONE ?? -1)) {
                         if (!tabsInGroup[tab.groupId]) {
                             tabsInGroup[tab.groupId] = [];
                         }
@@ -813,6 +813,7 @@ function start(browser) {
                             id: tab.id,
                             title: tab.title,
                             url: tab.url,
+                            favIconUrl: tab.favIconUrl,
                             active: tab.active,
                             index: tab.index
                         });
@@ -837,6 +838,9 @@ function start(browser) {
                 pinned: !tab.pinned
             });
         });
+    };
+    self.closeTabByIds = function(message, sender, sendResponse) {
+        chrome.tabs.remove(message.tabIds);
     };
     function focusTab(windowId, tabId) {
         chrome.windows.update(windowId, {
@@ -1784,15 +1788,20 @@ function start(browser) {
         });
     };
     self.getCaptureSize = function(message, sender, sendResponse) {
-        var img = document.createElement( "img" );
-        img.onload = function() {
-            _response(message, sendResponse, {
-                width: img.width,
-                height: img.height
-            });
-        };
         chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataUrl) {
-            img.src = dataUrl;
+            fetch(dataUrl)
+                .then(function(res) {
+                    return res.blob();
+                })
+                .then(function(blob) {
+                    return createImageBitmap(blob);
+                })
+                .then(function(img) {
+                    _response(message, sendResponse, {
+                        width: img.width,
+                        height: img.height
+                    });
+                });
         });
     };
     self.deleteHistoryOlderThan = function(message, sender, sendResponse) {

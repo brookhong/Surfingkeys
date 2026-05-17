@@ -271,7 +271,7 @@ const Front = (function() {
     function renderTabs(container, tabs) {
         setSanitizedContent(container, "");
         var hintLabels = hints.genLabels(tabs.length - 1);
-        const unitWidth = window.innerWidth / tabs.length - 2;
+        const unitWidth = (window.innerWidth - 2) / tabs.length - 2;
         const verticalTabs = runtime.conf.verticalTabs;
         container.className = verticalTabs ? "vertical" : "horizontal";
         renderTabTitles(container, tabs);

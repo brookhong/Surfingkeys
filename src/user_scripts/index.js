@@ -77,6 +77,7 @@ let onClipboardReadFn;
 let onEditorWriteFn;
 let userScriptTask = () => {};
 let hintsCreationResolve;
+let _pendingOnEnter = null;
 initSKFunctionListener("user", {
     callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
@@ -130,6 +131,12 @@ initSKFunctionListener("user", {
         if (hintsCreationResolve) {
             hintsCreationResolve(found);
             hintsCreationResolve = null;
+        }
+    },
+    userURLs_onEnter: (item, ctrlKey, shiftKey) => {
+        if (_pendingOnEnter) {
+            _pendingOnEnter(item, ctrlKey, shiftKey);
+            _pendingOnEnter = null;
         }
     },
 }, true);
@@ -279,6 +286,12 @@ const api = {
             dispatchSKEvent('api', ['front:showEditor', element, type, useNeovim]);
         },
         openOmnibar: (args) => {
+            _pendingOnEnter = null;
+            if (typeof args.onEnter === 'function') {
+                _pendingOnEnter = args.onEnter;
+                args = Object.assign({}, args, { _hasCustomOnEnter: true });
+                delete args.onEnter;
+            }
             dispatchSKEvent('api', ['front:openOmnibar', args]);
         },
         showBanner,

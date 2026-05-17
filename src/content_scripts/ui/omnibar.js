@@ -123,13 +123,14 @@ function createOmnibar(front, clipboard) {
         annotation: "Toggle Omnibar's position",
         feature_group: 8,
         code: function () {
+            const savedInput = self.input.value;
             if (runtime.conf.omnibarPosition === "bottom") {
                 runtime.conf.omnibarPosition = "middle";
             } else {
                 runtime.conf.omnibarPosition = "bottom";
             }
             reopen(function() {
-                _savedAargs.pref = self.input.value;
+                _savedAargs.pref = savedInput;
                 front.openOmnibar(_savedAargs);
             });
         }
@@ -451,6 +452,7 @@ function createOmnibar(front, clipboard) {
             `<div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`, { "class": "text-container" }));
         li.uid = uid;
         li.url = b.url;
+        li._item = b;
         return li;
     };
 
@@ -763,12 +765,13 @@ function createOmnibar(front, clipboard) {
         });
     }));
     self.addHandler('Tabs', OpenTabs(self));
+    self.addHandler('CloseTabs', CloseTabs(self));
     self.addHandler('Windows', OpenWindows(self, front));
     self.addHandler('VIMarks', OpenVIMarks(self));
     self.addHandler('SearchEngine', searchEngine);
     self.addHandler('Commands', Commands(self, front));
     self.addHandler('OmniQuery', OmniQuery(self, front));
-    self.addHandler('UserURLs', OpenUserURLs(self));
+    self.addHandler('UserURLs', OpenUserURLs(self, front));
     self.addHandler('LLMChat', LLMChat(self, front));
 
     front._actions['updateOmnibarResult'] = function(message) {
@@ -1115,6 +1118,49 @@ function OpenTabs(omnibar) {
             var filtered = filterByTitleOrUrl(cached, omnibar.input.value, runtime.getCaseSensitive(omnibar.input.value));
             omnibar.listURLs(filtered, false);
         });
+    };
+    return self;
+}
+
+function CloseTabs(omnibar) {
+    var self = {
+        focusFirstCandidate: true,
+    };
+
+    self.onOpen = function() {
+        self.prompt = `close tabs${separatorHtml}`;
+        omnibar.cachedPromise = new Promise(function(resolve) {
+            RUNTIME('getTabs', {queryInfo: {currentWindow: true}}, function(response) {
+                resolve(response.tabs);
+            });
+        });
+        self.onInput();
+    };
+    self.onInput = function() {
+        omnibar.cachedPromise.then(function(cached) {
+            var filtered = filterByTitleOrUrl(cached, omnibar.input.value, runtime.getCaseSensitive(omnibar.input.value));
+            filtered.forEach(function(tab) {
+                try {
+                    var u = new URL(tab.url);
+                    tab.url = u.origin + u.pathname;
+                } catch (e) {}
+            });
+            omnibar.listURLs(filtered, false);
+        });
+    };
+    self.onEnter = function() {
+        var items = omnibar.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li');
+        var tabIds = [];
+        items.forEach(function(li) {
+            if (li.uid && li.uid[0] === 'T') {
+                var parts = li.uid.substr(1).split(":");
+                tabIds.push(parseInt(parts[1]));
+            }
+        });
+        if (tabIds.length > 0) {
+            RUNTIME('closeTabByIds', {tabIds: tabIds});
+        }
+        return true;
     };
     return self;
 }
@@ -1537,7 +1583,7 @@ function OmniQuery(omnibar, front) {
     return self;
 }
 
-function OpenUserURLs(omnibar) {
+function OpenUserURLs(omnibar, front) {
     var self = {
         focusFirstCandidate: true,
         prompt: `UserURLs${separatorHtml}`
@@ -1555,6 +1601,17 @@ function OpenUserURLs(omnibar) {
 
         urls = filterByTitleOrUrl(_items, query, runtime.getCaseSensitive(query));
         omnibar.listURLs(urls, false);
+    };
+    self.onEnter = function() {
+        var fi = omnibar.resultsDiv.querySelector('li.focused');
+        front.contentCommand({
+            action: 'userURLs_entered',
+            item: fi ? fi._item : { url: omnibar.input.value },
+            tabbed: this.tabbed,
+            ctrlKey: !this.activeTab,
+            shiftKey: omnibar.tabbed ^ this.tabbed,
+        });
+        return this.activeTab;
     };
     return self;
 }
