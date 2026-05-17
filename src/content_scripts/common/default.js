@@ -470,7 +470,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             }
         })
     }, { repeatIgnore: true });
-    mapkey('S', '#4Go back in history', function() {
+    mapkey('s', '#4Go back in history', function() {
         history.go(-1);
     }, {repeatIgnore: true});
     mapkey('D', '#4Go forward in history', function() {
