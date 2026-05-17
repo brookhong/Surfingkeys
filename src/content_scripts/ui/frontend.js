@@ -525,48 +525,7 @@ const Front = (function() {
             editor.show(message);
         });
     }
-    let _neovim = null;
-    function renderNvim(message) {
-        if (!_neovim) {
-            _neovim  = new Promise((resolve, reject) => {
-                import(/* webpackIgnore: true */ './neovim_lib.js').then((nvimlib) => {
-                    nvimlib.default(_nvim).then(({nvim, destroy}) => {
-                        function quitNvim() {
-                            normal.enter();
-                            destroy();
-                            self.hidePopup();
-                        }
-                        function rpc(data) {
-                            const [ event, args ] = data;
-                            if (event === "WriteData") {
-                                self.contentCommand({
-                                    action: 'ace_editor_saved',
-                                    data: args[0].join("\r")
-                                });
-                                quitNvim();
-                            }
-                        }
-                        nvim.on('nvim:open', () => {
-                            nvim.on('surfingkeys:rpc', rpc);
-                        });
-                        nvim.on('nvim:close', () => {
-                            nvim.off('surfingkeys:rpc', rpc);
-                            quitNvim();
-                        });
-                        resolve(nvim);
-                    });
-                });
-            });
-        }
-        _neovim.then((nvim) => {
-            normal.exit();
-            RUNTIME('connectNative', {mode: "embed"}, (resp) => {
-                nvim.connect(resp.url, () => {
-                    nvim.command(`call NewScratch("${message.file_name}", "${encode(message.content)}", "${message.type}")`);
-                });
-            });
-        });
-    }
+
     _actions['showEditor'] = function(message) {
         if (message.onEditorSaved) {
             self.onEditorSaved = message.onEditorSaved;
