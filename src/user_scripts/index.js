@@ -1,7 +1,5 @@
 import { RUNTIME, dispatchSKEvent } from '../content_scripts/common/runtime.js';
 import {
-    aceVimMap,
-    addVimMapKey,
     applyUserSettings,
     getBrowserName,
     getClickableElements,
@@ -165,8 +163,6 @@ function createCssSelectorForElements(cssSelector, elements) {
 
 const api = {
     RUNTIME,
-    aceVimMap,
-    addVimMapKey,
     addSearchAlias,
     addCommand,
     cmap,
@@ -273,17 +269,6 @@ const api = {
         registerInlineQuery: (args) => {
             inlineQuery = args;
             dispatchSKEvent('api', ['front:registerInlineQuery']);
-        },
-        showEditor: (element, onWrite, type, useNeovim) => {
-            if (typeof(element) !== 'string') {
-                const elementEditing = "surfingkeys--element--editing";
-                if (createCssSelectorForElements(elementEditing, element) === 0) {
-                    return;
-                }
-                element = `.${elementEditing}`;
-            }
-            onEditorWriteFn = onWrite;
-            dispatchSKEvent('api', ['front:showEditor', element, type, useNeovim]);
         },
         openOmnibar: (args) => {
             _pendingOnEnter = null;

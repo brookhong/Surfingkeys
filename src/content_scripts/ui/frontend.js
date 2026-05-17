@@ -184,7 +184,6 @@ const Front = (function() {
     const _usage = document.getElementById('sk_usage');
     const _popup = document.getElementById('sk_popup');
     const _editor = document.getElementById('sk_editor');
-    const _nvim = document.getElementById('sk_nvim');
     const _tabs = document.getElementById('sk_tabs');
     const _banner = document.getElementById('sk_banner');
     const _bubble = document.getElementById('sk_bubble');

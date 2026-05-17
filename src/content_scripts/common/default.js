@@ -39,12 +39,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('?', '#0Show usage', function() {
         front.showUsage();
     });
-    function openVim(useNeovim) {
-        var element = getRealEdit();
-        element.blur();
-        insert.exit();
-        front.showEditor(element, null, null, useNeovim);
-    }
 
     mapkey(";ql", '#0Show last action', function() {
         showPopup(htmlEncode(runtime.conf.lastKeys.map(function(k) {

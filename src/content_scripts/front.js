@@ -251,67 +251,6 @@ function createFront(insert, normal, hints, visual, browser) {
 
     var onEditorSaved, elementBehindEditor;
 
-    /**
-     * Launch the vim editor.
-     *
-     * @param {HTMLElement} element the target element which the vim editor is launched for, this parameter can also be a string, which will be used as default content in vim editor.
-     * @param {function} onWrite a callback function to be executed on written back from vim editor.
-     * @param {string} [type=null] the type for the vim editor, which can be `url`, if not provided, it will be tag name of the target element.
-     * @param {boolean} [useNeovim=false] the vim editor will be the embeded JS implementation, if `useNeovim` is true, neovim will be used through natvie messaging.
-     * @name Front.showEditor
-     *
-     * @example
-     * mapkey(';U', '#4Edit current URL with vim editor, and reload', function() {
-     *     Front.showEditor(window.location.href, function(data) {
-     *         window.location.href = data;
-     *     }, 'url');
-     * });
-     */
-    self.showEditor = function(element, onWrite, type, useNeovim) {
-        var content,
-            type = type || element.localName,
-            initial_line = 0;
-        if (typeof(element) === "string") {
-            content = element;
-            elementBehindEditor = document.body;
-        } else if (type === 'select') {
-            var selected = element.value;
-            content = Array.from(element.querySelectorAll('option')).map(function(n, i) {
-                if (n.value === selected) {
-                    initial_line = i;
-                }
-                return n.innerText.trim() + " >< " + n.value;
-            }).join('\n');
-            elementBehindEditor = element;
-        } else {
-            elementBehindEditor = element;
-            if (elementBehindEditor.nodeName === "DIV") {
-                if (elementBehindEditor.className === "CodeMirror-code") {
-                    let codeMirrorLines = elementBehindEditor.querySelectorAll(".CodeMirror-line")
-                    content = Array.from(codeMirrorLines).map(el => el.innerText).join("\n")
-                    // Remove the red dot (char code 8226) that CodeMirror uses to visualize the zero-width space.
-                    content = content.replace(/\u200B/g, "")
-
-                } else {
-                    content = elementBehindEditor.innerText;
-                }
-            } else {
-                content = elementBehindEditor.value;
-            }
-        }
-        onEditorSaved = onWrite || updateElementBehindEditor;
-        const cmd = {
-            action: 'showEditor',
-            type: type || "textarea",
-            initial_line: initial_line,
-            content: content
-        };
-        if (useNeovim || runtime.conf.useNeovim) {
-            cmd.file_name = `${new URL(window.location.origin).host}/${elementBehindEditor.nodeName.toLowerCase()}`;
-        }
-        self.command(cmd);
-    };
-
     self.chooseTab = function() {
         if (normal.repeats !== "") {
             RUNTIME('focusTabByIndex');
@@ -522,20 +461,6 @@ function createFront(insert, normal, hints, visual, browser) {
                 mode: mode,
                 new_keystroke: new_keystroke,
                 old_keystroke: old_keystroke
-            });
-        },
-        addVimMap: (lhs, rhs, ctx) => {
-            applyUICommand({
-                action: 'addVimMap',
-                lhs: lhs,
-                rhs: rhs,
-                ctx: ctx
-            });
-        },
-        addVimKeyMap: (vimKeyMap) => {
-            applyUICommand({
-                action: 'addVimKeyMap',
-                vimKeyMap
             });
         },
         addCommand: (name, description) => {

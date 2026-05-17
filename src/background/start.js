@@ -1286,7 +1286,6 @@ function start(browser) {
 
     function onFullSettingsRequested(data, callback) {
         data.isMV3 = isMV3;
-        data.useNeovim = browser.nvimServer && browser.nvimServer.instance;
         data.isUserScriptsAvailable = isUserScriptsAvailable();
         if (isMV3) {
             data.showAdvanced = data.isUserScriptsAvailable && data.showAdvanced;
@@ -1983,23 +1982,6 @@ function start(browser) {
 
     self.getContainerName = browser._getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
-
-    self.connectNative = function (message, sender, sendResponse) {
-        if (browser.nvimServer && browser.nvimServer.instance) {
-            browser.nvimServer.instance.then(({url, nm}) => {
-                nm.postMessage({
-                    mode: message.mode
-                });
-                _response(message, sendResponse, {
-                    url,
-                });
-            }).catch((error) => {
-                _response(message, sendResponse, {
-                    error,
-                });
-            });
-        }
-    };
 }
 
 export {

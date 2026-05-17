@@ -69,7 +69,6 @@
         }
     ],
     "web_accessible_resources": [
-        "pages/neovim.html",
         "pages/emoji.tsv",
         "pages/l10n.json",
         "pages/frontend.html",
