@@ -138,14 +138,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         hints.mouseoutLastElement();
     });
 
-    mapkey(';pp', '#7Paste html on current page', function() {
-        clipboard.read(function(response) {
-            document.documentElement.removeAttributes();
-            document.body.removeAttributes();
-            setSanitizedContent(document.head, "<title>" + new Date() +" updated by Surfingkeys</title>");
-            setSanitizedContent(document.body, response.data);
-        });
-    });
 
     function openGoogleTranslate() {
         if (window.getSelection().toString()) {
@@ -155,32 +147,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         }
     }
 
-    mapkey('O', '#1Open detected links from text', function() {
-        hints.create(runtime.conf.clickablePat, function(element) {
-            window.location.assign(element[2]);
-        }, {statusLine: "Open detected links from text"});
-    });
-
-    mapkey(".", '#0Repeat last action', function() {
-        // lastKeys in format: <keys in normal mode>[,(<mode name>\t<keys in this mode>)*], examples
-        // ['se']
-        // ['f', 'Hints\tBA']
-        const lastKeys = runtime.conf.lastKeys;
-        normal.feedkeys(lastKeys[0]);
-        var modeKeys = lastKeys.slice(1);
-        for (var i = 0; i < modeKeys.length; i++) {
-            var modeKey = modeKeys[i].split('\t');
-            if (modeKey[0] === 'Hints') {
-                function closureWrapper() {
-                    var hintKeys = modeKey[1];
-                    return function() {
-                        hints.feedkeys(hintKeys);
-                    };
-                }
-                setTimeout(closureWrapper(), 120 + i*100);
-            }
-        }
-    }, {repeatIgnore: true});
 
     mapkey("f", '#1Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints', function() {
         hints.create("", hints.dispatchMouseClick);
@@ -235,18 +201,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
     });
 
-    map('ZQ', ':quit');
-    mapkey('ZZ', '#5Save session and quit', function() {
-        RUNTIME('createSession', {
-            name: 'LAST',
-            quitAfterSaved: true
-        });
-    });
-    mapkey('ZR', '#5Restore last session', function() {
-        RUNTIME('openSession', {
-            name: 'LAST'
-        });
-    });
     map('u', 'e');
     mapkey('af', '#1Open a link in active new tab', function() {
         hints.create("", hints.dispatchMouseClick, {tabbed: true, active: true});
@@ -293,38 +247,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
         return tds;
     }
-    mapkey('yc', '#7Copy a column of a table', function() {
-        hints.create(getTableColumnHeads(), function(element) {
-            var column = Array.from(element.closest("table").querySelectorAll("tr")).map(function(tr) {
-                return tr.children.length > element.cellIndex ? tr.children[element.cellIndex].innerText : "";
-            });
-            clipboard.write(column.join("\n"));
-        });
-    });
-    mapkey('ymc', '#7Copy multiple columns of a table', function() {
-        var rows = null;
-        hints.create(getTableColumnHeads(), function(element) {
-            var column = Array.from(element.closest("table").querySelectorAll("tr")).map(function(tr) {
-                return tr.children.length > element.cellIndex ? tr.children[element.cellIndex].innerText : "";
-            });
-            if (!rows) {
-                rows = column;
-            } else {
-                column.forEach(function(c, i) {
-                    rows[i] += "\t" + c;
-                });
-            }
-            clipboard.write(rows.join("\n"));
-        }, {multipleHits: true});
-    });
-    mapkey('yq', '#7Copy pre text', function() {
-        hints.create("pre", function(element) {
-            clipboard.write(element.innerText);
-        });
-    });
 
-    cmap('<ArrowDown>', '<Ctrl-n>');
-    cmap('<ArrowUp>', '<Ctrl-p>');
     mapkey('q', '#1Click on an Image or a button', function() {
         hints.create("img, button", hints.dispatchMouseClick);
     });
@@ -392,22 +315,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey(';w', '#2Focus top window', function() {
         top.focus();
     });
-    mapkey('cc', '#7Open selected link or link from clipboard', function() {
-        if (window.getSelection().toString()) {
-            tabOpenLink(window.getSelection().toString());
-        } else {
-            clipboard.read(function(response) {
-                tabOpenLink(response.data);
-            });
-        }
-    });
-    mapkey(';cq', '#7Clear all URLs in queue to be opened', function() {
-        RUNTIME('clearQueueURLs');
-    });
-    mapkey('ys', "#7Copy current page's source", function() {
-        var aa = document.documentElement.cloneNode(true);
-        clipboard.write(aa.outerHTML);
-    });
     mapkey('yj', "#7Copy current settings", function() {
         RUNTIME('getSettings', {
             key: "RAW"
@@ -435,25 +342,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             url = window.location.search.substr(filePos);
         }
         clipboard.write(url);
-    });
-    mapkey('yY', "#7Copy all tabs's url", function() {
-        RUNTIME('getTabs', null, function (response) {
-            clipboard.write(response.tabs.map(tab => tab.url).join('\n'));
-        });
-    });
-    mapkey('yh', "#7Copy current page's host", function() {
-        var url = new URL(window.location.href);
-        clipboard.write(url.host);
-    });
-    mapkey('yl', "#7Copy current page's title", function() {
-        clipboard.write(document.title);
-    });
-    mapkey('yQ', '#7Copy all query history of OmniQuery.', function() {
-        RUNTIME('getSettings', {
-            key: 'OmniQueryHistory'
-        }, function(response) {
-            clipboard.write(response.settings.OmniQueryHistory.join("\n"));
-        });
     });
 
     function getFormData(form, format) {
@@ -488,68 +376,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     function generateFormKey(form) {
         return (form.method || "get") + "::" + new URL(form.action).pathname;
     }
-    mapkey('yf', '#7Copy form data in JSON on current page', function() {
-        var fd = {};
-        document.querySelectorAll('form').forEach(function(form) {
-            fd[generateFormKey(form)] = getFormData(form, "json");
-        });
-        clipboard.write(JSON.stringify(fd, null, 4));
-    });
-    mapkey(';pf', '#7Fill form with data from yf', function() {
-        hints.create('form', function(element, event) {
-            var formKey = generateFormKey(element);
-            clipboard.read(function(response) {
-                var forms = JSON.parse(response.data.trim());
-                if (forms.hasOwnProperty(formKey)) {
-                    var fd = forms[formKey];
-                    element.querySelectorAll('input, textarea').forEach(function(ip) {
-                        if (fd.hasOwnProperty(ip.name) && ip.type !== "hidden") {
-                            if (ip.type === "radio") {
-                                var op = element.querySelector(`input[name='${ip.name}'][value='${fd[ip.name]}']`);
-                                if (op) {
-                                    op.checked = true;
-                                }
-                            } else if (Array.isArray(fd[ip.name])) {
-                                element.querySelectorAll(`input[name='${ip.name}']`).forEach(function(ip) {
-                                    ip.checked = false;
-                                });
-                                var vals = fd[ip.name];
-                                vals.forEach(function(v) {
-                                    var op = element.querySelector(`input[name='${ip.name}'][value='${v}']`);
-                                    if (op) {
-                                        op.checked = true;
-                                    }
-                                });
-                            } else if (typeof(fd[ip.name]) === "string") {
-                                ip.value = fd[ip.name];
-                            }
-                        }
-                    });
-                } else {
-                    showBanner("No form data found for your selection from clipboard.");
-                }
-            });
-        });
-    });
-    mapkey('yp', '#7Copy form data for POST on current page', function() {
-        var aa = [];
-        document.querySelectorAll('form').forEach(function(form) {
-            var fd = {};
-            fd[(form.method || "get") + "::" + form.action] = getFormData(form);
-            aa.push(fd);
-        });
-        clipboard.write(JSON.stringify(aa, null, 4));
-    });
 
-    mapkey('g?', '#4Reload current page without query string(all parts after question mark)', function() {
-        window.location.href = window.location.href.replace(/\?[^\?]*$/, '');
-    });
-    mapkey('g#', '#4Reload current page without hash fragment', function() {
-        window.location.href = window.location.href.replace(/\#[^\#]*$/, '');
-    });
-    mapkey('gU', '#4Go to root of current URL hierarchy', function() {
-        window.location.href = window.location.origin;
-    });
     mapkey('gxt', '#3Close tab on left', function() {
         RUNTIME("closeTabLeft");
     });
@@ -567,9 +394,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
     mapkey('gxp', '#3Close playing tab', function() {
         RUNTIME("closeAudibleTab");
-    });
-    mapkey(';e', '#11Edit Settings', function() {
-        tabOpenLink("/pages/options.html");
     });
 
     addSearchAlias('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
@@ -618,44 +442,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             tabOpenLink("about:blank");
         });
     } else if (bn === "Chrome") {
-        mapkey('gr', '#14Read selected text or text from clipboard', function() {
-            clipboard.read(function(response) {
-                readText(window.getSelection().toString() || response.data, {verbose: true});
-            });
-        });
-        vmapkey('gr', '#9Read selected text', function() {
-            readText(window.getSelection().toString(), {verbose: true});
-        });
-
         mapkey('on', '#3Open newtab', function() {
             tabOpenLink("chrome://newtab/");
-        });
-        mapkey('ga', '#12Open Chrome About', function() {
-            tabOpenLink("chrome://help/");
-        });
-        mapkey('gb', '#12Open Chrome Bookmarks', function() {
-            tabOpenLink("chrome://bookmarks/");
-        });
-        mapkey('gc', '#12Open Chrome Cache', function() {
-            tabOpenLink("chrome://cache/");
-        });
-        mapkey('gd', '#12Open Chrome Downloads', function() {
-            tabOpenLink("chrome://downloads/");
-        });
-        mapkey('gh', '#12Open Chrome History', function() {
-            tabOpenLink("chrome://history/");
-        });
-        mapkey('gk', '#12Open Chrome Cookies', function() {
-            tabOpenLink("chrome://settings/cookies");
-        });
-        mapkey('ge', '#12Open Chrome Extensions', function() {
-            tabOpenLink("chrome://extensions/");
-        });
-        mapkey('gn', '#12Open Chrome net-internals', function() {
-            tabOpenLink("chrome://net-internals/#proxy");
-        });
-        mapkey(';i', '#12Open Chrome Inspect', function() {
-            tabOpenLink("chrome://inspect/#devices");
         });
     }
 
@@ -664,25 +452,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
 
     if (!getBrowserName().startsWith("Safari")) {
-        mapkey('t', '#8Open a URL', function() {
-            front.openOmnibar({type: "URLs"});
-        });
-        mapkey('go', '#8Open a URL in current tab', function() {
-            front.openOmnibar({type: "URLs", tabbed: false});
-        });
-        mapkey('ox', '#8Open recently closed URL', function() {
-            front.openOmnibar({type: "RecentlyClosed"});
-        });
         mapkey('W', '#3Move current tab to another window',  function() {
             front.openOmnibar(({type: "Windows"}));
-        });
-        mapkey(';gt', '#3Gather filtered tabs into current window', function() {
-            front.openOmnibar({type: "Tabs", extra: {
-                action: "gather"
-            }});
-        });
-        mapkey(';gw', '#3Gather all tabs into current window',  function() {
-            RUNTIME("gatherWindows");
         });
         mapkey('<<', '#3Move current tab to left', function() {
             RUNTIME('moveTab', {
@@ -693,32 +464,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             RUNTIME('moveTab', {
                 step: 1
             });
-        });
-        mapkey('yd', "#7Copy current downloading URL", function() {
-            RUNTIME('getDownloads', {
-                query: {state: "in_progress"}
-            }, function(response) {
-                var items = response.downloads.map(function(o) {
-                    return o.url;
-                });
-                clipboard.write(items.join(','));
-            });
-        });
-        mapkey('gs', '#12View page source', function() {
-            RUNTIME("viewSource", { tab: { tabbed: true }});
-        });
-        mapkey(';pm', '#11Preview markdown', function() {
-            tabOpenLink("/pages/markdown.html");
-        });
-        mapkey(';di', '#1Download image', function() {
-            hints.create('img', function(element) {
-                RUNTIME('download', {
-                    url: element.src
-                });
-            });
-        });
-        mapkey(';j', '#12Close Downloads Shelf', function() {
-            RUNTIME("closeDownloadsShelf", {clearHistory: true});
         });
     }
 }
