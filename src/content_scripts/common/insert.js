@@ -57,27 +57,7 @@ function createInsert() {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
-	/* Lolo
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-e>"), {
-        annotation: "Move the cursor to the end of the line",
-        feature_group: 15,
-        code: moveCursorEOL
-    });
-	const keyToBOL = KeyboardUtils.platform === "Windows" ? "<Ctrl-f>" : "<Ctrl-a>";
-    self.mappings.add(KeyboardUtils.encodeKeystroke(keyToBOL), {
-        annotation: "Move the cursor to the beginning of the line",
-        feature_group: 15,
-        code: function() {
-            var element = getRealEdit();
-            if (element.setSelectionRange !== undefined) {
-                element.setSelectionRange(0, 0);
-            } else {
-                // for contenteditable div
-                var selection = document.getSelection();
-                selection.setPosition(selection.focusNode, 0);
-            }
-        }
-    });*/
+	
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-u>"), {
         annotation: "Delete all entered characters before the cursor",
         feature_group: 15,
