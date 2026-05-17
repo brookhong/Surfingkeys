@@ -39,61 +39,11 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('?', '#0Show usage', function() {
         front.showUsage();
     });
-    mapkey('Q', '#8Open omnibar for word translation', function() {
-        front.openOmniquery({query: getWordUnderCursor(), style: "opacity: 0.8;"});
-    });
-    imapkey("<Ctrl-'>", '#15Toggle quotes in an input element', toggleQuote);
     function openVim(useNeovim) {
         var element = getRealEdit();
         element.blur();
         insert.exit();
         front.showEditor(element, null, null, useNeovim);
-    }
-    imapkey('<Ctrl-i>', '#15Open vim editor for current input', function() {
-        openVim(false);
-    });
-    const browserName = getBrowserName();
-    if (browserName === "Chrome") {
-        imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function() {
-            openVim(true);
-        });
-        mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
-            var pdfUrl = window.location.href;
-            if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                const filePos = window.location.search.indexOf("=") + 1;
-                pdfUrl = window.location.search.substr(filePos);
-                RUNTIME('updateSettings', {
-                    settings: {
-                        "noPdfViewer": 1
-                    }
-                }, (resp) => {
-                    window.location.replace(pdfUrl);
-                });
-            } else {
-                if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
-                    RUNTIME('updateSettings', {
-                        settings: {
-                            "noPdfViewer": 0
-                        }
-                    }, (resp) => {
-                        window.location.replace(pdfUrl);
-                    });
-                } else {
-                    RUNTIME('getSettings', {
-                        key: 'noPdfViewer'
-                    }, function(resp) {
-                        const info = resp.settings.noPdfViewer ? "PDF viewer enabled." : "PDF viewer disabled.";
-                        RUNTIME('updateSettings', {
-                            settings: {
-                                "noPdfViewer": !resp.settings.noPdfViewer
-                            }
-                        }, (r) => {
-                            showBanner(info);
-                        });
-                    });
-                }
-            }
-        });
     }
 
     mapkey(";ql", '#0Show last action', function() {
@@ -107,11 +57,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
     mapkey('i', '#1Go to edit box', function() {
         hints.create(getCssSelectorsOfEditable(), hints.dispatchMouseClick);
-    });
-    mapkey('I', '#1Go to edit box with vim editor', function() {
-        hints.create(getCssSelectorsOfEditable(), function(element) {
-            front.showEditor(element);
-        });
     });
     mapkey('L', '#1Enter regional Hints mode', function() {
         hints.create(getLargeElements(), (e) => { }, { regionalHints: true });
@@ -148,12 +93,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         visual.feedkeys('20j');
     });
 
-    mapkey('m', '#10Add current URL to vim-like marks', normal.addVIMark);
-    mapkey("'", '#10Jump to vim-like mark', normal.jumpVIMark);
-    mapkey("<Ctrl-'>", '#10Jump to vim-like mark in new tab.', function(mark) {
-        normal.jumpVIMark(mark);
-    });
-
     mapkey('w', '#2Switch frames', function() {
         // ensure frontend ready so that ui related actions can be available in iframes.
         dispatchSKEvent('ensureFrontEnd');
@@ -174,16 +113,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         } else {
             normal.rotateFrame();
         }
-    });
-
-    mapkey('yg', '#7Capture current page', function() {
-        front.toggleStatus(false);
-        setTimeout(function() {
-            RUNTIME('captureVisibleTab', null, function(response) {
-                front.toggleStatus(true);
-                showPopup("<img src='{0}' />".format(response.dataUrl));
-            });
-        }, 500);
     });
 
     mapkey('gu', '#4Go up one path in the URL', function() {
@@ -225,14 +154,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
         }
     }
-    mapkey(';t', 'Translate selected text with google', () => {
-        if (chrome.surfingkeys) {
-            chrome.surfingkeys.translateCurrentPage();
-        } else {
-            openGoogleTranslate()
-        }
-    });
-    vmapkey('t', '#9Translate selected text with google', openGoogleTranslate);
 
     mapkey('O', '#1Open detected links from text', function() {
         hints.create(runtime.conf.clickablePat, function(element) {
@@ -281,20 +202,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         hints.create(normal.refreshScrollableElements(), hints.dispatchMouseClick);
     });
 
-    vmapkey("q", '#9Translate word under cursor', function() {
-        var w = getWordUnderCursor();
-        browser.readText(w);
-        var b = visual.getCursorPixelPos();
-        front.performInlineQuery(w, {
-            top: b.top,
-            left: b.left,
-            height: b.height,
-            width: b.width
-        }, function(pos, queryResult) {
-            dispatchSKEvent("front", ['showBubble', pos, queryResult, true]);
-        });
-    });
-
     function getSentence(textNode, offset) {
         var sentence = "";
 
@@ -309,22 +216,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
 
         return sentence.replace(/\n/g, '');
     }
-
-    mapkey("cq", '#7Query word with Hints', function() {
-        hints.create(runtime.conf.textAnchorPat, function (element) {
-            var word = element[2].trim().replace(/[^A-z].*$/, "");
-            var b = getTextNodePos(element[0], element[1], element[2].length);
-            front.performInlineQuery(word, {
-                top: b.top,
-                left: b.left,
-                height: b.height,
-                width: b.width
-            }, function (pos, queryResult) {
-                dispatchSKEvent("front", ['showBubble', pos, queryResult, false]);
-            });
-        });
-    });
-
 
     map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
     map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
@@ -432,7 +323,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
     });
 
-    map('<Ctrl-i>', 'I');
     cmap('<ArrowDown>', '<Ctrl-n>');
     cmap('<ArrowUp>', '<Ctrl-p>');
     mapkey('q', '#1Click on an Image or a button', function() {
@@ -488,20 +378,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('H', '#8Open opened URL in current tab', function() {
         front.openOmnibar({type: "TabURLs"});
     });
-    mapkey('om', '#8Open URL from vim-like marks', function() {
-        front.openOmnibar({type: "VIMarks"});
-    });
     mapkey(':', '#8Open commands', function() {
         front.openOmnibar({type: "Commands"});
-    });
-    mapkey('A', '#8Open llm chat', function() {
-        front.openOmnibar({type: "LLMChat"});
-    });
-    vmapkey('A', '#8Open llm chat', function() {
-        const sel = window.getSelection().toString();
-        front.openOmnibar({type: "LLMChat", extra: {
-            system: sel
-        }});
     });
     mapkey('yi', '#7Yank text of an input', function() {
         hints.create("input, textarea, select", function(element) {
@@ -693,16 +571,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey(';e', '#11Edit Settings', function() {
         tabOpenLink("/pages/options.html");
     });
-    mapkey(';u', '#4Edit current URL with vim editor, and open in new tab', function() {
-        front.showEditor(window.location.href, function(data) {
-            tabOpenLink(data);
-        }, 'url');
-    });
-    mapkey(';U', '#4Edit current URL with vim editor, and reload', function() {
-        front.showEditor(window.location.href, function(data) {
-            window.location.href = data;
-        }, 'url');
-    });
 
     addSearchAlias('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
         var res = JSON.parse(response.text);
@@ -750,39 +618,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             tabOpenLink("about:blank");
         });
     } else if (bn === "Chrome") {
-        mapkey('cp', '#13Toggle proxy for current site', function() {
-            var host = window.location.host.replace(/:\d+/,'');
-            if (host && host.length) {
-                RUNTIME('updateProxy', {
-                    host: host,
-                    operation: "toggle"
-                });
-            }
-        });
-        mapkey(';cp', '#13Copy proxy info', function() {
-            RUNTIME('getSettings', {
-                key: ['proxyMode', 'proxy', 'autoproxy_hosts']
-            }, function(response) {
-                clipboard.write(JSON.stringify(response.settings, null, 4));
-            });
-        });
-        mapkey(';ap', '#13Apply proxy info from clipboard', function() {
-            clipboard.read(function(response) {
-                var proxyConf = JSON.parse(response.data);
-                RUNTIME('updateProxy', {
-                    operation: 'set',
-                    host: proxyConf.autoproxy_hosts,
-                    proxy: proxyConf.proxy,
-                    mode: proxyConf.proxyMode
-                });
-            });
-        });
-        // create shortcuts for the command with different parameters
-        map(';pa', ':setProxyMode always', 0, '#13set proxy mode `always`');
-        map(';pb', ':setProxyMode byhost', 0, '#13set proxy mode `byhost`');
-        map(';pd', ':setProxyMode direct', 0, '#13set proxy mode `direct`');
-        map(';ps', ':setProxyMode system', 0, '#13set proxy mode `system`');
-        map(';pc', ':setProxyMode clear', 0, '#13set proxy mode `clear`');
         mapkey('gr', '#14Read selected text or text from clipboard', function() {
             clipboard.read(function(response) {
                 readText(window.getSelection().toString() || response.data, {verbose: true});
@@ -822,9 +657,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         mapkey(';i', '#12Open Chrome Inspect', function() {
             tabOpenLink("chrome://inspect/#devices");
         });
-        mapkey(';v', '#11Open neovim', function() {
-            tabOpenLink("/pages/neovim.html");
-        });
     }
 
     mapkey('X', '#3Restore closed tab', function() {
@@ -840,19 +672,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
         mapkey('ox', '#8Open recently closed URL', function() {
             front.openOmnibar({type: "RecentlyClosed"});
-        });
-        mapkey('b', '#8Open a bookmark', function() {
-            front.openOmnibar(({type: "Bookmarks"}));
-        });
-        mapkey('ab', '#8Bookmark current page to selected folder', function() {
-            var page = {
-                url: window.location.href,
-                title: document.title
-            };
-            front.openOmnibar(({type: "AddBookmark", extra: page}));
-        });
-        mapkey('oh', '#8Open URL from history', function() {
-            front.openOmnibar({type: "History"});
         });
         mapkey('W', '#3Move current tab to another window',  function() {
             front.openOmnibar(({type: "Windows"}));
@@ -900,24 +719,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
         mapkey(';j', '#12Close Downloads Shelf', function() {
             RUNTIME("closeDownloadsShelf", {clearHistory: true});
-        });
-        mapkey(';dh', '#14Delete history older than 30 days', function() {
-            RUNTIME('deleteHistoryOlderThan', {
-                days: 30
-            });
-        });
-        mapkey(';yh', '#14Yank histories', function() {
-            RUNTIME('getHistory', {}, function(response) {
-                clipboard.write(response.history.map(h => h.url).join("\n"));
-            });
-        });
-        mapkey(';ph', '#14Put histories from clipboard', function() {
-            clipboard.read(function(response) {
-                RUNTIME('addHistories', {history: response.data.split("\n")});
-            });
-        });
-        mapkey(';db', '#14Remove bookmark for current page', function() {
-            RUNTIME('removeBookmark');
         });
     }
 }
