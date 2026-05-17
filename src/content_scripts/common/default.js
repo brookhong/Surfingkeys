@@ -58,9 +58,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('i', '#1Go to edit box', function() {
         hints.create(getCssSelectorsOfEditable(), hints.dispatchMouseClick);
     });
-    mapkey('L', '#1Enter regional Hints mode', function() {
-        hints.create(getLargeElements(), (e) => { }, { regionalHints: true });
-    });
 
     mapkey('zv', '#9Enter visual mode, and select whole element', function() {
         visual.toggle("z");
@@ -133,11 +130,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         }
         window.location.href = location.origin + pathname;
     });
-
-    mapkey(';m', '#1mouse out last element', function() {
-        hints.mouseoutLastElement();
-    });
-
 
     function openGoogleTranslate() {
         if (window.getSelection().toString()) {
