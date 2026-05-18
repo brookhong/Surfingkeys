@@ -57,7 +57,6 @@ function createInsert() {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
-    const keyToBOL = KeyboardUtils.platform === "Windows" ? "<Ctrl-f>" : "<Ctrl-a>";
 	
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-u>"), {
         annotation: "Delete all entered characters before the cursor",
