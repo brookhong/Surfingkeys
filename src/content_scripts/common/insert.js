@@ -57,6 +57,7 @@ function createInsert() {
 
     self.mappings = new Trie();
     self.map_node = self.mappings;
+    const keyToBOL = KeyboardUtils.platform === "Windows" ? "<Ctrl-f>" : "<Ctrl-a>";
 	
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-u>"), {
         annotation: "Delete all entered characters before the cursor",
@@ -241,38 +242,6 @@ function createInsert() {
             event.sk_suppressed = true;
         }
     });
-
-    function nextNonWord(str, dir, cur) {
-        var nonWord = /\W/;
-        cur = cur + dir;
-        for ( ; ; ) {
-            if (cur < 0) {
-                cur = 0;
-                break;
-            } else if (cur >= str.length) {
-                cur = str.length;
-                break;
-            } else if (nonWord.test(str[cur])) {
-                break;
-            } else {
-                cur = cur + dir;
-            }
-        }
-        return cur;
-    }
-
-    function deleteNextWord(str, dir, cur) {
-        var pos = nextNonWord(str, dir, cur);
-        var s = str;
-        if (pos > cur) {
-            s = str.substr(0, cur) + str.substr(pos);
-        } else if (pos < cur) {
-            s = str.substr(0, pos) + str.substr(cur);
-        } else {
-            s = str.substr(0, pos) + str.substr(pos + 1);
-        }
-        return [s, dir > 0 ? cur: pos];
-    }
 
     var _element;
     var _enter = self.enter;

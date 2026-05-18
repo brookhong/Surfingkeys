@@ -550,19 +550,6 @@ function createFront(insert, normal, hints, visual, browser) {
             insert.enter(elementBehindEditor);
         }
     };
-    _actions["nextEdit"] = function(response) {
-        var sel = hints.getSelector() || "input, textarea, *[contenteditable=true], select";
-        sel = getElements(sel);
-        if (sel.length) {
-            var i = sel.indexOf(elementBehindEditor);
-            i = (i + (response.backward ? -1 : 1)) % sel.length;
-            sel = sel[i];
-            scrollIntoViewIfNeeded(sel);
-            flashPressedLink(sel, () => {
-                self.showEditor(sel);
-            });
-        }
-    };
 
     _actions["omnibar_query_entered"] = function(response) {
         RUNTIME('updateInputHistory', { OmniQuery: response.query });
