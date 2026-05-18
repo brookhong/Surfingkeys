@@ -68,10 +68,6 @@ document.addEventListener("surfingkeys:defaultSettingsLoaded", function(evt) {
         }
     }
 
-    mapkey('sm', '#99Edit markdown source', function() {
-        Front.showEditor(_source, previewMarkdown, 'markdown');
-    });
-
     mapkey(';s', '#99Switch markdown parser', function() {
         runtime.conf.useLocalMarkdownAPI = !runtime.conf.useLocalMarkdownAPI;
         previewMarkdown(_source);

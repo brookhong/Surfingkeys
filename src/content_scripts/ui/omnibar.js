@@ -86,38 +86,6 @@ function createOmnibar(front, clipboard) {
     }
 
     const searchEngine = SearchEngine(self, front);
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-i>"), {
-        annotation: "Edit selected URL with vim editor, then open",
-        feature_group: 8,
-        code: function () {
-            var fi = self.resultsDiv.querySelector('li.focused');
-            if (fi && fi.url) {
-                reopen(function () {
-                    front.showEditor({
-                        initial_line: 1,
-                        type: "url",
-                        content: fi.url,
-                        onEditorSaved: function(data) {
-                            data && tabOpenLink(data);
-                        }
-                    });
-                });
-            } else if (handler === searchEngine) {
-                var query = self.input.value;
-                var url = searchEngine.url;
-                reopen(function () {
-                    front.showEditor({
-                        initial_line: 1,
-                        type: "url",
-                        content: query,
-                        onEditorSaved: function(data) {
-                            tabOpenLink(constructSearchURL(url, encodeURIComponent(data)));
-                        }
-                    });
-                });
-            }
-        }
-    });
 
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-j>"), {
         annotation: "Toggle Omnibar's position",

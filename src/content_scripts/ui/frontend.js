@@ -526,21 +526,6 @@ const Front = (function() {
         });
     }
 
-    _actions['showEditor'] = function(message) {
-        if (message.onEditorSaved) {
-            self.onEditorSaved = message.onEditorSaved;
-        }
-        if (message.file_name) {
-            showElement(_nvim, () => {
-                renderNvim(message);
-            });
-        } else {
-            showElement(_editor, () => {
-                renderAceEditor(message);
-            });
-        }
-    };
-    self.showEditor = _actions['showEditor'];
     _actions['openOmnibar'] = function(message) {
         showElement(_omnibar, () => {
             _omnibar.onShow(message);
