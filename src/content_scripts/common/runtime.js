@@ -53,7 +53,6 @@ const runtime = (function() {
             clickableSelector: "",
             editableSelector: "div.CodeMirror-scroll,div.ace_content",
             cursorAtEndOfInput: true,
-            defaultLLMProvider: "ollama",
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
             editableBodyCare: true,

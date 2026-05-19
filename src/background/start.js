@@ -1,7 +1,6 @@
 import {
     filterByTitleOrUrl,
 } from '../common/utils.js';
-import llmClients from './llm.js';
 
 function request(url, onReady, headers, data, onException) {
     headers = headers || {};
@@ -215,7 +214,6 @@ function start(browser) {
     var newTabUrl = browser._setNewTabUrl();
 
     var conf = {
-        llm: { },
         focusAfterClosed: "right",
         tabsMRUOrder: true,
         newTabPosition: 'default',
@@ -1335,33 +1333,6 @@ function start(browser) {
                     conf[k] = message.settings[k];
                 }
             }
-            const llmConf = conf.llm;
-            if (llmConf.ollama && llmConf.ollama.model) {
-                llmClients.ollama.model = llmConf.ollama.model;
-            }
-            if (llmConf.deepseek && llmConf.deepseek.apiKey) {
-                llmClients.deepseek.apiKey = llmConf.deepseek.apiKey;
-                llmClients.deepseek.model = llmConf.deepseek.model;
-                delete message.settings.llm.deepseek;
-            }
-            if (llmConf.gemini && llmConf.gemini.apiKey) {
-                llmClients.gemini.apiKey = llmConf.gemini.apiKey;
-                llmClients.gemini.model = llmConf.gemini.model;
-                delete message.settings.llm.gemini;
-            }
-            if (llmConf.bedrock
-                && llmConf.bedrock.accessKeyId
-                && llmConf.bedrock.secretAccessKey
-                && llmConf.bedrock.model) {
-                llmClients.bedrock.init(llmConf.bedrock);
-                delete message.settings.llm.bedrock;
-            }
-            if (llmConf.custom && llmConf.custom.serviceUrl && llmConf.custom.apiKey && llmConf.custom.model) {
-                llmClients.custom.serviceUrl = llmConf.custom.serviceUrl;
-                llmClients.custom.apiKey = llmConf.custom.apiKey;
-                llmClients.custom.model = llmConf.custom.model;
-                delete message.settings.llm.custom;
-            }
             return { error };
         } else {
             if (message.settings.showAdvanced && isMV3) {
@@ -1929,56 +1900,6 @@ function start(browser) {
             return str;
         }
     }
-    let clientInLLMRequest = {tabId: 0, frameId: 0};
-    const sendLLMessage = (tabId, frameId, message) => {
-        if (browser.name === "Safari") {
-            chrome.runtime.sendMessage(message);
-        } else {
-            sendTabMessage(tabId, frameId, message);
-        }
-    };
-
-    self.llmRequest = function (message, sender, sendResponse) {
-        clientInLLMRequest.tabId = sender.tab.id;
-        clientInLLMRequest.frameId = sender.frameId;
-
-        const decoder = new TextDecoder();
-
-        const provider = message.provider;
-        if (llmClients.hasOwnProperty(provider)) {
-            const llmClient = llmClients[provider];
-            llmClient(message, {
-                onComplete: (message) => {
-                    if (message.content && message.content.constructor.name === "Array") {
-                        message.content = message.content.map((c) => {
-                            return c.type === "text" ? { type: "text", text: toUTF8(c.text) } : c;
-                        });
-                    }
-                    sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
-                        subject: 'llmResponse',
-                        message,
-                        done: true
-                    });
-                },
-                onChunk: (chunk) => {
-                    sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
-                        subject: 'llmResponse',
-                        chunk: toUTF8(chunk)
-                    });
-                },
-            });
-        } else {
-            sendLLMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, {
-                subject: 'llmResponse',
-                chunk: `**Warning:** There is no LLM provider ${provider} implemented.`
-            });
-        }
-    };
-    self.getAllLlmProviders = function (message, sender, sendResponse) {
-        _response(message, sendResponse, {
-            providers: Object.keys(llmClients)
-        });
-    };
 
     self.getContainerName = browser._getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");

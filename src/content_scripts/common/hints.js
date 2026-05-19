@@ -106,16 +106,6 @@ kbd {
         }
     });
 
-    self.mappings.add("l", {
-        annotation: "learn more about target element",
-        feature_group: 17,
-        code: function() {
-            const system = overlay.link.innerText;
-            openOmnibar({type: "LLMChat", extra: {system}});
-            self.exit();
-        }
-    });
-
     const menu = createElementWithContent('div', "", {class: "menu"});
     getAnnotations(self.mappings).forEach((b) => {
         const menuItem = createElementWithContent('div', "", {class: "menu-item"});
