@@ -23,7 +23,6 @@ import {
     toggleQuote,
 } from '../common/utils.js';
 import { RUNTIME, runtime } from '../common/runtime.js';
-import LLMChat from './llmchat';
 
 const separator = '➤';
 const separatorHtml = `<span class='separator'>${separator}</span>`;
@@ -740,7 +739,6 @@ function createOmnibar(front, clipboard) {
     self.addHandler('Commands', Commands(self, front));
     self.addHandler('OmniQuery', OmniQuery(self, front));
     self.addHandler('UserURLs', OpenUserURLs(self, front));
-    self.addHandler('LLMChat', LLMChat(self, front));
 
     front._actions['updateOmnibarResult'] = function(message) {
         self.listWords(message.words);
