@@ -54,30 +54,6 @@ function createOmnibar(front, clipboard) {
     }
 
     var savedFocused = -1;
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-d>"), {
-        annotation: "Delete focused item from bookmark or history",
-        feature_group: 8,
-        code: function () {
-            var fi = self.resultsDiv.querySelector('li.focused');
-            if (fi && fi.uid) {
-                RUNTIME("removeURL", {
-                    uid: fi.uid
-                }, function(ret) {
-                    if (ret.response === "Done") {
-                        var newFI = (getPosition() !== "bottom") ? fi.nextElementSibling : fi.previousElementSibling;
-                        fi.remove();
-                        if (newFI) {
-                            self.focusItem(newFI);
-                        } else {
-                            savedFocused = (getPosition() !== "bottom") ?
-                                self.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li').length : 0;
-                            self.input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }
-                });
-            }
-        }
-    });
 
     function reopen(cb) {
         front.hidePopup();
@@ -100,94 +76,6 @@ function createOmnibar(front, clipboard) {
                 _savedAargs.pref = savedInput;
                 front.openOmnibar(_savedAargs);
             });
-        }
-    });
-
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-.>"), {
-        annotation: "Show results of next page",
-        feature_group: 8,
-        code: function () {
-            if (_items) {
-                if (_start * runtime.conf.omnibarMaxResults < _items.length) {
-                    _start ++;
-                } else {
-                    _start = 1;
-                }
-                _listResultPage();
-            }
-        }
-    });
-
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-,>"), {
-        annotation: "Show results of previous page",
-        feature_group: 8,
-        code: function () {
-            if (_items) {
-                if (_start > 1) {
-                    _start --;
-                } else {
-                    _start = Math.ceil(_items.length / runtime.conf.omnibarMaxResults);
-                }
-                _listResultPage();
-            }
-        }
-    });
-
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-c>"), {
-        annotation: "Copy selected item url or all listed item urls",
-        feature_group: 8,
-        code: function () {
-            // hide Omnibar.input, so that we could use clipboard_holder to make copy
-            self.input.style.display = "none";
-
-            const fi = self.resultsDiv.querySelector('li.focused');
-            let text;
-            if (fi && fi.copy) {
-                text = fi.copy;
-            } else if (fi && fi.url) {
-                text = fi.url;
-            } else if (_page) {
-                text = _page.map(p => {
-                    return p.url;
-                }).join("\n")
-            }
-            clipboard.write(text);
-
-            self.input.style.display = "";
-        }
-    });
-
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-D>"), {
-        annotation: "Delete all listed items from bookmark or history",
-        feature_group: 8,
-        code: function () {
-            var uids = Array.from(self.resultsDiv.querySelectorAll('#sk_omnibarSearchResult>ul>li')).map(function(li) {
-                return li.uid;
-            }).filter(function(u) {
-                return u;
-            });
-            if (uids.length) {
-                RUNTIME("removeURL", {
-                    uid: uids
-                }, function(ret) {
-                    if (ret.response === "Done") {
-                        if (handler && handler.getResults) {
-                            handler.getResults();
-                        }
-                        self.triggerInput();
-                    }
-                });
-            }
-        }
-    });
-
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-r>"), {
-        annotation: "Re-sort history by visitCount or lastVisitTime",
-        feature_group: 8,
-        code: function () {
-            if (handler && handler.onReset) {
-                handler.onReset();
-            }
         }
     });
 
@@ -457,10 +345,6 @@ function createOmnibar(front, clipboard) {
         return runtime.conf.omnibarMaxResults;
     };
 
-    self.getHistoryCacheSize = () => {
-        return runtime.conf.omnibarHistoryCacheSize;
-    };
-
     self.listURLs = function(items, showFolder) {
         _start = 1;
         _items = items;
@@ -684,53 +568,6 @@ function createOmnibar(front, clipboard) {
 
     self.addHandler('Bookmarks', OpenBookmarks(self));
     self.addHandler('AddBookmark', AddBookmark(self));
-    self.addHandler('History', OpenURLs(`history${separatorHtml}`, self, () => {
-        return new Promise((resolve, reject) => {
-            RUNTIME('getHistory', {
-                maxResults: self.getHistoryCacheSize(),
-                query: self.input.value,
-                sortByMostUsed: runtime.conf.historyMUOrder
-            }, function(response) {
-                resolve(response.history);
-            });
-        });
-    }));
-    self.addHandler('URLs', OpenURLs(separatorHtml, self, () => {
-        return new Promise((resolve, reject) => {
-            RUNTIME('getTabs', {
-                queryInfo: runtime.conf.omnibarTabsQuery
-            }, function(response) {
-                var results = response.tabs;
-                RUNTIME("getTopSites", null, function(response) {
-                    results = results.concat(response.urls);
-                    results = filterByTitleOrUrl(results, self.input.value, runtime.getCaseSensitive(self.input.value));
-                    self.listBookmarkFolders(function() {
-                        RUNTIME('getAllURLs', {
-                            maxResults: self.getHistoryCacheSize() - results.length,
-                            query: self.input.value
-                        } , function(response) {
-                            results = results.concat(response.urls);
-                            resolve(results);
-                        });
-                    });
-                });
-            });
-        });
-    }));
-    self.addHandler('RecentlyClosed', OpenURLs(`Recently closed${separatorHtml}`, self, () => {
-        return new Promise((resolve, reject) => {
-            RUNTIME('getRecentlyClosed', null, function(response) {
-                resolve(filterByTitleOrUrl(response.urls, self.input.value, runtime.getCaseSensitive(self.input.value)));
-            });
-        });
-    }));
-    self.addHandler('TabURLs', OpenURLs(`Tab History${separatorHtml}`, self, () => {
-        return new Promise((resolve, reject) => {
-            RUNTIME('getTabURLs', null, function(response) {
-                resolve(filterByTitleOrUrl(response.urls, self.input.value, runtime.getCaseSensitive(self.input.value)));
-            });
-        });
-    }));
     self.addHandler('Tabs', OpenTabs(self));
     self.addHandler('CloseTabs', CloseTabs(self));
     self.addHandler('Windows', OpenWindows(self, front));

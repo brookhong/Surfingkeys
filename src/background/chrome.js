@@ -107,33 +107,6 @@ function _setNewTabUrl(){
 function _getContainerName(self, _response){
 }
 
-function getLatestHistoryItem(text, maxResults, cb) {
-    const caseSensitive = text.toLowerCase() !== text;
-    let endTime = new Date().getTime();
-    let results = [];
-    const impl = (endTime, maxResults, cb) => {
-        const prefetch = maxResults * Math.pow(10, Math.min(2, text.length));
-        chrome.history.search({
-            startTime: 0,
-            endTime,
-            text: "",
-            maxResults: prefetch
-        }, function(items) {
-            const filtered = filterByTitleOrUrl(items, text, false);
-            results = [...results, ...filtered];
-            if (items.length < maxResults || results.length >= maxResults) {
-                // all items are scanned or we have got what we want
-                cb(results.slice(0, maxResults));
-            } else {
-                endTime = items[items.length-1].lastVisitTime - 0.01;
-                impl(endTime, maxResults, cb);
-            }
-        });
-    };
-
-    impl(endTime, maxResults, cb);
-}
-
 function generatePassword() {
     const random = new Uint32Array(8);
     self.crypto.getRandomValues(random);
@@ -143,7 +116,6 @@ function generatePassword() {
 start({
     name: "Chrome",
     detectTabTitleChange: true,
-    getLatestHistoryItem,
     loadRawSettings,
     _applyProxySettings,
     _setNewTabUrl,

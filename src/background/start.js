@@ -713,35 +713,6 @@ function start(browser) {
     };
 
 
-    function _getHistory(text, maxResults, cb, sortByMostUsed) {
-        browser.getLatestHistoryItem(text, maxResults, (items) => {
-            if (sortByMostUsed) {
-                items = items.sort(function(a, b) {
-                    return b.visitCount - a.visitCount;
-                });
-            }
-            cb(items);
-        });
-    }
-    self.getAllURLs = function(message, sender, sendResponse) {
-        chrome.bookmarks.search(message.query || {}, function(bmItems) {
-            var urls = bmItems,
-                requestCount = message.maxResults || 100;
-            var maxResults = requestCount - urls.length;
-            if (maxResults > 0) {
-                _getHistory(message.query || "", maxResults,  function(historyItems) {
-                    urls = urls.concat(historyItems);
-                    _response(message, sendResponse, {
-                        urls: urls
-                    });
-                }, true);
-            } else {
-                _response(message, sendResponse, {
-                    urls: urls.slice(0, requestCount)
-                });
-            }
-        });
-    };
     self.getTabs = function(message, sender, sendResponse) {
         var tab = sender.tab;
         var queryInfo = message.queryInfo || {};
@@ -1129,18 +1100,6 @@ function start(browser) {
                 });
             }
         }
-    };
-    self.getHistory = function(message, sender, sendResponse) {
-        _getHistory(message.query || "", message.maxResults || 100, function(tree) {
-            _response(message, sendResponse, {
-                history: tree
-            });
-        }, message.sortByMostUsed);
-    };
-    self.addHistories = function(message, sender, sendResponse) {
-        message.history.forEach(h => {
-            chrome.history.addUrl({url: h});
-        });
     };
     function normalizeURL(url) {
         if (!/^view-source:|^javascript:/.test(url) && /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/im.test(url)) {
@@ -1552,22 +1511,6 @@ function start(browser) {
             }
         });
     };
-    self.deleteSession = function(message, sender, sendResponse) {
-        loadSettings('sessions', function(data) {
-            delete data.sessions[message.name];
-            _updateAndPostSettings({
-                sessions: data.sessions
-            });
-        });
-    };
-    self.closeDownloadsShelf = function(message, sender, sendResponse) {
-        if (message.clearHistory) {
-            chrome.downloads.erase({"urlRegex": ".*"});
-        } else {
-            chrome.downloads.setShelfEnabled(false);
-            chrome.downloads.setShelfEnabled(true);
-        }
-    };
     self.getDownloads = function(message, sender, sendResponse) {
         chrome.downloads.search(message.query, function(items) {
             _response(message, sendResponse, {
@@ -1691,49 +1634,6 @@ function start(browser) {
             });
         }
     };
-    function _removeURL(uid, cb) {
-        var type = uid[0], uid = uid.substr(1);
-        if (type === 'B') {
-            chrome.bookmarks.remove(uid, cb);
-        } else if (type === 'H') {
-            chrome.history.deleteUrl({url: uid}, cb);
-        } else if (type === 'T') {
-            uid = uid.split(":").map(function(u) {
-                return parseInt(u);
-            });
-            chrome.windows.update(uid[0], {
-                focused: true
-            }, function() {
-                chrome.tabs.remove(uid[1], cb);
-            });
-        } else if (type === 'M') {
-            loadSettings('marks', function(data) {
-                delete data.marks[uid];
-                _updateAndPostSettings({marks: data.marks}, cb);
-            });
-        }
-    }
-    self.removeURL = function(message, sender, sendResponse) {
-        var removed = 0,
-            totalToRemoved = message.uid.length,
-            uid = message.uid;
-        if (typeof(message.uid) === "string") {
-            totalToRemoved = 1;
-            uid = [ message.uid ];
-        }
-        function _done() {
-            removed ++;
-            if (removed === totalToRemoved) {
-                _response(message, sendResponse, {
-                    response: "Done"
-                });
-            }
-        }
-        uid.forEach(function(u) {
-            _removeURL(u, _done);
-        });
-
-    };
     self.localData = function(message, sender, sendResponse) {
         if (message.data.constructor === Object) {
             chrome.storage.local.set(message.data, function() {
@@ -1772,14 +1672,6 @@ function start(browser) {
                         height: img.height
                     });
                 });
-        });
-    };
-    self.deleteHistoryOlderThan = function(message, sender, sendResponse) {
-        var days = message.days || 0, hours = message.hours || 0;
-        chrome.history.deleteRange({
-            startTime: 0,
-            endTime: new Date().getTime() - (days * 86400 + hours * 3600) * 1000
-        }, function() {
         });
     };
     function removeBookmark(url, cb) {
