@@ -53,7 +53,6 @@ const runtime = (function() {
             clickableSelector: "",
             editableSelector: "div.CodeMirror-scroll,div.ace_content",
             cursorAtEndOfInput: true,
-            defaultSearchEngine: "g",
             defaultVoice: "Daniel",
             editableBodyCare: true,
             enableAutoFocus: true,

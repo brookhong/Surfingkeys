@@ -862,15 +862,6 @@ function getAnnotations(mappings) {
     });
 }
 
-function constructSearchURL(se, word) {
-    if (se.indexOf("{0}") > 0) {
-        return se.format(word);
-    } else if (se.indexOf("%s") > 0) {
-        return se.replace("%s", word)
-    } else {
-        return se + word;
-    }
-}
 
 /**
  * Open links in new tabs.
@@ -1136,7 +1127,6 @@ export {
     addVimMapKey,
     applyUserSettings,
     attachFaviconToImgSrc,
-    constructSearchURL,
     createElementWithContent,
     dispatchMouseEvent,
     dispatchSKEvent,

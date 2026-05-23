@@ -77,25 +77,6 @@ function createFront(insert, normal, hints, visual, browser) {
     }
 
     var _listSuggestions = {};
-    self.addSearchAlias = function (alias, prompt, url, suggestionURL, listSuggestion, options) {
-        if (suggestionURL && listSuggestion) {
-            _listSuggestions[suggestionURL] = listSuggestion;
-        }
-        applyUICommand({
-            action: 'addSearchAlias',
-            alias: alias,
-            prompt: prompt,
-            url: url,
-            suggestionURL: suggestionURL,
-            options: options,
-        });
-    };
-    self.removeSearchAlias = function (alias) {
-        applyUICommand({
-            action: 'removeSearchAlias',
-            alias: alias
-        });
-    };
     self.setHintsCharacters = function (chars) {
         applyUICommand({
             action: 'setHintsCharacters',
@@ -135,31 +116,6 @@ function createFront(insert, normal, hints, visual, browser) {
         }
     };
 
-    _actions["getSearchSuggestions"] = function (message) {
-        var ret = null;
-        if (_listSuggestions.hasOwnProperty(message.url)) {
-            const listSuggestion = _listSuggestions[message.url];
-            if (typeof listSuggestion === "function") {
-                ret = listSuggestion(message.response, {
-                    url: message.requestUrl,
-                    query: message.query,
-                });
-            } else {
-                ret = new Promise((resolve, reject) => {
-                    const callbackId = generateQuickGuid();
-                    skCallbacks[callbackId] = (res) => {
-                        resolve(res);
-                    };
-
-                    dispatchSKEvent('user', ["getSearchSuggestions", message.url, message.response, {
-                        url: message.requestUrl,
-                        query: message.query,
-                    }, callbackId]);
-                });
-            }
-        }
-        return ret;
-    };
 
     self.executeCommand = function (cmd) {
         self.command({
@@ -270,7 +226,7 @@ function createFront(insert, normal, hints, visual, browser) {
     /**
      * Open the omnibar.
      *
-     * @param {object} args `type` the sub type for the omnibar, which can be `Bookmarks`, `AddBookmark`, `History`, `URLs`, `RecentlyClosed`, `TabURLs`, `Tabs`, `Windows`, `VIMarks`, `SearchEngine`, `Commands`, `OmniQuery` and `UserURLs`.
+     * @param {object} args `type` the sub type for the omnibar, which can be `Bookmarks`, `AddBookmark`, `History`, `URLs`, `RecentlyClosed`, `TabURLs`, `Tabs`, `Windows`, `VIMarks`, `Commands`, `OmniQuery` and `UserURLs`.
      * @name Front.openOmnibar
      *
      * @example
