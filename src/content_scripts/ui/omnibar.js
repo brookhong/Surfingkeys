@@ -85,16 +85,6 @@ function createOmnibar(front, clipboard) {
         }
     });
 
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-m>"), {
-        annotation: "Create vim-like mark for selected item",
-        feature_group: 8,
-        code: function (mark) {
-            var fi = self.resultsDiv.querySelector('li.focused');
-            if (fi) {
-                Normal.addVIMark(mark, fi.url);
-            }
-        }
-    });
 
     var handlers = {},
         bookmarkFolders;
@@ -532,7 +522,6 @@ function createOmnibar(front, clipboard) {
     self.addHandler('Tabs', OpenTabs(self));
     self.addHandler('CloseTabs', CloseTabs(self));
     self.addHandler('Windows', OpenWindows(self, front));
-    self.addHandler('VIMarks', OpenVIMarks(self));
     self.addHandler('Commands', Commands(self, front));
     self.addHandler('OmniQuery', OmniQuery(self, front));
     self.addHandler('UserURLs', OpenUserURLs(self, front));
@@ -748,42 +737,6 @@ function OpenWindows(omnibar, front) {
     return self;
 }
 
-function OpenVIMarks(omnibar) {
-    var self = {
-        focusFirstCandidate: true,
-        prompt: `VIMarks${separatorHtml}`
-    };
-
-    self.onOpen = function() {
-        var query = omnibar.input.value;
-        var urls = [];
-        RUNTIME('getSettings', {
-            key: 'marks'
-        }, function(response) {
-            for (var m in response.settings.marks) {
-                var markInfo = response.settings.marks[m];
-                if (typeof(markInfo) === "string") {
-                    markInfo = {
-                        url: markInfo,
-                        scrollLeft: 0,
-                        scrollTop: 0
-                    };
-                }
-                if (query === "" || markInfo.url.indexOf(query) !== -1) {
-                    urls.push({
-                        title: m,
-                        type: '🔗',
-                        uid: 'M' + m,
-                        url: markInfo.url
-                    });
-                }
-            }
-            omnibar.listURLs(urls, false);
-        });
-    };
-    self.onInput = self.onOpen;
-    return self;
-}
 
 function Commands(omnibar, front) {
     var self = {
