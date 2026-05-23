@@ -583,10 +583,9 @@ function start(browser) {
         });
     };
     self.getState = function(message, sender, sendResponse) {
-        loadSettings(['blocklist', 'noPdfViewer', 'proxyMode', 'proxy'], function(data) {
+        loadSettings(['blocklist', 'proxyMode', 'proxy'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
-                    noPdfViewer: data.noPdfViewer,
                     proxyMode: data.proxyMode,
                     proxy: data.proxy,
                     state: _getState(data, new URL(getSenderUrl(sender)), message.blocklistPattern, message.lurkingPattern)

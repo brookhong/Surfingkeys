@@ -322,10 +322,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             RUNTIME.repeats = 1;
         } else {
             var url = window.location.href;
-            if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                const filePos = window.location.search.indexOf("=") + 1;
-                url = window.location.search.substr(filePos);
-            }
             clipboard.write(url);
         }
     });

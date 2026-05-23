@@ -75,11 +75,7 @@ function applyRuntimeConf(normal) {
         } else if (state === "lurking") {
             state = normal.startLurk();
         } else {
-            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                _browser.usePdfViewer();
-            } else {
-                normal.enable();
-            }
+			normal.enable();
             Mode.showStatus();
         }
 
@@ -202,7 +198,6 @@ Mode.init(window === top ? undefined : ()=> {
 let _browser;
 function start(browser) {
     _browser = browser || {
-        usePdfViewer: () => {},
         readText: () => {},
     };
     if (window === top) {
