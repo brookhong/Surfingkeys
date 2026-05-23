@@ -75,11 +75,7 @@ function applyRuntimeConf(normal) {
         } else if (state === "lurking") {
             state = normal.startLurk();
         } else {
-            if (document.contentType === "application/pdf" && !resp.noPdfViewer) {
-                _browser.usePdfViewer();
-            } else {
-                normal.enable();
-            }
+			normal.enable();
             Mode.showStatus();
         }
 
@@ -111,17 +107,9 @@ function applySettings(api, normal, rs) {
             runtime.conf[k] = rs[k];
         }
     }
-    if ('findHistory' in rs) {
-        runtime.conf.lastQuery = rs.findHistory.length ? rs.findHistory[0] : "";
-    }
     if (!rs.showAdvanced) {
         if (rs.basicMappings) {
             applyBasicMappings(api, normal, rs.basicMappings);
-        }
-        if (rs.disabledSearchAliases) {
-            for (const key in rs.disabledSearchAliases) {
-                api.removeSearchAlias(key);
-            }
         }
     } else if (!rs.isMV3 && rs.snippets && !document.location.href.startsWith(chrome.runtime.getURL("/"))) {
         var settings = {}, error = "";
@@ -159,10 +147,9 @@ function _initModules() {
     RUNTIME('getSettings', null, function(response) {
         var rs = response.settings;
         applySettings(api, normal, rs);
-        const disabledSearchAliases = rs.disabledSearchAliases;
         const getUsage = front.getUsage;
         const frontCommand = front.command;
-        dispatchSKEvent('userSettingsLoaded', {settings: rs, disabledSearchAliases, getUsage, frontCommand});
+        dispatchSKEvent('userSettingsLoaded', {settings: rs, getUsage, frontCommand});
     });
     return {
         normal,
@@ -211,7 +198,6 @@ Mode.init(window === top ? undefined : ()=> {
 let _browser;
 function start(browser) {
     _browser = browser || {
-        usePdfViewer: () => {},
         readText: () => {},
     };
     if (window === top) {

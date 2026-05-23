@@ -353,53 +353,6 @@ export default function(
         }).filter((m) => m !== null);;
     });
 
-    function renderSearchAlias(frontCommand, disabledSearchAliases) {
-        new Promise((r, j) => {
-            const getSearchAliases = () => {
-                frontCommand({
-                    action: 'getSearchAliases'
-                }, function(response) {
-                    if (Object.keys(response.aliases).length > 0) {
-                        r(response.aliases);
-                    } else {
-                        setTimeout(getSearchAliases, 300);
-                    }
-                });
-            };
-            getSearchAliases();
-        }).then((aliases) => {
-            const allAliases = {};
-            for (const key in aliases) {
-                let prompt = aliases[key].prompt;
-                if (!prompt.startsWith("<img src=")) {
-                    prompt = prompt.replace(/<span class='separator'>.*/, '');
-                }
-                allAliases[key] = { prompt, checked: "checked" };
-            }
-            for (const key in disabledSearchAliases) {
-                allAliases[key] = { prompt: disabledSearchAliases[key], checked: "" };
-            }
-            for (const key in allAliases) {
-                const { prompt, checked } = allAliases[key];
-                const elm = createElementWithContent("div", `<div class='remove'><input type="checkbox" ${checked} /></div><span class='prompt'>${prompt}</span>`);
-                document.querySelector("#searchAliases").appendChild(elm);
-
-                elm.querySelector("input").onchange = () => {
-                    if (disabledSearchAliases.hasOwnProperty(key)) {
-                        delete disabledSearchAliases[key];
-                    } else {
-                        disabledSearchAliases[key] = prompt;
-                    }
-
-                    RUNTIME('updateSettings', {
-                        settings: {
-                            disabledSearchAliases
-                        }
-                    });
-                };
-            }
-        });
-    }
 
     function renderKeyMappings(rs) {
         initL10n(function (locale) {
@@ -424,13 +377,12 @@ export default function(
     }
 
     document.addEventListener("surfingkeys:userSettingsLoaded", function(evt) {
-        const { settings, disabledSearchAliases, frontCommand } = evt.detail;
+        const { settings, frontCommand } = evt.detail;
         mappingsEditor = createMappingEditor('mappings');
         renderSettings(settings);
         if ('error' in settings) {
             showBanner(settings.error, 5000);
         }
-        renderSearchAlias(frontCommand, disabledSearchAliases || {});
         renderKeyMappings(settings);
     });
 

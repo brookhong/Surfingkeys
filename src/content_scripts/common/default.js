@@ -18,14 +18,12 @@ import {
 
 export default function(api, clipboard, insert, normal, hints, visual, front, browser) {
     const {
-        addSearchAlias,
         cmap,
         map,
         mapkey,
         imapkey,
         readText,
         vmapkey,
-        searchSelectedWith,
     } = api;
 
     mapkey('[[', '#1Click on the previous link on current page', hints.previousPage);
@@ -124,14 +122,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         }
         window.location.href = location.origin + pathname;
     });
-
-    function openGoogleTranslate() {
-        if (window.getSelection().toString()) {
-            searchSelectedWith('https://translate.google.com/?hl=en#auto/en/', false, false, '');
-        } else {
-            tabOpenLink("https://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=" + window.location.href);
-        }
-    }
 
 
     mapkey("f", '#1Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints', function() {
@@ -332,10 +322,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             RUNTIME.repeats = 1;
         } else {
             var url = window.location.href;
-            if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                const filePos = window.location.search.indexOf("=") + 1;
-                url = window.location.search.substr(filePos);
-            }
             clipboard.write(url);
         }
     });
@@ -390,46 +376,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
     mapkey('gxp', '#3Close playing tab', function() {
         RUNTIME("closeAudibleTab");
-    });
-
-    addSearchAlias('g', 'google', 'https://www.google.com/search?q=', 's', 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=', function(response) {
-        var res = JSON.parse(response.text);
-        return res[1];
-    });
-    addSearchAlias('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
-        var res = JSON.parse(response.text);
-        return res.map(function(r){
-            return r.phrase;
-        });
-    });
-    addSearchAlias('b', 'baidu', 'https://www.baidu.com/s?wd=', 's', 'https://suggestion.baidu.com/su?cb=&wd=', function(response) {
-        var res = response.text.match(/,s:\[("[^\]]+")]}/);
-        return res ? res[1].replace(/"/g, '').split(",") : [];
-    });
-
-    addSearchAlias('e', 'wikipedia', 'https://en.wikipedia.org/wiki/', 's', 'https://en.wikipedia.org/w/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=40&search=', function(response) {
-        return JSON.parse(response.text)[1];
-    });
-    addSearchAlias('w', 'bing', 'https://www.bing.com/search?setmkt=en-us&setlang=en-us&q=', 's', 'https://api.bing.com/osjson.aspx?query=', function(response) {
-        var res = JSON.parse(response.text);
-        return res[1];
-    });
-    addSearchAlias('s', 'stackoverflow', 'https://stackoverflow.com/search?q=');
-    addSearchAlias('h', 'github', 'https://github.com/search?q=', 's', 'https://api.github.com/search/repositories?order=desc&q=', function(response) {
-        var res = JSON.parse(response.text)['items'];
-        return res ? res.map(function(r){
-            return {
-                title: r.description,
-                url: r.html_url
-            };
-        }) : [];
-    });
-    addSearchAlias('y', 'youtube', 'https://www.youtube.com/results?search_query=', 's',
-    'https://clients1.google.com/complete/search?client=youtube&ds=yt&callback=cb&q=', function(response) {
-        var res = JSON.parse(response.text.substr(9, response.text.length-10));
-        return res[1].map(function(d) {
-            return d[0];
-        });
     });
 
     const bn = getBrowserName();

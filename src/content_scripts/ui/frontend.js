@@ -385,7 +385,6 @@ const Front = (function() {
             'Tabs',                  // 3
             'Page Navigation',       // 4
             'Sessions',              // 5
-            'Search selected with',  // 6
             'Clipboard',             // 7
             'Omnibar',               // 8
             'Visual Mode',           // 9

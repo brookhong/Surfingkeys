@@ -352,9 +352,7 @@ div.hint-scrollable {
                 const modKey = (navigator.platform.indexOf("Mac") !== -1) ? "metaKey" : "ctrlKey";
 				// Lolo - Vivaldi hack job in Linux
 				// This is a temp fix for 'af' on some sites while I thing about it more.
-				//
-				// Note; SurfingKeys is also causing 'CTRL-A' to go to start of line in DDG searches
-				//       And CTRL-E goes to here (like a terminal)
+				// Will probably need to be a switch setting in config: "Using Vivaldi?" Tick.
                 //mouseEventModifiers[modKey] = true;
                 mouseEventModifiers[modKey] = false;
             }

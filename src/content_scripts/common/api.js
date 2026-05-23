@@ -6,7 +6,6 @@ import {
     LOG,
 } from '../../common/utils.js';
 import {
-    constructSearchURL,
     getBrowserName,
     getClickableElements,
     initSKFunctionListener,
@@ -295,123 +294,11 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         }
     }
 
-    /**
-     * Add a search engine alias into Omnibar.
-     *
-     * @param {string} alias the key to trigger this search engine, one or several chars, used as search alias, when you input the string and press `space` in omnibar, the search engine will be triggered.
-     * @param {string} prompt a caption to be placed in front of the omnibar.
-     * @param {string} search_url the URL of the search engine, for example, `https://www.s.com/search.html?query=`, if there are extra parameters for the search engine, you can use it as `https://www.s.com/search.html?query={0}&type=cs` or `https://www.s.com/search.html?type=cs&query=`(since order of URL parameters usually does not matter).
-     * @param {string} [search_leader_key=s] `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`.
-     * @param {string} [suggestion_url=null] the URL to fetch suggestions in omnibar when this search engine is triggered.
-     * @param {function} [callback_to_parse_suggestion=null] a function to parse the response from `suggestion_url` and return a list of strings as suggestions. Receives two arguments: `response`, the first argument, is an object containing a property `text` which holds the text of the response; and `request`, the second argument, is an object containing the properties `query` which is the text of the query and `url` which is the formatted URL for the request.
-     * @param {string} [only_this_site_key=o] `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`.
-     * @param {object} [options=null] `favicon_url` URL for favicon for this search engine, `skipMaps` if `true` disable creating key mappings for this search engine
-     *
-     * @example
-     * addSearchAlias('d', 'duckduckgo', 'https://duckduckgo.com/?q=', 's', 'https://duckduckgo.com/ac/?q=', function(response) {
-     *     var res = JSON.parse(response.text);
-     *     return res.map(function(r){
-     *         return r.phrase;
-     *     });
-     * });
-     */
-    function addSearchAlias(alias, prompt, search_url, search_leader_key, suggestion_url, callback_to_parse_suggestion, only_this_site_key, options) {
-        if (!/^[\u0000-\u007f]*$/.test(alias)) {
-            throw `Invalid alias ${alias}, which must be ASCII characters.`;
-        }
-        if (!isInUIFrame() && front.addSearchAlias) {
-            front.addSearchAlias(alias, prompt, search_url, suggestion_url, callback_to_parse_suggestion, options);
-        }
-        const skipMaps = options?.skipMaps ?? false
-        if (skipMaps) {
-          return
-        }
-        function ssw() {
-            searchSelectedWith(search_url);
-        }
-        mapkey((search_leader_key || 's') + alias, ['#6Search selected with {0}', prompt], ssw);
-        mapkey('o' + alias, ['#8Open Omnibar for {0} Search', prompt], () => {
-            front.openOmnibar({type: "SearchEngine", extra: alias});
-        });
-        vmapkey((search_leader_key || 's') + alias, '', ssw);
-        function ssw2() {
-            searchSelectedWith(search_url, true);
-        }
-        mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
-        vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + alias, '', ssw2);
-
-        var capitalAlias = alias.toUpperCase();
-        if (capitalAlias !== alias) {
-            function ssw4() {
-                searchSelectedWith(search_url, false, true, alias);
-            }
-            mapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
-            vmapkey((search_leader_key || 's') + capitalAlias, '', ssw4);
-            function ssw5() {
-                searchSelectedWith(search_url, true, true, alias);
-            }
-            mapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
-            vmapkey((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias, '', ssw5);
-        }
-    }
-
-    /**
-     * Remove a search engine alias from Omnibar.
-     *
-     * @param {string} alias the alias of the search engine to be removed.
-     * @param {string} [search_leader_key=s] `<search_leader_key><alias>` in normal mode will search selected text with this search engine directly without opening the omnibar, for example `sd`.
-     * @param {string} [only_this_site_key=o] `<search_leader_key><only_this_site_key><alias>` in normal mode will search selected text within current site with this search engine directly without opening the omnibar, for example `sod`.
-     *
-     * @example
-     * removeSearchAlias('d');
-     */
-    function removeSearchAlias(alias, search_leader_key, only_this_site_key) {
-        if (!isInUIFrame()) {
-            front.removeSearchAlias(alias);
-        }
-        unmap((search_leader_key || 's') + alias);
-        unmap('o' + alias);
-        vunmap((search_leader_key || 's') + alias);
-        unmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
-        vunmap((search_leader_key || 's') + (only_this_site_key || 'o') + alias);
-        var capitalAlias = alias.toUpperCase();
-        if (capitalAlias !== alias) {
-            unmap((search_leader_key || 's') + capitalAlias);
-            vunmap((search_leader_key || 's') + capitalAlias);
-            unmap((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias);
-            vunmap((search_leader_key || 's') + (only_this_site_key || 'o') + capitalAlias);
-        }
-    }
 
 
-    /**
-     * Search selected with.
-     *
-     * @param {string} se a search engine's search URL
-     * @param {boolean} [onlyThisSite=false] whether to search only within current site, need support from the provided search engine.
-     * @param {boolean} [interactive=false] whether to search in interactive mode, in case that you need some small modification on the selected content.
-     * @param {string} [alias=""] only used with interactive mode, in such case the url from `se` is ignored, SurfingKeys will construct search URL from the alias registered by `addSearchAlias`.
-     *
-     * @example
-     * searchSelectedWith('https://translate.google.com/?hl=en#auto/en/');
-     */
-    function searchSelectedWith(se, onlyThisSite, interactive, alias) {
-        let query = window.getSelection().toString();
-        clipboard.read(function(response) {
-            query = query || response.data;
-            if (onlyThisSite) {
-                query = "site:" + window.location.hostname + " " + query;
-            }
-            if (interactive) {
-                front.openOmnibar({type: "SearchEngine", extra: alias, pref: query});
-            } else {
-                tabOpenLink(constructSearchURL(se, encodeURIComponent(query)));
-            }
-        });
-    }
+
 
     initSKFunctionListener("api", {
-        addSearchAlias,
         imap,
         map,
         lmap,
@@ -420,8 +307,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         unmapAllExcept,
         iunmap,
         vunmap,
-        removeSearchAlias,
-        searchSelectedWith,
         "clipboard:write": clipboard.write,
         "clipboard:read": () => {
             clipboard.read((resp) => {
@@ -465,7 +350,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     });
     return {
         RUNTIME,
-        addSearchAlias,
         cmap,
         imap,
         imapkey,
@@ -480,8 +364,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         vunmap,
         mapkey,
         readText: browser.readText,
-        removeSearchAlias,
-        searchSelectedWith,
         tabOpenLink,
         vmap,
         vmapkey,
