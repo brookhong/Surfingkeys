@@ -82,7 +82,6 @@ const runtime = (function() {
             scrollFallback: false,
             scrollStepSize: 70,
             showModeStatus: false,
-            showProxyInStatusBar: false,
             smartPageBoundary: false,
             smoothScroll: true,
             startToShowEmoji: 2,

@@ -6,29 +6,6 @@ import {
 import { RUNTIME } from '../common/runtime.js';
 
 export default (normal, command, omnibar) => {
-    command('setProxy', 'setProxy <proxy_host>:<proxy_port> [proxy_type|PROXY]', function(args) {
-        // args is an array of arguments
-        var proxy = ((args.length > 1) ? args[1] : "PROXY") + " " + args[0];
-        RUNTIME('updateProxy', {
-            proxy: proxy
-        });
-        return true;
-    });
-
-    command('setProxyMode', 'setProxyMode <always|direct|byhost|system|clear>', function(args) {
-        RUNTIME("updateProxy", {
-            mode: args[0]
-        }, function(rs) {
-            if (["byhost", "always"].indexOf(rs.proxyMode) !== -1) {
-                showBanner("{0}: {1}".format(rs.proxyMode, rs.proxy), 3000);
-            } else {
-                showBanner(rs.proxyMode, 3000);
-            }
-        });
-        // return true to close Omnibar for Commands, false to keep Omnibar on
-        return true;
-    });
-
     command('listVoices', 'list tts voices', function() {
         RUNTIME('getVoices', null, function(response) {
 
