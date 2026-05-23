@@ -37,7 +37,6 @@
     "permissions": [
         "nativeMessaging",
         "tabs",
-        "bookmarks",
         "scripting",
         "storage",
         "sessions",
