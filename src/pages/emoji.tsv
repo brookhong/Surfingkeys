@@ -757,7 +757,6 @@
 0x1f4ce	paperclip
 0x1f4cf	straight ruler
 0x1f4d0	triangular ruler
-0x1f4d1	bookmark tabs
 0x1f4d2	ledger
 0x1f4d3	notebook
 0x1f4d4	notebook with decorative cover
@@ -827,7 +826,6 @@
 0x1f513	unlock
 0x1f514	bell
 0x1f515	no bell
-0x1f516	bookmark
 0x1f517	link
 0x1f518	radio button
 0x1f519	back
