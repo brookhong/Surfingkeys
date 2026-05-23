@@ -307,11 +307,6 @@ function createFront(insert, normal, hints, visual, browser) {
             _showQueryResult = function(result) {
                 showQueryResult(pos, result);
             };
-            document.getElementById("proxyFrame").contentWindow.postMessage({surfingkeys_content_data: {
-                action: "performInlineQuery",
-                pos: pos,
-                query: query
-            }}, "*");
         } else {
             tabOpenLink("https://github.com/brookhong/Surfingkeys/wiki/Register-inline-query");
             hidePopup();

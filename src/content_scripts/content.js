@@ -83,14 +83,7 @@ function applyRuntimeConf(normal) {
             RUNTIME('setSurfingkeysIcon', {
                 status: state
             });
-            var proxyMode = "";
-            if (state === "enabled" && runtime.conf.showProxyInStatusBar && resp.proxyMode) {
-                proxyMode = resp.proxyMode;
-                if (["byhost", "always"].indexOf(resp.proxyMode) !== -1) {
-                    proxyMode = "{0}: {1}".format(resp.proxyMode, resp.proxy);
-                }
-            }
-            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, proxyMode]]);
+            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined]]);
         }
     });
 }

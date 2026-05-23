@@ -17,8 +17,6 @@ function loadRawSettings(keys, cb, defaultSet) {
     });
 }
 
-function _applyProxySettings(proxyConf) {
-}
 
 function _setNewTabUrl(){
     return "about:newtab";
@@ -42,7 +40,6 @@ start({
     name: "Firefox",
     detectTabTitleChange: true,
     loadRawSettings,
-    _applyProxySettings,
     _setNewTabUrl,
     _getContainerName
 });
