@@ -388,7 +388,6 @@ const Front = (function() {
             'Clipboard',             // 7
             'Omnibar',               // 8
             'Visual Mode',           // 9
-            'vim-like marks',        // 10
             'Settings',              // 11
             'Chrome URLs',           // 12
             'Misc',                  // 14

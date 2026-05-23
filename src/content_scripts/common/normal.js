@@ -698,47 +698,6 @@ function createNormal(insert) {
         }
     };
 
-    self.addVIMark = function(mark, url) {
-        url = url || window.location.href;
-        var mo = {};
-        mo[mark] = {
-            url: url,
-            scrollLeft: document.scrollingElement.scrollLeft,
-            scrollTop: document.scrollingElement.scrollTop
-        };
-        RUNTIME('addVIMark', {mark: mo});
-        showBanner("Mark '{0}' added for: {1}.".format(mark, url));
-    };
-
-    /**
-     * Jump to a vim-like mark.
-     *
-     * @param {string} mark a vim-like mark.
-     * @name Normal.jumpVIMark
-     *
-     */
-    self.jumpVIMark = function(mark) {
-        if (mark === "'") {
-            let scrollNode = document.scrollingElement;
-            initScrollIndex();
-            if (scrollNodes.length > 0) {
-                scrollNode = scrollNodes[scrollIndex];
-                if (scrollNode.lastScrollTop !== undefined && scrollNode.lastScrollLeft !== undefined) {
-                    const lt = scrollNode.scrollTop;
-                    const ll = scrollNode.scrollLeft;
-                    scrollNode.scrollTop = scrollNode.lastScrollTop;
-                    scrollNode.scrollLeft = scrollNode.lastScrollLeft;
-                    scrollNode.lastScrollTop = lt;
-                    scrollNode.lastScrollLeft = ll;
-                }
-            }
-        } else {
-            RUNTIME('jumpVIMark', {
-                mark: mark
-            });
-        }
-    };
-
     self.moveTab = function(pos) {
         RUNTIME('moveTab', {
             position: pos

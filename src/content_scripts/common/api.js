@@ -321,7 +321,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         "front:registerInlineQuery": front.registerInlineQuery,
         "front:openOmnibar": front.openOmnibar,
         "normal:feedkeys": normal.feedkeys,
-        "normal:jumpVIMark": normal.jumpVIMark,
         "normal:passThrough": normal.passThrough,
         "normal:scroll": normal.scroll,
         "visual:style": visual.style,
@@ -370,7 +369,6 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         Clipboard: clipboard,
         Normal: {
             feedkeys: normal.feedkeys,
-            jumpVIMark: normal.jumpVIMark,
             passThrough: normal.passThrough,
             scroll: normal.scroll,
         },
