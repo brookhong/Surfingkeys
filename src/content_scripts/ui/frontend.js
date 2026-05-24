@@ -427,6 +427,9 @@ const Front = (function() {
     _actions['showUsage'] = function(message) {
         showElement(_usage, () => {
             buildUsage(message.metas, function(usage) {
+				console.log("Fish fucker");
+				console.log(_usage);
+				console.log(usage);
                 setSanitizedContent(_usage, usage);
             });
         });
