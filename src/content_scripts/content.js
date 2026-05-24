@@ -83,7 +83,7 @@ function applyRuntimeConf(normal) {
             RUNTIME('setSurfingkeysIcon', {
                 status: state
             });
-            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined]]);
+            dispatchSKEvent("front", ['showStatus', [undefined, undefined, undefined, undefined]]);
         }
     });
 }
