@@ -48,11 +48,6 @@ function _setNewTabUrl(){
 function _getContainerName(self, _response){
 }
 
-function generatePassword() {
-    const random = new Uint32Array(8);
-    self.crypto.getRandomValues(random);
-    return Array.from(random).join("");
-}
 
 start({
     name: "Chrome",

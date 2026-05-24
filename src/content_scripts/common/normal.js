@@ -348,11 +348,6 @@ function createNormal(insert) {
     var scrollNodes, scrollIndex = 0,
         lastKeys;
 
-    function easeFn(t, b, c, d) {
-        // t: current time, b: begInnIng value, c: change In value, d: duration
-        return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
-    }
-
     var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {

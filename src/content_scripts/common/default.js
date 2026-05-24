@@ -144,21 +144,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         hints.create(normal.refreshScrollableElements(), hints.dispatchMouseClick);
     });
 
-    function getSentence(textNode, offset) {
-        var sentence = "";
-
-        actionWithSelectionPreserved(function(sel) {
-            sel.setPosition(textNode, offset);
-            sel.modify("extend", "backward", "sentence");
-            sel.collapseToStart();
-            sel.modify("extend", "forward", "sentence");
-
-            sentence = sel.toString();
-        });
-
-        return sentence.replace(/\n/g, '');
-    }
-
     map('g0', ':feedkeys 99E', 0, "#3Go to the first tab");
     map('g$', ':feedkeys 99R', 0, "#3Go to the last tab");
     mapkey('zr', '#3zoom reset', function() {
@@ -213,16 +198,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             clipboard.write(linksToYank.join('\n'));
         }, {multipleHits: true});
     });
-    function getTableColumnHeads() {
-        var tds = [];
-        document.querySelectorAll("table").forEach(function(t) {
-            var tr = t.querySelector("tr");
-            if (tr) {
-                tds.push(...tr.children);
-            }
-        });
-        return tds;
-    }
 
     mapkey('q', '#1Click on an Image or a button', function() {
         hints.create("img, button", hints.dispatchMouseClick);
@@ -325,39 +300,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
             clipboard.write(url);
         }
     });
-
-    function getFormData(form, format) {
-        var formData = new FormData(form);
-        if (format === "json") {
-            var obj = {};
-
-            formData.forEach(function (value, key) {
-                if (obj.hasOwnProperty(key)) {
-                    if (value.length) {
-                        var p = obj[key];
-                        if (p.constructor.name === "Array") {
-                            p.push(value);
-                        } else {
-                            obj[key] = [];
-                            if (p.length) {
-                                obj[key].push(p);
-                            }
-                            obj[key].push(value);
-                        }
-                    }
-                } else {
-                    obj[key] = value;
-                }
-            });
-
-            return obj;
-        } else {
-            return new URLSearchParams(formData).toString();
-        }
-    }
-    function generateFormKey(form) {
-        return (form.method || "get") + "::" + new URL(form.action).pathname;
-    }
 
     mapkey('gxt', '#3Close tab on left', function() {
         RUNTIME("closeTabLeft");

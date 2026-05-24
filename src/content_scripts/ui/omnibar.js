@@ -533,50 +533,6 @@ function createOmnibar(front, clipboard) {
 }
 
 
-
-function OpenURLs(prompt, omnibar, queryFn) {
-    var self = { prompt }, sequenceNumber;
-
-    const queryAndList = () => {
-        let myseq = ++sequenceNumber;
-        queryFn().then((urls) => {
-            if (myseq === sequenceNumber) {
-                var val = omnibar.input.value;
-                omnibar.detectAndInsertURLItem(val, urls);
-                omnibar.listURLs(urls, false);
-            }
-        });
-    };
-    self.onOpen = function(arg) {
-        if (arg) {
-            omnibar.input.value = arg;
-        }
-        sequenceNumber = 0;
-        queryAndList();
-    };
-    self.onInput = debounce(queryAndList, 200);
-    self.onClose = function() {
-        self.onInput.cancel();
-    };
-
-    self.onReset = function() {
-        runtime.conf.historyMUOrder = !runtime.conf.historyMUOrder;
-        queryFn().then((historyItems) => {
-            if (runtime.conf.historyMUOrder) {
-                historyItems = historyItems.sort(function(a, b) {
-                    return b.visitCount - a.visitCount;
-                });
-            } else {
-                historyItems = historyItems.sort(function(a, b) {
-                    return b.lastVisitTime - a.lastVisitTime;
-                });
-            }
-            omnibar.listURLs(historyItems, false);
-        });
-    };
-    return self;
-}
-
 function OpenTabs(omnibar) {
     var self = {
         focusFirstCandidate: true,

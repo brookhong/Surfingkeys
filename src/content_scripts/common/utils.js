@@ -108,50 +108,6 @@ function getColor(i) {
     return colors[i];
 }
 
-/**
- * Map the key sequence `lhs` to `rhs` for mode `ctx` in ACE editor.
- *
- * @param {string} lhs a key sequence to replace
- * @param {string} rhs a key sequence to be replaced
- * @param {string} ctx a mode such as `insert`, `normal`.
- *
- * @example aceVimMap('J', ':bn', 'normal');
- */
-function aceVimMap(lhs, rhs, ctx) {
-    dispatchSKEvent("front", ['addVimMap', lhs, rhs, ctx]);
-}
-
-/**
- * Add map key in ACE editor.
- *
- * @param {object} objects multiple objects to define key map in ACE, see more from [ace/keyboard/vim.js](https://github.com/ajaxorg/ace/blob/ec450c03b51aba3724cf90bb133708078d1f3de6/lib/ace/keyboard/vim.js#L927-L1099)
- *
- * @example
- * addVimMapKey(
- *     {
- *         keys: 'n',
- *         type: 'motion',
- *         motion: 'moveByCharacters',
- *         motionArgs: {
- *             forward: false
- *         }
- *     },
- *
- *     {
- *         keys: 'e',
- *         type: 'motion',
- *         motion: 'moveByLines',
- *         motionArgs: {
- *             forward: true,
- *             linewise: true
- *         }
- *     }
- * );
- */
-function addVimMapKey() {
-    dispatchSKEvent("front", ['addVimKeyMap', Array.from(arguments)]);
-}
-
 function isEmptyObject(obj) {
     for (var name in obj) {
         return false;
@@ -361,20 +317,6 @@ function isEditable(element) {
         || element.isContentEditable
         || (element.matches && element.matches(runtime.conf.editableSelector))
         || (element.localName === 'input' && /^(?!button|checkbox|file|hidden|image|radio|reset|submit)/i.test(element.type)));
-}
-
-function parseQueryString(query) {
-    var params = {};
-    if (query.length) {
-        var parts = query.split('&');
-        for (var i = 0, ii = parts.length; i < ii; ++i) {
-            var param = parts[i].split('=');
-            var key = param[0].toLowerCase();
-            var value = param.length > 1 ? param[1] : null;
-            params[decodeURIComponent(key)] = decodeURIComponent(value);
-        }
-    }
-    return params;
 }
 
 function reportIssue(title, description) {
@@ -1122,9 +1064,7 @@ async function hashString(str, algorithm = 'SHA-256') {
 }
 
 export {
-    aceVimMap,
     actionWithSelectionPreserved,
-    addVimMapKey,
     applyUserSettings,
     attachFaviconToImgSrc,
     createElementWithContent,
