@@ -1562,15 +1562,6 @@ function start(browser) {
     };
 
     var userAgent;
-    function onBeforeSendHeaders(details) {
-        for (var i = 0; i < details.requestHeaders.length; ++i) {
-            if (details.requestHeaders[i].name === 'User-Agent') {
-                details.requestHeaders[i].value = userAgent;
-                break;
-            }
-        }
-        return {requestHeaders: details.requestHeaders};
-    }
 
     self.writeClipboard = function (message, sender, sendResponse) {
         navigator.clipboard.writeText(message.text)
@@ -1581,13 +1572,6 @@ function start(browser) {
             _response(message, sendResponse, response);
         });
     };
-    function toUTF8(str) {
-        try {
-            return decodeURIComponent(escape(str));
-        } catch {
-            return str;
-        }
-    }
 
     self.getContainerName = browser._getContainerName(self, _response);
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");

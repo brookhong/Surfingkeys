@@ -378,23 +378,27 @@ const Front = (function() {
     }
 
     function buildUsage(metas, cb) {
-        var feature_groups = [
-            'Help',                  // 0
-            'Mouse Click',           // 1
-            'Scroll Page / Element', // 2
-            'Tabs',                  // 3
-            'Page Navigation',       // 4
-            'Sessions',              // 5
-            'Clipboard',             // 7
-            'Omnibar',               // 8
-            'Visual Mode',           // 9
-            'Settings',              // 11
-            'Chrome URLs',           // 12
-            'Misc',                  // 14
-            'Insert Mode',           // 15
-            'Lurk Mode',             // 16
-            'Regional Hints Mode',   // 17
-        ];
+		// Lolo: Don't delete any of these T-T
+		var feature_groups = [
+			'Help',                  // 0
+			'Mouse Click',           // 1
+			'Scroll Page / Element', // 2
+			'Tabs',                  // 3
+			'Page Navigation',       // 4
+			'Sessions',              // 5
+			'Search selected with',  // 6
+			'Clipboard',             // 7
+			'Omnibar',               // 8
+			'Visual Mode',           // 9
+			'vim-like marks',        // 10
+			'Settings',              // 11
+			'Chrome URLs',           // 12
+			'Proxy',                 // 13
+			'Misc',                  // 14
+			'Insert Mode',           // 15
+			'Lurk Mode',             // 16
+			'Regional Hints Mode',   // 17
+		];
 
         initL10n(function(locale) {
             var help_groups = feature_groups.map(function(){return [];});
@@ -427,6 +431,9 @@ const Front = (function() {
     _actions['showUsage'] = function(message) {
         showElement(_usage, () => {
             buildUsage(message.metas, function(usage) {
+				console.log("Fish fucker");
+				console.log(_usage);
+				console.log(usage);
                 setSanitizedContent(_usage, usage);
             });
         });
