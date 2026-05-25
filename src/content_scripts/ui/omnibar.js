@@ -232,11 +232,6 @@ function createOmnibar(front, clipboard) {
             }
         }
     });
-    self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-'>"), {
-        annotation: "Toggle quotes in an input element",
-        feature_group: 8,
-        code: toggleQuote
-    });
 
     self.highlight = function(rxp, str) {
         if (str.substr(0, 11) === "data:image/") {

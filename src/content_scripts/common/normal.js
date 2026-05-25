@@ -804,25 +804,6 @@ function createNormal(insert) {
         });
     };
 
-    self.mappings.add("yG", {
-        annotation: "Capture current full page",
-        feature_group: 7,
-        code: function() {
-            self.captureElement(document.scrollingElement);
-        }
-    });
-    self.mappings.add("yS", {
-        annotation: "Capture scrolling element",
-        feature_group: 7,
-        code: function() {
-            var scrollNode = document.scrollingElement;
-            initScrollIndex();
-            if (scrollNodes.length > 0) {
-                scrollNode = scrollNodes[scrollIndex];
-            }
-            self.captureElement(scrollNode);
-        }
-    });
 
     self.mappings.add("cS", {
         annotation: "Reset scroll target",

@@ -123,7 +123,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         window.location.href = location.origin + pathname;
     });
 
-
     mapkey("f", '#1Open a link, press SHIFT to flip overlapped hints, hold SPACE to hide hints', function() {
         hints.create("", hints.dispatchMouseClick);
     }, {repeatIgnore: true});
@@ -249,9 +248,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
     });
 
-    mapkey('H', '#8Open opened URL in current tab', function() {
-        front.openOmnibar({type: "TabURLs"});
-    });
     mapkey(':', '#8Open commands', function() {
         front.openOmnibar({type: "Commands"});
     });
@@ -265,20 +261,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     });
     mapkey(';w', '#2Focus top window', function() {
         top.focus();
-    });
-    mapkey('yj', "#7Copy current settings", function() {
-        RUNTIME('getSettings', {
-            key: "RAW"
-        }, function(response) {
-            clipboard.write(JSON.stringify(response.settings, null, 4));
-        });
-    });
-    mapkey(';pj', "#7Restore settings data from clipboard", function() {
-        clipboard.read(function(response) {
-            RUNTIME('updateSettings', {
-                settings: JSON.parse(response.data.trim())
-            });
-        });
     });
     mapkey('yt', '#3Duplicate current tab', function() {
         RUNTIME("duplicateTab");
