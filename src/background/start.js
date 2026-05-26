@@ -549,6 +549,31 @@ function start(browser) {
         }
         return "enabled";
     }
+    self.addBlocklistOrigins = function(message, sender, sendResponse) {
+        loadSettings('blocklist', function(data) {
+            message.origins.forEach(function(origin) {
+                data.blocklist[origin] = 1;
+            });
+            _updateAndPostSettings({blocklist: data.blocklist}, function() {
+                _response(message, sendResponse, {blocklist: data.blocklist});
+            });
+        });
+    };
+    self.removeBlocklistOrigins = function(message, sender, sendResponse) {
+        loadSettings('blocklist', function(data) {
+            message.origins.forEach(function(origin) {
+                delete data.blocklist[origin];
+            });
+            _updateAndPostSettings({blocklist: data.blocklist}, function() {
+                _response(message, sendResponse, {blocklist: data.blocklist});
+            });
+        });
+    };
+    self.getBlocklist = function(message, sender, sendResponse) {
+        loadSettings('blocklist', function(data) {
+            _response(message, sendResponse, {blocklist: data.blocklist});
+        });
+    };
     self.toggleBlocklist = function(message, sender, sendResponse) {
         loadSettings('blocklist', function(data) {
             var origin = ".*";
