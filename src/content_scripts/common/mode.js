@@ -2,6 +2,7 @@ import {
     listElements,
     isInUIFrame,
     reportIssue,
+    isElementDrawn,
 } from './utils.js';
 import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import KeyboardUtils from './keyboardUtils';
@@ -179,6 +180,15 @@ function init(cb) {
 }
 
 Mode.hasScroll = function (el, direction, barSize) {
+    const style = window.getComputedStyle(el);
+    if (!style) {
+        return false;
+    }
+    const overflow = (direction === 'y') ? style.overflowY : style.overflowX;
+    if (!['auto', 'scroll', 'overlay'].includes(overflow)) {
+        return false;
+    }
+
     var offset = (direction === 'y') ? ['scrollTop', 'height'] : ['scrollLeft', 'width'];
     var result = el[offset[0]];
 
@@ -198,7 +208,7 @@ Mode.hasScroll = function (el, direction, barSize) {
 
 Mode.getScrollableElements = function () {
     var nodes = listElements(document.body, NodeFilter.SHOW_ELEMENT, function(n) {
-        return (Mode.hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (Mode.hasScroll(n, 'x', 16) && n.scrollWidth > 200);
+        return isElementDrawn(n) && ((Mode.hasScroll(n, 'y', 16) && n.scrollHeight > 200 ) || (Mode.hasScroll(n, 'x', 16) && n.scrollWidth > 200));
     });
     nodes.sort(function(a, b) {
         if (b.contains(a)) return 1;
