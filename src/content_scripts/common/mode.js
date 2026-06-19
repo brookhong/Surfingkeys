@@ -321,7 +321,7 @@ Mode.handleMapKey = function(event, onNoMatched) {
                     RUNTIME.repeats = parseInt(this.repeats) || 1;
                     event.sk_stopPropagation = (!this.map_node.meta.stopPropagation
                         || this.map_node.meta.stopPropagation(key));
-                    if (RUNTIME.repeats > runtime.conf.repeatThreshold) {
+                    if (!this.map_node.meta.repeatNoThrottling && RUNTIME.repeats > runtime.conf.repeatThreshold) {
                         dispatchSKEvent("front", ['showDialog', `Do you really want to repeat this action (${this.map_node.meta.annotation}) ${RUNTIME.repeats} times?`, () => {
                             while(RUNTIME.repeats > 0) {
                                 code();

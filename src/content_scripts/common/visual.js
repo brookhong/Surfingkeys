@@ -133,11 +133,13 @@ function createVisual(clipboard, hints) {
     self.mappings.add("j", {
         annotation: "forward line",
         feature_group: 9,
+        repeatNoThrottling: true,
         code: modifySelection
     });
     self.mappings.add("k", {
         annotation: "backward line",
         feature_group: 9,
+        repeatNoThrottling: true,
         code: modifySelection
     });
     self.mappings.add("w", {

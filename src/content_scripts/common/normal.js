@@ -994,6 +994,7 @@ function createNormal(insert) {
         annotation: "Go one tab left",
         feature_group: 3,
         repeatIgnore: true,
+        repeatNoThrottling: true,
         code: function() {
             RUNTIME("previousTab");
         }
@@ -1002,6 +1003,7 @@ function createNormal(insert) {
         annotation: "Go one tab right",
         feature_group: 3,
         repeatIgnore: true,
+        repeatNoThrottling: true,
         code: function() {
             RUNTIME("nextTab");
         }
