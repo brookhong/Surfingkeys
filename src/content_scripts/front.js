@@ -328,6 +328,12 @@ function createFront(insert, normal, hints, visual, browser) {
         });
     };
 
+    self.openContainer = function() {
+        self.command({
+            action: 'openContainer'
+        });
+    };
+
     /**
      * Open the omnibar.
      *
@@ -378,6 +384,11 @@ function createFront(insert, normal, hints, visual, browser) {
                 url: message.item.url
             });
         }
+    };
+
+    _actions['containerSelected'] = function(message) {
+        hints.setContainerCookieStoreId(message.cookieStoreId);
+        hints.create("", hints.dispatchMouseClick);
     };
 
     var _inlineQuery = false;

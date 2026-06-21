@@ -334,6 +334,14 @@ div.hint-scrollable {
      *     Hints.create("div.media_box img", Hints.dispatchMouseClick);
      * }, {domain: /weibo.com/i});
      */
+    self.setContainerCookieStoreId = function(cookieStoreId) {
+        _containerCookieStoreId = cookieStoreId;
+    };
+
+    self.clearContainer = function() {
+        _containerCookieStoreId = null;
+    };
+
     self.dispatchMouseClick = function(element) {
         if (isEditable(element)) {
             self.exit();
@@ -362,8 +370,19 @@ div.hint-scrollable {
                 const modKey = (navigator.platform.indexOf("Mac") !== -1) ? "metaKey" : "ctrlKey";
                 mouseEventModifiers[modKey] = true;
             }
+            const cookieStoreId = _containerCookieStoreId;
+            self.clearContainer();
             flashPressedLink(element,() => {
-                if (tabbed && getBrowserName().startsWith("Safari")) {
+                if (cookieStoreId) {
+                    RUNTIME("openLink", {
+                        tab: {
+                            tabbed: tabbed,
+                            active: active || shiftKey,
+                            cookieStoreId: cookieStoreId
+                        },
+                        url: getHref(element)
+                    });
+                } else if (tabbed && getBrowserName().startsWith("Safari")) {
                     RUNTIME("openLink", {
                         tab: {
                             tabbed: tabbed,
@@ -399,7 +418,8 @@ div.hint-scrollable {
             mouseEvents: MOUSE_EVENTS
         },
         holder = createElementWithContent('section', '', {style: "display: block; opacity: 1;"}),
-        shiftKey = false;
+        shiftKey = false,
+        _containerCookieStoreId = null;
     var _lastCreateAttrs = {},
         _onHintKey = self.dispatchMouseClick,
         _cssSelector = "";

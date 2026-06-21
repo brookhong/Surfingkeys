@@ -317,6 +317,12 @@ const Front = (function() {
         });
     };
     self.chooseTab = _actions['chooseTab'];
+    _actions['openContainer'] = function() {
+        showElement(_omnibar, () => {
+            _omnibar.onShow({type: 'Containers'});
+        });
+    };
+    self.openContainer = _actions['openContainer'];
     _actions['groupTab'] = function() {
         RUNTIME('getTabGroups', {}, function(response) {
             const groups = response.groups;

@@ -107,6 +107,9 @@ function _setNewTabUrl(){
 function _getContainerName(self, _response){
 }
 
+function _getContainers(self, _response){
+}
+
 function getLatestHistoryItem(text, maxResults, cb) {
     const caseSensitive = text.toLowerCase() !== text;
     let endTime = new Date().getTime();
@@ -184,5 +187,6 @@ start({
     nvimServer,
     _applyProxySettings,
     _setNewTabUrl,
-    _getContainerName
+    _getContainerName,
+    _getContainers
 });

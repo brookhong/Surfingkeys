@@ -1176,13 +1176,17 @@ function start(browser) {
                     break;
             }
         }
-        chrome.tabs.create({
+        var createProperties = {
             url: url,
             active: message.tab.active,
             index: newTabPosition,
             pinned: message.tab.pinned,
             openerTabId: currentTab.id
-        }, function(tab) {
+        };
+        if (message.tab.cookieStoreId) {
+            createProperties.cookieStoreId = message.tab.cookieStoreId;
+        }
+        chrome.tabs.create(createProperties, function(tab) {
             if (message.scrollLeft || message.scrollTop) {
                 tabMessages[tab.id] = {
                     scrollLeft: message.scrollLeft,
@@ -1200,7 +1204,16 @@ function start(browser) {
                 message: "JavaScript URLs are not allowed in such operation."
             });
         } else {
-            if (message.tab.tabbed) {
+            if (message.tab.cookieStoreId) {
+                if (browser.name !== "Firefox") {
+                    delete message.tab.cookieStoreId;
+                } else if (sender.tab && sender.tab.cookieStoreId === message.tab.cookieStoreId) {
+                    delete message.tab.cookieStoreId;
+                }
+            }
+            if (message.tab.cookieStoreId) {
+                openUrlInNewTab(sender.tab, url, message);
+            } else if (message.tab.tabbed) {
                 if (sender.frameId !== 0 && chrome.runtime.getURL("pages/frontend.html") === sender.url
                     || !sender.tab) {
                     // if current call was made from Omnibar, the sender.tab may be stale,
@@ -1982,6 +1995,9 @@ function start(browser) {
     };
 
     self.getContainerName = browser._getContainerName(self, _response);
+    self.getContainers = browser._getContainers ? browser._getContainers(self, _response) : function(message, sender, sendResponse) {
+        _response(message, sendResponse, { containers: [] });
+    };
     chrome.runtime.setUninstallURL("http://brookhong.github.io/2018/01/30/why-did-you-uninstall-surfingkeys.html");
 
     self.connectNative = function (message, sender, sendResponse) {

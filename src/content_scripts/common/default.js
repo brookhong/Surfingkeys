@@ -760,6 +760,9 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         mapkey('on', '#3Open newtab', function() {
             tabOpenLink("about:blank");
         });
+        mapkey(';cl', '#3Open a link in a container', function() {
+            front.openContainer();
+        });
     } else if (bn === "Chrome") {
         mapkey('cp', '#13Toggle proxy for current site', function() {
             var host = window.location.host.replace(/:\d+/,'');

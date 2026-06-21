@@ -43,6 +43,9 @@ function _setNewTabUrl(){
 function _getContainerName(self, _response){
 }
 
+function _getContainers(self, _response){
+}
+
 function getLatestHistoryItem(text, maxResults, cb) {
 }
 
@@ -52,5 +55,6 @@ start({
     loadRawSettings,
     _applyProxySettings,
     _setNewTabUrl,
-    _getContainerName
+    _getContainerName,
+    _getContainers
 });

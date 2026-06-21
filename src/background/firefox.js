@@ -38,6 +38,20 @@ function _getContainerName(self, _response) {
     };
 }
 
+function _getContainers(self, _response) {
+    return function (message, sender, sendResponse){
+        browser.contextualIdentities.query({}).then(function(containers){
+            _response(message, sendResponse, {
+                containers: containers
+            });
+        }, function(err){
+            _response(message, sendResponse, {
+                containers: []
+            });
+        });
+    };
+}
+
 function getLatestHistoryItem(text, maxResults, cb) {
     chrome.history.search({
         startTime: 0,
@@ -55,5 +69,6 @@ start({
     loadRawSettings,
     _applyProxySettings,
     _setNewTabUrl,
-    _getContainerName
+    _getContainerName,
+    _getContainers
 });
