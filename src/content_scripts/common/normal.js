@@ -241,7 +241,10 @@ function createNormal(insert) {
     self.addEventListener('blur', function(event) {
         keyHeld = 0;
     });
+    var _inFocusHandler = false;
     self.addEventListener('focus', function(event) {
+        if (_inFocusHandler) return;
+        _inFocusHandler = true;
         Mode.showStatus();
         if (runtime.conf.stealFocusOnLoad && !isInUIFrame()) {
             var elm = getRealEdit(event);
@@ -257,6 +260,7 @@ function createNormal(insert) {
                 }
             }
         }
+        _inFocusHandler = false;
     });
     self.addEventListener('keyup', function(event) {
         setTimeout(function() {
