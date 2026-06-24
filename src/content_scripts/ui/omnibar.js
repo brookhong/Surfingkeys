@@ -452,6 +452,7 @@ function createOmnibar(front, clipboard) {
             `<div class="title">${self.highlight(rxp, htmlEncode(b.title))} ${additional}</div><div class="url">${self.highlight(rxp, htmlEncode(safeDecodeURIComponent(b.url)))}</div>`, { "class": "text-container" }));
         li.uid = uid;
         li.url = b.url;
+        li.copy = b.copy;
         li._item = b;
         return li;
     };
