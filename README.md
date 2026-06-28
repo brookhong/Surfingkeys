@@ -604,6 +604,8 @@ Some functionalities are also available when you're using original pdf viewer, b
             font-size: 20pt;
         }
     }`;
+* Notice: CSS child selector > will be normalized, please use `SPACE` instead.
+  * example: `.sk_theme #sk_omnibarSearchResult ul li:nth-child(odd)`
 
 ## Chat with LLM
 There are several LLM providers integrated into Surfingkeys now, use `A` to call out a chat popup, and chat with your AI providers. The supported LLM providers now are
