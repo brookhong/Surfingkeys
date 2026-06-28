@@ -892,6 +892,12 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
                 step: 1
             });
         });
+        mapkey(';s', '#3Sort tabs by domain in current window', function() {
+            RUNTIME('sortTabsByDomain');
+        });
+        mapkey(';b', '#3Cluster tabs by base domain in current window', function() {
+            RUNTIME('clusterTabsByDomain');
+        });
         mapkey('yd', "#7Copy current downloading URL", function() {
             RUNTIME('getDownloads', {
                 query: {state: "in_progress"}
