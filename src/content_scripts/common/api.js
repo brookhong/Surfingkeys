@@ -494,6 +494,15 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         tabOpenLink,
         vmap,
         vmapkey,
+        addBlocklistOrigins: (origins, cb) => {
+            RUNTIME('addBlocklistOrigins', {origins: origins}, cb);
+        },
+        removeBlocklistOrigins: (origins, cb) => {
+            RUNTIME('removeBlocklistOrigins', {origins: origins}, cb);
+        },
+        getBlocklist: (cb) => {
+            RUNTIME('getBlocklist', {}, cb);
+        },
         Clipboard: clipboard,
         Normal: {
             feedkeys: normal.feedkeys,

@@ -192,6 +192,15 @@ const api = {
     unmapAllExcept: (keystrokes, domain) => {
         dispatchSKEvent('api', ['unmapAllExcept', keystrokes, domain]);
     },
+    addBlocklistOrigins: (origins, cb) => {
+        RUNTIME('addBlocklistOrigins', {origins: origins}, cb);
+    },
+    removeBlocklistOrigins: (origins, cb) => {
+        RUNTIME('removeBlocklistOrigins', {origins: origins}, cb);
+    },
+    getBlocklist: (cb) => {
+        RUNTIME('getBlocklist', {}, cb);
+    },
     readText: (text, options) => {
         dispatchSKEvent('api', ['readText', text, options]);
     },
