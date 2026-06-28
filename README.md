@@ -243,6 +243,20 @@ The omnibar provides kinds of functions that need user input, for example,
 * Open search engines with `og` / `ow` ...
 * Open commands with `:`
 
+* Additional search engines can be configured via the advanced settings panel. Below is an example showing how to add Perplexity AI as a search engine:
+  ```
+// Add Perplexity search engine with favicon
+api.addSearchAlias('p', 'Perplexity AI', 'https://www.perplexity.ai/search?q=', 's', 
+    'https://www.perplexity.ai/ac/?q=', null, 'o', {
+        favicon_url: 'https://www.perplexity.ai/favicon.ico'
+    });
+
+// Map key to open Perplexity search in omnibar  
+api.mapkey('op', '#8Search with Perplexity AI', function() {
+    api.Front.openOmnibar({type: "SearchEngine", extra: "p"});
+});
+  ```
+
 ### key bindings in Omnibar
 * `Enter` to open selected item and close omnibar.
 * `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
