@@ -27,6 +27,35 @@ function createUiHost(browser, onload) {
     uiHost.attachShadow({ mode: 'open' });
     uiHost.shadowRoot.appendChild(ifr);
 
+    // Messages queued while the UI host is detached from the page.
+    var _pendingFrontendMessages = [];
+
+    function _ensureFrontendAttached() {
+        // Some pages replace/remove document.documentElement, which orphans
+        // our UI host and discards the iframe's browsing context (making
+        // ifr.contentWindow null). Re-insert it so the iframe reloads and
+        // re-runs the init handshake below.
+        if (!uiHost.isConnected) {
+            (document.documentElement || document).appendChild(uiHost);
+        }
+    }
+
+    function _postToFrontend(data) {
+        _ensureFrontendAttached();
+        if (uiHost.isConnected && ifr.contentWindow) {
+            ifr.contentWindow.postMessage(data, frontEndURL);
+        } else {
+            // Iframe is reloading after a re-attach; deliver once it's ready.
+            _pendingFrontendMessages.push(data);
+        }
+    }
+
+    function _flushPendingToFrontend() {
+        while (_pendingFrontendMessages.length && ifr.contentWindow) {
+            ifr.contentWindow.postMessage(_pendingFrontendMessages.shift(), frontEndURL);
+        }
+    }
+
     function _onWindowMessage(event) {
         var _message = event.data && event.data.surfingkeys_uihost_data;
         if (_message === undefined) {
@@ -34,7 +63,7 @@ function createUiHost(browser, onload) {
         }
         if (_message.toFrontend) {
             // forward message to frontend
-            ifr.contentWindow.postMessage({surfingkeys_frontend_data: _message}, frontEndURL);
+            _postToFrontend({surfingkeys_frontend_data: _message});
             if (_message.toFrontend && event.source
                 && ['showStatus', 'showEditor', 'openOmnibar', 'openFinder', 'chooseTab'].indexOf(_message.action) !== -1) {
                 if (!activeContent || activeContent.window !== event.source) {
@@ -80,9 +109,13 @@ function createUiHost(browser, onload) {
             origin: getDocumentOrigin()
         }}, frontEndURL);
 
+        // addEventListener de-dupes the same handler, so re-running this on
+        // an iframe reload (after re-attach) won't double-register.
         window.addEventListener('message', _onWindowMessage, true);
 
-    }, {once: true});
+        // Deliver anything queued while the iframe was detached.
+        _flushPendingToFrontend();
+    });
 
     var lastStateOfPointerEvents = "none", _origOverflowY;
     var _actions = {}, activeContent = null;
@@ -127,6 +160,12 @@ function createUiHost(browser, onload) {
     };
 
     uiHost.tryDetach = function() {
+        if (!ifr.contentWindow) {
+            // Page already orphaned the host; nothing to ask, just clean up.
+            window.removeEventListener('message', _onWindowMessage, true);
+            uiHost.remove();
+            return;
+        }
         ifr.contentWindow.postMessage({surfingkeys_frontend_data: {
             action: 'destroyFrontend',
             ack: true,
