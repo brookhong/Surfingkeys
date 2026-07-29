@@ -431,7 +431,13 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
             });
         },
         "hints:click": hints.click,
-        "hints:create": hints.create,
+        "hints:create": (cssSelector, onHintKey, attrs) => {
+            if (cssSelector && cssSelector.source !== undefined && !(cssSelector instanceof RegExp)) {
+                // A regex forwarded from the user-script world arrives as {source, flags}.
+                cssSelector = new RegExp(cssSelector.source, cssSelector.flags);
+            }
+            return hints.create(cssSelector, onHintKey, attrs);
+        },
         "hints:setCharacters": hints.setCharacters,
         "hints:setNumeric": hints.setNumeric,
         "hints:style": hints.style,
