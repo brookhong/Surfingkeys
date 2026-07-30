@@ -456,13 +456,14 @@ div.hint-scrollable {
                     _onHintKey(elm);
                 }
             } else {
+                // dispatch (element, shiftKey); the node can't cross scopes, so it rides as
+                // the event target via the "__EVENT_TARGET__" placeholder
                 if (elm.constructor.name === "Array") {
                     const target = elm[0];
-                    // remove Text Node from elm as it cannot be transitted across JS scope
                     elm[0] = "__EVENT_TARGET__";
                     dispatchSKEvent('user', ["onHintClicked", elm, shiftKey], target);
                 } else {
-                    dispatchSKEvent('user', ["onHintClicked", shiftKey], elm);
+                    dispatchSKEvent('user', ["onHintClicked", "__EVENT_TARGET__", shiftKey], elm);
                 }
             }
             if (behaviours.multipleHits) {

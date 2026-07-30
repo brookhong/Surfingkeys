@@ -122,16 +122,9 @@ initSKFunctionListener("user", {
     onEditorWrite: (data) => {
         onEditorWriteFn(data);
     },
-    onHintClicked: (shiftKeyOrElement, element) => {
-        if (typeof(hintsFunction) !== 'function') {
-            return;
-        }
-        if (Array.isArray(shiftKeyOrElement)) {
-            // regex / text-node hints deliver [textNode, matchIndex, matchText]
-            // as the element, followed by shiftKey (see hints.js onHintClicked dispatch).
-            hintsFunction(shiftKeyOrElement, element);
-        } else {
-            hintsFunction(element, shiftKeyOrElement);
+    onHintClicked: (element, shiftKey) => {
+        if (typeof(hintsFunction) === 'function') {
+            hintsFunction(element, shiftKey);
         }
     },
     onHintCreated: (found) => {
