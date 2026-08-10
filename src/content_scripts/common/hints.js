@@ -815,9 +815,9 @@ div.hint-scrollable {
     }
 
     function createHintsForClick(cssSelector, attrs) {
-        self.statusLine = "Hints to click";
-
         attrs = attrs || {};
+        self.statusLine = attrs.statusLine || "Hints to click";
+
         for (var attr in attrs) {
             behaviours[attr] = attrs[attr];
         }
@@ -1008,7 +1008,7 @@ div.hint-scrollable {
      *
      * @param cssSelector `string or array of HTMLElement`, if `links` is a string, it will be used as css selector.
      * @param {function} onHintKey a callback function on hint keys pressed.
-     * @param {object} [attrs=null] `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered.
+     * @param {object} [attrs=null] `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered, `statusLine`: the text to show on the status bar while the hints are open.
      * @name Hints.create
      * @returns {Promise} which will be resolved how many hints are created.
      * @see Hints.dispatchMouseClick
