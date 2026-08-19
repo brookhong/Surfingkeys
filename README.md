@@ -612,7 +612,7 @@ There are several LLM providers integrated into Surfingkeys now. Use `A` to call
 
 * Ollama
 * Bedrock
-* Custom LLM provider (e.g.: SiliconFlow, OpenRouter, DeepSeek and Gemini; other OpenAI API compatible services should also work)
+* Custom LLM provider (e.g.: SiliconFlow, OpenRouter, DeepSeek, Gemini and OrcaRouter; other OpenAI API compatible services should also work)
 
 To use the feature, you need to set up your credentials/API keys first, like this:
 
@@ -647,6 +647,11 @@ To use the feature, you need to set up your credentials/API keys first, like thi
                 serviceUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
                 apiKey: '***********************************',
                 model: 'gemini-2.0-flash',
+            },
+            orcarouter: {
+                serviceUrl: 'https://api.orcarouter.ai/v1/chat/completions',
+                apiKey: '***********************************',
+                model: 'orcarouter/auto',
             },
         }
     };

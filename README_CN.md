@@ -593,7 +593,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 
 * Ollama
 * Bedrock
-* 自定义模型(例如：SiliconFlow、OpenRouter、DeepSeek 和 Gemini, 其他和OpenAI API兼容的服务应该也可以)
+* 自定义模型(例如：SiliconFlow、OpenRouter、DeepSeek、Gemini 和 OrcaRouter, 其他和OpenAI API兼容的服务应该也可以)
 
 使用之前，必须设置相应的密钥或者API key，比如
 
@@ -628,6 +628,11 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
                 serviceUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
                 apiKey: '***********************************',
                 model: 'gemini-2.0-flash',
+            },
+            orcarouter: {
+                serviceUrl: 'https://api.orcarouter.ai/v1/chat/completions',
+                apiKey: '***********************************',
+                model: 'orcarouter/auto',
             },
         }
     };
