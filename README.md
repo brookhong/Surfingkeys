@@ -606,6 +606,8 @@ Some functionalities are also available when you're using the original PDF viewe
             font-size: 20pt;
         }
     }`;
+* Notice: CSS child selector > will be normalized, please use `SPACE` instead.
+  * example: `.sk_theme #sk_omnibarSearchResult ul li:nth-child(odd)`
 
 ## Chat with LLM
 There are several LLM providers integrated into Surfingkeys now. Use `A` to call out a chat popup and chat with your AI providers. The page you are on is not sent along with your question: the model reads it with the `read_page` tool when a question actually needs it, so a chat that never asks about the page never sends it anywhere. The supported LLM providers are currently:
