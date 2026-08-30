@@ -110,6 +110,11 @@ function _registerLlmProviders(llmConf) {
     }
 }
 
+/*
+ * Store what the snippets carry, and report whether they carried anything at all --
+ * the caller uses that to decide whether this is now the newest word on the
+ * providers, see `llmProvidersFromSnippets`.
+ */
 function _persistLlmProviderConfig(llmConf) {
     const persistable = { custom: llmConf.custom || {} };
     if (llmConf.ollama && llmConf.ollama.model) {
@@ -129,9 +134,10 @@ function _persistLlmProviderConfig(llmConf) {
     if (llmConf.custom === undefined
         && !(llmConf.ollama && llmConf.ollama.model)
         && !persistable.bedrock) {
-        return;
+        return false;
     }
     chrome.storage.local.set({ _llmProviderConfig: persistable });
+    return true;
 }
 
 function start(browser) {
@@ -229,14 +235,79 @@ function start(browser) {
 
     loadSettings(null, function(data) {
         browser._applyProxySettings(data);
-        // Custom LLM providers are registered from snippets at page load, so
-        // they live only in this process's memory. Re-register them after a
-        // background restart so llmRequest keeps working until the next page
-        // reload re-runs the snippets.
-        chrome.storage.local.get({ _llmProviderConfig: {} }, function(stored) {
-            _registerLlmProviders(stored._llmProviderConfig);
-        });
     });
+
+    /*
+     * The LLM providers, read back from storage at every start.
+     *
+     * They are configured in the user's snippets, which run in a page, so a
+     * registration lives only in the memory of this process -- and an MV3 service
+     * worker is evicted as soon as it has been idle for a while. The stored copy that
+     * `_persistLlmProviderConfig` leaves behind is what survives that, and this reads
+     * it back.
+     *
+     * Everything that answers about providers waits for this read, because the
+     * message that WAKES the worker is delivered before it finishes: a chat sent
+     * after an idle period would otherwise be answered from an empty registry --
+     * "Please set up bedrock correctly" for credentials the user had configured, a
+     * custom provider reported as not implemented, or ollama quietly falling back to
+     * its built-in default model.
+     *
+     * Read straight from storage rather than from inside `loadSettings`: that one may
+     * fetch the user's snippets over the network first, and waiting on a request that
+     * may never finish is not something a chat can afford.
+     */
+    let llmProvidersRestored = false;
+    let waitingForLlmProviders = [];
+    /*
+     * Whether a page has since told us what the snippets say -- see `updateSettings`,
+     * which every page load reaches. What it registers is by definition newer than
+     * what is on disk: a read is answered from the state it was ISSUED in, so a get
+     * made at boot carries the value from BEFORE the set that same page load
+     * persisted. Restoring on top of that would put the previous model or the
+     * previous credentials back, and the request that woke this worker -- dispatched
+     * as soon as the read lands -- would be the one to use them.
+     */
+    let llmProvidersFromSnippets = false;
+    /*
+     * Releasing the queue is what a waiting request depends on: the frontend books the
+     * shared `llmResponse` handler for the duration of one, and a request that never
+     * completes silently disables every LLM feature in that frame until a reload. That
+     * holds for the failing read too, hence the `catch` below -- a chrome API throws
+     * synchronously once the extension context has been invalidated, and a request
+     * answered from an empty registry at least says something.
+     *
+     * There is deliberately no timer behind it. A read that is accepted and then never
+     * answered means this worker was suspended, and a timer would have been suspended
+     * with it; the storage callback is the only thing that can report on a read.
+     */
+    function llmProvidersReady() {
+        llmProvidersRestored = true;
+        const waiting = waitingForLlmProviders;
+        waitingForLlmProviders = [];
+        waiting.forEach((cb) => cb());
+    }
+    function whenLlmProvidersReady(cb) {
+        if (llmProvidersRestored) {
+            cb();
+        } else {
+            waitingForLlmProviders.push(cb);
+        }
+    }
+    try {
+        chrome.storage.local.get({ _llmProviderConfig: {} }, function(stored) {
+            // `stored` is undefined when the read failed rather than came back empty
+            // (chrome.runtime.lastError is set for the length of this callback); the
+            // point is to reach llmProvidersReady() either way, since a throw in here
+            // leaves whatever is queued waiting forever
+            if (!llmProvidersFromSnippets) {
+                _registerLlmProviders(stored && stored._llmProviderConfig);
+            }
+            llmProvidersReady();
+        });
+    } catch (e) {
+        llmProvidersReady();
+    }
 
     function removeTab(tabId) {
         delete tabActivated[tabId];
@@ -1331,7 +1402,14 @@ function start(browser) {
             }
             const llmConf = conf.llm;
             _registerLlmProviders(llmConf);
-            _persistLlmProviderConfig(llmConf);
+            // what a page just told us outranks the stored copy this process booted
+            // with, whether or not that read has landed yet -- but only when the
+            // snippets actually carried providers: snippets that carry none say
+            // nothing about the ones stored earlier, which is why persisting reports
+            // back rather than just happening.
+            if (_persistLlmProviderConfig(llmConf)) {
+                llmProvidersFromSnippets = true;
+            }
             if (llmConf.bedrock
                 && llmConf.bedrock.accessKeyId
                 && llmConf.bedrock.secretAccessKey
@@ -1954,67 +2032,90 @@ function start(browser) {
             return str;
         }
     }
-    let clientInLLMRequest = {tabId: 0, frameId: 0, origin: ""};
-    const sendLLMessage = (message) => {
-        if (browser.name === "Safari" && chrome.runtime.getURL("/").toLowerCase().indexOf(clientInLLMRequest.origin) === 0) {
+    /*
+     * The reply destination is captured per request, here in this closure, and must
+     * stay that way: it cannot be hoisted into one variable that later requests
+     * overwrite.
+     *
+     * Requests overlap. Several frames' content scripts wake this worker at once and
+     * queue behind the provider read (see whenLlmProvidersReady), a provider streams
+     * for as long as the model takes to answer, and nothing stops the user asking in
+     * a second tab meanwhile. Read the destination at delivery time instead of
+     * capturing it and it holds whoever asked LAST, so every earlier request's chunks
+     * and its completion go to that frame: one tab's answer appears inside another,
+     * and the frame that actually asked waits forever on a reply that was delivered
+     * elsewhere -- which keeps its `llmResponse` booking and disables every LLM
+     * feature there until a reload.
+     */
+    const llmClientOf = (sender) => ({
+        tabId: sender.tab.id,
+        frameId: sender.frameId,
+        origin: sender.origin.toLowerCase(),
+    });
+    const sendLLMessage = (client, message) => {
+        if (browser.name === "Safari" && chrome.runtime.getURL("/").toLowerCase().indexOf(client.origin) === 0) {
               chrome.runtime.sendMessage(message);
         } else {
-            sendTabMessage(clientInLLMRequest.tabId, clientInLLMRequest.frameId, message);
+            sendTabMessage(client.tabId, client.frameId, message);
         }
     };
 
     self.llmRequest = function (message, sender, sendResponse) {
-        clientInLLMRequest.tabId = sender.tab.id;
-        clientInLLMRequest.frameId = sender.frameId;
-        clientInLLMRequest.origin = sender.origin.toLowerCase();
-
-        const decoder = new TextDecoder();
+        const client = llmClientOf(sender);
 
         const provider = message.provider;
-        if (llmClients.hasOwnProperty(provider)) {
-            const llmClient = llmClients[provider];
-            llmClient(message, {
-                onComplete: (message) => {
-                    if (message.content && message.content.constructor.name === "Array") {
-                        message.content = message.content.map((c) => {
-                            return c.type === "text" ? { type: "text", text: toUTF8(c.text) } : c;
+        // the request may be what woke this worker, in which case the providers the
+        // previous one held have not been read back yet -- see whenLlmProvidersReady
+        whenLlmProvidersReady(function() {
+            if (llmClients.hasOwnProperty(provider)) {
+                const llmClient = llmClients[provider];
+                llmClient(message, {
+                    onComplete: (message) => {
+                        if (message.content && message.content.constructor.name === "Array") {
+                            message.content = message.content.map((c) => {
+                                return c.type === "text" ? { type: "text", text: toUTF8(c.text) } : c;
+                            });
+                        }
+                        sendLLMessage(client, {
+                            subject: 'llmResponse',
+                            message,
+                            done: true
                         });
-                    }
-                    sendLLMessage({
-                        subject: 'llmResponse',
-                        message,
-                        done: true
-                    });
-                },
-                onChunk: (chunk) => {
-                    sendLLMessage({
-                        subject: 'llmResponse',
-                        chunk: toUTF8(chunk)
-                    });
-                },
-            });
-        } else {
-            /*
-             * The same two messages a provider sends, never one carrying both: every
-             * caller reads `chunk` and `done` as alternatives, so a message with both
-             * is delivered as a chunk and its completion is never seen -- which
-             * leaves the caller's `llmResponse` booking held forever and silently
-             * disables every LLM feature in that frame until a reload.
-             */
-            sendLLMessage({
-                subject: 'llmResponse',
-                chunk: `**Warning:** There is no LLM provider ${provider} implemented.`
-            });
-            sendLLMessage({
-                subject: 'llmResponse',
-                message: {},
-                done: true
-            });
-        }
+                    },
+                    onChunk: (chunk) => {
+                        sendLLMessage(client, {
+                            subject: 'llmResponse',
+                            chunk: toUTF8(chunk)
+                        });
+                    },
+                });
+            } else {
+                /*
+                 * The same two messages a provider sends, never one carrying both:
+                 * every caller reads `chunk` and `done` as alternatives, so a message
+                 * with both is delivered as a chunk and its completion is never seen
+                 * -- which leaves the caller's `llmResponse` booking held forever and
+                 * silently disables every LLM feature in that frame until a reload.
+                 */
+                sendLLMessage(client, {
+                    subject: 'llmResponse',
+                    chunk: `**Warning:** There is no LLM provider ${provider} implemented.`
+                });
+                sendLLMessage(client, {
+                    subject: 'llmResponse',
+                    message: {},
+                    done: true
+                });
+            }
+        });
     };
     self.getAllLlmProviders = function (message, sender, sendResponse) {
-        _response(message, sendResponse, {
-            providers: Object.keys(llmClients).filter(p => p !== 'custom')
+        // the same wait: a woken worker would otherwise report only the built-in
+        // providers, leaving the user's own out of the list they pick from
+        whenLlmProvidersReady(function() {
+            _response(message, sendResponse, {
+                providers: Object.keys(llmClients).filter(p => p !== 'custom')
+            });
         });
     };
 

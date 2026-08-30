@@ -2249,6 +2249,200 @@ describe('start', () => {
             }
         });
 
+        /*
+         * The worker is woken BY the request, and reading the stored config back is
+         * asynchronous, so the request arrives first. Answering it from the registry
+         * as it stands at that moment is what reported "Please set up bedrock
+         * correctly" for credentials the user had configured, and a custom provider
+         * as not implemented, on the first chat after an idle period.
+         */
+        describe('a request that arrives before the stored config is read', () => {
+            const STORED = {storage: {local: {_llmProviderConfig: {
+                bedrock: {accessKeyId: 'AKIA', secretAccessKey: 'secret', model: 'claude'},
+                custom: {claude: {serviceUrl: 'https://api.example', apiKey: 'k', model: 'claude-x'}},
+            }}}, deferStorageReads: true};
+
+            it('holds the request until the providers are back, then dispatches it', () => {
+                const realCustom = llmClients.custom;
+                const custom = jest.spyOn(llmClients, 'custom').mockImplementation(() => {});
+                // the spy replaces the function, and registration goes through it
+                llmClients.custom.register = realCustom.register;
+                const {chrome, dispatch} = bootstrap({chrome: STORED});
+                try {
+                    dispatch({action: 'llmRequest', provider: 'claude', messages: []}, senderFor(12));
+
+                    // nothing is registered yet, and the frame must NOT be told so
+                    expect(custom).not.toHaveBeenCalled();
+                    expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(12, expect.objectContaining({
+                        subject: 'llmResponse',
+                    }), expect.anything());
+
+                    chrome.flushStorageReads();
+
+                    expect(custom).toHaveBeenCalledWith(
+                        expect.objectContaining({provider: 'claude'}), expect.any(Object));
+                } finally {
+                    custom.mockRestore();
+                    delete llmClients.claude;
+                }
+            });
+
+            it('initialises bedrock before the request reaches it', () => {
+                const init = jest.spyOn(llmClients.bedrock, 'init').mockImplementation(() => {});
+                const bedrock = jest.spyOn(llmClients, 'bedrock').mockImplementation(() => {});
+                // the spy replaces the function, so `init` has to hang off the spy too
+                llmClients.bedrock.init = init;
+                const {chrome, dispatch} = bootstrap({chrome: STORED});
+                try {
+                    dispatch({action: 'llmRequest', provider: 'bedrock', messages: []}, senderFor(12));
+                    expect(bedrock).not.toHaveBeenCalled();
+
+                    chrome.flushStorageReads();
+
+                    expect(init).toHaveBeenCalledWith(expect.objectContaining({accessKeyId: 'AKIA'}));
+                    expect(bedrock).toHaveBeenCalled();
+                } finally {
+                    bedrock.mockRestore();
+                    init.mockRestore();
+                    delete llmClients.claude;
+                }
+            });
+
+            it('lists the user\'s own providers rather than the built-in ones alone', () => {
+                const {chrome, dispatch} = bootstrap({chrome: STORED});
+                try {
+                    const {sendResponse, kept} = dispatch(
+                        {action: 'getAllLlmProviders', needResponse: true}, senderFor(12));
+                    // the channel is kept open instead of answering with a short list
+                    expect(kept).toBe(true);
+                    expect(sendResponse).not.toHaveBeenCalled();
+
+                    chrome.flushStorageReads();
+
+                    expect(sendResponse.mock.calls[0][0].providers).toContain('claude');
+                } finally {
+                    delete llmClients.claude;
+                }
+            });
+
+            /*
+             * A request must not be left waiting on a read that cannot happen: the
+             * frontend books the shared `llmResponse` handler for its duration, and a
+             * request that never completes disables every LLM feature in that frame
+             * until a reload. A chrome API throws synchronously once the extension
+             * context has been invalidated, so that throw releases the queue.
+             */
+            it('answers a request even when the config cannot be read at all', () => {
+                const {chrome, dispatch} = bootstrap({chrome: {
+                    storageReadThrows: new Error('Extension context invalidated'),
+                }});
+                dispatch({action: 'llmRequest', provider: 'nope', messages: []}, senderFor(12));
+
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(12, expect.objectContaining({
+                    chunk: expect.stringContaining('no LLM provider nope'),
+                }), {frameId: 0});
+            });
+
+            /*
+             * The other way a read fails: accepted, then answered with `undefined` and
+             * chrome.runtime.lastError instead of items. Reaching into that answer
+             * throws INSIDE the storage callback, where the `try` above cannot catch it
+             * and nothing is left to release the queue -- so the request would hang.
+             */
+            it('answers a request when the read fails instead of returning items', () => {
+                const {chrome, dispatch} = bootstrap({chrome: {
+                    deferStorageReads: true,
+                    storageReadError: 'An unexpected error occurred',
+                }});
+                dispatch({action: 'llmRequest', provider: 'nope', messages: []}, senderFor(12));
+                expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+                    12, expect.objectContaining({subject: 'llmResponse'}), expect.anything());
+
+                chrome.flushStorageReads();
+
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(12, expect.objectContaining({
+                    chunk: expect.stringContaining('no LLM provider nope'),
+                }), {frameId: 0});
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+                    12, {subject: 'llmResponse', message: {}, done: true}, {frameId: 0});
+            });
+        });
+
+        /*
+         * The other order, and the one a page load actually produces: the boot read is
+         * issued, then a page reports what the snippets say. A read is answered from
+         * the state it was ISSUED in, so that answer predates what the page just
+         * persisted -- restoring on top of it would put the previous model or the
+         * previous credentials back, and the request waiting on the read is dispatched
+         * into exactly that.
+         */
+        describe('a page that reports the snippets while the read is in flight', () => {
+            const snippetSettings = (llm) => ({
+                action: 'updateSettings', scope: 'snippets', settings: {llm},
+            });
+
+            it('keeps the model the page reported rather than the stored one', () => {
+                const init = jest.spyOn(llmClients.bedrock, 'init').mockImplementation(() => {});
+                const {chrome, dispatch} = bootstrap({chrome: {
+                    deferStorageReads: true,
+                    storage: {local: {_llmProviderConfig: {bedrock: {
+                        accessKeyId: 'AKIA', secretAccessKey: 'secret', model: 'stale-model',
+                    }}}},
+                }});
+                try {
+                    dispatch(snippetSettings({bedrock: {
+                        accessKeyId: 'AKIA', secretAccessKey: 'secret', model: 'fresh-model',
+                    }}), senderFor(12));
+                    expect(init).toHaveBeenCalledWith(expect.objectContaining({model: 'fresh-model'}));
+
+                    chrome.flushStorageReads();
+
+                    // the stale answer landed and was ignored: no second init
+                    expect(init).toHaveBeenCalledTimes(1);
+                } finally {
+                    init.mockRestore();
+                }
+            });
+
+            it('still releases a request waiting on that read', () => {
+                const {chrome, dispatch} = bootstrap({chrome: {deferStorageReads: true}});
+                dispatch({action: 'llmRequest', provider: 'nope', messages: []}, senderFor(12));
+                dispatch(snippetSettings({ollama: {model: 'llama3.2'}}), senderFor(12));
+                expect(chrome.tabs.sendMessage).not.toHaveBeenCalledWith(
+                    12, expect.objectContaining({subject: 'llmResponse'}), expect.anything());
+
+                chrome.flushStorageReads();
+
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(12, expect.objectContaining({
+                    chunk: expect.stringContaining('no LLM provider nope'),
+                }), {frameId: 0});
+            });
+
+            /*
+             * Snippets carrying no llm config say nothing about the providers stored
+             * earlier -- the same reason `_persistLlmProviderConfig` leaves the stored
+             * copy alone -- so such an update must not suppress the restore.
+             */
+            it('still restores when the snippets carry no providers at all', () => {
+                const {chrome, dispatch} = bootstrap({chrome: {
+                    deferStorageReads: true,
+                    storage: {local: {_llmProviderConfig: {custom: {
+                        claude: {serviceUrl: 'https://api.example', apiKey: 'k', model: 'claude-x'},
+                    }}}},
+                }});
+                try {
+                    dispatch({action: 'updateSettings', scope: 'snippets',
+                        settings: {showTabIndices: true}}, senderFor(12));
+
+                    chrome.flushStorageReads();
+
+                    expect(llmClients.claude).toBe(llmClients.custom);
+                } finally {
+                    delete llmClients.claude;
+                }
+            });
+        });
+
         it('streams chunks and the final message back to the requesting frame', () => {
             const {chrome, dispatch} = bootstrap();
             llmClients.faux = (message, {onChunk, onComplete}) => {
@@ -2293,6 +2487,76 @@ describe('start', () => {
                 expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
                     {subject: 'llmResponse', chunk: 'hi'});
                 expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+            } finally {
+                delete llmClients.faux;
+            }
+        });
+
+        /*
+         * Requests overlap: a provider streams for as long as the model takes, and a
+         * chat in one tab does not stop the user asking in another (nor do two frames
+         * waking this worker together, which queue behind the provider read). Each
+         * reply has to reach the frame that ASKED -- one answer arriving in the wrong
+         * tab is also an asking frame left hanging on a reply it never gets, with its
+         * `llmResponse` booking held until a reload.
+         */
+        it('streams each of two overlapping requests back to its own frame', () => {
+            const {chrome, dispatch} = bootstrap();
+            const turns = [];
+            llmClients.faux = (message, callbacks) => turns.push(callbacks);
+            try {
+                dispatch({action: 'llmRequest', provider: 'faux', messages: []}, senderFor(11));
+                dispatch({action: 'llmRequest', provider: 'faux', messages: []}, senderFor(12));
+                expect(turns).toHaveLength(2);
+
+                // the FIRST request answers after the second has been accepted
+                turns[0].onChunk('for eleven');
+                turns[0].onComplete({content: [{type: 'text', text: 'eleven done'}]});
+                turns[1].onChunk('for twelve');
+
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+                    11, {subject: 'llmResponse', chunk: 'for eleven'}, {frameId: 0});
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(11, {
+                    subject: 'llmResponse',
+                    message: {content: [{type: 'text', text: 'eleven done'}]},
+                    done: true,
+                }, {frameId: 0});
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+                    12, {subject: 'llmResponse', chunk: 'for twelve'}, {frameId: 0});
+                // nothing meant for one tab was delivered to the other
+                const routed = chrome.tabs.sendMessage.mock.calls
+                    .filter((c) => c[1] && c[1].subject === 'llmResponse')
+                    .map((c) => [c[0], c[1].chunk || c[1].message]);
+                expect(routed).toEqual([
+                    [11, 'for eleven'],
+                    [11, {content: [{type: 'text', text: 'eleven done'}]}],
+                    [12, 'for twelve'],
+                ]);
+            } finally {
+                delete llmClients.faux;
+            }
+        });
+
+        // the same two frames, both queued behind the boot read: whichever asked last
+        // must not become the destination of the one that asked first
+        it('keeps the frames apart when both requests waited for the provider read', () => {
+            const {chrome, dispatch} = bootstrap({chrome: {deferStorageReads: true}});
+            const turns = [];
+            llmClients.faux = (message, callbacks) => turns.push(callbacks);
+            try {
+                dispatch({action: 'llmRequest', provider: 'faux', messages: []}, senderFor(11));
+                dispatch({action: 'llmRequest', provider: 'faux', messages: []}, senderFor(12));
+                expect(turns).toHaveLength(0);
+
+                chrome.flushStorageReads();
+
+                expect(turns).toHaveLength(2);
+                turns[0].onChunk('for eleven');
+                turns[1].onChunk('for twelve');
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+                    11, {subject: 'llmResponse', chunk: 'for eleven'}, {frameId: 0});
+                expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+                    12, {subject: 'llmResponse', chunk: 'for twelve'}, {frameId: 0});
             } finally {
                 delete llmClients.faux;
             }

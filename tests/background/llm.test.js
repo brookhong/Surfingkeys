@@ -72,6 +72,36 @@ const toolTurn = (partialJsonDeltas) => [
     { type: "message_stop" },
 ];
 
+/*
+ * Before init, in a module of its own: `awsClient` is module state and no init can
+ * put it back to null, so this is the only way to see the unconfigured path -- the
+ * one a background that has just been woken takes if the stored credentials cannot
+ * be read back (see whenLlmProvidersReady in start.js).
+ */
+describe('bedrock before it is configured', () => {
+    it('says which fields it needs, and releases the caller', () => {
+        jest.isolateModules(() => {
+            const fresh = require('../../src/background/llm.js').default;
+            const onChunk = jest.fn();
+            const onComplete = jest.fn();
+            fresh.bedrock({ messages: [{ role: 'system', content: 'sys' }] }, { onChunk, onComplete });
+
+            const said = onChunk.mock.calls.map((c) => c[0]).join('');
+            expect(said).toContain('accessKeyId');
+            expect(said).toContain('secretAccessKey');
+            expect(said).toContain('model');
+            // the case a user actually hits: configured, but this process lost it
+            expect(said).toContain('reload the page');
+            /*
+             * The caller books the shared `llmResponse` handler for the request, so a
+             * refusal that does not complete disables every LLM feature in that frame
+             * until a reload.
+             */
+            expect(onComplete).toHaveBeenCalledWith({});
+        });
+    });
+});
+
 describe('bedrock streaming', () => {
     let onChunk;
     let onComplete;

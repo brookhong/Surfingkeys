@@ -170,7 +170,10 @@ function createOmnibar(front, clipboard) {
         annotation: "Copy selected item url or all listed item urls",
         feature_group: 8,
         code: function () {
-            // hide Omnibar.input, so that we could use clipboard_holder to make copy
+            // `clipboard.write` copies by selecting a hidden textarea of its own and
+            // running execCommand('copy'), which takes the DOCUMENT's selection -- so
+            // the focused input has to give that selection up first. Hiding it does
+            // that; it is restored below.
             self.input.style.display = "none";
 
             const fi = self.resultsDiv.querySelector('li.focused');

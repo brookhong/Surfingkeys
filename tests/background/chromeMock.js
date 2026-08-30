@@ -37,6 +37,21 @@ function tabMatches(tab, queryInfo, currentWindowId) {
  * @param {Array}   [opts.tabs=[]]           fixtures returned by chrome.tabs.query.
  * @param {number}  [opts.currentWindowId=1] which window `currentWindow: true` means.
  * @param {object}  [opts.storage]           seeds chrome.storage.{local,sync}.
+ * @param {boolean} [opts.deferStorageReads=false] hold every storage read until
+ *   `chrome.flushStorageReads()` is called. Storage is really asynchronous, and an
+ *   MV3 worker is woken BY a message, so anything start() reads at boot arrives
+ *   after the first request it has to answer -- which is only reproducible here by
+ *   deciding when the read lands.
+ * @param {Error}   [opts.storageReadThrows]  make every storage read throw, the way
+ *   EVERY chrome API does once the extension context has been invalidated -- which
+ *   is why it is not per-area. Note the browser stub's loadRawSettings does not go
+ *   through chrome.storage, so under this option a boot fails only at the reads
+ *   start() issues itself.
+ * @param {string}  [opts.storageReadError]   the OTHER way a read fails: it is
+ *   accepted and answered, but with `undefined` instead of items and
+ *   chrome.runtime.lastError set for the duration of the callback. A caller that
+ *   reaches into the answer without checking throws inside the callback here, where
+ *   nothing is left to complete whatever was waiting on it.
  */
 function createChromeMock(opts = {}) {
     const {
@@ -44,16 +59,75 @@ function createChromeMock(opts = {}) {
         tabs = [],
         currentWindowId = 1,
         storage = {},
+        deferStorageReads = false,
+        storageReadThrows = null,
+        storageReadError = null,
     } = opts;
 
     const state = { tabs, currentWindowId };
+    const pendingStorageReads = [];
+
+    /*
+     * What chrome.storage answers a read with: null/undefined asks for the whole
+     * area, a string or array of strings for those keys alone -- a key absent from
+     * the store is absent from the answer -- and an OBJECT for its keys with its
+     * values as defaults for the ones the store does not have. Returning the whole
+     * area regardless would hide a caller that forgot to ask for a key, and would
+     * hand it a default it never requested.
+     */
+    const selectKeys = (data, keys) => {
+        if (keys === null || keys === undefined) {
+            return Object.assign({}, data);
+        }
+        const wanted = typeof keys === 'string' ? [keys] : keys;
+        const defaults = Array.isArray(wanted) ? {} : wanted;
+        const names = Array.isArray(wanted) ? wanted : Object.keys(wanted);
+        const picked = {};
+        names.forEach((k) => {
+            if (Object.prototype.hasOwnProperty.call(data, k)) {
+                picked[k] = data[k];
+            } else if (Object.prototype.hasOwnProperty.call(defaults, k)) {
+                picked[k] = defaults[k];
+            }
+        });
+        return picked;
+    };
 
     const makeStorageArea = (seed) => {
         const data = Object.assign({}, seed);
         return {
             data,
             MAX_WRITE_OPERATIONS_PER_MINUTE: 120,
-            get: jest.fn((keys, cb) => cb && cb(Object.assign({}, data))),
+            get: jest.fn((keys, cb) => {
+                if (storageReadThrows) {
+                    throw storageReadThrows;
+                }
+                if (!cb) {
+                    return;
+                }
+                // snapshot at the moment the read is ISSUED, the way real storage
+                // serialises it: a write that happens while the read is in flight is
+                // not in its answer. That is what lets a stale answer land on top of
+                // a fresher write, which is the whole point of deferring one.
+                const snapshot = selectKeys(data, keys);
+                const answer = storageReadError
+                    ? () => {
+                        chrome.runtime.lastError = { message: storageReadError };
+                        try {
+                            cb(undefined);
+                        } finally {
+                            // chrome clears it once the callback returns, so reading it
+                            // later tells you nothing
+                            chrome.runtime.lastError = undefined;
+                        }
+                    }
+                    : () => cb(snapshot);
+                if (deferStorageReads) {
+                    pendingStorageReads.push(answer);
+                } else {
+                    answer();
+                }
+            }),
             set: jest.fn((items, cb) => {
                 Object.assign(data, items);
                 cb && cb();
@@ -169,6 +243,15 @@ function createChromeMock(opts = {}) {
         action: { setIcon: jest.fn() },
         browserAction: { setIcon: jest.fn() },
         proxy: { settings: { set: jest.fn(), clear: jest.fn() } },
+    };
+
+    // Answer every storage read held back by `deferStorageReads`, in the order they
+    // were made. Not part of the chrome API: it is how a test says "and now the disk
+    // came back", which is the only moment a boot-time read can be observed at.
+    chrome.flushStorageReads = () => {
+        const pending = pendingStorageReads.splice(0);
+        pending.forEach((answer) => answer());
+        return pending.length;
     };
 
     return chrome;

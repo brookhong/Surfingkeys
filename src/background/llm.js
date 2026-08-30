@@ -194,7 +194,14 @@ function bedrock(req, opts) {
     const { complete, fail, isDone } = completeOnce(opts);
 
     if (!awsClient) {
-        fail("Please set up bedrock correctly.");
+        /*
+         * Names the three fields because `_registerLlmProviders` needs ALL of them
+         * and says nothing when one is missing -- a config with the model line
+         * commented out registers no client at all -- and mentions reloading because
+         * the credentials come from snippets that run in a page: a background that
+         * has never seen one since it started has nothing to build a client from.
+         */
+        fail("Bedrock is not set up in this browser: settings.llm.bedrock needs accessKeyId, secretAccessKey and model, all three of them. If you have set them, reload the page so your snippets run again.");
         return;
     }
 
