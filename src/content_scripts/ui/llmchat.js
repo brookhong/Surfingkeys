@@ -225,43 +225,240 @@ export default function (omnibar, front) {
      * read the page the chat was opened on and nothing else, the ones with nowhere
      * to send anything.
      *
-     * A tool that CHANGES something is confirmed every single time, whatever the
-     * settings say: see `isPreAllowed`.
+     * The prompt itself can also grant a standing permission, narrower than that
+     * setting: `a` covers the conversation in front of the user, `s` covers one site,
+     * in every tab, until `/clear` (that site's) or `/permissions clear` (every
+     * site's). Both exist for the reason the setting does -- a tool the user has
+     * decided about does not become a decision again on the next page -- and neither
+     * reaches a site they have not chosen.
+     *
+     * A tool that CHANGES something is confirmed every time until the user grants it
+     * a site with `s`, and no setting can do that for them: see `isPreAllowed`.
      */
     const CONFIRM_TIMEOUT = 60000;
     /*
      * How long after a prompt appears its keys are inert.
      *
      * The prompt arrives on its own schedule, in the middle of whatever the user is
-     * typing, and `y`/`a`/`n` are ordinary letters -- so without this a keystroke
-     * meant for the input approves a call, or grants a tool a standing permission,
-     * with nothing to show that it happened. Keys within the window are still
-     * swallowed rather than typed: they were aimed at an input that is no longer
-     * listening.
+     * typing, and `y`/`a`/`s`/`n` are ordinary letters -- so without this a
+     * keystroke meant for the input approves a call, or grants a tool a standing
+     * permission, with nothing to show that it happened. Keys within the window are
+     * still swallowed rather than typed: they were aimed at an input that is no
+     * longer listening.
      */
     const CONFIRM_KEY_DELAY = 400;
     let pendingConfirm = null;
     // "allow for the rest of this conversation", reset whenever it resets
     let sessionAllowed = new Set();
 
+    const SITE_TOOLS_PREFIX = "surfingkeys.llmSiteTools.";
+    /*
+     * "allow on this site": the tools the user allowed for every URL of one origin.
+     *
+     * Kept in `localStorage`, which the extension owns and every chat in every tab
+     * reads, so the grant is not spent by the page it was made on: the frontend is
+     * built per page, so anything held only in this iframe is gone the moment the
+     * user follows a link, and a question walked across a site would ask about the
+     * same tool once per page and once per tab. The store is the one that outlives
+     * all of that -- it survives a navigation, another tab, and a restart of the
+     * browser.
+     *
+     * Outliving the chat that made it is exactly what makes a grant something the
+     * user must be able to FIND again, so the store is enumerable and two commands
+     * read it: `/clear` ends the grants for the site the chat is on, and
+     * `/permissions` lists every site's and can end all of them -- from any page,
+     * because a grant the user has forgotten is by definition on a site they are not
+     * looking at. Without that, the only way to find one would be to visit every
+     * site it might be on, and a permission nobody can find is one nobody can
+     * withdraw.
+     *
+     * Two things follow from the store being shared and durable, and both are why
+     * the read happens per call rather than being cached at open time: a grant made
+     * in another tab is honoured here without reopening anything, and, which matters
+     * more, a withdrawal there stops granting here just as promptly.
+     *
+     * The key is namespaced for the same reason a conversation's is (this storage is
+     * shared with the omnibar and the pdf viewer) and is deliberately NOT under
+     * `KEY_PREFIX`, so the eviction in `persist` -- which deletes other
+     * conversations to make room -- cannot reach a permission. It is plain
+     * `localStorage` rather than a setting because a permission granted on this
+     * machine has no business being synced to the user's other ones.
+     */
+    let siteAllowedOrigin = null;
+    /*
+     * Grants the store refused (see `grantForSite`), good for this document alone.
+     * Reset on a change of site, since they were the previous one's.
+     */
+    let siteAllowedHere = new Set();
+
     /*
      * Whether a call may run without asking.
      *
      * A standing permission is a judgement made once about calls that have not
-     * happened yet, and that is a reasonable thing to grant a tool that only ever
-     * reports. It is not one for a tool that changes something: the arguments are
-     * the whole decision there -- which URL, which tabs -- and they are decided per
-     * call, by a model reading text the page wrote. So a mutating tool is asked
-     * about every time, and neither `settings.llmAllowedTools` nor "allow for this
-     * chat" can waive it.
+     * happened yet, which is easy to grant a tool that only ever reports and quite
+     * something else for one that changes things: there the ARGUMENTS are the whole
+     * decision -- which URL, which tabs -- and they are chosen per call by a model
+     * reading text the page wrote. A grant for `open_url` is a grant to put any
+     * address the model comes up with into a tab, and a URL is a way to send data
+     * out, so what the user is agreeing to is not the call in front of them.
+     *
+     * "allow on this site" can nevertheless waive it, because it is the one grant
+     * whose scope the user picks with the same keystroke: it names one origin, and
+     * the prompt says so. A setting (`llmAllowedTools`) covers every site there is,
+     * and "allow for this chat" is offered before the model has shown what it does
+     * with the tool, so neither of those can: they would be a blanket answer given
+     * once, which for a write tool is what must not be possible.
+     *
+     * Whatever waives the prompt, the call is still TRACED in the chat, so an
+     * `open_url` nobody wanted is visible after the fact rather than silent.
      */
     function isPreAllowed(name) {
+        if (siteAllowedHere.has(name) || storedSiteTools().has(name)) {
+            return true;
+        }
         if (llmTools.isMutating(name)) {
             return false;
         }
         const allowed = runtime.conf.llmAllowedTools;
         return sessionAllowed.has(name)
             || (Array.isArray(allowed) && allowed.indexOf(name) !== -1);
+    }
+
+    function siteToolsKey(origin) {
+        return `${SITE_TOOLS_PREFIX}${origin}`;
+    }
+
+    /*
+     * The tools one stored key grants. Anything unreadable reads as no grant at all,
+     * which is a call that gets confirmed -- where every tool starts.
+     */
+    function readSiteTools(key) {
+        try {
+            const stored = JSON.parse(localStorage.getItem(key));
+            return new Set(Array.isArray(stored) ? stored.filter((n) => typeof n === "string") : []);
+        } catch (e) {
+            return new Set();
+        }
+    }
+
+    // the tools granted the current site
+    function storedSiteTools() {
+        if (!siteAllowedOrigin) {
+            return new Set();
+        }
+        return readSiteTools(siteToolsKey(siteAllowedOrigin));
+    }
+
+    /*
+     * Every key the grants are stored under, collected before anything is read or
+     * removed: `localStorage.key(i)` walks an index that a `removeItem` reshuffles,
+     * so revoking while enumerating would skip whatever slid into the freed slot and
+     * leave a permission standing that the user was told had gone.
+     */
+    function siteToolKeys() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.indexOf(SITE_TOOLS_PREFIX) === 0) {
+                keys.push(key);
+            }
+        }
+        return keys;
+    }
+
+    /*
+     * What every site has been granted, as `{origin, tools}` sorted by origin. This
+     * is what `/permissions` shows, and it reports on the whole store rather than the
+     * current site because the grant worth reviewing is the one made on a site the
+     * user has since left.
+     *
+     * A key holding nothing is left out: it grants no call, so listing it would be an
+     * entry the user cannot act on.
+     */
+    function allSiteGrants() {
+        return siteToolKeys()
+            .map((key) => ({
+                origin: key.slice(SITE_TOOLS_PREFIX.length),
+                tools: Array.from(readSiteTools(key)).sort(),
+            }))
+            .filter((grant) => grant.tools.length > 0)
+            .sort((a, b) => (a.origin < b.origin ? -1 : a.origin > b.origin ? 1 : 0));
+    }
+
+    /*
+     * The site the grants are read and written for: the origin of the page the chat
+     * was opened on. A change of it drops the local fallbacks, which belonged to the
+     * site the user has left.
+     */
+    function adoptSite(url) {
+        const origin = originOf(url);
+        if (origin !== siteAllowedOrigin) {
+            siteAllowedOrigin = origin;
+            siteAllowedHere = new Set();
+        }
+    }
+
+    /**
+     * Grant one tool the whole of the current site.
+     *
+     * Merged into what is stored rather than written over it, since another tab may
+     * have granted something since this page was opened -- with a per-call read, that
+     * grant is live here, and clobbering it would revoke it behind the user's back.
+     *
+     * @returns {boolean} whether the grant reached the store. It holds for this
+     * document either way, so a store that refuses the write costs the user the pages
+     * and tabs they have not opened yet rather than the call in front of them -- but
+     * they are told, because a permission that quietly covers less than its own label
+     * said is one they would not notice being asked for again.
+     */
+    function grantForSite(name) {
+        const tools = storedSiteTools();
+        tools.add(name);
+        try {
+            localStorage.setItem(siteToolsKey(siteAllowedOrigin), JSON.stringify(Array.from(tools)));
+            return true;
+        } catch (e) {
+            siteAllowedHere.add(name);
+            LOG("error", `failed to store the site-wide permission for ${name}: ${e && e.message}`);
+            return false;
+        }
+    }
+
+    function forget(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            // it was never stored, so there is nothing left to withdraw
+        }
+    }
+
+    /*
+     * Take back what the current site was granted.
+     *
+     * The store is shared, so this ends those grants in every tab, not just here.
+     * What it does NOT touch is another site's: `/clear` is scoped to the
+     * conversation it clears, and silently dropping a grant made somewhere else
+     * would be a surprise in the other direction. `/permissions clear` is the one
+     * that reaches all of them.
+     */
+    function revokeSiteAllowed() {
+        siteAllowedHere = new Set();
+        if (!siteAllowedOrigin) {
+            return;
+        }
+        forget(siteToolsKey(siteAllowedOrigin));
+    }
+
+    /*
+     * Take every site's grants back, wherever they were made.
+     *
+     * This is the blunt instrument on purpose: a user who has lost track of what they
+     * pressed `s` on needs one action that leaves nothing standing, and reviewing the
+     * list first is what `/permissions` on its own is for.
+     */
+    function revokeAllSiteGrants() {
+        siteAllowedHere = new Set();
+        siteToolKeys().forEach(forget);
     }
 
     /*
@@ -282,16 +479,45 @@ export default function (omnibar, front) {
     const CONFIRM_CHOICES = [
         { key: "y", label: "allow once" },
         { key: "a", label: "allow for this chat" },
+        { key: "s", label: (name) => `${llmTools.isMutating(name) ? "allow any call on" : "allow on"} ${siteLabel()}` },
         { key: "n", label: "deny" },
     ];
 
     /*
-     * The choices one prompt offers. "allow for this chat" is left out for a call
-     * that changes something, because `isPreAllowed` would not honour it: an option
-     * that silently does nothing teaches the user that the prompt is noise.
+     * How the `s` choice names what it covers: `siteAllowedOrigin`, the very key the
+     * grant is stored under, so the label cannot promise a scope other than the one
+     * it gets. The origin is what that scope is -- `http://example.com` and
+     * `https://example.com` are two different sites here, and "this site" would hide
+     * that. An opaque origin falls back to the whole URL (see `originOf`), which a
+     * `data:` page makes arbitrarily long, hence the cut.
+     */
+    function siteLabel() {
+        const origin = siteAllowedOrigin || "";
+        return origin.length > 60 ? `${origin.slice(0, 60)}…` : origin;
+    }
+
+    /*
+     * The choices one prompt offers.
+     *
+     * "allow for this chat" is left out for a call that changes something, because
+     * `isPreAllowed` would not honour it: an option that silently does nothing
+     * teaches the user that the prompt is noise. "allow on this site" IS honoured
+     * there, and says "allow any call on <origin>" rather than "allow on <origin>":
+     * the rest of the prompt describes this one call, naming the tabs or the URL it
+     * would touch, and the grant covers calls whose arguments the model has not
+     * chosen yet. The choice still needs a site to name -- with no origin to key it
+     * by there is nothing it could be a permission for.
      */
     function confirmChoicesFor(name) {
-        return CONFIRM_CHOICES.filter((c) => c.key !== "a" || !llmTools.isMutating(name));
+        return CONFIRM_CHOICES.filter((c) => {
+            if (c.key === "a") {
+                return !llmTools.isMutating(name);
+            }
+            if (c.key === "s") {
+                return !!siteAllowedOrigin;
+            }
+            return true;
+        });
     }
 
     /*
@@ -304,15 +530,28 @@ export default function (omnibar, front) {
         if (!pendingConfirm) {
             return false;
         }
+        const name = pendingConfirm.name;
         if (key === "y") {
             pendingConfirm.settle(true, "");
         } else if (key === "a") {
-            if (llmTools.isMutating(pendingConfirm.name)) {
+            if (llmTools.isMutating(name)) {
                 // not on offer for this call, so it decides nothing -- the prompt stays
                 return false;
             }
-            sessionAllowed.add(pendingConfirm.name);
+            sessionAllowed.add(name);
             pendingConfirm.settle(true, "");
+        } else if (key === "s") {
+            if (!siteAllowedOrigin) {
+                // as above: this prompt never offered the choice
+                return false;
+            }
+            const site = siteLabel();
+            const stored = grantForSite(name);
+            pendingConfirm.settle(true, "");
+            if (!stored) {
+                // said after settling, so the notice is not removed with the prompt
+                showSystemMessage(`${name} is allowed for the rest of this page, but the permission for ${site} could not be stored, so another page or tab will ask again.`, 8000);
+            }
         } else if (key === "n") {
             pendingConfirm.settle(false, "The user denied this call.");
         } else {
@@ -357,7 +596,12 @@ export default function (omnibar, front) {
 
         const actions = createElementWithContent('div', "", { "class": "confirmActions" });
         confirmChoicesFor(name).forEach(({ key, label }) => {
-            const choice = createElementWithContent('span', `<kbd>${key}</kbd> ${label}`, { "class": "confirmChoice" });
+            const choice = createElementWithContent('span', "<kbd></kbd>", { "class": "confirmChoice" });
+            // the label of the site choice carries a page-supplied origin -- for an
+            // opaque one, the whole URL -- so it goes in as TEXT: a `data:` page
+            // whose URL contains markup would otherwise write it into this prompt
+            choice.firstElementChild.textContent = key;
+            choice.append(document.createTextNode(` ${typeof label === "function" ? label(name) : label}`));
             choice.addEventListener('mousedown', (event) => {
                 event.preventDefault();
                 answerConfirm(key);
@@ -638,11 +882,7 @@ export default function (omnibar, front) {
         return false;
     }
 
-    function showSystemMessage(msg, duration) {
-        const li = createElementWithContent('li', msg, { "class": "role-surfingkeys" });
-        chatList().append(li);
-
-        // Add fadeout animation after 3 seconds
+    function fadeOut(li, duration) {
         setTimeout(() => {
             li.style.transition = "opacity 1s";
             li.style.opacity = "0";
@@ -652,9 +892,42 @@ export default function (omnibar, front) {
         }, duration);
     }
 
+    function showSystemMessage(msg, duration) {
+        const li = createElementWithContent('li', msg, { "class": "role-surfingkeys" });
+        chatList().append(li);
+        fadeOut(li, duration);
+    }
+
+    /*
+     * A system notice built from TEXT lines instead of markup.
+     *
+     * `showSystemMessage` sanitizes its argument and inserts it as HTML, which is
+     * right for the fixed strings it is given and wrong for anything that names a
+     * site: an origin comes from the page, and for an opaque one it is the whole URL,
+     * so a `data:` page could otherwise write markup into the very line the user is
+     * reading to decide what to withdraw.
+     *
+     * A duration of 0 leaves the notice in place -- a list of permissions is
+     * something to read and act on, not a flash.
+     */
+    function showSystemLines(lines, duration) {
+        const li = createElementWithContent('li', "", { "class": "role-surfingkeys" });
+        lines.forEach((line) => {
+            const div = document.createElement('div');
+            div.textContent = line;
+            li.append(div);
+        });
+        chatList().append(li);
+        li.scrollIntoView({ behavior: 'instant', block: 'end', });
+        if (duration) {
+            fadeOut(li, duration);
+        }
+    }
+
     const clear = () => {
         messages = messages.slice(0, RESERVED_MESSAGE_COUNT);
         sessionAllowed = new Set();
+        revokeSiteAllowed();
         if (storageKey) {
             localStorage.removeItem(storageKey);
         }
@@ -679,6 +952,42 @@ export default function (omnibar, front) {
             RUNTIME('updateInputHistory', {llmChat: []});
             inputs = [];
             curInputIdx = inputs.length;
+        },
+        /*
+         * Review and withdraw what `s` ("allow on this site") has granted.
+         *
+         * This is here because such a grant outlives the chat that made it and is
+         * keyed by a site the user may not return to: `/clear` reaches the current
+         * site's, and with nothing to enumerate the rest, an `s` pressed on a write
+         * tool months ago would stand with nothing to show it ever happened. A
+         * permission the user cannot find is one they cannot withdraw.
+         *
+         * Listing is separate from withdrawing so that the blunt action is a choice
+         * made after seeing what it costs.
+         */
+        "permissions": (arg) => {
+            const what = (arg || "").trim();
+            if (what === "clear") {
+                const sites = allSiteGrants().length;
+                revokeAllSiteGrants();
+                showSystemLines([sites
+                    ? `Withdrew the tool permissions granted on ${sites} site${sites === 1 ? "" : "s"}. Every tab asks again from now on.`
+                    : "There was no site-wide tool permission to withdraw."], 8000);
+                return;
+            }
+            if (what) {
+                showSystemLines([`Unknown argument "${what}". /permissions lists the tools allowed per site, /permissions clear withdraws all of them.`], 8000);
+                return;
+            }
+            const grants = allSiteGrants();
+            if (!grants.length) {
+                showSystemLines(["No tool is allowed on any site — every call is confirmed."], 8000);
+                return;
+            }
+            showSystemLines([
+                "Tools allowed without asking, by site. /permissions clear withdraws all of them; /clear withdraws this site's.",
+                ...grants.map(({ origin, tools }) => `${origin} — ${tools.join(", ")}`),
+            ], 0);
         },
         "clear": clear,
     };
@@ -822,13 +1131,15 @@ export default function (omnibar, front) {
      * Conversations are keyed by origin, so one site keeps one conversation
      * whichever of its pages you are on, and the number of stored conversations is
      * bounded by the number of sites rather than growing with every URL visited.
+     * The site-wide tool grants are keyed by the same origin, so what "this site"
+     * means is one answer for both.
      *
      * An opaque origin (file:, data:, about:) serialises to "null", which every
-     * such page would otherwise share, so those fall back to the full URL. The key
-     * is namespaced because this localStorage belongs to the extension origin and
-     * is shared with the omnibar and the pdf viewer.
+     * such page would otherwise share, so those fall back to the full URL -- one
+     * `file:` document is then a site of its own, which is the conservative reading
+     * for a permission and the useful one for a conversation.
      */
-    function storageKeyFor(url) {
+    function originOf(url) {
         let origin;
         try {
             origin = new URL(url).origin;
@@ -836,9 +1147,17 @@ export default function (omnibar, front) {
             origin = "";
         }
         if (!origin || origin === "null") {
-            origin = url;
+            return url || "";
         }
-        return `${KEY_PREFIX}${origin}`;
+        return origin;
+    }
+
+    /*
+     * The key is namespaced because this localStorage belongs to the extension
+     * origin and is shared with the omnibar and the pdf viewer.
+     */
+    function storageKeyFor(url) {
+        return `${KEY_PREFIX}${originOf(url)}`;
     }
 
     /*
@@ -1076,6 +1395,9 @@ export default function (omnibar, front) {
         cleanLegacyConversations();
         currentUrl = opts.url;
         storageKey = storageKeyFor(currentUrl);
+        // the site the tool grants are read and written for, before the first prompt
+        // can be raised, and the same origin the conversation is keyed by
+        adoptSite(currentUrl);
         if (!provider) {
             provider = opts && opts.provider || runtime.conf.defaultLLMProvider;
         }

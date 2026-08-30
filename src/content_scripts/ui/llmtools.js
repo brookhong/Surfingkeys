@@ -21,9 +21,11 @@ import toMarkdown, { tidy } from '../common/pageMarkdown.js';
  * READ TOOLS come first below and only ever report. WRITE TOOLS come last, under
  * a banner of their own, and carry `mutates: true` -- which is not decoration:
  *
- *   - the host refuses to pre-approve a mutating tool, so `settings.llmAllowedTools`
- *     and "allow for this chat" cannot silently stand in for the user's consent to
- *     a call that changes something (llmchat.js `isPreAllowed`);
+ *   - the host refuses to pre-approve a mutating tool from a setting or from a whole
+ *     conversation, so neither `settings.llmAllowedTools` nor "allow for this chat"
+ *     can stand in for the user's consent to a call that changes something; only
+ *     "allow on this site", scoped to the one origin the prompt names, waives it
+ *     (llmchat.js `isPreAllowed`);
  *   - the host drops its page snapshot afterwards, since a write may have changed
  *     what the page-reading tools return;
  *   - it buys the model extra tool rounds, because acting and then checking what

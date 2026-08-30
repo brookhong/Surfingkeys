@@ -653,7 +653,7 @@ To use the feature, you need to set up your credentials/API keys first, like thi
 
 You can also use `A` in visual mode. Press `v` or `V` to enter visual mode, then `v` again to select the text you'd like to chat with AI about, then `A` to call out the LLM chat box. Now start chatting with AI about the selected text — `read_page` then returns only that selection, not the whole page, and a half-selected link is still a link.
 
-A conversation is kept per site, so returning to any page of that site — or reloading — resumes where you left off. `/clear` starts a fresh one. A conversation you resume under a different provider than the one it was held with keeps its questions and answers, but not the tool results, which only the original provider can be given back.
+A conversation is kept per site, so returning to any page of that site — or reloading — resumes where you left off. `/clear` starts a fresh one, and also withdraws the tool permissions granted from a confirmation prompt on that site (see below). A conversation you resume under a different provider than the one it was held with keeps its questions and answers, but not the tool results, which only the original provider can be given back.
 
 Another solution to select the content to chat with AI about is Regional Hints mode. Press `L` to pick an element, then `l` to call out the LLM chat box.
 
@@ -689,7 +689,7 @@ A few tools **change** something instead of reporting on it, so that an answer c
 | `open_url` | open a page in a new background tab, for you to look at when you are done |
 | `group_tabs` | collect open tabs into one named tab group |
 
-So *"where does it say that?"* highlights the sentence on the page (`n` walks the other matches, `Esc` clears them), *"open the changelog it links to"* leaves a tab waiting for you, and *"tidy my GitHub tabs into a group"* does it. These three never touch the page you are on and never close anything: `open_url` opens in the background on purpose, because navigating or switching away would take the chat down with it, and a tab group only collects tabs you already have open — drag one out to undo it. **Every call of them is confirmed, every time, and no setting can waive that** — see below.
+So *"where does it say that?"* highlights the sentence on the page (`n` walks the other matches, `Esc` clears them), *"open the changelog it links to"* leaves a tab waiting for you, and *"tidy my GitHub tabs into a group"* does it. These three never touch the page you are on and never close anything: `open_url` opens in the background on purpose, because navigating or switching away would take the chat down with it, and a tab group only collects tabs you already have open — drag one out to undo it. **Every call of them is confirmed, and no setting can waive that** — the only thing that can is the `s` you press on the prompt itself, which allows the tool on one site until you take it back — see below.
 
 `page_outline`, `search_page` and `list_page_links` exist so that a question about one detail of a long page does not cost a full read of it: each returns a short list, and `search_page` gives the character offset that makes the `read_page` after it land on the answer rather than at the top. `list_page_links` reads the converter's own output back, which is exact rather than approximate — every unescaped bracket in that text is one the converter wrote, so a link it reports is a link the page really contains, and a page that merely prints `[docs](https://evil.example)` in its text has none.
 
@@ -731,11 +731,17 @@ A tool call is not necessarily something you asked for. Whatever the page-readin
 
     🔐 search_browsing_history wants to read your browsing history and send the matches to the LLM provider.
        query: rust async
-       y allow once · a allow for this chat · n deny
+       y allow once · a allow for this chat · s allow on https://news.example.com · n deny
 
-`y` allows that one call, `a` stops asking for that tool for the rest of the conversation, `n` denies it — a denial is reported back to the model, which then answers with what it already has. Any other unmodified key is ignored while the prompt is up, so a stray Enter cannot submit past it, but `Ctrl`/`Cmd` shortcuts still work if you want to copy a URL out before deciding. The three choices are also clickable, since the chat input does not always have the keyboard. Read the arguments before approving — they are shown one per line, exactly as the model sent them, and a request to fetch an address on your own network is called out explicitly.
+`y` allows that one call, `a` stops asking for that tool for the rest of the conversation, `n` denies it — a denial is reported back to the model, which then answers with what it already has. Any other unmodified key is ignored while the prompt is up, so a stray Enter cannot submit past it, but `Ctrl`/`Cmd` shortcuts still work if you want to copy a URL out before deciding. The choices are also clickable, since the chat input does not always have the keyboard. Read the arguments before approving — they are shown one per line, exactly as the model sent them, and a request to fetch an address on your own network is called out explicitly.
 
-The prompt arrives whenever the model decides it needs a tool, which may be in the middle of a sentence you are typing, so `y`/`a`/`n` do not count for a moment after it appears — a keystroke meant for the input cannot approve a call or grant a standing permission. `Esc` denies immediately, and is the key to reach for if a prompt takes you by surprise.
+`s` stops asking for that tool on every URL of the site you are on, in every tab, until you take it back. The chat is rebuilt with each page you visit, so `a` lasts only until you follow a link — one question walked across a few pages of a site asks about the same tool once per page, and once more in the next tab. `s` is that decision made once instead. It is scoped to the **origin**, which is what the prompt names rather than saying "this site": `http://example.com` and `https://example.com` are two different sites to it, a subdomain is another one again, and a `file:` or `data:` page counts only as itself.
+
+A grant is kept where the conversations are kept, so it is remembered across a restart of the browser and is read fresh on every call — grant a tool in one tab and the chat already open in another honours it, withdraw it anywhere and it stops in every tab at once.
+
+Nothing expires a grant, so there are two ways to take one back. `/clear` withdraws what was granted on **the site you are on**, along with the conversation. `/permissions` lists every site you have granted something and what you granted it — from any page, which is the point, since the `s` worth reviewing is the one you pressed on a site you have not been back to — and `/permissions clear` withdraws all of them at once. Press `s` knowing that: on `fetch_url` or a write tool it is a decision that stands until you go and look for it.
+
+The prompt arrives whenever the model decides it needs a tool, which may be in the middle of a sentence you are typing, so `y`/`a`/`s`/`n` do not count for a moment after it appears — a keystroke meant for the input cannot approve a call or grant a standing permission. `Esc` denies immediately, and is the key to reach for if a prompt takes you by surprise.
 
 Page text arrives as a tool result, fenced and labelled as untrusted, and the model is told to report on it rather than obey it.
 
@@ -745,12 +751,14 @@ To stop being asked for tools you trust, list them:
 
 Anything not listed is still confirmed. The default is `["read_page", "search_page", "list_page_links"]`: reading the page you opened the chat on is the point of opening it there, and none of the three takes a destination, so they have nowhere to send anything — the latter two are served from the same snapshot as `read_page` and report strictly less of it, so asking about them while the whole page goes unasked would only teach you to approve without reading. Set it to `[]` to be asked about those too. `page_outline` and `highlight_on_page` are reasonable additions for the same reason: the first reports strictly less of the page than `read_page`, and the second sends nothing anywhere. `read_tab` and `fetch_url` are the two worth thinking twice about before listing: the first can hand over a page you are not looking at — your mail, your tickets — and the second takes a URL chosen per call by a model that has been reading text the page wrote, so a standing permission for it is a standing permission to send something somewhere.
 
-A tool that CHANGES something — `open_url`, `group_tabs` — is asked about every single time. Listing it in `llmAllowedTools` has no effect, and the prompt for it does not offer `a`, because a standing permission is a judgement made once about calls that have not happened yet: with these tools the arguments are the whole decision — which URL, which tabs — and they are chosen per call by a model that has been reading text the page wrote. So the prompt names the target rather than the tool, looking up what the ids mean first:
+A tool that CHANGES something — `open_url`, `group_tabs` — is asked about until you grant it a site. Listing it in `llmAllowedTools` has no effect and the prompt for it does not offer `a`, because a standing permission is a judgement made once about calls that have not happened yet: with these tools the arguments are the whole decision — which URL, which tabs — and they are chosen per call by a model that has been reading text the page wrote. So the prompt names the target rather than the tool, looking up what the ids mean first:
 
     🔐 group_tabs wants to put 3 tabs: "Inbox", "Pull requests", "CI — build #4821" into a tab group named "work".
        tabIds: [7,12,19]
        title: work
-       y allow once · n deny
+       y allow once · s allow any call on https://github.com · n deny
+
+`s` is the one standing permission these accept, and it reads **allow any call** rather than "allow on", because the prompt above it describes the call in front of you while the grant covers the ones after it — arguments included. It is the only grant whose reach you choose with the same keystroke that makes it — one origin, the one the prompt names — and `/clear` on that site, or `/permissions clear` from anywhere, takes it back in every tab at once. A setting cannot stand in for it, and neither can `a`: those answer for sites you are not on, or before the model has shown what it does with the tool. Worth pressing for *"open each of these links"* on a site you are working through; worth thinking about first for `open_url`, since a URL is also a way to send something somewhere, and the model picks it after reading the page. Whatever you grant, the call still appears in the chat as a trace line — the prompt is what a granted call loses, not the record of it, and `/permissions` will still name the tool afterwards.
 
 ### To use LLM chat with a specified system prompt
 

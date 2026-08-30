@@ -172,12 +172,16 @@ body {
 }
 #sk_omnibarSearchResult.llmChat .confirmActions {
     display: flex;
-    gap: 12px;
+    /* the site choice carries an origin, so the row is as wide as the site is
+       named; wrapping keeps the last choice on screen instead of past its edge */
+    flex-wrap: wrap;
+    gap: 4px 12px;
     padding: 4px 0 2px 0;
 }
 #sk_omnibarSearchResult.llmChat .confirmChoice {
     cursor: pointer;
     opacity: 0.85;
+    overflow-wrap: anywhere;
 }
 #sk_omnibarSearchResult.llmChat .confirmChoice:hover {
     opacity: 1;

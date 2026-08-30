@@ -91,6 +91,8 @@ describe('llmchat conversation restore', () => {
         jest.useFakeTimers();
         // not implemented by jsdom
         Element.prototype.scrollIntoView = jest.fn();
+        // the conversations and the site-wide tool grants both live here, and jsdom
+        // keeps one window for the whole file: neither may decide the next test
         localStorage.clear();
         mockRUNTIME.mockReset();
         document.body.innerHTML = '<div id="bar" style="display: none;"><div id="results"></div><input id="input"></div>';
@@ -484,6 +486,23 @@ describe('llmchat tool-use confirmation', () => {
         omnibar.input.value = 'a question';
         chat.onEnter();
     }
+    /*
+     * The next page of the site, as the browser gives it: a NEW chat, because the
+     * frontend iframe dies with the document that hosted it. Only a second instance
+     * can show what a grant covers -- one that ran in the same instance would prove
+     * nothing that "allow for this chat" does not already.
+     */
+    async function nextPage(url) {
+        const next = LLMChat(omnibar, { addDestroyListener: jest.fn() });
+        container.style.display = "";
+        omnibar.resultsDiv.innerHTML = "";
+        next.onOpen({ url, system: 'page text' });
+        await flush();
+        omnibar.input.value = 'another question';
+        next.onEnter();
+        await flush();
+        return next;
+    }
     // the frontend hides #sk_omnibar before onHide runs, which wipes resultsDiv
     function closeChat() {
         container.style.display = "none";
@@ -494,6 +513,8 @@ describe('llmchat tool-use confirmation', () => {
     beforeEach(async () => {
         jest.useFakeTimers();
         Element.prototype.scrollIntoView = jest.fn();
+        // the conversations and the site-wide tool grants both live here, and jsdom
+        // keeps one window for the whole file: neither may decide the next test
         localStorage.clear();
         mockBooked.handler = null;
         runtime.conf.llmAllowedTools = [];
@@ -575,6 +596,338 @@ describe('llmchat tool-use confirmation', () => {
 
         expect(confirmPrompt()).toBeNull();
         expect(ranTool('getTabs')).toBe(true);
+    });
+
+    /*
+     * "allow on this site" is the middle ground between the two: the chat itself is
+     * rebuilt with every page, so "for this chat" is spent as soon as the user
+     * follows a link, while the allowlist setting covers every site there is. This
+     * one covers one origin, in one tab.
+     */
+    describe('"s" allows that tool on the site', () => {
+        // where the grant lives: extension-owned storage every tab's chat reads, so
+        // writing it here is what another tab granting the tool looks like from in
+        // here, and removing it is that tab's /clear
+        const siteToolsKey = 'surfingkeys.llmSiteTools.https://page.com';
+        const granted = () => {
+            const raw = localStorage.getItem(siteToolsKey);
+            return raw === null ? null : JSON.parse(raw).sort();
+        };
+
+        test('runs the call it was granted on', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            expect(confirmPrompt()).toBeNull();
+            expect(ranTool('getTabs')).toBe(true);
+        });
+
+        test('covers another page of the same site, in the same tab', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            await nextPage('https://page.com/deeper/page');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toBeNull();
+            expect(ranTool('getTabs')).toBe(true);
+        });
+
+        test('says nothing about another site', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            await nextPage('https://elsewhere.com/');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('list_tabs');
+            expect(ranTool('getTabs')).toBe(false);
+        });
+
+        // the grant is keyed by origin, and the scheme is part of one: a page served
+        // over http is not the site the user trusted over https
+        test('says nothing about the same host on another scheme', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            await nextPage('http://page.com/');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('list_tabs');
+            expect(ranTool('getTabs')).toBe(false);
+        });
+
+        test('covers only the tool it was pressed for', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            await modelAsksFor('search_browsing_history', { query: 'x' });
+
+            expect(confirmPrompt()).toContain('search_browsing_history');
+            expect(ranTool('getHistory')).toBe(false);
+        });
+
+        // it outlives the conversation, so /clear has to be able to take it back:
+        // otherwise a mis-pressed `s` stands until the tab is closed
+        test('/clear withdraws it', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            omnibar.input.value = '/clear';
+            chat.onEnter();
+            await nextPage('https://page.com/after');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('list_tabs');
+            expect(ranTool('getTabs')).toBe(false);
+        });
+
+        test('the choice names the origin it would cover', async () => {
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('allow on https://page.com');
+        });
+
+        /*
+         * The store is shared by every chat in every tab, and read per call rather
+         * than at open time. Both directions of that matter, and the withdrawal one
+         * matters more: a grant taken back elsewhere must not keep running here just
+         * because this chat was already open when it happened.
+         */
+        test('a grant from another tab is honoured without reopening anything', async () => {
+            localStorage.setItem(siteToolsKey, JSON.stringify(['list_tabs']));
+
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toBeNull();
+            expect(ranTool('getTabs')).toBe(true);
+        });
+
+        test('a withdrawal elsewhere stops granting here at once', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            localStorage.removeItem(siteToolsKey);
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('list_tabs');
+            expect(ranTool('getTabs')).toBe(false);
+        });
+
+        // granting merges with what is stored: another tab's grant is live here, and
+        // writing over it would revoke it behind the user's back
+        test('granting keeps what another tab granted', async () => {
+            localStorage.setItem(siteToolsKey, JSON.stringify(['fetch_url']));
+
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            expect(granted()).toEqual(['fetch_url', 'list_tabs']);
+        });
+
+        test('/clear withdraws it for every tab, not just this one', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+            expect(granted()).toEqual(['list_tabs']);
+
+            omnibar.input.value = '/clear';
+            chat.onEnter();
+
+            expect(granted()).toBeNull();
+        });
+
+        /*
+         * `/clear` clears the conversation it is typed into, and a grant made on
+         * another site is not part of that. Dropping it here would be a surprise in
+         * the other direction -- `/permissions clear` is the one that reaches all of
+         * them, and it says so.
+         */
+        test('/clear leaves another site\'s grant alone', async () => {
+            const elsewhere = 'surfingkeys.llmSiteTools.https://elsewhere.com';
+            localStorage.setItem(elsewhere, JSON.stringify(['open_url']));
+
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+            omnibar.input.value = '/clear';
+            chat.onEnter();
+
+            expect(granted()).toBeNull();
+            expect(JSON.parse(localStorage.getItem(elsewhere))).toEqual(['open_url']);
+        });
+
+        /*
+         * A page with an opaque origin is named by its whole URL, and that URL is the
+         * page's to write. The one line the user is meant to read before approving a
+         * call must not be something the page can restyle or forge a choice into.
+         */
+        test('a url of the page\'s own making cannot dress the choice up as markup', async () => {
+            await nextPage('data:text/html,<strong>y allow once</strong>');
+            await modelAsksFor('list_tabs', {});
+
+            const choices = Array.from(omnibar.resultsDiv.querySelectorAll('.confirmChoice'));
+            expect(choices[2].textContent).toContain('allow on data:text/html,<strong>');
+            expect(choices[2].querySelector('strong')).toBeNull();
+        });
+    });
+
+    /*
+     * `/permissions` is what keeps `s` from being a decision the user cannot revisit.
+     * A grant outlives the chat that made it and is keyed by an origin, so the one
+     * worth reviewing is on a site the user has left -- `/clear` cannot reach it, and
+     * without an enumeration nothing else could either.
+     */
+    describe('/permissions reviews and withdraws the site grants', () => {
+        const keyFor = (origin) => `surfingkeys.llmSiteTools.${origin}`;
+        const notice = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-surfingkeys'))
+            .map((li) => li.textContent).join(" ");
+        const run = (cmd) => {
+            omnibar.input.value = cmd;
+            chat.onEnter();
+        };
+
+        test('lists a grant made on a site the user is no longer on', async () => {
+            localStorage.setItem(keyFor('https://elsewhere.com'), JSON.stringify(['open_url']));
+
+            run('/permissions');
+
+            expect(notice()).toContain('https://elsewhere.com');
+            expect(notice()).toContain('open_url');
+        });
+
+        test('lists what was just granted here', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            run('/permissions');
+
+            expect(notice()).toContain('https://page.com — list_tabs');
+        });
+
+        test('says so when nothing is granted', async () => {
+            run('/permissions');
+
+            expect(notice()).toContain('No tool is allowed on any site');
+        });
+
+        // a key holding no tool grants no call, so an entry for it is one the user
+        // cannot act on
+        test('leaves an emptied site out of the list', async () => {
+            localStorage.setItem(keyFor('https://empty.com'), JSON.stringify([]));
+
+            run('/permissions');
+
+            expect(notice()).not.toContain('https://empty.com');
+        });
+
+        test('the listing stays on screen instead of fading', async () => {
+            localStorage.setItem(keyFor('https://elsewhere.com'), JSON.stringify(['open_url']));
+
+            run('/permissions');
+            jest.advanceTimersByTime(120000);
+
+            expect(notice()).toContain('https://elsewhere.com');
+        });
+
+        test('clear withdraws every site, not just this one', async () => {
+            localStorage.setItem(keyFor('https://elsewhere.com'), JSON.stringify(['open_url']));
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            run('/permissions clear');
+
+            expect(localStorage.getItem(keyFor('https://elsewhere.com'))).toBeNull();
+            expect(localStorage.getItem(keyFor('https://page.com'))).toBeNull();
+            expect(notice()).toContain('2 sites');
+        });
+
+        /*
+         * `localStorage.key(i)` walks an index a removal reshuffles, so a revoke that
+         * enumerated as it deleted would skip whatever slid into the freed slot --
+         * leaving a permission standing that the user was told had gone.
+         */
+        test('clear leaves nothing behind, however many sites there are', async () => {
+            for (let i = 0; i < 8; i++) {
+                localStorage.setItem(keyFor(`https://s${i}.com`), JSON.stringify(['open_url']));
+            }
+
+            run('/permissions clear');
+
+            expect(Object.keys(localStorage).filter((k) => k.startsWith('surfingkeys.llmSiteTools.'))).toEqual([]);
+        });
+
+        // the store is shared, so a withdrawal here is one everywhere -- the chat
+        // already open in another tab reads it on its next call
+        test('a withdrawn tool is confirmed again', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            run('/permissions clear');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('list_tabs', {});
+
+            expect(confirmPrompt()).toContain('list_tabs');
+            expect(ranTool('getTabs')).toBe(false);
+        });
+
+        test('clear keeps the conversation, unlike /clear', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            run('/permissions clear');
+
+            expect(omnibar.resultsDiv.textContent).toContain('a question');
+        });
+
+        test('says so when there was nothing to withdraw', async () => {
+            run('/permissions clear');
+
+            expect(notice()).toContain('no site-wide tool permission to withdraw');
+        });
+
+        /*
+         * An origin is the page's to choose, and for an opaque one it is the whole
+         * URL. The list is read to decide what to withdraw, so a page must not be able
+         * to write markup into the line naming it.
+         */
+        test('an origin of the page\'s own making cannot bring markup into the list', async () => {
+            localStorage.setItem(keyFor('data:text/html,<strong>trusted</strong>'), JSON.stringify(['open_url']));
+
+            run('/permissions');
+
+            const li = omnibar.resultsDiv.querySelector('li.role-surfingkeys');
+            expect(li.textContent).toContain('data:text/html,<strong>trusted</strong>');
+            expect(li.querySelector('strong')).toBeNull();
+        });
+
+        test('an unknown argument explains itself rather than withdrawing anything', async () => {
+            await modelAsksFor('list_tabs', {});
+            press('s');
+            await flush();
+
+            run('/permissions revoke');
+
+            expect(notice()).toContain('/permissions clear withdraws all of them');
+            expect(JSON.parse(localStorage.getItem(keyFor('https://page.com')))).toEqual(['list_tabs']);
+        });
     });
 
     test('a tool in settings.llmAllowedTools is never confirmed', async () => {
@@ -677,6 +1030,22 @@ describe('llmchat tool-use confirmation', () => {
             expect(confirmPrompt()).not.toContain('allow for this chat');
         });
 
+        /*
+         * "allow on this site" is the one grant it accepts, and the only one whose
+         * scope the user chooses with the same keystroke: one origin, one tab. The
+         * choice says "any call" because the rest of the prompt describes THIS call,
+         * naming the tabs it would touch, while the grant covers arguments the model
+         * has not chosen yet.
+         */
+        test('offers the site-wide permission, saying it covers any call', async () => {
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+
+            const choices = Array.from(omnibar.resultsDiv.querySelectorAll('.confirmChoice'));
+            expect(choices.map((c) => c.textContent)).toEqual([
+                'y allow once', 's allow any call on https://page.com', 'n deny',
+            ]);
+        });
+
         test('pressing "a" decides nothing, the prompt stays', async () => {
             await modelAsksFor('group_tabs', { tabIds: [11] });
             press('a');
@@ -684,6 +1053,58 @@ describe('llmchat tool-use confirmation', () => {
 
             expect(confirmPrompt()).not.toBeNull();
             expect(ranTool('createTabGroup')).toBe(false);
+        });
+
+        test('pressing "s" runs it and stops asking on this site', async () => {
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+            press('s');
+            await flush();
+            expect(ranTool('createTabGroup')).toBe(true);
+
+            mockRUNTIME.mockClear();
+            // another call of it, with other arguments the model chose
+            await modelAsksFor('group_tabs', { tabIds: [11], title: 'whatever' });
+
+            expect(confirmPrompt()).toBeNull();
+            expect(ranTool('createTabGroup')).toBe(true);
+        });
+
+        // the point of the grant: a question that walks a site does not ask about the
+        // same write tool once per page
+        test('the grant reaches the next page of the site', async () => {
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+            press('s');
+            await flush();
+
+            await nextPage('https://page.com/next');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+
+            expect(confirmPrompt()).toBeNull();
+            expect(ranTool('createTabGroup')).toBe(true);
+        });
+
+        test('the grant stops at the site it was made on', async () => {
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+            press('s');
+            await flush();
+
+            await nextPage('https://elsewhere.com/');
+            mockRUNTIME.mockClear();
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+
+            expect(confirmPrompt()).toContain('group_tabs');
+            expect(ranTool('createTabGroup')).toBe(false);
+        });
+
+        // the prompt is what a granted call no longer has; the trace is what it keeps
+        test('a granted call is still traced in the chat', async () => {
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+            press('s');
+            await flush();
+            await modelAsksFor('group_tabs', { tabIds: [11] });
+
+            expect(trace()).toContain('group_tabs');
         });
 
         test('is confirmed again after an earlier call of it was approved', async () => {
@@ -769,7 +1190,7 @@ describe('llmchat tool-use confirmation', () => {
 
         const choices = Array.from(omnibar.resultsDiv.querySelectorAll('.confirmChoice'));
         expect(choices.map((c) => c.textContent)).toEqual([
-            'y allow once', 'a allow for this chat', 'n deny',
+            'y allow once', 'a allow for this chat', 's allow on https://page.com', 'n deny',
         ]);
 
         choices[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -997,6 +1418,8 @@ describe('llmchat tool budget', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         Element.prototype.scrollIntoView = jest.fn();
+        // the conversations and the site-wide tool grants both live here, and jsdom
+        // keeps one window for the whole file: neither may decide the next test
         localStorage.clear();
         mockBooked.handler = null;
         // no prompting: this is about the loop, not about the confirmation
@@ -1224,6 +1647,8 @@ describe('llmchat page text', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         Element.prototype.scrollIntoView = jest.fn();
+        // the conversations and the site-wide tool grants both live here, and jsdom
+        // keeps one window for the whole file: neither may decide the next test
         localStorage.clear();
         mockBooked.handler = null;
         // the shipped default: read_page has no destination argument, so there is
@@ -1595,6 +2020,8 @@ describe('llmchat persistence', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         Element.prototype.scrollIntoView = jest.fn();
+        // the conversations and the site-wide tool grants both live here, and jsdom
+        // keeps one window for the whole file: neither may decide the next test
         localStorage.clear();
         destroyTasks = [];
         mockBooked.handler = null;
@@ -1858,6 +2285,24 @@ describe('llmchat persistence', () => {
             send('another question');
 
             expect(storedFor('https://p.com')).toContain('another question');
+        });
+
+        // the eviction is for conversations, which are replaceable; a tool permission
+        // is a decision the user made, and dropping one to make room for chat text
+        // would revoke it with nothing to show that it happened
+        test('never evicts a site-wide tool permission', async () => {
+            const permission = 'surfingkeys.llmSiteTools.https://old.com';
+            localStorage.setItem(keyOf('old.com'), conversation(1, 'from a site long left'));
+            localStorage.setItem(permission, JSON.stringify(['open_url']));
+            const setItem = fullUntilEvicted(keyOf('old.com'));
+
+            await open('https://p.com');
+            send('my question');
+
+            expect(localStorage.getItem(keyOf('old.com'))).toBeNull();
+            expect(JSON.parse(localStorage.getItem(permission))).toEqual(['open_url']);
+
+            setItem.mockRestore();
         });
     });
 
