@@ -65,6 +65,18 @@ const runtime = (function() {
             // Every other tool reaches beyond that page, so it is confirmed until
             // listed here.
             llmAllowedTools: ["read_page", "search_page", "list_page_links"],
+            // How many tabs the LLM chat may hold open at once. Reaching it does not
+            // fail a call: the next `open_url` points the OLDEST of those tabs at the
+            // new address instead of opening one more, even when the model has not
+            // read that page to the end -- so a long conversation costs a bounded
+            // number of tabs, and the price of the bound is that a page can be taken
+            // away before it was finished with. A tab the user opened is never counted
+            // and never taken; one the chat opened and the user then navigated
+            // somewhere of their own is likewise never taken, but goes on counting,
+            // since it sits on the strip and in the chat's tab group because the chat
+            // put it there. llmtools.js `DEFAULT_MAX_LLM_TABS` carries this same number
+            // for a setting that is not a number at all.
+            llmMaxTabs: 5,
             llmTranslateTarget: "auto",
             editableBodyCare: true,
             enableAutoFocus: true,

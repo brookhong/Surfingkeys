@@ -1,9 +1,29 @@
 import LLMTools from '../../src/content_scripts/ui/llmtools.js';
+import { runtime } from '../../src/content_scripts/common/runtime.js';
 
 const mockRUNTIME = jest.fn();
 
 jest.mock('../../src/content_scripts/common/runtime.js', () => ({
     RUNTIME: (...args) => mockRUNTIME(...args),
+    /*
+     * Only the settings llmtools reads, inlined because this factory is hoisted above
+     * the module's own const initializers.
+     *
+     * Behind a Proxy so that a setting added to the module later fails HERE, loudly,
+     * instead of reading as `undefined` and quietly changing what a tool decides while
+     * every test still passes. Symbols are let through, since anything that inspects
+     * or prints this object asks for those.
+     */
+    runtime: {
+        conf: new Proxy({ llmMaxTabs: 5 }, {
+            get(target, key) {
+                if (typeof key === "string" && !(key in target)) {
+                    throw new Error(`llmtools read runtime.conf.${key}, which this mock does not define`);
+                }
+                return target[key];
+            },
+        }),
+    },
 }));
 
 // Answer the RUNTIME actions listed in `responses`, ignore any other.
@@ -28,6 +48,7 @@ describe('llmtools', () => {
             highlight: (...args) => mockHighlight(...args),
         });
         mockRUNTIME.mockReset();
+        runtime.conf.llmMaxTabs = 5;
     });
 
     describe('schemasFor', () => {
@@ -114,11 +135,30 @@ describe('llmtools', () => {
         test('scopes list_tabs to the current window by default', async () => {
             respondWith({ getTabs: { tabs: [{ title: 'one', url: 'https://one.com', active: true }] } });
             const result = await tools.run('list_tabs', {});
-            expect(mockRUNTIME).toHaveBeenCalledWith('getTabs', { queryInfo: { currentWindow: true } }, expect.any(Function));
+            expect(mockRUNTIME).toHaveBeenCalledWith('getTabs',
+                { queryInfo: { currentWindow: true }, includeLoading: true }, expect.any(Function));
             expect(result).toContain('active');
 
             await tools.run('list_tabs', { currentWindowOnly: false });
-            expect(mockRUNTIME).toHaveBeenCalledWith('getTabs', { queryInfo: {} }, expect.any(Function));
+            expect(mockRUNTIME).toHaveBeenCalledWith('getTabs',
+                { queryInfo: {}, includeLoading: true }, expect.any(Function));
+        });
+
+        /*
+         * A tab this chat opened is reported the moment it exists, before its site
+         * has answered, so the list it points the model at has to contain that tab
+         * -- and say which of the two states it is in, since one can be read now and
+         * the other cannot.
+         */
+        test('lists a tab that has not loaded a page yet, by its destination', async () => {
+            respondWith({ getTabs: { tabs: [
+                { id: 6, windowId: 1, title: '', url: '', pendingUrl: 'https://slow.example/' },
+            ] } });
+            const result = await tools.run('list_tabs', {});
+
+            expect(result).toContain('tab 6');
+            expect(result).toContain('https://slow.example/');
+            expect(result).toContain('still loading, no page in it yet');
         });
 
         test('strips markup and scripts from a fetched page', async () => {
@@ -873,6 +913,24 @@ describe('llmtools', () => {
         });
 
         /*
+         * A tab whose navigation has not committed is a tab the chat may have opened
+         * a moment ago, so this is a passing state and not a wrong id: it says which,
+         * because "not a web page" would send the model to ask the user about a page
+         * that is simply on its way.
+         */
+        test('says a tab has no page in it yet rather than calling it not a web page', async () => {
+            respondWith({ getTabs: { tabs: [
+                { id: 6, windowId: 1, title: '', url: '', pendingUrl: 'https://slow.example/', status: 'loading' },
+            ] } });
+            const result = await tools.run('read_tab', { tabId: 6 });
+
+            expect(result).toContain('still loading https://slow.example/');
+            expect(result).toContain('read_tab with tabId: 6 again in a moment');
+            expect(result).not.toContain('not a web page');
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('getTabMarkdown', expect.anything(), expect.any(Function));
+        });
+
+        /*
          * A discarded tab still has its title and URL in `list_tabs`, but the browser
          * threw the page itself away -- which has a remedy, so it is named rather
          * than left to the failure below.
@@ -1023,9 +1081,58 @@ describe('llmtools', () => {
     });
 
     describe('open_url', () => {
+        /*
+         * A browser in which a tab really appears: `open_url` identifies the tab it
+         * opened by being NEW, so `getTabs` has to answer differently before and
+         * after `openLink` -- a mock that reports the same list both times is a
+         * browser in which nothing opened.
+         *
+         * `navigateTab` moves the addressed tab, whichever of these it is, for the same
+         * reason: the reuse path reads the tab back to say what became of it and later
+         * decides whether that tab is still showing what the chat put there, so a mock
+         * that kept reporting the old page would let those tests agree with code that
+         * had recycled the wrong tab. Grouping is answered by default so that no test
+         * hangs on the tidying step.
+         */
+        function opens(tab, extra = {}, existing = []) {
+            const answers = Object.assign({
+                createTabGroup: { groupId: 99 },
+                getTabGroups: { groups: [{ id: 99, windowId: 1, title: 'LLM', tabs: [] }] },
+            }, extra);
+            let opened = false;
+            mockRUNTIME.mockImplementation((action, args, cb) => {
+                if (action === 'openLink') {
+                    opened = true;
+                } else if (action === 'getTabs') {
+                    cb({ tabs: opened && tab ? existing.concat([tab]) : existing });
+                } else if (action === 'navigateTab' && !answers.hasOwnProperty('navigateTab')) {
+                    const target = existing.concat(tab ? [tab] : []).find((t) => t.id === args.tabId);
+                    if (target) {
+                        target.url = args.url;
+                        target.title = 'the next page';
+                    }
+                    cb({ tab: target || null });
+                } else if (answers.hasOwnProperty(action)) {
+                    const answer = answers[action];
+                    cb(typeof answer === 'function' ? answer(args) : answer);
+                }
+            });
+            return tab;
+        }
+
+        // the state the reuse path needs: a tab this chat opened and has read
+        async function openedAndRead(overrides = {}, extra = {}) {
+            const tab = opens(Object.assign({
+                id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', status: 'complete',
+            }, overrides), Object.assign({ getTabMarkdown: { markdown: 'the first page' } }, extra));
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            await tools.run('read_tab', { tabId: tab.id });
+            return tab;
+        }
+
         // a foreground tab would detach the frontend and take the chat down with it
         test('opens a background tab and reports the one it can see', async () => {
-            respondWith({ getTabs: { tabs: [{ id: 5, windowId: 1, url: 'https://example.com/x', title: 'Example' }] } });
+            opens({ id: 5, windowId: 1, url: 'https://example.com/x', title: 'Example' });
             const result = await tools.run('open_url', { url: 'https://example.com/x' });
 
             expect(mockRUNTIME).toHaveBeenCalledWith('openLink', {
@@ -1041,8 +1148,44 @@ describe('llmtools', () => {
 
         // a tab that has not committed yet reports its destination as pendingUrl
         test('finds a tab that is still loading', async () => {
-            respondWith({ getTabs: { tabs: [{ id: 6, windowId: 1, url: '', pendingUrl: 'https://slow.com/', title: '' }] } });
+            opens({ id: 6, windowId: 1, url: '', pendingUrl: 'https://slow.com/', title: '' });
             expect(await tools.run('open_url', { url: 'https://slow.com/' })).toContain('background tab 6');
+        });
+
+        /*
+         * Which is only true because the tabs are asked for with `includeLoading`: the
+         * background leaves a tab with no `url` out of the list a person picks from,
+         * and that is exactly the tab this has just created. Without it, how fast the
+         * site answered decided whether the tab was found -- and a tab that was not
+         * found is not put in the group, not recorded as this chat's, and its id never
+         * reaches the model.
+         */
+        test('asks for the tabs in a way that can see one still loading', async () => {
+            opens({ id: 6, windowId: 1, url: '', pendingUrl: 'https://slow.com/', title: '' });
+            await tools.run('open_url', { url: 'https://slow.com/' });
+
+            const listings = mockRUNTIME.mock.calls.filter(([action]) => action === 'getTabs');
+            expect(listings.length).toBeGreaterThan(0);
+            listings.forEach(([, args]) => expect(args.includeLoading).toBe(true));
+        });
+
+        // the group is the point of the registry, and a second tab is the first time
+        // it has to hold: a page slower than the first one must not cost the tab its
+        // place in the group
+        test('groups the next tab even while it is still loading', async () => {
+            opens({ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A' });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            mockRUNTIME.mockClear();
+            opens({ id: 6, windowId: 1, url: '', pendingUrl: 'https://slow.example/', title: '' }, {},
+                [{ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A' }]);
+            const result = await tools.run('open_url', { url: 'https://slow.example/' });
+
+            expect(result).toContain('background tab 6');
+            expect(mockRUNTIME).toHaveBeenCalledWith('createTabGroup',
+                { tabIds: [6], groupId: 99 }, expect.any(Function));
+            // and not the tab from the first call, which is already in the group
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('createTabGroup',
+                { tabIds: [5], groupId: 99 }, expect.any(Function));
         });
 
         /*
@@ -1051,11 +1194,443 @@ describe('llmtools', () => {
          * may not have.
          */
         test('does not claim a tab it cannot see', async () => {
-            respondWith({ getTabs: { tabs: [] } });
+            opens(null);
             const result = await tools.run('open_url', { url: 'https://example.com/' });
 
             expect(result).toContain('no tab with that URL can be seen yet');
             expect(result).toContain('Do not claim more than that');
+        });
+
+        /*
+         * The tab is identified by being NEW rather than by holding the address,
+         * because the tab this records is the one a later `open_url` may navigate:
+         * mistaking one of the user's for it would mean replacing their page.
+         */
+        test('does not take a tab the user already had open at that address', async () => {
+            const mine = { id: 9, windowId: 1, url: 'https://example.com/x', title: 'Mine' };
+            opens({ id: 10, windowId: 1, url: 'https://example.com/x', title: 'Opened' }, {}, [mine]);
+            const result = await tools.run('open_url', { url: 'https://example.com/x' });
+
+            expect(result).toContain('background tab 10');
+            expect(result).not.toContain('background tab 9');
+        });
+
+        /*
+         * Every tab the chat opens joins ONE group, so a conversation that opens
+         * several pages leaves something the user can collapse or close in one go
+         * instead of a row of loose tabs.
+         */
+        test('puts the tab it opened into the chat tab group', async () => {
+            opens({ id: 5, windowId: 1, url: 'https://example.com/x', title: 'Example' });
+            const result = await tools.run('open_url', { url: 'https://example.com/x' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('createTabGroup',
+                { tabIds: [5], title: 'LLM', color: 'cyan' }, expect.any(Function));
+            expect(result).toContain('"LLM" tab group (group 99)');
+        });
+
+        /*
+         * None of which the user asked about. They approved the call and can see their
+         * own tab strip, so an answer that recites the ids, the group and what the
+         * limit did buries the answer -- the result says outright that this half of it
+         * is not to be repeated, rather than leaving a model to guess which half was
+         * addressed to it.
+         */
+        test('tells the model to keep the tab bookkeeping out of its answer', async () => {
+            opens({ id: 5, windowId: 1, url: 'https://example.com/x', title: 'Example' });
+            const result = await tools.run('open_url', { url: 'https://example.com/x' });
+
+            expect(result).toContain('is not part of the answer');
+            expect(result).toContain('do not mention it to the user');
+        });
+
+        // the second tab joins the group the first one made rather than a group of
+        // its own -- and the title is not sent again, so a group the user renamed
+        // stays renamed
+        test('adds the next tab to the same group', async () => {
+            await openedAndRead();
+            mockRUNTIME.mockClear();
+            opens({ id: 6, windowId: 1, url: 'https://b.example/', title: 'B' }, {},
+                [{ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', active: true }]);
+            await tools.run('open_url', { url: 'https://b.example/' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('createTabGroup',
+                { tabIds: [6], groupId: 99 }, expect.any(Function));
+        });
+
+        /*
+         * A browser without tab groups has still opened the tab: the tidying step
+         * fails quietly rather than turning a successful call into an error the model
+         * would report to the user.
+         */
+        test('opens the tab anyway when the browser cannot group it', async () => {
+            opens({ id: 5, windowId: 1, url: 'https://example.com/x', title: 'Example' },
+                { createTabGroup: { error: 'tab groups are not supported by this browser' } });
+            const result = await tools.run('open_url', { url: 'https://example.com/x' });
+
+            expect(result).toContain('background tab 5');
+            expect(result).not.toContain('joined');
+            expect(result).not.toContain('"LLM"');
+        });
+
+        /*
+         * The tab a chat opened to read has served its purpose once the model has the
+         * whole page, so the next URL goes INTO it. Otherwise a conversation that
+         * reaches five pages leaves five tabs behind.
+         */
+        test('reuses a tab it opened and has read in full', async () => {
+            const tab = await openedAndRead();
+            mockRUNTIME.mockClear();
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: tab.id, url: 'https://b.example/2' }, expect.any(Function));
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('openLink', expect.anything());
+            expect(result).toContain('Reused background tab 5');
+            expect(result).toContain('all of https://a.example/1');
+            expect(result).toContain('Nothing of the old page was lost');
+            /*
+             * ... and nothing about reading it again. The model was handed that page in
+             * full, so a re-read buys it nothing: the network copy is signed out and
+             * script-free, which is LESS than what it already has, and asking for it
+             * costs the user a confirmation prompt. Naming no route is what leaves the
+             * model working from the page.
+             */
+            expect(result).not.toContain('fetch_url');
+        });
+
+        /*
+         * The fix for the one thing reuse could cost: a page is served in chunks, and
+         * a tab taken away while an offset is outstanding leaves the rest of that page
+         * reachable NOWHERE -- not in the tab, which holds something else, and not in
+         * the snapshot, which the mutating call drops. So a half-read tab keeps its
+         * page while the chat is under its tab limit.
+         */
+        test('does not reuse a tab with more of its page left to read', async () => {
+            const long = Array.from({ length: 400 }, (_, i) => `line ${i} of the page`).join('\n');
+            const tab = await openedAndRead({}, { getTabMarkdown: { markdown: long } });
+            const read = await tools.run('read_tab', { tabId: tab.id });
+            expect(read).toContain('characters left');
+
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+            expect(result).not.toContain('Reused');
+            // and the model is told both what it still has and what would end it
+            expect(read).toContain('still holds this page, so you can read on in it');
+            expect(read).toContain('only 5 tabs at once');
+            // which is for its own next call, not for the user
+            expect(read).toContain('do not mention it to the user');
+        });
+
+        // reading the rest of it hands the tab over
+        test('reuses the tab once the last of its page has been served', async () => {
+            const long = Array.from({ length: 400 }, (_, i) => `line ${i} of the page`).join('\n');
+            const tab = await openedAndRead({}, { getTabMarkdown: { markdown: long } });
+            const first = await tools.run('read_tab', { tabId: tab.id });
+            const next = Number(first.match(/offset: (\d+) to read on/)[1]);
+            await tools.run('read_tab', { tabId: tab.id, offset: next });
+            await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: tab.id, url: 'https://b.example/2' }, expect.any(Function));
+        });
+
+        /*
+         * Reaching the END of the page is not the same as having been given all of it:
+         * a reading that jumped an offset left the chunk before the jump outstanding,
+         * and that offset is exactly what reuse must not invalidate. So coverage is
+         * counted as one run from the start of the page.
+         */
+        test('does not reuse a tab whose page was read past a gap', async () => {
+            const long = Array.from({ length: 400 }, (_, i) => `line ${i} of the page`).join('\n');
+            const tab = await openedAndRead({}, { getTabMarkdown: { markdown: long } });
+            // straight to the tail, skipping everything between
+            const tail = await tools.run('read_tab', { tabId: tab.id, offset: long.length - 40 });
+            expect(tail).not.toContain('characters left');
+
+            await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+        });
+
+        // a tab the model has not read yet is a tab the model still needs
+        test('does not reuse a tab it has not read', async () => {
+            opens({ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A' });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+            expect(result).not.toContain('Reused');
+        });
+
+        /* -----------------------------------------------------------------
+         * THE TAB LIMIT
+         *
+         * Keeping a half-read tab bounds nothing on its own: a chat that reads a
+         * little of each page would hold every tab it ever opened. So the count is
+         * the end of it -- at `settings.llmMaxTabs` the oldest of these tabs is
+         * taken even mid-read, which is the one case where reuse costs something.
+         * ----------------------------------------------------------------- */
+
+        // n tabs opened by this chat and none of them read: the state the limit exists
+        // for, and the state every other rule here would leave untouched forever
+        async function holdTabs(n) {
+            const held = [];
+            for (let i = 1; i <= n; i += 1) {
+                const tab = { id: 100 + i, windowId: 1, url: `https://held${i}.example/`, title: `held ${i}` };
+                opens(tab, {}, held.slice());
+                // sequential on purpose: each call must see the ones before it
+                // eslint-disable-next-line no-await-in-loop
+                await tools.run('open_url', { url: tab.url });
+                held.push(tab);
+            }
+            return held;
+        }
+
+        test('takes the oldest tab, unread or not, once it is holding the limit', async () => {
+            const held = await holdTabs(5);
+            mockRUNTIME.mockClear();
+            opens(null, {}, held.slice());
+            const result = await tools.run('open_url', { url: 'https://new.example/' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 101, url: 'https://new.example/' }, expect.any(Function));
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('openLink', expect.anything());
+            expect(result).toContain('holding its limit of 5 open tabs');
+            expect(result).toContain('https://held1.example/');
+            expect(result).toContain('NOT been given in full');
+        });
+
+        // the number is the user's, and read fresh, so raising it mid-conversation
+        // stops the recycling from there on
+        test('follows settings.llmMaxTabs for where that limit is', async () => {
+            runtime.conf.llmMaxTabs = 2;
+            const held = await holdTabs(2);
+            opens(null, {}, held.slice());
+            await tools.run('open_url', { url: 'https://new.example/' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 101, url: 'https://new.example/' }, expect.any(Function));
+        });
+
+        /*
+         * A recycled tab holds the NEWEST of these pages, so it must go to the back of
+         * the queue. Taking the same tab every time would drop the page it was just
+         * given -- before the model could read it -- while the other tabs it holds sat
+         * untouched, so a chat at its limit could never finish reading anything.
+         */
+        test('recycles the tabs in turn rather than the same one every time', async () => {
+            runtime.conf.llmMaxTabs = 2;
+            const held = await holdTabs(2);
+            opens(null, {}, held.slice());
+            await tools.run('open_url', { url: 'https://first.example/' });
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 101, url: 'https://first.example/' }, expect.any(Function));
+
+            mockRUNTIME.mockClear();
+            opens(null, {}, held.slice());
+            await tools.run('open_url', { url: 'https://second.example/' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 102, url: 'https://second.example/' }, expect.any(Function));
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab',
+                { tabId: 101, url: 'https://second.example/' }, expect.any(Function));
+        });
+
+        /*
+         * The half of the rule the count does NOT override: a page someone is reading
+         * is worse to lose than a tab too many, so the limit steps over the user's tab
+         * to the next candidate.
+         */
+        test('skips the tab the user is looking at and takes the next oldest', async () => {
+            const held = await holdTabs(5);
+            held[0].active = true;
+            opens(null, {}, held.slice());
+            await tools.run('open_url', { url: 'https://new.example/' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab',
+                { tabId: 101, url: 'https://new.example/' }, expect.any(Function));
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 102, url: 'https://new.example/' }, expect.any(Function));
+        });
+
+        /*
+         * A tab the user took over is never TAKEN, but it goes on being COUNTED: it is
+         * on the strip, and in the chat's tab group, because the chat opened it. So
+         * what the limit bounds is the tabs this chat caused rather than the ones it
+         * can still recycle -- and the cost of that lands on the chat, which starts
+         * taking back pages it opened recently, never on the user.
+         */
+        test('still counts a tab the user took over toward the limit', async () => {
+            runtime.conf.llmMaxTabs = 2;
+            const held = await holdTabs(2);
+            held[0].url = 'https://elsewhere.example/what-the-user-found';
+            mockRUNTIME.mockClear();
+            opens(null, {}, held.slice());
+            const result = await tools.run('open_url', { url: 'https://new.example/' });
+
+            // the tab that is still the chat's is taken, unread, because the other one
+            // spends a slot without being available: were it forgotten, this would be
+            // one tab under the limit and a new tab would have been opened
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: 102, url: 'https://new.example/' }, expect.any(Function));
+            expect(result).toContain('holding its limit of 2 open tabs');
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('openLink', expect.anything());
+        });
+
+        // and when none of them is the chat's to take, it goes one over the limit
+        // rather than pull a page out from under the user
+        test('opens another tab when every tab it holds has become the user\'s', async () => {
+            runtime.conf.llmMaxTabs = 2;
+            const held = await holdTabs(2);
+            held[0].active = true;
+            held[1].url = 'https://elsewhere.example/what-the-user-found';
+            opens({ id: 7, windowId: 1, url: 'https://new.example/', title: 'New' }, {}, held.slice());
+            const result = await tools.run('open_url', { url: 'https://new.example/' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+            expect(result).toContain('background tab 7');
+        });
+
+        // the limit counts what the chat still HAS, so a tab the user closed makes
+        // room instead of leaving the chat permanently at its ceiling
+        test('does not count a tab the user has closed', async () => {
+            const held = await holdTabs(5);
+            // the oldest is gone from the browser, so four are held
+            opens({ id: 7, windowId: 1, url: 'https://new.example/', title: 'New' }, {}, held.slice(1));
+            const result = await tools.run('open_url', { url: 'https://new.example/' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+            expect(result).toContain('background tab 7');
+        });
+
+        /*
+         * The one thing a forced reuse must not leave unsaid. An offset into the old
+         * page can be served by nothing any more -- not the tab, and not the snapshot
+         * the call drops -- so a model reading on there would be reading the NEW page
+         * from a position measured in the old one. Which is not a loss, only a re-read,
+         * and the way back it names is a TAB: that page is known to render in one,
+         * having just been read from one, while the network route is either untried or
+         * -- on the fetch_url -> empty shell -> open_url path that brings pages here --
+         * already known to have failed on it.
+         */
+        test('tells the model the offsets into the page it took are void', async () => {
+            const long = Array.from({ length: 400 }, (_, i) => `line ${i} of the page`).join('\n');
+            runtime.conf.llmMaxTabs = 1;
+            const tab = opens({ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', status: 'complete' },
+                { getTabMarkdown: { markdown: long } });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            const read = await tools.run('read_tab', { tabId: tab.id });
+            expect(read).toContain('characters left');
+
+            opens(null, {}, [tab]);
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(result).toContain('do not call read_tab with an offset into that page');
+            expect(result).toContain('Nothing about it is permanently gone');
+            expect(result).toContain('open_url puts https://a.example/1 back in a background tab');
+            expect(result).toContain('read_tab reads it there from the start');
+            // and not at the door this route exists to work around
+            expect(result).not.toContain('fetch_url');
+            expect(result).not.toContain('Nothing of the old page was lost');
+            // ... and to keep the whole episode out of the answer: the user asked
+            // about a page, not about which tab held what
+            expect(result).toContain('not that a page was replaced or left unfinished');
+        });
+
+        // the prompt has to name the cost, since closing a tab or raising the limit is
+        // a choice the user cannot make from "reuses a tab"
+        test('says in the prompt that an unfinished page is being taken', async () => {
+            const held = await holdTabs(5);
+            opens(null, {}, held.slice());
+            const { action } = await tools.explain('open_url', { url: 'https://new.example/' });
+
+            expect(action).toContain('background tab 101');
+            expect(action).toContain('https://held1.example/');
+            expect(action).toContain('has NOT finished reading');
+            expect(action).toContain('limit of 5 tabs');
+        });
+
+        // a tab the user has taken over is theirs, whatever this chat opened in it
+        test('does not reuse a tab the user navigated somewhere else', async () => {
+            const tab = await openedAndRead();
+            tab.url = 'https://elsewhere.example/what-the-user-found';
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+            expect(result).not.toContain('Reused');
+        });
+
+        // ... and neither is the tab they are looking at right now
+        test('does not reuse the tab the user is looking at', async () => {
+            const tab = await openedAndRead();
+            tab.active = true;
+            await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).not.toHaveBeenCalledWith('navigateTab', expect.anything(), expect.any(Function));
+        });
+
+        // a redirect within the site is still the page that was opened
+        test('reuses a tab whose page redirected inside its own site', async () => {
+            const tab = await openedAndRead();
+            tab.url = 'https://a.example/1?utm=x#section';
+            await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('navigateTab',
+                { tabId: tab.id, url: 'https://b.example/2' }, expect.any(Function));
+        });
+
+        // the user asked for the page, not for a particular tab to hold it
+        test('opens a new tab when the one it meant to reuse cannot be navigated', async () => {
+            await openedAndRead({}, { navigateTab: { error: 'No tab with id: 5.' } });
+            const result = await tools.run('open_url', { url: 'https://b.example/2' });
+
+            expect(mockRUNTIME).toHaveBeenCalledWith('openLink', {
+                url: 'https://b.example/2',
+                tab: { tabbed: true, active: false },
+            });
+            expect(result).not.toContain('Reused');
+        });
+
+        /*
+         * A reading is pinned per tab id, and reuse puts a different page behind that
+         * id: serving a chunk of the previous one is the one failure neither the model
+         * nor the user could detect.
+         */
+        test('does not serve the replaced page under the reused tab id', async () => {
+            let page = 'the first page';
+            const tab = opens({ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', status: 'complete' },
+                { getTabMarkdown: () => ({ markdown: page }) });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            expect(await tools.run('read_tab', { tabId: tab.id })).toContain('the first page');
+
+            await tools.run('open_url', { url: 'https://a.example/2' });
+            page = 'the second page';
+
+            expect(await tools.run('read_tab', { tabId: tab.id })).toContain('the second page');
+        });
+
+        // the tool it is paired with says so too, so the model can read the page
+        // before the tab is taken for the next address
+        test('read_tab says the tab it just read is the one open_url will reuse', async () => {
+            const tab = opens({ id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', status: 'complete' },
+                { getTabMarkdown: { markdown: 'the page' } });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            const read = await tools.run('read_tab', { tabId: tab.id });
+
+            expect(read).toContain('the next open_url will point this tab at that address');
+        });
+
+        // a tab the user opened is not the chat's to navigate
+        test('read_tab says nothing of the kind about the user own tabs', async () => {
+            respondWith({
+                getTabs: { tabs: [{ id: 7, windowId: 1, url: 'https://theirs/', title: 'Theirs', status: 'complete' }] },
+                getTabMarkdown: { markdown: 'their page' },
+            });
+            const read = await tools.run('read_tab', { tabId: 7 });
+
+            expect(read).not.toContain('the next open_url');
         });
 
         test.each([
@@ -1068,6 +1643,46 @@ describe('llmtools', () => {
 
             expect(result).toContain('Refused');
             expect(mockRUNTIME).not.toHaveBeenCalled();
+        });
+
+        /*
+         * The route the two tools exist to make: open a page fetch_url could see
+         * nothing of, then read it where the browser rendered it.
+         *
+         * The id goes straight from one result into the next call, with no list_tabs
+         * TOOL CALL between them. `resolveTabs` does ask the browser which tabs are
+         * open -- that is what stops an invented id -- but it checks against the
+         * browser rather than against what the model has been told, so an id this tool
+         * produced passes exactly as one list_tabs reported. Sending the model back
+         * through list_tabs to learn an id it was just handed would be a wasted round
+         * and one more list of the user's tabs sent to the provider.
+         */
+        test('reports an id read_tab takes without a list_tabs call in between', async () => {
+            const opened = opens({ id: 5, windowId: 1, url: 'https://app.example.com/', title: 'App', status: 'complete' },
+                { getTabMarkdown: { markdown: 'what the app rendered' } });
+
+            const result = await tools.run('open_url', { url: 'https://app.example.com/' });
+            const reported = result.match(/read_tab with tabId: (\d+)/);
+            expect(reported).not.toBeNull();
+            expect(Number(reported[1])).toBe(opened.id);
+
+            const read = await tools.run('read_tab', { tabId: Number(reported[1]) });
+
+            expect(read).toContain('what the app rendered');
+            // not turned back at the door with the advice that starts the loop over
+            expect(read).not.toContain('list_tabs');
+        });
+
+        // the schema text is what the model reads while filling the argument in, so
+        // it has to name open_url too -- the long description doing it is not enough
+        // to stop a model that was told "exactly as list_tabs reported it"
+        test('read_tab names both sources of an id it accepts', () => {
+            const readTab = tools.schemasFor('ollama')
+                .map((s) => s.function)
+                .find((f) => f.name === 'read_tab');
+
+            expect(readTab.parameters.properties.tabId.description).toContain('open_url');
+            expect(readTab.description).toContain('needs no list_tabs call in between');
         });
     });
 
@@ -1266,6 +1881,33 @@ describe('llmtools', () => {
         test('names what a write tool would act on', async () => {
             expect((await tools.explain('open_url', { url: 'https://example.com/x' })).action)
                 .toBe('open https://example.com/x in a new background tab');
+        });
+
+        /*
+         * Which tab the URL lands in is the part of the decision the arguments do not
+         * show: replacing a page in a tab this chat opened reads very differently from
+         * opening another one, and only the prompt can say which is about to happen.
+         */
+        test('says which tab an open_url would replace the page in', async () => {
+            let opened = false;
+            const tab = { id: 5, windowId: 1, url: 'https://a.example/1', title: 'A', status: 'complete' };
+            mockRUNTIME.mockImplementation((action, args, cb) => {
+                if (action === 'openLink') {
+                    opened = true;
+                } else if (action === 'getTabs') {
+                    cb({ tabs: opened ? [tab] : [] });
+                } else if (action === 'getTabMarkdown') {
+                    cb({ markdown: 'the page' });
+                } else if (action === 'createTabGroup') {
+                    cb({ groupId: 99 });
+                }
+            });
+            await tools.run('open_url', { url: 'https://a.example/1' });
+            await tools.run('read_tab', { tabId: 5 });
+
+            expect((await tools.explain('open_url', { url: 'https://b.example/2' })).action)
+                .toBe('open https://b.example/2 in background tab 5, replacing https://a.example/1'
+                    + ' -- the page this chat opened there and has read in full');
         });
 
         test('warns that a URL the page could not have reached is about to be opened', async () => {

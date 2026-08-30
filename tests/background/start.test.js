@@ -1012,6 +1012,77 @@ describe('start', () => {
             // never-accessed tabs pushed to the end
             expect(ids).toEqual([13, 11, 21]);
         });
+
+        /*
+         * A tab that has just been created holds its destination in `pendingUrl` and
+         * has no `url` at all, so it is left out of the lists a person picks a tab
+         * from -- but a caller looking for the tab it opened a moment ago has to be
+         * able to see it, or a slow site alone decides whether that tab was found.
+         */
+        it('hides a tab that has not committed its navigation', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.state.tabs = [
+                {id: 11, index: 0, windowId: 1, url: 'https://a/', title: 'A'},
+                {id: 12, index: 1, windowId: 1, url: '', pendingUrl: 'https://slow/', title: ''},
+            ];
+            const {sendResponse} = dispatch({action: 'getTabs', needResponse: true}, senderFor(11));
+            expect(sendResponse.mock.calls[0][0].tabs.map((t) => t.id)).toEqual([11]);
+        });
+
+        it('reports a tab that has not committed its navigation when asked to', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.state.tabs = [
+                {id: 11, index: 0, windowId: 1, url: 'https://a/', title: 'A'},
+                {id: 12, index: 1, windowId: 1, url: '', pendingUrl: 'https://slow/', title: ''},
+            ];
+            const {sendResponse} = dispatch(
+                {action: 'getTabs', needResponse: true, includeLoading: true}, senderFor(11));
+            expect(sendResponse.mock.calls[0][0].tabs.map((t) => t.id)).toEqual([11, 12]);
+        });
+
+        /*
+         * A loading tab has no title and no `url` for a query to match, so admitting
+         * it and then matching it on those two would drop every one of them again the
+         * moment a caller passed a filter -- the destination stands in for both.
+         */
+        it('matches a filter against the destination of a tab still loading', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.state.tabs = [
+                {id: 11, index: 0, windowId: 1, url: 'https://a/', title: 'A'},
+                {id: 12, index: 1, windowId: 1, url: '', pendingUrl: 'https://slow/', title: ''},
+            ];
+            const {sendResponse} = dispatch(
+                {action: 'getTabs', needResponse: true, includeLoading: true, filter: 'slow'},
+                senderFor(11));
+            expect(sendResponse.mock.calls[0][0].tabs.map((t) => t.id)).toEqual([12]);
+        });
+
+        // the tabs themselves are answered, not the projection the match was made on
+        it('answers the tabs as the browser reports them when filtering', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.state.tabs = [
+                {id: 12, index: 0, windowId: 1, url: '', pendingUrl: 'https://slow/', title: ''},
+            ];
+            const {sendResponse} = dispatch(
+                {action: 'getTabs', needResponse: true, includeLoading: true, filter: 'slow'},
+                senderFor(12));
+            expect(sendResponse.mock.calls[0][0].tabs).toEqual([
+                {id: 12, index: 0, windowId: 1, url: '', pendingUrl: 'https://slow/', title: ''},
+            ]);
+        });
+
+        // a tab with neither is not a tab anything can be said about, whatever the
+        // caller asked for
+        it('still leaves out a tab with no address at all', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.state.tabs = [
+                {id: 11, index: 0, windowId: 1, url: 'https://a/', title: 'A'},
+                {id: 12, index: 1, windowId: 1, title: ''},
+            ];
+            const {sendResponse} = dispatch(
+                {action: 'getTabs', needResponse: true, includeLoading: true}, senderFor(11));
+            expect(sendResponse.mock.calls[0][0].tabs.map((t) => t.id)).toEqual([11]);
+        });
     });
 
     describe('tab groups', () => {
@@ -1395,6 +1466,67 @@ describe('start', () => {
             dispatch({action: 'viewSource', tab: {tabbed: true}}, senderFor(12));
             expect(chrome.tabs.create).toHaveBeenCalledWith(
                 expect.objectContaining({url: 'view-source:https://b.example/'}), expect.any(Function));
+        });
+
+        /*
+         * Navigating a tab the caller is NOT in: only the background can address one
+         * by id, which is what lets the LLM chat's `open_url` reuse a tab it opened
+         * instead of leaving one behind per URL. The focus is left alone -- the chat
+         * runs in an iframe of the tab the user is on, and activating another tab
+         * detaches it mid-answer.
+         */
+        it('navigates a tab by id and answers with it', () => {
+            const {chrome, dispatch} = bootstrap();
+            const {sendResponse} = dispatch(
+                {action: 'navigateTab', tabId: 11, url: 'https://dest/', needResponse: true},
+                senderFor(12));
+            expect(chrome.tabs.update).toHaveBeenCalledWith(11, {url: 'https://dest/'}, expect.any(Function));
+            expect(sendResponse).toHaveBeenCalledWith({tab: {id: 11}});
+            // no `active` and no window of its own: the tab is navigated where it stands
+            expect(chrome.windows.update).not.toHaveBeenCalled();
+        });
+
+        it('prefixes a bare host it is asked to navigate to', () => {
+            const {chrome, dispatch} = bootstrap();
+            dispatch({action: 'navigateTab', tabId: 11, url: 'example.com'}, senderFor(12));
+            expect(chrome.tabs.update).toHaveBeenCalledWith(11, {url: 'http://example.com'}, expect.any(Function));
+        });
+
+        it.each([
+            ['a javascript url', 'javascript:alert(1)'],
+            ['a file url', 'file:///etc/passwd'],
+            ['nothing at all', ''],
+        ])('refuses to point a tab at %s', (_label, url) => {
+            const {chrome, dispatch} = bootstrap();
+            const {sendResponse} = dispatch(
+                {action: 'navigateTab', tabId: 11, url, needResponse: true}, senderFor(12));
+            expect(chrome.tabs.update).not.toHaveBeenCalled();
+            expect(sendResponse.mock.calls[0][0].error).toMatch(/not an http\(s\) URL/);
+        });
+
+        it('asks for a tab id instead of guessing one', () => {
+            const {chrome, dispatch} = bootstrap();
+            const {sendResponse} = dispatch(
+                {action: 'navigateTab', url: 'https://dest/', needResponse: true}, senderFor(12));
+            expect(chrome.tabs.update).not.toHaveBeenCalled();
+            expect(sendResponse.mock.calls[0][0].error).toMatch(/no tab id/);
+        });
+
+        /*
+         * Reported, not thrown: the caller has to be able to tell the model that the
+         * tab is gone, and a throw here would reach it as a timeout instead.
+         */
+        it('reports a tab the browser would not navigate', () => {
+            const {chrome, dispatch} = bootstrap();
+            chrome.tabs.update = jest.fn((id, props, cb) => {
+                chrome.runtime.lastError = {message: 'No tab with id: 11.'};
+                cb(undefined);
+            });
+            const {sendResponse} = dispatch(
+                {action: 'navigateTab', tabId: 11, url: 'https://dest/', needResponse: true},
+                senderFor(12));
+            expect(sendResponse.mock.calls[0][0].error).toMatch(/No tab with id/);
+            delete chrome.runtime.lastError;
         });
     });
 

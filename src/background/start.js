@@ -695,11 +695,39 @@ function start(browser) {
             _response(message, sendResponse, status);
         });
     };
-    function _filterByTitleOrUrl(tabs, query) {
+    /*
+     * The tabs worth listing, filtered by the caller's query.
+     *
+     * A tab whose navigation has not committed yet reports no `url` at all -- its
+     * destination is in `pendingUrl` -- and it is dropped by default, because a list
+     * a person picks a tab from has nothing to show for it.
+     *
+     * `includeLoading` keeps it, for a caller that is looking for precisely the tab
+     * that was opened a moment ago rather than choosing among the ones already there:
+     * the LLM chat identifies the tab its `open_url` created by that tab being NEW to
+     * the list, so while it cannot be seen the chat cannot put it in its tab group or
+     * read it back either, and how long that lasts is decided by how fast the site
+     * answers.
+     *
+     * Such a tab has no title and no `url` for a query to match, so the destination
+     * stands in for both -- admitting it and then matching it on nothing would drop
+     * every loading tab again the moment a caller passed a filter. The match itself
+     * still goes through the shared `filterByTitleOrUrl`, on a projection of the
+     * tabs, so the two cannot answer differently.
+     */
+    function _filterByTitleOrUrl(tabs, query, includeLoading) {
         tabs = tabs.filter(function(b) {
-            return b.url;
+            return b.url || (includeLoading && b.pendingUrl);
         });
-        return filterByTitleOrUrl(tabs, query, false);
+        if (!includeLoading) {
+            return filterByTitleOrUrl(tabs, query, false);
+        }
+        const matchable = tabs.map(function(b) {
+            return {tab: b, title: b.title, url: b.url || b.pendingUrl};
+        });
+        return filterByTitleOrUrl(matchable, query, false).map(function(m) {
+            return m.tab;
+        });
     }
     self.getRecentlyClosed = function(message, sender, sendResponse) {
         chrome.sessions.getRecentlyClosed({}, function(sessions) {
@@ -767,7 +795,7 @@ function start(browser) {
         var tab = sender.tab;
         var queryInfo = message.queryInfo || {};
         chrome.tabs.query(queryInfo, function(tabs) {
-            tabs = _filterByTitleOrUrl(tabs, message.filter);
+            tabs = _filterByTitleOrUrl(tabs, message.filter, message.includeLoading);
             if (tabs.length > message.tabsThreshold && conf.tabsMRUOrder) {
                 // only remove current tab when tabsMRUOrder is enabled.
                 tabs = tabs.filter(function(b) {
@@ -1288,6 +1316,57 @@ function start(browser) {
                     }
                 });
             }
+        }
+    };
+    /*
+     * Point ONE named tab at a URL, leaving the focus where it is.
+     *
+     * `openLink` navigates the tab the caller sits in, or opens a new one; only the
+     * background can address a tab it does not live in, so this is the way to
+     * navigate a tab by id -- for the LLM chat's `open_url` when it reuses a tab it
+     * opened and has already read, instead of leaving one behind per URL.
+     *
+     * Focus is deliberately untouched: the chat runs in an iframe of the tab the
+     * user is on, and activating another tab detaches the frontend mid-answer.
+     *
+     * The tab is answered back as the browser reports it, because the caller has to
+     * be able to say what happened rather than assume it, and every failure -- a
+     * closed tab, a URL the browser refuses -- comes back as `error`: a throw here
+     * would reach the caller as a timeout it cannot act on. Only http(s) is
+     * accepted, so this cannot be turned into a way to run a `javascript:` URL in
+     * someone else's tab.
+     */
+    self.navigateTab = function(message, sender, sendResponse) {
+        const tabId = message.tabId;
+        const url = normalizeURL(message.url || "");
+        if (!Number.isInteger(tabId)) {
+            _response(message, sendResponse, {
+                error: "no tab id was given"
+            });
+            return;
+        }
+        if (!/^https?:\/\//i.test(url)) {
+            _response(message, sendResponse, {
+                error: `${message.url} is not an http(s) URL`
+            });
+            return;
+        }
+        try {
+            chrome.tabs.update(tabId, {url: url}, function(tab) {
+                if (chrome.runtime.lastError || !tab) {
+                    _response(message, sendResponse, {
+                        error: chrome.runtime.lastError ? chrome.runtime.lastError.message : "the tab did not answer"
+                    });
+                } else {
+                    _response(message, sendResponse, {
+                        tab: tab
+                    });
+                }
+            });
+        } catch (e) {
+            _response(message, sendResponse, {
+                error: e.message
+            });
         }
     };
     self.viewSource = function(message, sender, sendResponse) {
