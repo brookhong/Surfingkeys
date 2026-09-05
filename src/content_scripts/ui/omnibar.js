@@ -231,7 +231,7 @@ function createOmnibar(front, clipboard) {
         annotation: "Close Omnibar",
         feature_group: 8,
         code: function () {
-            front.hidePopup();
+            escapePressed();
         }
     });
 
@@ -344,12 +344,31 @@ function createOmnibar(front, clipboard) {
         }
         handler.onInput && handler.onInput.call(this);
     }
+    /*
+     * Esc closes the omnibar, unless the handler has something of its own to stop
+     * first -- the LLM chat stops the answer it is working on and stays open, so the
+     * user can read where it got to (llmchat.js `onEsc`).
+     *
+     * Both routes a key can take to the omnibar come through here, because Esc is
+     * MAPPED: `Mode.handleMapKey` runs on window capture, so a mapped key never
+     * reaches the input's own keydown handler, and a stop wired only into the latter
+     * would never run. The mapping is the live route today; the input handler is kept
+     * in step so that the two cannot answer Esc differently, which means a handler's
+     * `onKeydown` must pass Esc back rather than consume it (llmchat.js does).
+     */
+    function escapePressed() {
+        if (handler && handler.onEsc && handler.onEsc()) {
+            return;
+        }
+        front.hidePopup();
+    }
+
     function _onKeyDown(evt) {
         if (handler && handler.onKeydown && handler.onKeydown.call(evt.target, evt)) {
             return;
         }
         if (Mode.isSpecialKeyOf("<Esc>", evt.sk_keyName)) {
-            front.hidePopup();
+            escapePressed();
             evt.preventDefault();
         } else if (evt.keyCode === KeyboardUtils.keyCodes.enter) {
             handler.activeTab = !evt.ctrlKey;

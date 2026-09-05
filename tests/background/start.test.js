@@ -2778,4 +2778,121 @@ describe('start', () => {
             }
         });
     });
+    /*
+     * Stopping a chat mid-answer: llmchat.js `stopTurn` -> `llmAbort` -> the function
+     * the provider returned. A stub provider stands in for a real one, since what is
+     * under test is the bookkeeping around it rather than any provider's stream: what
+     * gets cancelled, and what the frame hears afterwards.
+     */
+    describe('aborting an llm request', () => {
+        const request = (requestId) => (
+            {action: 'llmRequest', provider: 'faux', requestId, messages: []});
+        const llmReplies = (chrome) => chrome.tabs.sendMessage.mock.calls
+            .filter((c) => c[1] && c[1].subject === 'llmResponse');
+
+        let faux;
+        beforeEach(() => {
+            // one record per request, since a frame's requests come one after another
+            // and each returns a canceller of its own
+            faux = jest.fn((message, opts) => {
+                const abort = jest.fn();
+                faux.requests.push({requestId: message.requestId, opts, abort});
+                return abort;
+            });
+            faux.requests = [];
+            llmClients.faux = faux;
+        });
+        afterEach(() => {
+            delete llmClients.faux;
+        });
+
+        it('cancels the connection the frame has in flight', () => {
+            const {dispatch} = bootstrap();
+            dispatch(request(1), senderFor(12));
+
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(12));
+
+            expect(faux.requests[0].abort).toHaveBeenCalled();
+        });
+
+        /*
+         * Cancelling a fetch does not stop it reporting -- the rejection reaches
+         * `fail`, which sends a chunk and a completion. Those must not reach the frame:
+         * by the time they arrive it may have asked something new and booked
+         * `llmResponse` again, and nothing in a reply says which request it answers, so
+         * they would land in the answer to the new question and release its booking
+         * early.
+         */
+        it('silences a cancelled request instead of letting its reply land', () => {
+            const {chrome, dispatch} = bootstrap();
+            dispatch(request(1), senderFor(12));
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(12));
+
+            faux.requests[0].opts.onChunk('half an answer');
+            faux.requests[0].opts.onComplete({role: 'assistant', content: 'half an answer'});
+
+            expect(llmReplies(chrome)).toHaveLength(0);
+        });
+
+        /*
+         * An abort names the request it was sent for, and one naming a request this
+         * frame is no longer running does nothing. Cancelling the wrong one would be
+         * unrecoverable: it is silenced by the rule above, so the frame would wait for
+         * an answer that never comes, holding the shared booking, with every LLM
+         * feature in it dead until a reload.
+         */
+        it('ignores an abort that names a request the frame is no longer running', () => {
+            const {chrome, dispatch} = bootstrap();
+            dispatch(request(1), senderFor(12));
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(12));
+            // the user asks something else, and the stopped turn's abort is delivered
+            // only now
+            dispatch(request(2), senderFor(12));
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(12));
+
+            const asked = faux.requests[1];
+            expect(asked.abort).not.toHaveBeenCalled();
+            asked.opts.onComplete({role: 'assistant', content: 'the answer'});
+            expect(llmReplies(chrome)).toHaveLength(1);
+        });
+
+        it('cancels only the frame that asked', () => {
+            const {dispatch} = bootstrap();
+            dispatch(request(1), senderFor(11));
+            dispatch(request(1), senderFor(12));
+
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(11));
+
+            expect(faux.requests[0].abort).toHaveBeenCalled();
+            expect(faux.requests[1].abort).not.toHaveBeenCalled();
+        });
+
+        /*
+         * A request stopped while it is still queued behind the boot-time config read
+         * (see whenLlmProvidersReady) has nothing to cancel yet, so not starting it is
+         * the cancellation.
+         */
+        it('never starts a request stopped while queued behind the config read', () => {
+            const {chrome, dispatch} = bootstrap({chrome: {deferStorageReads: true}});
+            dispatch(request(1), senderFor(12));
+            dispatch({action: 'llmAbort', requestId: 1}, senderFor(12));
+
+            chrome.flushStorageReads();
+
+            expect(faux).not.toHaveBeenCalled();
+            expect(llmReplies(chrome)).toHaveLength(0);
+        });
+
+        // an abort races a reply that was already on its way, and the caller cannot
+        // know which won
+        it('does nothing when the frame has nothing in flight', () => {
+            const {chrome, dispatch} = bootstrap();
+            dispatch(request(1), senderFor(12));
+            faux.requests[0].opts.onComplete({role: 'assistant', content: 'the answer'});
+
+            expect(() => dispatch({action: 'llmAbort', requestId: 1}, senderFor(12))).not.toThrow();
+            expect(faux.requests[0].abort).not.toHaveBeenCalled();
+            expect(llmReplies(chrome)).toHaveLength(1);
+        });
+    });
 });

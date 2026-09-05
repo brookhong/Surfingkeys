@@ -606,3 +606,120 @@ describe('ollama streaming', () => {
         expect(JSON.parse(global.fetch.mock.calls[0][1].body).tool_choice).toBe('none');
     });
 });
+
+/*
+ * Cancelling a request, for the user who stops a chat mid-answer: llmchat.js
+ * `stopTurn` -> `llmAbort` in start.js -> the function the provider returned here.
+ *
+ * Two things matter, whichever provider it is. The abort must reach the FETCH, since
+ * a connection left open is a model still generating and a user still paying; and it
+ * must still complete the caller, who books the shared `llmResponse` handler for the
+ * request and disables every LLM feature in that frame if it is never released.
+ */
+describe('cancelling a request', () => {
+    let onChunk;
+    let onComplete;
+    let opts;
+
+    // a provider that has answered nothing yet, and rejects the way fetch does when
+    // its signal is aborted
+    const hangingFetch = () => jest.fn((url, init) => new Promise((resolve, reject) => {
+        (init.signal || url.signal).addEventListener('abort', () => {
+            reject(new DOMException('The user aborted a request.', 'AbortError'));
+        });
+    }));
+    const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    beforeEach(() => {
+        onChunk = jest.fn();
+        onComplete = jest.fn();
+        opts = { onChunk, onComplete };
+    });
+
+    it('aborts the bedrock connection and releases the caller', async () => {
+        // aws4fetch signs a Request, so the signal arrives on that instead of `init`
+        AwsClient.prototype.fetch = hangingFetch();
+        llmClients.bedrock.init({ accessKeyId: 'AKIA', secretAccessKey: 'secret', model: 'claude' });
+        const abort = llmClients.bedrock({ messages: [{ role: 'system', content: 'sys' }] }, opts);
+
+        const [url, init] = AwsClient.prototype.fetch.mock.calls[0];
+        expect((init.signal || url.signal).aborted).toBe(false);
+        abort();
+        await settled();
+
+        expect((init.signal || url.signal).aborted).toBe(true);
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    it('aborts the ollama connection and releases the caller', async () => {
+        global.fetch = hangingFetch();
+        const abort = llmClients.ollama({ messages: [] }, opts);
+        abort();
+        await settled();
+
+        expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    it('aborts an openAI-compatible connection and releases the caller', async () => {
+        llmClients.custom.register('deepseek', {
+            serviceUrl: 'https://api.deepseek.com/chat/completions',
+            apiKey: 'k',
+            model: 'deepseek-chat',
+        });
+        global.fetch = hangingFetch();
+        const abort = llmClients.custom({ provider: 'deepseek', messages: [] }, opts);
+        abort();
+        await settled();
+
+        expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    /*
+     * The same for a stream that had already opened, where the abort surfaces as a
+     * rejected read rather than a rejected fetch. Reported, not swallowed: an abort
+     * is not a fault to log, but it is still the end of the request, and the caller
+     * is released whatever ended it.
+     */
+    it('cancels a stream that had already started, and completes only once', async () => {
+        llmClients.custom.register('deepseek', {
+            serviceUrl: 'https://api.deepseek.com/chat/completions',
+            apiKey: 'k',
+            model: 'deepseek-chat',
+        });
+        global.fetch = jest.fn((url, init) => Promise.resolve({
+            status: 200,
+            body: {
+                getReader: () => ({
+                    // a stream that is open and quiet, as one is between two tokens
+                    read: () => new Promise((resolve, reject) => {
+                        init.signal.addEventListener('abort', () => {
+                            reject(new DOMException('aborted', 'AbortError'));
+                        });
+                    }),
+                }),
+            },
+        }));
+        const abort = llmClients.custom({ provider: 'deepseek', messages: [] }, opts);
+        await settled();
+        abort();
+        await settled();
+
+        expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    /*
+     * A provider that refused before it ever fetched still hands back a function, so
+     * the caller holding it never has to ask which kind of failure it was -- calling
+     * it must simply do nothing.
+     */
+    it('hands back a function even when the request never started', () => {
+        llmClients.custom.register('halfset', { serviceUrl: '', apiKey: '', model: '' });
+        const abort = llmClients.custom({ provider: 'halfset', messages: [] }, opts);
+
+        expect(typeof abort).toBe('function');
+        expect(() => abort()).not.toThrow();
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+});

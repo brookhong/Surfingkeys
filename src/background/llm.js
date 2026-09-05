@@ -157,10 +157,27 @@ class EventStreamParser {
 }
 
 /*
+ * Every provider RETURNS a function that cancels the request it just started, for
+ * the user who stops a chat mid-answer (llmchat.js `stopTurn`). Cancelling has to
+ * reach the fetch itself and not merely stop reading its body: the model keeps
+ * generating -- and the user keeps paying for it -- for as long as the connection
+ * is open.
+ *
+ * A cancelled request still reports through `fail`, in every provider, so that
+ * whoever aborted is released even if they hold a booking they have not let go of.
+ * The report says the request was aborted, which is why the caller that DID mean to
+ * abort has to drop it rather than show it (see `llmRequest` in start.js); the log
+ * is the one thing an abort is spared, being a decision rather than a fault. The
+ * function comes back even from the paths that never got as far as fetching, so
+ * that whoever holds it never has to ask which kind of failure it was.
+ */
+
+/*
  * Guard a provider's callbacks so the caller is completed exactly once, whatever
  * route the request ends by: a normal stop, an error frame mid-stream, a malformed
  * chunk, a connection dropped without a terminator, an error body that is not a
- * stream at all, or a fetch that never connected.
+ * stream at all, a fetch that never connected, or a fetch cancelled from the
+ * outside.
  *
  * The caller books the shared `llmResponse` handler for the duration of a request,
  * and nothing but a completion releases it -- so a request that ends without one
@@ -191,6 +208,7 @@ function completeOnce(opts) {
 
 let awsClient = null;
 function bedrock(req, opts) {
+    const abortCtrl = new AbortController();
     const { complete, fail, isDone } = completeOnce(opts);
 
     if (!awsClient) {
@@ -202,7 +220,7 @@ function bedrock(req, opts) {
          * has never seen one since it started has nothing to build a client from.
          */
         fail("Bedrock is not set up in this browser: settings.llm.bedrock needs accessKeyId, secretAccessKey and model, all three of them. If you have set them, reload the page so your snippets run again.");
-        return;
+        return () => abortCtrl.abort();
     }
 
     function transformMessages(messages) {
@@ -227,6 +245,7 @@ function bedrock(req, opts) {
         aws: {
             service: "bedrock",
         },
+        signal: abortCtrl.signal,
         body: JSON.stringify({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 4096,
@@ -237,8 +256,8 @@ function bedrock(req, opts) {
             // then, and those are rejected when `tools` is absent.
             //
             // `none` is a recent addition to the anthropic API, so a model that
-            // predates it answers the last round of a tool loop with an error
-            // instead. It is only ever sent once the tool budget is spent.
+            // predates it answers such a round with an error instead. Only a caller
+            // that has decided the tool calling is over ever sends it.
             "tool_choice": req.tool_choice,
             "system": req.messages[0].content,
             "messages": transformMessages(req.messages.slice(1))
@@ -355,6 +374,8 @@ function bedrock(req, opts) {
     }).catch(error => {
         fail(`Error: ${error.message}`);
     });
+
+    return () => abortCtrl.abort();
 }
 
 bedrock.init = function(opts) {
@@ -369,18 +390,19 @@ bedrock.init = function(opts) {
 
 function ollama(req, opts) {
     const decoder = new TextDecoder();
+    const abortCtrl = new AbortController();
     const { complete, fail, isDone } = completeOnce(opts);
 
     fetch('http://localhost:11434/api/chat', {
         method: 'POST',
+        signal: abortCtrl.signal,
         body: JSON.stringify({
             "model": ollama.model || 'qwen2.5-coder:32b',
             "tools": req.tools,
-            // "answer with what you have, call nothing else", sent once the tool
-            // budget is spent. Ollama's own /api/chat does not document
-            // `tool_choice` -- it is forwarded in case the server honours it, and
-            // ignored otherwise, which is why the frontend enforces the budget on
-            // its own rather than relying on this.
+            // "answer with what you have, call nothing else", from a caller that has
+            // decided the tool calling is over. Ollama's own /api/chat does not
+            // document `tool_choice` -- it is forwarded in case the server honours
+            // it, and ignored otherwise, so nothing may depend on it being obeyed.
             "tool_choice": req.tool_choice,
             "messages": req.messages
         })
@@ -449,6 +471,8 @@ function ollama(req, opts) {
     }).catch(error => {
         fail(`Error: ${error.message}`);
     });
+
+    return () => abortCtrl.abort();
 }
 
 const customClients = {};
@@ -646,10 +670,13 @@ function openAICompatible(req, opts, client) {
                         readStream();
                     })
                     .catch(err => {
+                        // an abort is reported too, so the caller is released
+                        // whatever ends the request; only the log is spared, since
+                        // a cancellation is not a fault to investigate
                         if (err.name !== 'AbortError') {
                             console.error('Stream error:', err);
-                            fail(`Error: ${err.message}`);
                         }
+                        fail(`Error: ${err.message}`);
                     });
             };
 
@@ -658,8 +685,8 @@ function openAICompatible(req, opts, client) {
         .catch(err => {
             if (err.name !== 'AbortError') {
                 console.error('Fetch error:', err);
-                fail(`Error: ${err.message}`);
             }
+            fail(`Error: ${err.message}`);
         });
 
     return () => abortCtrl.abort();

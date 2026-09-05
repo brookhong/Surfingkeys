@@ -30,9 +30,7 @@ import toMarkdown, { tidy } from '../common/pageMarkdown.js';
  *     "allow on this site", scoped to the one origin the prompt names, waives it
  *     (llmchat.js `isPreAllowed`);
  *   - the host drops its page snapshot afterwards, since a write may have changed
- *     what the page-reading tools return;
- *   - it buys the model extra tool rounds, because acting and then checking what
- *     happened costs two rounds where reading costs one.
+ *     what the page-reading tools return.
  *
  * A write tool must also:
  *

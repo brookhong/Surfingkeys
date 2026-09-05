@@ -493,7 +493,7 @@ describe('llmchat tool-use confirmation', () => {
      * nothing that "allow for this chat" does not already.
      */
     async function nextPage(url) {
-        const next = LLMChat(omnibar, { addDestroyListener: jest.fn() });
+        const next = LLMChat(omnibar, frontMock());
         container.style.display = "";
         omnibar.resultsDiv.innerHTML = "";
         next.onOpen({ url, system: 'page text' });
@@ -509,6 +509,15 @@ describe('llmchat tool-use confirmation', () => {
         omnibar.resultsDiv.innerHTML = "";
         chat.onClose();
     }
+    /*
+     * `front.revealOmnibar` puts the popup back on screen without re-opening it, so
+     * the display is all that changes here -- nothing calls `onOpen`, which is the
+     * whole point of it in the frontend.
+     */
+    const frontMock = () => ({
+        addDestroyListener: jest.fn(),
+        revealOmnibar: jest.fn(() => { container.style.display = ""; }),
+    });
 
     beforeEach(async () => {
         jest.useFakeTimers();
@@ -531,7 +540,7 @@ describe('llmchat tool-use confirmation', () => {
             input: document.querySelector('#input'),
             isVisible: () => container.style.display !== "none",
         };
-        chat = LLMChat(omnibar, { addDestroyListener: jest.fn() });
+        chat = LLMChat(omnibar, frontMock());
         await openAndSend();
     });
 
@@ -576,13 +585,36 @@ describe('llmchat tool-use confirmation', () => {
         expect(toolMsg.content).toContain('Do not retry');
     });
 
-    test('Escape denies rather than closing the chat', async () => {
+    /*
+     * Esc is MAPPED in the omnibar, so it is answered on window capture and reaches
+     * `onEsc` without passing through the input's keydown handler, which is why it is
+     * driven directly here.
+     */
+    test('Escape denies the call rather than closing the chat', async () => {
         await modelAsksFor('list_tabs', {});
-        expect(press('Escape')).toBe(true);
+        expect(chat.onEsc()).toBe(true);
         await flush();
 
         expect(ranTool('getTabs')).toBe(false);
         expect(confirmPrompt()).toBeNull();
+        // the turn goes on, with the refusal reported like any other
+        const toolMsg = llmRequests().pop().messages.find((m) => m.role === 'tool');
+        expect(toolMsg.content).toContain('denied this call');
+    });
+
+    /*
+     * The other route to the omnibar, kept in step with the mapped one: the input's
+     * keydown handler asks the chat first, and a chat that consumed Esc there would
+     * leave it doing nothing at all on that route while the mapping denies the call.
+     * Handing it back is what sends it to the same `onEsc` (omnibar.js
+     * `escapePressed`).
+     */
+    test('Escape is handed back to the omnibar rather than swallowed', async () => {
+        await modelAsksFor('list_tabs', {});
+
+        expect(press('Escape')).toBe(false);
+        // the letters, in contrast, belong to the prompt while it is up
+        expect(pressNow('q')).toBe(true);
     });
 
     test('"a" allows that tool for the rest of the conversation', async () => {
@@ -975,15 +1007,36 @@ describe('llmchat tool-use confirmation', () => {
         expect(toolMsg.content).toContain('timed out');
     });
 
-    test('closing the chat denies a pending prompt', async () => {
+    test('closing the chat ends the turn instead of running it unwatched', async () => {
         await modelAsksFor('list_tabs', {});
+        const requests = llmRequests().length;
 
         closeChat();
         await flush();
 
         expect(ranTool('getTabs')).toBe(false);
-        const toolMsg = llmRequests().pop().messages.find((m) => m.role === 'tool');
-        expect(toolMsg.content).toContain('closed the chat');
+        // the prompt is settled, but nothing goes back: there is nobody to answer
+        expect(llmRequests()).toHaveLength(requests);
+        expect(mockBooked.handler).toBeNull();
+    });
+
+    test('the conversation a closed turn leaves behind is one a provider accepts', async () => {
+        await respond({ role: 'assistant', content: "", tool_calls: [{ function: { name: 'list_tabs', arguments: {} } }] });
+        closeChat();
+        await flush();
+
+        container.style.display = "";
+        chat.onOpen({ url: 'https://page.com', system: 'page text' });
+        await flush();
+        omnibar.input.value = 'another question';
+        chat.onEnter();
+        await flush();
+
+        // the call nobody answered went with the turn, rather than being replayed
+        // unanswered in every request from now on
+        const sent = llmRequests().pop().messages;
+        expect(sent.some((m) => m.tool_calls)).toBe(false);
+        expect(sent.pop().content).toBe('another question');
     });
 
 
@@ -1132,29 +1185,35 @@ describe('llmchat tool-use confirmation', () => {
     });
 
     describe('a response that outlives the chat', () => {
-        test('denies at once instead of prompting into a hidden UI', async () => {
-            // the model is slow, the user presses Esc and moves on
+        test('a reply that arrives after the close reaches nothing', async () => {
+            // the model is slow, the user closes the chat and moves on
             closeChat();
 
-            await modelAsksFor('list_tabs', {});
-
-            // no invisible prompt left pending, and no 60s wait: the timers are
-            // never advanced here, yet the loop has already moved on
-            expect(confirmPrompt()).toBeNull();
-            expect(ranTool('getTabs')).toBe(false);
-            const toolMsg = llmRequests().pop().messages.find((m) => m.role === 'tool');
-            expect(toolMsg.content).toContain('closed before this call could be confirmed');
+            // the booking went with the turn, so the frame is not listening any more
+            // -- that reply is dropped before it can prompt into a hidden UI, and the
+            // request behind it was aborted (see 'llmchat stopping a turn')
+            expect(mockBooked.handler).toBeNull();
         });
 
-        test('denies when the omnibar is hidden even if onClose never ran', async () => {
-            // reading the display means the decision cannot drift out of sync with
-            // the UI, whatever route hid it
+        /*
+         * A chat hidden with its turn still running was never closed -- closing
+         * stops the turn -- so the conversation and the transcript are still there
+         * and there is still a user to ask. Denying for them would also leave the
+         * model asking round after round with nothing to stop it, since the user is
+         * the only stop a tool loop has.
+         */
+        test('brings a hidden chat back rather than deciding for the user', async () => {
             container.style.display = "none";
 
             await modelAsksFor('list_tabs', {});
 
-            expect(confirmPrompt()).toBeNull();
+            expect(container.style.display).not.toBe("none");
+            expect(confirmPrompt()).toContain('list_tabs');
+            // still the user's call to make, and still theirs to approve
             expect(ranTool('getTabs')).toBe(false);
+            press('y');
+            await flush();
+            expect(ranTool('getTabs')).toBe(true);
         });
 
         test('denies the rest of a round when the chat closes midway', async () => {
@@ -1173,6 +1232,9 @@ describe('llmchat tool-use confirmation', () => {
             expect(confirmPrompt()).toBeNull();
             expect(ranTool('getTabs')).toBe(true);
             expect(ranTool('getHistory')).toBe(false);
+            // and the chat is not brought back to ask about the second call: the
+            // turn went with the close, so nothing would read the answer
+            expect(container.style.display).toBe("none");
         });
 
         test('a prompt is never dropped when the message list is missing', async () => {
@@ -1272,7 +1334,8 @@ describe('llmchat tool-use confirmation', () => {
         test('Escape still denies at once, being unambiguous', async () => {
             await modelAsksFor('list_tabs', {});
 
-            expect(pressNow('Escape')).toBe(true);
+            // no delay to wait out: Esc is not a key the user was typing
+            expect(chat.onEsc()).toBe(true);
             await flush();
             expect(confirmPrompt()).toBeNull();
         });
@@ -1375,17 +1438,16 @@ describe('llmchat tool-use confirmation', () => {
 });
 
 /*
- * A question is allowed a fixed number of tool rounds. What matters at the end of
- * them is that the model is asked to answer with what it gathered, and that the
- * conversation it is asked with is still one the provider accepts -- it now carries
- * tool calls and their results, which a request without `tools` is rejected for.
+ * Nothing caps how many tools one question may use, so the user is the whole stop:
+ * Esc, or closing the chat. What matters is that a stop reaches everywhere the turn
+ * lives -- no further request is sent, the provider request already out is aborted so
+ * its reply cannot land in the next question, the shared booking is let go, and the
+ * conversation is left as one the provider still accepts.
  */
-describe('llmchat tool budget', () => {
+describe('llmchat stopping a turn', () => {
     let chat;
     let omnibar;
     let container;
-
-    const MAX_TOOL_ROUNDS = 5;
 
     const flush = async () => {
         for (let i = 0; i < 30; i++) {
@@ -1393,7 +1455,16 @@ describe('llmchat tool budget', () => {
         }
     };
     const llmRequests = () => mockRUNTIME.mock.calls.filter((c) => c[0] === 'llmRequest').map((c) => c[1]);
+    const abortCalls = () => mockRUNTIME.mock.calls.filter((c) => c[0] === 'llmAbort').map((c) => c[1]);
+    const aborts = () => abortCalls().length;
+    /*
+     * The name each round was sent under, recorded AS it is sent: the chat reuses one
+     * request object for every round of a turn, so `mock.calls` holds that same object
+     * several times over and only the newest id can be read back from it.
+     */
+    let sentRounds;
     const tabReads = () => mockRUNTIME.mock.calls.filter((c) => c[0] === 'getTabs').length;
+    const released = () => mockBooked.handler === null;
     const trace = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-assistant'))
         .map((li) => li.textContent).join(" ");
 
@@ -1425,7 +1496,9 @@ describe('llmchat tool budget', () => {
         // no prompting: this is about the loop, not about the confirmation
         runtime.conf.llmAllowedTools = ['list_tabs'];
         mockRUNTIME.mockReset();
+        sentRounds = [];
         mockRUNTIME.mockImplementation((action, args, cb) => {
+            if (action === 'llmRequest') { sentRounds.push(args.requestId); }
             if (action === 'getTabs') { cb({ tabs: [{ title: 'a tab', url: 'https://tab.com' }] }); }
         });
         document.body.innerHTML = '<div id="bar" style="display: none;"><div id="results"></div><input id="input"></div>';
@@ -1443,54 +1516,151 @@ describe('llmchat tool budget', () => {
         jest.useRealTimers();
     });
 
-    test('an ordinary round carries no tool_choice', async () => {
+    test('a long tool loop is never cut short', async () => {
         await openAndSend();
-        await askForTool();
-
-        expect(llmRequests().pop().tool_choice).toBeUndefined();
-    });
-
-    test('the last round asks for an answer without withdrawing the declarations', async () => {
-        await openAndSend();
-        for (let i = 0; i < MAX_TOOL_ROUNDS; i++) {
+        for (let i = 0; i < 20; i++) {
             await askForTool();
         }
 
-        const last = llmRequests().pop();
-        expect(last.tool_choice).toBe('none');
-        expect(last.tools.map((t) => t.function.name)).toContain('list_tabs');
-        expect(trace()).toContain('tool budget spent');
+        // every round ran, and none of them was told to answer with what it had
+        expect(tabReads()).toBe(20);
+        expect(llmRequests().every((r) => r.tool_choice === undefined)).toBe(true);
+        expect(llmRequests().pop().tools.map((t) => t.function.name)).toContain('list_tabs');
     });
 
-    test('bedrock is told the same thing in its own shape', async () => {
+    test('bedrock loops on unbounded too, in its own shape', async () => {
         await openAndSend('bedrock');
-        for (let i = 0; i < MAX_TOOL_ROUNDS; i++) {
+        for (let i = 0; i < 20; i++) {
             await askForTool('bedrock');
         }
 
-        const last = llmRequests().pop();
-        expect(last.tool_choice).toEqual({ type: 'none' });
-        expect(last.tools.map((t) => t.name)).toContain('list_tabs');
+        expect(tabReads()).toBe(20);
+        expect(llmRequests().every((r) => r.tool_choice === undefined)).toBe(true);
     });
 
-    test('a model that keeps asking after that is told, not looped', async () => {
+    test('Esc sends no further request and says so', async () => {
         await openAndSend();
-        for (let i = 0; i < MAX_TOOL_ROUNDS; i++) {
-            await askForTool();
-        }
-        const rounds = tabReads();
+        await askForTool();
         const requests = llmRequests().length;
 
-        await askForTool();
+        expect(chat.onEsc()).toBe(true);
+        await flush();
 
-        expect(tabReads()).toBe(rounds);
         expect(llmRequests()).toHaveLength(requests);
-        expect(trace()).toContain('kept asking for tools');
+        expect(trace()).toContain('stopped by the user');
     });
 
-    test('a new question starts with a fresh budget', async () => {
+    test('Esc aborts the request already out, so its reply cannot arrive', async () => {
         await openAndSend();
-        for (let i = 0; i < MAX_TOOL_ROUNDS; i++) {
+        await askForTool();
+
+        chat.onEsc();
+        await flush();
+
+        expect(aborts()).toBe(1);
+        // and the shared channel is free for whatever asks next
+        expect(released()).toBe(true);
+    });
+
+    /*
+     * The abort NAMES the round it is for. A turn is many rounds, and the abort and
+     * the next question are two separate messages: an abort that named nothing and
+     * arrived after the question would cancel the request answering THAT one -- which
+     * a cancelled request never reports, so the frame would wait for an answer that
+     * never comes and never release the shared booking.
+     */
+    test('the abort names the round that was out', async () => {
+        await openAndSend();
+        await askForTool();
+        await askForTool();
+
+        chat.onEsc();
+        await flush();
+
+        // three rounds went out, each under a name of its own
+        expect(sentRounds).toHaveLength(3);
+        expect(new Set(sentRounds).size).toBe(3);
+        expect(abortCalls()).toEqual([{ requestId: sentRounds[2] }]);
+    });
+
+    test('the chat stays open, so the user can read where it got to', async () => {
+        await openAndSend();
+        await askForTool();
+
+        chat.onEsc();
+        await flush();
+
+        expect(container.style.display).not.toBe("none");
+        // and the next Esc is the ordinary one the omnibar answers by closing
+        expect(chat.onEsc()).toBe(false);
+    });
+
+    test('a question asked after a stop is accepted', async () => {
+        await openAndSend();
+        await askForTool();
+        chat.onEsc();
+        await flush();
+
+        omnibar.input.value = 'another question';
+        chat.onEnter();
+        await flush();
+
+        expect(released()).toBe(false);
+        expect(llmRequests().pop().messages.pop().content).toBe('another question');
+    });
+
+    test('a round that finished is kept, an unanswered call is not', async () => {
+        await openAndSend();
+        // one whole round, then a second one stopped between the call and its result
+        await askForTool();
+        mockBooked.handler({ done: true, message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [{ id: 'call_pending', function: { name: 'list_tabs', arguments: {} } }],
+        } });
+        chat.onEsc();
+        await flush();
+
+        omnibar.input.value = 'another question';
+        chat.onEnter();
+        await flush();
+
+        const sent = llmRequests().pop().messages;
+        // what the first round gathered is ordinary conversation and stays; the call
+        // left unanswered would be refused by every later request, so it goes
+        expect(sent.filter((m) => m.tool_calls)).toHaveLength(1);
+        expect(sent.filter((m) => m.role === 'tool')).toHaveLength(1);
+        expect(sent.some((m) => (m.tool_calls || []).some((c) => c.id === 'call_pending'))).toBe(false);
+        expect(sent.pop().content).toBe('another question');
+    });
+
+    test('closing the chat stops the loop as Esc does', async () => {
+        await openAndSend();
+        await askForTool();
+        const requests = llmRequests().length;
+
+        container.style.display = "none";
+        omnibar.resultsDiv.innerHTML = "";
+        chat.onClose();
+        await flush();
+
+        expect(llmRequests()).toHaveLength(requests);
+        expect(aborts()).toBe(1);
+        expect(released()).toBe(true);
+    });
+
+    test('Esc with nothing running is left to the omnibar', async () => {
+        await openAndSend();
+        mockBooked.handler({ done: true, message: { role: 'assistant', content: 'the answer' } });
+        await flush();
+
+        expect(chat.onEsc()).toBe(false);
+        expect(aborts()).toBe(0);
+    });
+
+    test('a new question after an answer needs no stop', async () => {
+        await openAndSend();
+        for (let i = 0; i < 3; i++) {
             await askForTool();
         }
         mockBooked.handler({ done: true, message: { role: 'assistant', content: 'the answer' } });
@@ -1504,14 +1674,11 @@ describe('llmchat tool budget', () => {
     });
 
     /*
-     * Reading costs one round per answer; acting costs two, since the round after a
-     * write is where the model checks what happened and says so. A budget sized for
-     * reads would run out mid-task the moment anything is done rather than merely
-     * looked at.
+     * A turn that acts is where a stop matters most: the loop is holding a prompt,
+     * and the answer to it decides whether something happens to the user's browser.
      */
-    describe('a task that acts rather than only reads', () => {
-        const EXTRA_ROUNDS_PER_WRITE = 2;
-        const MAX_TOOL_ROUNDS_HARD = 12;
+    describe('a turn that acts rather than only reads', () => {
+        const ranTool = (action) => mockRUNTIME.mock.calls.some((c) => c[0] === action);
 
         // one write round: `group_tabs` is never pre-allowed, so it is approved here
         async function askForWrite(n) {
@@ -1536,30 +1703,37 @@ describe('llmchat tool budget', () => {
             });
         });
 
-        test('a write buys back the round it costs', async () => {
+        test('acting costs the turn nothing that follows it', async () => {
             await openAndSend();
             await askForWrite(0);
-            // the budget a read-only turn would have spent by now
-            for (let i = 0; i < MAX_TOOL_ROUNDS - 1; i++) {
+            for (let i = 0; i < 10; i++) {
                 await askForTool();
             }
 
-            expect(llmRequests().pop().tool_choice).toBeUndefined();
-
-            for (let i = 0; i < EXTRA_ROUNDS_PER_WRITE; i++) {
-                await askForTool();
-            }
-            expect(llmRequests().pop().tool_choice).toBe('none');
+            expect(llmRequests().every((r) => r.tool_choice === undefined)).toBe(true);
+            // the turn is still going: only the user ends one
+            expect(released()).toBe(false);
         });
 
-        test('no amount of writing raises the ceiling', async () => {
+        test('closing the chat while a write waits for approval runs nothing', async () => {
             await openAndSend();
-            for (let i = 0; i < MAX_TOOL_ROUNDS_HARD; i++) {
-                await askForWrite(i);
-            }
+            mockBooked.handler({ done: true, message: {
+                role: 'assistant',
+                content: '',
+                tool_calls: [{ id: 'w_0', function: { name: 'group_tabs', arguments: { tabIds: [11] } } }],
+            } });
+            await flush();
+            const requests = llmRequests().length;
 
-            expect(llmRequests().pop().tool_choice).toBe('none');
-            expect(trace()).toContain('tool budget spent');
+            container.style.display = "none";
+            omnibar.resultsDiv.innerHTML = "";
+            chat.onClose();
+            await flush();
+
+            expect(ranTool('createTabGroup')).toBe(false);
+            // not even the denial goes back: there is nobody left to read the answer
+            expect(llmRequests()).toHaveLength(requests);
+            expect(released()).toBe(true);
         });
     });
 
@@ -1570,8 +1744,6 @@ describe('llmchat tool budget', () => {
      * all of them are dead until the page is reloaded.
      */
     describe('a response that carries no message', () => {
-        const released = () => mockBooked.handler === null;
-
         test('a bare done releases the shared booking', async () => {
             await openAndSend();
 

@@ -160,24 +160,76 @@ export default function (omnibar, front) {
     }
 
     /*
-     * A hard stop for the tool loop, so that a model that keeps asking for tools can
-     * never spin forever while holding the `llmResponse` booking.
+     * The turn a tool loop belongs to, or null when nothing is in flight.
      *
-     * Reading costs one round per answer; ACTING costs two, because a write tool
-     * that reports what it observed is only half of the job -- the round after it is
-     * where the model checks the result and says what happened. A budget sized for
-     * reads therefore runs out mid-task the moment anything is done rather than
-     * merely looked at, so each write buys back the round it costs, up to a ceiling
-     * that no amount of writing can raise.
+     * There is no limit on how many tools one question may use: the user is the stop
+     * (Esc, or closing the chat), and `stopTurn` is how they exercise it. That makes
+     * this token load-bearing rather than bookkeeping. A stop cannot reach into work
+     * that is already awaiting -- the tool in flight will resolve, the provider may
+     * still be streaming -- so every step that would carry the loop forward checks
+     * the turn it started in against this one first, and a step from a turn that has
+     * been stopped is dropped instead of appended. Skip that check on the tool result
+     * in particular and the conversation grows a result whose call was pruned away
+     * when the turn ended, which every later request is refused for.
      */
-    const MAX_TOOL_ROUNDS = 5;
-    const EXTRA_ROUNDS_PER_WRITE = 2;
-    const MAX_TOOL_ROUNDS_HARD = 12;
-    let toolRounds = 0;
-    let writeRounds = 0;
+    let currentTurn = null;
+    const isCurrent = (turn) => currentTurn === turn && currentTurn !== null;
 
-    function toolBudget() {
-        return Math.min(MAX_TOOL_ROUNDS + writeRounds * EXTRA_ROUNDS_PER_WRITE, MAX_TOOL_ROUNDS_HARD);
+    /*
+     * Every round is its own background request, and each is NAMED so that an abort
+     * can cancel only the one it was sent for.
+     *
+     * A turn is many rounds and a stop aborts the round that is out, but the abort
+     * and the next question are two separate messages: were the abort to arrive
+     * after the question, an abort that named nothing would cancel THAT request
+     * instead -- and a cancelled request is silenced in the background, so the
+     * answer would never come and never release its booking, leaving every LLM
+     * feature in this frame dead until a reload. The name is what makes a late abort
+     * a no-op rather than that.
+     */
+    let requestSeq = 0;
+    let inFlightRequestId = null;
+    function sendRound(req) {
+        req.requestId = ++requestSeq;
+        inFlightRequestId = req.requestId;
+        RUNTIME("llmRequest", req);
+    }
+
+    /*
+     * End the turn in flight, keeping what it has produced so far.
+     *
+     * Stopping is a stop and not a wind-down: no further request is sent, so the
+     * answer is whatever had already streamed plus the traces of the calls that ran.
+     * The abandoned provider request is cancelled in the background rather than
+     * merely ignored -- it would otherwise keep generating, and its chunks arrive on
+     * a channel shared with the other LLM features, with nothing in them to say which
+     * question they answer, so they would land in the next one.
+     *
+     * The conversation is then pruned to what a provider will accept, because a turn
+     * stopped between a call and its result leaves that call unanswered, which every
+     * following request would be refused for. Only what would be refused goes: a
+     * round that did finish is ordinary conversation, and the next question is asked
+     * with what it gathered. The transcript on screen is left as it is either way --
+     * it is the record of a stopped turn, for the user to read.
+     *
+     * @returns {boolean} whether there was a turn to stop.
+     */
+    function stopTurn(reason) {
+        if (!currentTurn) {
+            return false;
+        }
+        currentTurn = null;
+        // the round that is out, by name: see `sendRound`
+        RUNTIME("llmAbort", { requestId: inFlightRequestId });
+        runtime.releaseMessage('llmResponse');
+        stopSpinner();
+        // a call still waiting to be confirmed belongs to the turn that just ended
+        if (pendingConfirm) {
+            pendingConfirm.settle(false, reason);
+        }
+        messages = pruneDanglingToolUse(messages);
+        persist();
+        return true;
     }
 
     /*
@@ -647,12 +699,29 @@ export default function (omnibar, front) {
             return { approved: true, reason: "" };
         }
         if (!omnibar.isVisible()) {
-            // the response outlived the chat, so there is nobody to ask: deny now
-            // rather than block the loop on a prompt that cannot be seen
-            return {
-                approved: false,
-                reason: "The chat was closed before this call could be confirmed.",
-            };
+            /*
+             * A hidden chat is one of two things, and the turn says which.
+             *
+             * The turn has ENDED: the chat was closed, since that is what stops one
+             * (`stopTurn`). There is nobody to ask, and nothing will read the answer
+             * -- the result of this call is dropped for the same reason -- so deny at
+             * once rather than block the loop on a prompt that cannot be seen.
+             *
+             * The turn is still CURRENT: nothing closed the chat, so the
+             * conversation, the transcript and the input are all still there, and
+             * something merely took the omnibar off the screen. Bring it back and
+             * ask. Denying instead would answer for the user on a call that is
+             * theirs to decide, and leave the model free to ask again, round after
+             * round, with nobody watching it -- the user is the only stop a tool
+             * loop has, so a hidden prompt is a loop with no stop at all.
+             */
+            if (!currentTurn) {
+                return {
+                    approved: false,
+                    reason: "The chat was closed before this call could be confirmed.",
+                };
+            }
+            front.revealOmnibar();
         }
 
         stopSpinner();
@@ -680,26 +749,61 @@ export default function (omnibar, front) {
 
     /*
      * While a prompt is up an unmodified key belongs to it, otherwise Enter would
-     * submit the omnibar input and Esc would close the chat with the loop still
-     * waiting. A key held with a modifier is left alone, so that copying the URL
-     * out of the prompt before deciding on it still works -- Shift counts as one,
-     * since `Y` is as much a decision as `y` and neither should be one the user did
-     * not mean to make.
+     * submit the omnibar input with the loop still waiting. A key held with a
+     * modifier is left alone, so that copying the URL out of the prompt before
+     * deciding on it still works -- Shift counts as one, since `Y` is as much a
+     * decision as `y` and neither should be one the user did not mean to make.
      *
-     * Esc answers immediately: it is unambiguous, it denies, and it is what a user
-     * surprised by the prompt will reach for. The letters wait out
-     * CONFIRM_KEY_DELAY.
+     * The letters wait out CONFIRM_KEY_DELAY. Esc is passed straight back instead:
+     * it is answered by `onEsc`, and the omnibar's own keydown handler is what sends
+     * it there (`escapePressed`). Swallowing it here would leave Esc doing NOTHING on
+     * that route while the mapped one denies the call -- and the mapping being the
+     * route Esc actually takes today is the reason such a difference would go unseen.
      */
     self.onKeydown = function(event) {
         if (!pendingConfirm || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
             return false;
         }
         if (event.key === "Escape") {
-            answerConfirm("n");
-        } else if (confirmKeysLive()) {
+            return false;
+        }
+        if (confirmKeysLive()) {
             answerConfirm((event.key || "").toLowerCase());
         }
         event.preventDefault();
+        return true;
+    };
+
+    /**
+     * Esc, which the omnibar would otherwise answer by closing.
+     *
+     * It means "stop the smallest thing that is running", so it is read against what
+     * is on screen:
+     *
+     *   - a confirmation prompt: it denies THAT call and nothing more, the same narrow
+     *     answer as `n`, because Esc is what a user surprised by the prompt reaches
+     *     for and the reflex should not cost them the whole answer. The loop carries
+     *     on, so the model is free to try something else;
+     *   - a turn in flight: it ends the turn. Nothing else does -- there is no cap on
+     *     how many tools one question may use, so a model that keeps calling them
+     *     keeps going until the user says otherwise. The chat stays OPEN, showing
+     *     where it got to, since a stop whose result the user cannot read is barely a
+     *     stop;
+     *   - neither: nothing, so the omnibar closes as it always does -- which is what
+     *     the next Esc does once a turn has been stopped.
+     *
+     * @returns {boolean} whether Esc was used here, i.e. whether the omnibar must
+     * stay open.
+     */
+    self.onEsc = function() {
+        if (pendingConfirm) {
+            answerConfirm("n");
+            return true;
+        }
+        if (!stopTurn("The user stopped this answer.")) {
+            return false;
+        }
+        renderToolTrace("stopped by the user");
         return true;
     };
 
@@ -714,7 +818,6 @@ export default function (omnibar, front) {
         renderToolTrace(describeCall(name, params));
         startSpinner();
         if (llmTools.isMutating(name)) {
-            writeRounds += 1;
             /*
              * A write may have changed what the page-reading tools would return, and
              * the snapshot is what makes their offsets line up with each other. None
@@ -740,16 +843,25 @@ export default function (omnibar, front) {
      * The calls run one after another, not in parallel: each may raise a
      * confirmation prompt, and two prompts competing for the same keystroke
      * would be unanswerable.
+     *
+     * `turn` is the turn the response belongs to, checked after every call because
+     * a call is exactly where the user gets the time to stop the loop -- and a
+     * result appended to a conversation whose call has been pruned away is one no
+     * provider accepts. See `currentTurn`.
      */
     const providerClients = {
-        "ollama": async (resp) => {
+        "ollama": async (resp, turn) => {
             const calls = resp.message.tool_calls;
             if (!calls || calls.length === 0) {
                 return false;
             }
             for (const c of calls) {
+                const content = await runTool(c.function.name, c.function.arguments);
+                if (!isCurrent(turn)) {
+                    return false;
+                }
                 messages.push({
-                    "content": await runTool(c.function.name, c.function.arguments),
+                    "content": content,
                     "tool_name": c.function.name,
                     "role": "tool"
                 });
@@ -761,21 +873,25 @@ export default function (omnibar, front) {
          * answers through `tool_call_id`, and a provider rejects the conversation
          * when that id is not one of the calls in the assistant turn before it.
          */
-        "openai": async (resp) => {
+        "openai": async (resp, turn) => {
             const calls = resp.message.tool_calls;
             if (!calls || calls.length === 0) {
                 return false;
             }
             for (const c of calls) {
+                const content = await runTool(c.function.name, c.function.arguments);
+                if (!isCurrent(turn)) {
+                    return false;
+                }
                 messages.push({
-                    "content": await runTool(c.function.name, c.function.arguments),
+                    "content": content,
                     "tool_call_id": c.id,
                     "role": "tool"
                 });
             }
             return true;
         },
-        "bedrock": async (resp) => {
+        "bedrock": async (resp, turn) => {
             if (!resp.message.content) {
                 return false;
             }
@@ -785,10 +901,14 @@ export default function (omnibar, front) {
             }
             const results = [];
             for (const c of uses) {
+                const content = await runTool(c.name, c.input);
+                if (!isCurrent(turn)) {
+                    return false;
+                }
                 results.push({
                     "tool_use_id": c.id,
                     "is_error": false,
-                    "content": await runTool(c.name, c.input),
+                    "content": content,
                     "type": "tool_result"
                 });
             }
@@ -809,34 +929,10 @@ export default function (omnibar, front) {
         return provider === "bedrock" || provider === "ollama" ? provider : "openai";
     }
 
-    /*
-     * Whether a completed response asked for a tool, in either shape. Read only
-     * once the tool budget is spent, to tell a model that stopped asking from one
-     * that asked again and was refused.
-     */
-    function hasToolCalls(resp) {
-        const message = resp.message || {};
-        if (Array.isArray(message.content) && message.content.some((c) => c.type === "tool_use")) {
-            return true;
-        }
-        return !!(message.tool_calls && message.tool_calls.length > 0);
-    }
-
-    // "answer now, do not call anything else", in the shape the provider expects
-    function noToolChoice(provider) {
-        return toolShapeOf(provider) === "bedrock" ? { type: "none" } : "none";
-    }
-
     function llmRequest(req, onChunk) {
         req.tools = llmTools.schemasFor(req.provider);
-        delete req.tool_choice;
-        toolRounds = 0;
-        writeRounds = 0;
-        // a new question is asked about the page as it is now, and it is the only
-        // point at which re-reading it cannot misalign an offset mid-answer -- the
-        // same goes for every tab `read_tab` snapshotted for the last question
-        pageMarkdownSnapshot = null;
-        llmTools.dropSnapshots();
+        // the turn every step of this loop is checked against; see `currentTurn`
+        const turn = {};
         if (runtime.bookMessage('llmResponse', async (resp) => {
             if (resp.chunk) {
                 onChunk(resp.chunk);
@@ -851,38 +947,42 @@ export default function (omnibar, front) {
             const message = resp.message || {};
             if (Object.keys(message).length > 0) {
                 messages.push(message);
-                if (toolRounds < toolBudget()) {
-                    toolRounds += 1;
-                    try {
-                        toolUsed = await providerClients[toolShapeOf(req.provider)](resp);
-                    } catch (e) {
-                        renderToolTrace(`tool call failed: ${e.message}`);
-                    }
-                } else if (hasToolCalls(resp)) {
-                    // the request was already sent with "call nothing", so a model
-                    // that asked anyway is not going to stop; say so rather than
-                    // ending on a bubble that holds only the traces
-                    renderToolTrace("the model kept asking for tools instead of answering, stopping here");
+                try {
+                    toolUsed = await providerClients[toolShapeOf(req.provider)](resp, turn);
+                } catch (e) {
+                    renderToolTrace(`tool call failed: ${e.message}`);
                 }
             }
+            if (!isCurrent(turn)) {
+                // stopped while a tool was running: `stopTurn` has already released
+                // the booking and left the conversation in a state a provider accepts
+                return;
+            }
             if (toolUsed) {
-                if (toolRounds >= toolBudget()) {
-                    // Spend the budget, then make the model answer with what it has.
-                    // The declarations stay in the request: the conversation now
-                    // carries tool calls and their results, and a provider rejects
-                    // those when `tools` is absent.
-                    req.tool_choice = noToolChoice(req.provider);
-                    renderToolTrace("tool budget spent, answering with what was gathered");
-                }
                 req.messages = messages;
                 startSpinner();
-                RUNTIME("llmRequest", req);
+                sendRound(req);
             } else {
+                currentTurn = null;
                 runtime.releaseMessage('llmResponse');
                 persist();
             }
         })) {
-            RUNTIME("llmRequest", req);
+            /*
+             * Claimed only now that the booking is ours, because a booking held by
+             * something else may be held by the turn ALREADY RUNNING here -- a
+             * question typed while one is in flight is refused, and that refusal must
+             * not touch it. Overwrite `currentTurn` there and the running turn is
+             * orphaned: every step of it then reads as stopped, so it never releases
+             * the booking, and every LLM feature in this frame is dead until a reload.
+             */
+            currentTurn = turn;
+            // a new question is asked about the page as it is now, and it is the only
+            // point at which re-reading it cannot misalign an offset mid-answer -- the
+            // same goes for every tab `read_tab` snapshotted for the last question
+            pageMarkdownSnapshot = null;
+            llmTools.dropSnapshots();
+            sendRound(req);
             return true;
         }
         return false;
@@ -1449,13 +1549,19 @@ export default function (omnibar, front) {
         }
     };
     self.onClose = function() {
-        // the tool loop holds the shared `llmResponse` booking while it waits, so
-        // a prompt left open must not survive the chat being closed
-        if (pendingConfirm) {
-            pendingConfirm.settle(false, "The user closed the chat instead of answering.");
+        /*
+         * Closing the chat stops the turn as Esc does, and for a stronger reason:
+         * nothing bounds a tool loop but the user, and a loop left running behind a
+         * closed chat goes on reading tabs and spending tokens for an answer nobody
+         * will see. A prompt left open is settled by the same stop -- the loop holds
+         * the shared `llmResponse` booking while it waits for one, so it must not
+         * outlive the chat.
+         */
+        if (!stopTurn("The user closed the chat instead of answering.")) {
+            // no turn was running, so nothing has saved or stopped the spinner yet
+            persist();
+            stopSpinner();
         }
-        persist();
-        stopSpinner();
         omnibar.resultsDiv.className = "";
         commandsPrompt.close();
     };
