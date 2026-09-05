@@ -72,14 +72,21 @@ function createClipboard() {
      * Write text to clipboard.
      *
      * @param {string} text the text to be written to clipboard.
+     * @param {string} [notice] what the banner says instead of quoting the text
+     * back; pass null for no banner at all, when the caller reports the copy
+     * itself. Quoting is right for a URL and wrong for anything long -- a whole
+     * document echoed into the banner covers the page it was copied from.
      * @name Clipboard.write
      *
      * @example
      * Clipboard.write(window.location.href);
      */
-    self.write = function(text) {
+    self.write = function(text, notice) {
         const cb = () => {
-            showBanner("Copied: " + text);
+            if (notice === null) {
+                return;
+            }
+            showBanner(notice === undefined ? "Copied: " + text : notice);
         };
         // navigator.clipboard.writeText does not work on http site, and in chrome's background script.
         if (getBrowserName() === "Chrome") {

@@ -655,6 +655,8 @@ You can also use `A` in visual mode. Press `v` or `V` to enter visual mode, then
 
 A conversation is kept per site, so returning to any page of that site — or reloading — resumes where you left off. `/clear` starts a fresh one, and also withdraws the tool permissions granted from a confirmation prompt on that site (see below). A conversation you resume under a different provider than the one it was held with keeps its questions and answers, but not the tool results, which only the original provider can be given back.
 
+`/copy` puts the conversation on the clipboard as Markdown, to paste into a ticket, a document or a message. What you can read is what you get: your questions, the answers, and the `⚙` line for every tool call inside the answer that made one — including the ones you denied, so a pasted answer never reads as if the model simply knew something it had to go and look up. An answer still being written is copied as far as it has got, rather than the copy quietly giving you less than the screen does.
+
 Another solution to select the content to chat with AI about is Regional Hints mode. Press `L` to pick an element, then `l` to call out the LLM chat box.
 
 ### Correct grammar of the input with LLM

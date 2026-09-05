@@ -23,6 +23,25 @@ export default function (omnibar, front) {
         }
     ];
     let response = "";
+    /*
+     * Where in `messages` the bubble now on screen begins, or null when no bubble is
+     * live.
+     *
+     * The assistant bubble is written by streaming into `response`, never re-rendered
+     * from the conversation, so while it is up the screen and `messages` say the same
+     * thing twice -- and not always the same thing: a turn stopped mid-stream leaves
+     * text on screen that the conversation never received, since only completed
+     * rounds are pushed. Anything reading the transcript therefore stops here and
+     * takes the rest from `response` (`conversationMarkdown`), which is both faithful
+     * to the screen and free of the double.
+     *
+     * Null again as soon as the screen is drawn from the conversation instead
+     * (`renderMessages`, i.e. an open or a `/clear`), because the bubble it pointed
+     * past is gone from the screen while `response` still holds its text -- appending
+     * that text afterwards would copy an answer the user can no longer see, and after
+     * a `/clear` one they threw away on purpose.
+     */
+    let turnStart = null;
     let provider = "";
     let providers = [];
 
@@ -1095,6 +1114,34 @@ export default function (omnibar, front) {
                 ...grants.map(({ origin, tools }) => `${origin} — ${tools.join(", ")}`),
             ], 0);
         },
+        /*
+         * Take the conversation out of the chat, as Markdown -- into a ticket, a
+         * document, a message to someone.
+         *
+         * It is a command rather than a key because the chat is a text field and
+         * `<Ctrl-c>` is already the omnibar's copy; a slash command also puts the
+         * receipt in the transcript, next to what was copied.
+         *
+         * The clipboard is left alone when there is nothing to copy: replacing what
+         * the user had in it with an empty string is a loss, and one they would only
+         * find out about when they pasted.
+         */
+        "copy": () => {
+            const markdown = conversationMarkdown();
+            if (!markdown) {
+                showSystemMessage("There is nothing in this conversation to copy yet.", 5000);
+                return;
+            }
+            // no banner: it quotes what was copied, and a whole conversation quoted
+            // over the page is not a notice. The receipt goes in the chat instead.
+            omnibar.copy(markdown, null);
+            // said only when the unfinished bubble is actually in what was copied,
+            // which `turnStart` decides
+            const unfinished = currentTurn && turnStart !== null && response
+                ? ", including the answer still being written"
+                : "";
+            showSystemMessage(`Copied this conversation as Markdown${unfinished} — ${markdown.length} characters.`, 5000);
+        },
         "clear": clear,
     };
     const commandsPatten = new RegExp(`^/(${Object.keys(commands).join("|")})(?:\\s+(.+)|\\s*)?$`, "")
@@ -1173,10 +1220,24 @@ export default function (omnibar, front) {
             : "";
     }
 
-    function renderMessages() {
+    /*
+     * The conversation as the chat shows it: one entry per bubble, `content` being
+     * the markdown that bubble renders.
+     *
+     * The system prompt is left out (it is not a bubble), tool results are dropped
+     * and the calls they answer become trace lines, and two turns of one role are
+     * folded together. Read by `renderMessages` to draw them and by
+     * `conversationMarkdown` to copy them, so what a `/copy` hands over is the
+     * transcript the user is looking at rather than a second opinion about it.
+     *
+     * `upTo` bounds how much of the conversation is read, for a caller that has the
+     * rest on screen in a form the conversation does not hold -- see
+     * `conversationMarkdown`.
+     */
+    function readableMessages(upTo) {
         const readables = [];
         let currentRole = "";
-        const shown = messages.slice(RESERVED_MESSAGE_COUNT);
+        const shown = messages.slice(RESERVED_MESSAGE_COUNT, upTo);
         for (let i = 0; i < shown.length; i++) {
             const m = shown[i];
             // a tool result is conversation bookkeeping; the trace of the call that
@@ -1202,9 +1263,41 @@ export default function (omnibar, front) {
                 currentRole = m.role;
             }
         }
+        return readables;
+    }
 
+    /*
+     * The conversation as Markdown, for `/copy`.
+     *
+     * What you can read is what you get: the questions, the answers, and the trace
+     * of every tool call inside the answer that made it -- an answer that leaned on
+     * `read_page` says so, and a call the user denied still says it was denied, which
+     * is the difference between a transcript and a claim about what the model knew.
+     * A bubble still being written is included for the same reason (see `turnStart`),
+     * so copying mid-answer never hands over less than is on the screen.
+     *
+     * The system prompt stays out -- it is not part of the conversation on screen,
+     * and `/system` may hold instructions the user did not mean to paste anywhere.
+     *
+     * The role headings are `##` so that the levels a model writes nest under them
+     * rather than beside them.
+     */
+    function conversationMarkdown() {
+        const readables = readableMessages(turnStart === null ? undefined : turnStart);
+        if (turnStart !== null && response) {
+            readables.push({ role: "assistant", content: response });
+        }
+        return readables
+            .map((m) => `## ${m.role === "user" ? "You" : "Assistant"}\n\n${m.content.trim()}\n`)
+            .join("\n");
+    }
+
+    function renderMessages() {
+        // the screen now comes from the conversation, so the bubble whose text
+        // `response` still holds is no longer on it -- see `turnStart`
+        turnStart = null;
         const ul = createElementWithContent('ul');
-        for (const m of readables) {
+        for (const m of readableMessages()) {
             if (m.role === "user") {
                 ul.append(createElementWithContent('li', m.content, { "class": `role-${m.role}` }));
             } else {
@@ -1636,6 +1729,9 @@ export default function (omnibar, front) {
             userInput = "";
             omnibar.input.value = "";
             response = "";
+            // everything from here is written into the bubble below, not read back
+            // out of the conversation -- see `turnStart`
+            turnStart = messages.length;
             omnibar.resultsDiv.lastElementChild.append(createElementWithContent('li', prompt, { "class": "role-user" }));
             lastResponseItem = createElementWithContent('li', "<div></div>", { "class": "role-assistant" });
             omnibar.resultsDiv.lastElementChild.append(lastResponseItem);

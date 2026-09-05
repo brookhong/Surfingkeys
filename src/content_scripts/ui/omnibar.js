@@ -170,12 +170,6 @@ function createOmnibar(front, clipboard) {
         annotation: "Copy selected item url or all listed item urls",
         feature_group: 8,
         code: function () {
-            // `clipboard.write` copies by selecting a hidden textarea of its own and
-            // running execCommand('copy'), which takes the DOCUMENT's selection -- so
-            // the focused input has to give that selection up first. Hiding it does
-            // that; it is restored below.
-            self.input.style.display = "none";
-
             const fi = self.resultsDiv.querySelector('li.focused');
             let text;
             if (fi && fi.copy) {
@@ -187,9 +181,7 @@ function createOmnibar(front, clipboard) {
                     return p.url;
                 }).join("\n")
             }
-            clipboard.write(text);
-
-            self.input.style.display = "";
+            self.copy(text);
         }
     });
 
@@ -337,6 +329,26 @@ function createOmnibar(front, clipboard) {
     // authoritative answer to "is the omnibar on screen", which a handler needs
     // when it wants to know whether there is a user to interact with.
     self.isVisible = () => ui.style.display !== "none";
+
+    /**
+     * Copy from the omnibar, whoever is asking -- `<Ctrl-c>` for the listed items,
+     * a handler for whatever it holds (llmchat.js `/copy`).
+     *
+     * `clipboard.write` copies by selecting a hidden textarea of its own and running
+     * execCommand('copy'), which takes the DOCUMENT's selection -- so the focused
+     * input has to give that selection up first. Hiding it does that; it is restored
+     * afterwards. That is the whole reason this is not a plain `clipboard.write`
+     * call at the call site: an omnibar copy that skips the hiding silently copies
+     * the input's contents instead of what was asked for.
+     *
+     * `notice` is passed through: null when the caller says so itself, which is what
+     * anything longer than a URL wants -- see Clipboard.write.
+     */
+    self.copy = function(text, notice) {
+        self.input.style.display = "none";
+        clipboard.write(text, notice);
+        self.input.style.display = "";
+    };
 
     function _onIput() {
         if (lastInput !== self.input.value) {

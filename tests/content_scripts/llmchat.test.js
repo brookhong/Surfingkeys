@@ -1783,6 +1783,325 @@ describe('llmchat stopping a turn', () => {
     });
 });
 
+/*
+ * `/copy` hands the conversation over as Markdown, and the promise it makes is that
+ * what the user can READ is what they get: the answer they are looking at, the tool
+ * calls it leaned on, and the ones they refused. A copy that quietly differs from the
+ * screen is worse than none, because it is pasted somewhere before anyone reads it.
+ */
+describe('llmchat copying the conversation', () => {
+    let chat;
+    let omnibar;
+    let container;
+
+    const flush = async () => {
+        for (let i = 0; i < 30; i++) {
+            await Promise.resolve();
+        }
+    };
+    let copied;
+    const lastCopy = () => copied.mock.calls[copied.mock.calls.length - 1];
+    const copiedText = () => lastCopy()[0];
+    const receipt = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-surfingkeys'))
+        .map((li) => li.textContent).join(" ");
+    // the transcript as the user reads it, to compare the copy against
+    const onScreen = () => Array.from(omnibar.resultsDiv.querySelectorAll('ul>li'))
+        .map((li) => li.textContent).join("\n");
+
+    async function open(url = 'https://page.com', provider) {
+        container.style.display = "";
+        omnibar.resultsDiv.innerHTML = "";
+        chat.onOpen({ url, provider });
+        await flush();
+    }
+    function send(prompt) {
+        omnibar.input.value = prompt;
+        chat.onEnter();
+    }
+    // a whole exchange: the question, then the answer streamed and completed
+    async function exchange(question, answer) {
+        send(question);
+        mockBooked.handler({ chunk: answer });
+        mockBooked.handler({ done: true, message: { role: 'assistant', content: answer } });
+        await flush();
+    }
+    async function askForTool(name = 'list_tabs') {
+        mockBooked.handler({ done: true, message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [{ id: `c_${name}`, function: { name, arguments: {} } }],
+        } });
+        await flush();
+    }
+
+    beforeEach(() => {
+        jest.useFakeTimers();
+        Element.prototype.scrollIntoView = jest.fn();
+        localStorage.clear();
+        mockBooked.handler = null;
+        runtime.conf.llmAllowedTools = ['list_tabs'];
+        mockRUNTIME.mockReset();
+        mockRUNTIME.mockImplementation((action, args, cb) => {
+            if (action === 'getTabs') { cb({ tabs: [{ title: 'a tab', url: 'https://tab.com' }] }); }
+        });
+        document.body.innerHTML = '<div id="bar" style="display: none;"><div id="results"></div><input id="input"></div>';
+        container = document.querySelector('#bar');
+        copied = jest.fn();
+        omnibar = {
+            resultsDiv: document.querySelector('#results'),
+            input: document.querySelector('#input'),
+            isVisible: () => container.style.display !== "none",
+            copy: copied,
+        };
+        chat = LLMChat(omnibar, { addDestroyListener: jest.fn() });
+    });
+
+    afterEach(() => {
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
+
+    test('copies the questions and the answers, each under its own heading', async () => {
+        await open();
+        await exchange('what is this page?', 'a page about bees');
+        await exchange('and the other one?', 'that one is about wasps');
+
+        send('/copy');
+
+        expect(copiedText()).toBe([
+            '## You\n\nwhat is this page?\n',
+            '## Assistant\n\na page about bees\n',
+            '## You\n\nand the other one?\n',
+            '## Assistant\n\nthat one is about wasps\n',
+        ].join("\n"));
+    });
+
+    test('says what it copied, in the chat', async () => {
+        await open();
+        await exchange('a question', 'an answer');
+
+        send('/copy');
+
+        expect(receipt()).toContain('Copied this conversation as Markdown');
+    });
+
+    /*
+     * The banner quotes what was copied, which is a notice for a URL and a wall of
+     * text for a conversation -- so the copy is silent there and reports in the chat
+     * instead.
+     */
+    test('does not echo the whole conversation over the page', async () => {
+        await open();
+        await exchange('a question', 'an answer');
+
+        send('/copy');
+
+        expect(lastCopy()[1]).toBeNull();
+    });
+
+    test('carries the trace of a tool call into the copy', async () => {
+        await open();
+        send('what tabs?');
+        mockBooked.handler({ chunk: 'let me look' });
+        await askForTool();
+        mockBooked.handler({ chunk: 'one tab' });
+        mockBooked.handler({ done: true, message: { role: 'assistant', content: 'one tab' } });
+        await flush();
+
+        send('/copy');
+
+        expect(copiedText()).toContain('*⚙ list_tabs()*');
+        expect(copiedText()).toContain('one tab');
+    });
+
+    /*
+     * A denied call is the trace worth keeping most: without it the answer reads as
+     * if the model simply knew something it was in fact refused.
+     */
+    test('says a call was denied, rather than leaving it out', async () => {
+        runtime.conf.llmAllowedTools = [];
+        await open();
+        send('what have I been reading?');
+        mockBooked.handler({ done: true, message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [{ id: 'c_1', function: { name: 'search_browsing_history', arguments: { query: 'rust' } } }],
+        } });
+        await flush();
+        jest.advanceTimersByTime(500);
+        chat.onKeydown(new KeyboardEvent('keydown', { key: 'n' }));
+        await flush();
+        mockBooked.handler({ done: true, message: { role: 'assistant', content: 'I cannot see your history.' } });
+        await flush();
+
+        send('/copy');
+
+        expect(copiedText()).toContain('— denied');
+    });
+
+    /*
+     * The system prompt is not a bubble on screen, and `/system` may hold
+     * instructions the user did not mean to paste anywhere.
+     */
+    test('leaves the system prompt out', async () => {
+        await open();
+        await exchange('a question', 'an answer');
+
+        send('/copy');
+
+        expect(copiedText()).not.toContain('Surfingkeys');
+        expect(copiedText().match(/^## /gm)).toHaveLength(2);
+    });
+
+    /*
+     * The bubble is written by streaming and is never re-rendered from the
+     * conversation, so the two hold the same answer once it lands. Reading both is how
+     * a copy comes out with every answer twice.
+     */
+    test('copies a finished answer once', async () => {
+        await open();
+        await exchange('a question', 'an answer');
+
+        send('/copy');
+
+        expect(copiedText().match(/an answer/g)).toHaveLength(1);
+    });
+
+    test('copies a multi-round answer once, traces included', async () => {
+        await open();
+        send('what tabs?');
+        mockBooked.handler({ chunk: 'let me look' });
+        await askForTool();
+        mockBooked.handler({ chunk: 'one tab' });
+        mockBooked.handler({ done: true, message: { role: 'assistant', content: 'one tab' } });
+        await flush();
+
+        send('/copy');
+
+        expect(copiedText().match(/let me look/g)).toHaveLength(1);
+        expect(copiedText().match(/list_tabs/g)).toHaveLength(1);
+    });
+
+    describe('an answer that is still being written', () => {
+        // only completed rounds reach the conversation, so a copy that read it alone
+        // would hand over less than the screen shows
+        test('is copied as far as it has got', async () => {
+            await open();
+            send('a question');
+            mockBooked.handler({ chunk: 'half of an ans' });
+            await flush();
+
+            send('/copy');
+
+            expect(copiedText()).toContain('half of an ans');
+            expect(copiedText()).toContain('## You\n\na question');
+        });
+
+        test('is said to be unfinished, so the paste is not mistaken for the whole', async () => {
+            await open();
+            send('a question');
+            mockBooked.handler({ chunk: 'half of an ans' });
+            await flush();
+
+            send('/copy');
+
+            expect(receipt()).toContain('still being written');
+        });
+
+        test('does not double the rounds of its own turn that finished', async () => {
+            await open();
+            send('what tabs?');
+            mockBooked.handler({ chunk: 'let me look' });
+            await askForTool();
+            mockBooked.handler({ chunk: 'and now' });
+            await flush();
+
+            send('/copy');
+
+            expect(copiedText().match(/let me look/g)).toHaveLength(1);
+            expect(copiedText().match(/list_tabs/g)).toHaveLength(1);
+            expect(copiedText()).toContain('and now');
+        });
+
+        test('a stopped answer is copied, though the conversation never received it', async () => {
+            await open();
+            send('a question');
+            mockBooked.handler({ chunk: 'as far as I got' });
+            await flush();
+            chat.onEsc();
+            await flush();
+
+            send('/copy');
+
+            expect(copiedText()).toContain('as far as I got');
+            expect(copiedText()).toContain('stopped by the user');
+            // nothing is in flight any more, so nothing is claimed to be unfinished
+            expect(receipt()).not.toContain('still being written');
+        });
+    });
+
+    /*
+     * On an open the transcript is drawn from the conversation, so there is no live
+     * bubble any more -- and a cut kept from the turn before would take everything
+     * after it out of the copy.
+     */
+    test('copies the whole conversation again after it is reopened', async () => {
+        await open();
+        await exchange('the first question', 'the first answer');
+        await exchange('the second question', 'the second answer');
+        container.style.display = "none";
+        omnibar.resultsDiv.innerHTML = "";
+        chat.onClose();
+        await open();
+
+        send('/copy');
+
+        ['the first question', 'the first answer', 'the second question', 'the second answer']
+            .forEach((text) => expect(copiedText().match(new RegExp(text, 'g'))).toHaveLength(1));
+    });
+
+    /*
+     * Replacing what the user had in the clipboard with nothing is a loss they would
+     * only discover when they pasted.
+     */
+    test('leaves the clipboard alone when there is nothing to copy', async () => {
+        await open();
+
+        send('/copy');
+
+        expect(copied).not.toHaveBeenCalled();
+        expect(receipt()).toContain('nothing in this conversation to copy');
+    });
+
+    test('has nothing to copy after /clear', async () => {
+        await open();
+        await exchange('a question', 'an answer');
+
+        send('/clear');
+        send('/copy');
+
+        expect(copied).not.toHaveBeenCalled();
+    });
+
+    test('what is copied is what is on screen', async () => {
+        await open();
+        await exchange('what tabs?', 'let me look');
+        send('and again?');
+        mockBooked.handler({ chunk: 'looking' });
+        await askForTool();
+        await flush();
+
+        send('/copy');
+
+        const screen = onScreen();
+        // every readable line of the transcript, in order, is in the copy
+        ['what tabs?', 'let me look', 'and again?', 'looking', 'list_tabs'].forEach((text) => {
+            expect(screen).toContain(text);
+            expect(copiedText()).toContain(text);
+        });
+    });
+});
+
 describe('llmchat page text', () => {
     let chat;
     let omnibar;
