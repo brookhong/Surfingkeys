@@ -223,7 +223,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         }
     };
 
-    mapkey('<Space>t', '#8Translate selected text with LLM', function() {
+    mapkey(';lt', '#8Translate selected text with LLM', function() {
         hints.create(runtime.conf.textAnchorPat, function (element) {
             const text = element[1] === 0 ? element[0].data.trim() : element[2].trim();
             if (text) {
