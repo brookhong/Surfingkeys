@@ -491,10 +491,12 @@ function start(browser) {
             handleMessage(m, s, r);
         });
         chrome.runtime.onInstalled.addListener((e) => {
-            chrome.userScripts.configureWorld({
-                csp: 'script-src \'self\' \'unsafe-eval\'',
-                messaging: true
-            });
+            if (isUserScriptsAvailable()) {
+                chrome.userScripts.configureWorld({
+                    csp: 'script-src \'self\' \'unsafe-eval\'',
+                    messaging: true
+                });
+            }
         });
     }
 
