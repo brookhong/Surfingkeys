@@ -3,6 +3,9 @@ import {
     getSubSettings,
     start
 } from './start.js';
+import {
+    createNvimServer,
+} from './nvim.js';
 
 function loadRawSettings(keys, cb, defaultSet) {
     var rawSet = defaultSet || {};
@@ -67,6 +70,7 @@ start({
     detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,
+    nvimServer: createNvimServer(),
     _applyProxySettings,
     _setNewTabUrl,
     _getContainerName,

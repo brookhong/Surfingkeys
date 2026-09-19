@@ -180,15 +180,6 @@ local function sha1(val)
     to_32_bits_str(H4)
 end
 
-local function utf8_from_byte_array(t)
-    local bytearr = {}
-    for _, v in ipairs(t) do
-        local utf8byte = v < 0 and (0xff + v + 1) or v
-        table.insert(bytearr, string.char(utf8byte))
-    end
-    return table.concat(bytearr)
-end
-
 local opcodes = {
     text = 1,
     binary = 2,
@@ -299,7 +290,7 @@ local function decode_frame()
         end
         current_byte = payload_end + 1
         if result.opcode == opcodes.close then
-            log:write("exit decode: " .. frame .. "\n")
+            logw("exit decode: " .. frame .. "\n")
             return result
         else
             frame = string.sub(frame, current_byte) .. coroutine.yield(result)
@@ -366,7 +357,7 @@ local function connection_handler(server, sock, token)
     return function(err, chunk)
         assert(not err, err)
         if not chunk then
-            log:write("close_server 1\n")
+            logw("close_server 1\n")
             return close_server()
         end
         local _
@@ -385,7 +376,7 @@ local function connection_handler(server, sock, token)
                 -- hasn't been made from a webextension
                 -- context: abort.
                 sock:close()
-                log:write("close_server 2\n")
+                logw("close_server 2\n")
                 close_server(server)
                 return
             end
@@ -394,9 +385,9 @@ local function connection_handler(server, sock, token)
                 assert(not error, error)
                 if v then
                     local status, res = pcall(vim.fn.msgpackparse, {v})
-                    -- log:write("\n======out========\n")
-                    -- log:write(v)
-                    -- log:write("\n=================\n")
+                    -- logw("\n======out========\n")
+                    -- logw(v)
+                    -- logw("\n=================\n")
                     sock:write(encode_frame(v))
                 end
             end)
@@ -407,9 +398,9 @@ local function connection_handler(server, sock, token)
             if decoded_frame.opcode == opcodes.binary then
                 current_payload = current_payload .. decoded_frame.payload
                 if decoded_frame.fin then
-                    -- log:write("\n=======in========\n")
-                    -- log:write(current_payload)
-                    -- log:write("\n=================\n")
+                    -- logw("\n=======in========\n")
+                    -- logw(current_payload)
+                    -- logw("\n=================\n")
                     pipe:write(current_payload)
                     current_payload = ""
                 end
@@ -421,10 +412,10 @@ local function connection_handler(server, sock, token)
                 sock:write(close_frame(decoded_frame))
                 sock:close()
                 pipe:close()
-                log:write("close_server 3\n")
+                logw("close_server 3\n")
                 -- close_server(server)
-                log:write("header_parser: " .. coroutine.status(header_parser) .. "\n")
-                log:write("frame_decoder: " .. coroutine.status(frame_decoder) .. "\n")
+                logw("header_parser: " .. coroutine.status(header_parser) .. "\n")
+                logw("frame_decoder: " .. coroutine.status(frame_decoder) .. "\n")
                 return
             end
             _, decoded_frame = coroutine.resume(frame_decoder, "")
@@ -457,25 +448,99 @@ function write_stdout(id, data)
     -- to precede the message. It has to use native endianness. We
     -- assume big endian.
     -- https://developer.chrome.com/docs/apps/nativeMessaging/#native-messaging-host-protocol
+    --
+    -- The payload is CONCATENATED onto the header rather than unpacked with
+    -- string.byte, which makes one return value per byte and LuaJIT refuses past
+    -- ~8000 of them -- a size a reply carrying ~/.surfingkeys.js easily reaches.
     local len = string.len(data)
     local lenstr = string.char(bit.band(len, 255),
     bit.band(bit.rshift(len, 8), 255),
     bit.band(bit.rshift(len, 16), 255),
-    bit.band(bit.rshift(len, 24), 255),
-    string.byte(data, 1, -1))
+    bit.band(bit.rshift(len, 24), 255)) .. data
 
     vim.api.nvim_chan_send(id, lenstr)
 end
 
-function handle_input(id, data)
-    local tab = { string.byte(data[1], 5, -1) }
-    data = utf8_from_byte_array(tab)
-    log:write("stdin: " .. data .. "\n")
-    if string.len(data) == 0 then
-        log:write("qall: " .. current_server_port .. "\n")
-        vim.api.nvim_command('qall!')
+-- Read when `localPath` is `<native>`. Reports why a read failed, so the path and
+-- the host can be told apart.
+function read_settings()
+    local path = home_dir .. "/.surfingkeys.js"
+    local f, err = io.open(path, "r")
+    if f == nil then
+        return { error = err or ("Could not read " .. path) }
     end
-    data = vim.fn.json_decode(data)
+    local content = f:read("*a")
+    f:close()
+    if content == nil then
+        return { error = "Could not read " .. path }
+    end
+    return { data = content }
+end
+
+-- Bytes received from the browser that do not yet make up a whole message.
+local stdin_buffer = ""
+
+-- Recovers the exact bytes the browser wrote. A channel delivers stdin as LINES with
+-- NUL and newline swapped: a newline splits the list, a NUL arrives as "\n" inside an
+-- element. Both must be put back to read a binary length header.
+local function stream_bytes(data)
+    local parts = {}
+    for i, chunk in ipairs(data) do
+        parts[i] = (string.gsub(chunk, "\n", "\0"))
+    end
+    return table.concat(parts, "\n")
+end
+
+-- Takes the next complete native message out of the buffer, or nil when there is not
+-- one yet. One on_stdin call is not one message: a length byte of 0x0A splits the
+-- delivery, the editor and a settings read can both arrive in one call, and a long
+-- message arrives in pieces.
+local function take_message()
+    if #stdin_buffer < 4 then
+        return nil
+    end
+    local b1, b2, b3, b4 = string.byte(stdin_buffer, 1, 4)
+    local len = b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
+    if #stdin_buffer < 4 + len then
+        return nil
+    end
+    local text = string.sub(stdin_buffer, 5, 4 + len)
+    stdin_buffer = string.sub(stdin_buffer, 5 + len)
+    return text
+end
+
+-- Handles one whole message and writes its reply. The id tells the extension which
+-- request a reply answers, and is read separately from handling so that a request
+-- whose handling THROWS still carries it.
+local function respond_to(chan, text)
+    logw("stdin: " .. text .. "\n")
+    local decoded, req = pcall(vim.fn.json_decode, text)
+    local status, res
+    if decoded then
+        status, res = pcall(handle_input, chan, req)
+    else
+        status, res = false, req
+    end
+    local resp = vim.fn.json_encode({
+        status = status,
+        res = res,
+        id = decoded and type(req) == "table" and req['id'] or nil
+    })
+    -- A write that throws leaves the browser waiting on a reply that never arrives.
+    local written, werr = pcall(write_stdout, chan, resp)
+    if not written then
+        logw("stdout failed: " .. tostring(werr) .. "\n")
+    end
+    -- Settings are read on every page load, so logging the reply text would grow this
+    -- log by the size of ~/.surfingkeys.js per page.
+    if status and type(res) == "table" and type(res.data) == "string" then
+        logw("stdout: Settings.read " .. #res.data .. " bytes\n")
+    else
+        logw("stdout: " .. resp .. "\n")
+    end
+end
+
+function handle_input(id, data)
     if data['startServer'] and data['password'] then
         vim.g.surfingkeys_standalone = data['standalone']
         return start_server(data['password'], 0)
@@ -484,6 +549,8 @@ function handle_input(id, data)
         return {
             mode = data['mode']
         }
+    elseif data['command'] == 'Settings.read' then
+        return read_settings()
     end
 end
 
@@ -491,8 +558,36 @@ home_dir = os.getenv("HOME")
 if home_dir == nil then
     home_dir = os.getenv("USERPROFILE")
 end
-log = io.open(home_dir .. "/.surfingkeys.log", "a")
-log:setvbuf("no")
+-- Logging is opt-in: it records every message in both directions, and a host is
+-- long-lived. The switch is a FILE because the host inherits the browser's
+-- environment, and a browser launched from the Dock has nothing to set.
+--
+-- One file per pid, since several hosts can run at once and sharing one name
+-- interleaves their lines. Truncating keeps a recycled pid from appending onto a dead
+-- one's log.
+local function open_log()
+    local marker = io.open(home_dir .. "/.surfingkeys.log.on", "r")
+    if marker == nil then
+        return nil
+    end
+    marker:close()
+    local f = io.open(home_dir .. "/.surfingkeys." .. vim.fn.getpid() .. ".log", "w")
+    if f ~= nil then
+        f:setvbuf("no")
+    end
+    return f
+end
+
+log = open_log()
+
+-- Every log site goes through this, including those in the stdin handler and the
+-- socket callbacks: a bare log:write there would throw while logging is off, and
+-- turning the log off has to quiet the host, not stop it answering.
+function logw(msg)
+    if log ~= nil then
+        log:write(msg)
+    end
+end
 
 surfingkeys_server_id = 0
 if (vim.g ~= nil and vim.g.server_token ~= nil) then
@@ -501,10 +596,22 @@ if (vim.g ~= nil and vim.g.server_token ~= nil) then
 elseif vim.fn ~= nil then
     surfingkeys_server_id = vim.fn.stdioopen({
         on_stdin = function(id, data, event)
-            local status, res = pcall(handle_input, id, data)
-            local resp = vim.fn.json_encode({status = status, res = res})
-            write_stdout(id, resp)
-            log:write("stdout: " .. resp .. "\n")
+            -- The stream closing arrives as a single empty string. Checked explicitly,
+            -- since "nothing decoded" also describes a split length header.
+            if #data == 1 and data[1] == "" then
+                logw("qall: " .. tostring(current_server_port) .. "\n")
+                vim.api.nvim_command('qall!')
+                return
+            end
+            -- See stream_bytes for why this is not the bytes as delivered.
+            stdin_buffer = stdin_buffer .. stream_bytes(data)
+            while true do
+                local text = take_message()
+                if text == nil then
+                    break
+                end
+                respond_to(id, text)
+            end
         end
     })
 else

@@ -1,7 +1,9 @@
 import {
-    LOG,
     filterByTitleOrUrl,
 } from '../common/utils.js';
+import {
+    createNvimServer,
+} from './nvim.js';
 import {
     _save,
     dictFromArray,
@@ -137,54 +139,12 @@ function getLatestHistoryItem(text, maxResults, cb) {
     impl(endTime, maxResults, cb);
 }
 
-function generatePassword() {
-    const random = new Uint32Array(8);
-    self.crypto.getRandomValues(random);
-    return Array.from(random).join("");
-}
-
-let nativeConnected = false;
-const nvimServer = {};
-function startNative() {
-    return new Promise((resolve, reject) => {
-        const nm = chrome.runtime.connectNative("surfingkeys");
-        const password = generatePassword();
-        nm.onDisconnect.addListener((evt) => {
-            if (chrome.runtime.lastError) {
-                var error = chrome.runtime.lastError.message;
-            }
-            if (nativeConnected) {
-                nvimServer.instance = startNative();
-            } else {
-                delete nvimServer.instance;
-                LOG("warn", "Failed to connect neovim, please make sure your neovim version 0.5 or above.");
-            }
-        });
-        nm.onMessage.addListener(async (resp) => {
-            if (resp.status === true) {
-                nativeConnected = true;
-                if (resp.res.event === "serverStarted") {
-                    const url = `127.0.0.1:${resp.res.port}/${password}`;
-                    resolve({url, nm});
-                }
-            } else if (resp.err) {
-                LOG("error", resp.err);
-            }
-        });
-        nm.postMessage({
-            startServer: true,
-            password
-        });
-    });
-}
-nvimServer.instance = startNative();
-
 start({
     name: "Chrome",
     detectTabTitleChange: true,
     getLatestHistoryItem,
     loadRawSettings,
-    nvimServer,
+    nvimServer: createNvimServer(),
     _applyProxySettings,
     _setNewTabUrl,
     _getContainerName,

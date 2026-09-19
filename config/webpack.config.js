@@ -20,6 +20,13 @@ function modifyManifest(browser, mode, buffer) {
         manifest.permissions.push("contextualIdentities");
         manifest.permissions.push("<all_urls>");
         manifest.permissions.push("tabGroups");
+        if (mode === "development") {
+            manifest.browser_specific_settings = {
+                gecko: {
+                    id: "surfingkeys@github.com"
+                }
+            };
+        }
     } else if (browser === "safari") {
         manifest.incognito = "split";
         manifest.options_page = "pages/options.html";
@@ -113,10 +120,19 @@ module.exports = (env, argv) => {
             }
         }
     ];
+    // The neovim editor needs its page, its renderer and neovim.html wherever the
+    // adapter passes an nvimServer -- which is Chrome and Firefox, but not Safari,
+    // whose native host is the app and runs no neovim.
     if (browser === "chrome") {
         pagesCopyOptions.ignore = [];
+    } else if (browser === "firefox") {
+        pagesCopyOptions.ignore = pagesCopyOptions.ignore.filter((p) => p !== '**/neovim.*');
+    }
+    if (browser === "chrome" || browser === "firefox") {
         entry['pages/neovim'] = './src/pages/neovim.js';
         moduleEntries['pages/neovim_lib'] = './src/nvim/renderer.ts';
+    }
+    if (browser === "chrome") {
         moduleEntries['api'] = './src/user_scripts/index.js';
         const chromeOnlyCopyPatterns = [
             { from: 'node_modules/pdfjs-dist/cmaps', to: 'pages/cmaps' },

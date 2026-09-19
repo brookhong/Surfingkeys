@@ -57,10 +57,17 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         openVim(false);
     });
     const browserName = getBrowserName();
-    if (browserName === "Chrome") {
+    // Neovim is built for everything but Safari, so the mappings are gated the same
+    // way: offered without pages/neovim_lib.js they open an editor that never loads.
+    if (!browserName.startsWith("Safari")) {
         imapkey('<Ctrl-Alt-i>', '#15Open neovim for current input', function() {
             openVim(true);
         });
+        mapkey(';v', '#11Open neovim', function() {
+            tabOpenLink("/pages/neovim.html");
+        });
+    }
+    if (browserName === "Chrome") {
         mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
             var pdfUrl = window.location.href;
             if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
@@ -939,9 +946,6 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         });
         mapkey(';i', '#12Open Chrome Inspect', function() {
             tabOpenLink("chrome://inspect/#devices");
-        });
-        mapkey(';v', '#11Open neovim', function() {
-            tabOpenLink("/pages/neovim.html");
         });
     }
 

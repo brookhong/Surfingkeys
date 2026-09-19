@@ -44,6 +44,7 @@ Surfingkeys does its best to make full use of the keyboard for web browsing, but
 | Tab Groups | Y | Y | N |
 | Proxy | Y | N | N |
 | Markdown preview |Y  | Y | N |
+| Load settings from a local file | needs native host | needs native host | macOS only |
 
 ### TABLE OF CONTENTS
 
@@ -68,6 +69,7 @@ Surfingkeys does its best to make full use of the keyboard for web browsing, but
 * [Capture page](#capture-page)
 * [PDF viewer](#pdf-viewer)
 * [Edit your own settings](#edit-your-own-settings)
+* [Load settings from a local file](#load-settings-from-a-local-file)
 * [Chat with LLM](#chat-with-llm)
 * [License](#license)
 
@@ -607,6 +609,24 @@ Some functionalities are also available when you're using the original PDF viewe
             font-size: 20pt;
         }
     }`;
+
+## Load settings from a local file
+
+Set **Load settings from** to `<native>` on the settings page to keep your snippets in
+`~/.surfingkeys.js` instead of the settings box. The file is read on every page load, so
+you edit it with your own editor and reload the page to pick up the change.
+
+Safari on macOS reads the file through the Surfingkeys app. There is no home directory
+to read on iOS, so `<native>` reports that instead. Chrome and Firefox can not read a
+file in your home directory on their own and need the
+[native messaging host](src/nvim/server/Readme.md) installed.
+
+If the file can not be read, the last copy read successfully keeps working and the
+settings page says what went wrong.
+
+The same field also takes an `http`/`https` URL, or a path like
+`/home/you/.surfingkeys.js` if you have granted the extension **Allow access to file
+URLs**.
 
 ## Chat with LLM
 
