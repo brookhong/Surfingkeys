@@ -723,3 +723,95 @@ describe('cancelling a request', () => {
         expect(onComplete).toHaveBeenCalledWith({});
     });
 });
+
+/*
+ * A connection that neither resolves nor rejects -- what a fetch to a closed
+ * local port does on Safari, rather than the near-instant rejection Chrome
+ * gives it (see `hangingFetch` above, which DOES reject, on abort). Every
+ * provider needs its own bound on that wait: see `withConnectTimeout` in
+ * llm.js.
+ */
+describe('a connection that never settles', () => {
+    let onChunk;
+    let onComplete;
+    let opts;
+
+    // never resolves, never rejects, not even on abort -- there is nothing
+    // listening at the other end to send back so much as a refusal
+    const neverSettlingFetch = () => jest.fn(() => new Promise(() => {}));
+    const CONNECT_TIMEOUT_MS = 20000;
+
+    beforeEach(() => {
+        onChunk = jest.fn();
+        onComplete = jest.fn();
+        opts = { onChunk, onComplete };
+        jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    it('fails ollama and releases the caller once the deadline passes', () => {
+        global.fetch = neverSettlingFetch();
+        llmClients.ollama({ messages: [] }, opts);
+
+        jest.advanceTimersByTime(CONNECT_TIMEOUT_MS - 1);
+        expect(onComplete).not.toHaveBeenCalled();
+
+        jest.advanceTimersByTime(1);
+        expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+        expect(onChunk).toHaveBeenCalledWith(expect.stringContaining('Ollama'));
+        expect(onChunk).toHaveBeenCalledWith(expect.stringContaining('timed out'));
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    it('fails bedrock and releases the caller once the deadline passes', () => {
+        // aws4fetch signs a Request, so the signal arrives on that instead of `init`
+        AwsClient.prototype.fetch = neverSettlingFetch();
+        llmClients.bedrock.init({ accessKeyId: 'AKIA', secretAccessKey: 'secret', model: 'claude' });
+        llmClients.bedrock({ messages: [{ role: 'system', content: 'sys' }] }, opts);
+
+        jest.advanceTimersByTime(CONNECT_TIMEOUT_MS);
+
+        const [url, init] = AwsClient.prototype.fetch.mock.calls[0];
+        expect((init.signal || url.signal).aborted).toBe(true);
+        expect(onChunk).toHaveBeenCalledWith(expect.stringContaining('Bedrock'));
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    it('fails a custom openAI-compatible client, naming it in the message', () => {
+        llmClients.custom.register('deepseek', {
+            name: 'DeepSeek',
+            serviceUrl: 'https://api.deepseek.com/chat/completions',
+            apiKey: 'k',
+            model: 'deepseek-chat',
+        });
+        global.fetch = neverSettlingFetch();
+        llmClients.custom({ provider: 'deepseek', messages: [] }, opts);
+
+        jest.advanceTimersByTime(CONNECT_TIMEOUT_MS);
+
+        expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+        expect(onChunk).toHaveBeenCalledWith(expect.stringContaining('DeepSeek'));
+        expect(onComplete).toHaveBeenCalledWith({});
+    });
+
+    it('never fires once the connection has already succeeded', async () => {
+        // connects fine; the stream itself just sits quiet after that, as one
+        // does between two tokens -- the connect timeout must not reach this far
+        global.fetch = jest.fn(() => Promise.resolve({
+            status: 200,
+            body: { getReader: () => ({ read: () => new Promise(() => {}) }) },
+        }));
+        llmClients.ollama({ messages: [] }, opts);
+
+        // let the already-resolved fetch promise's `.then` run and clear the timer
+        await Promise.resolve();
+        await Promise.resolve();
+
+        jest.advanceTimersByTime(CONNECT_TIMEOUT_MS);
+        expect(onChunk).not.toHaveBeenCalledWith(expect.stringContaining('timed out'));
+        expect(onComplete).not.toHaveBeenCalled();
+    });
+});

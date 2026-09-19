@@ -1,9 +1,9 @@
-# Surfingkeys -- 用javascript和键盘扩展你的chrome
+# Surfingkeys —— 用javascript和键盘扩展你的浏览器
 
 
 [![Node CI](https://github.com/brookhong/Surfingkeys/workflows/Node%20CI/badge.svg?branch=master)](https://github.com/brookhong/Surfingkeys/actions?query=workflow%3A%22Node+CI%22+branch%3Amaster)
 
-Surfingkeys和现有的一些插件一样，让你尽可能的通过键盘来使用Chrome/Firefox浏览器，比如跳转网页，上下左右滚屏。但不只是给vim用户使用，Surfingkeys的基本特性是让你自己写一段Javascript脚本，然后通过`mapkey`映射到某些按键。之后当你按了那几个键以后，对应的Javascript脚本就会被执行。
+Surfingkeys是一款浏览器插件（支持Google Chrome、基于Chromium的浏览器、Firefox和Safari），以类似VIM编辑器的方式，让你尽可能通过键盘浏览和控制网页。但这不只是给vim用户使用的，任何需要更多自定义快捷键的人都用得上它。
 
 Surfingkeys的配置全部写在一段javascript中，很容易添加自己的映射按键。如：
 
@@ -11,19 +11,42 @@ Surfingkeys的配置全部写在一段javascript中，很容易添加自己的�
         api.Front.showPopup('a well-known phrase uttered by characters in the 1996 film Jerry Maguire (Escape to close).');
     });
 
-Surfingkeys从0.9.15开始支持火狐（需要57以上的版本），但目前下面的功能在火狐下不工作：
-* 同步不同设备间的设置
-* 代理设置
-* Markdown预览
-
 Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Google Chrome本身的，如果想要更彻底的体验请试试[Brook的Chromium浏览器](https://brookhong.github.io/2021/04/18/brook-build-of-chromium-cn.html)。
 
 ## 安装
 
-* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc)
-* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/)
-* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg)
-* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1609752330)
+<img src="https://raw.githubusercontent.com/brookhong/Surfingkeys/master/sk.svg" width="384">
+
+* [Surfingkeys - Chrome Web Store](https://chrome.google.com/webstore/detail/surfingkeys/gfbliohnnapiefjpjlpjnehglfpaknnc) 适用于Google Chrome、基于Chromium的浏览器
+* [Surfingkeys – Get this Extension for 🦊 Firefox](https://addons.mozilla.org/en-US/firefox/addon/surfingkeys_ff/) 适用于Firefox
+* [Surfingkeys - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/kgnghhfkloifoabeaobjkgagcecbnppg) 适用于Microsoft Edge
+* [Surfingkeys on the Mac App Store](https://apps.apple.com/us/app/surfingkeys/id1609752330) 适用于Safari，同时支持macOS和iOS，但在iOS上需要连接外接键盘。唯一的例外是[专为iOS设计的特殊功能](https://youtu.be/xaTf2booQkQ) —— “搜索选中文本”。
+
+### 功能可用性
+
+| 功能 \ 浏览器 | Chromium系列 (45以上) | Firefox (57以上) | Safari (15以上) |
+|:---------------|:-----|:-----|:-----|
+| 打开连接 | Y | Y | Y |
+| Surfingkeys支持的模式 | Y | Y | Y |
+| 搜索栏 | Y | Y | 部分支持 |
+| 搜索选中文本 | Y | Y | Y |
+| 类vim标示 | Y | Y | Y |
+| 切换标签页 | Y | Y | Y |
+| 窗口管理 | Y | Y | N |
+| 命令 | Y | Y | Y |
+| 顺滑滚动 | Y | Y | Y |
+| 会话管理 | Y | Y | Y |
+| 前缀数字可多次重复相应操作 | Y | Y | Y |
+| 开关热键 | Y | Y | Y |
+| VIM编辑器或者Emacs编辑器 | Y | Y | Y |
+| 点命令重复前一个操作 | Y | Y | Y |
+| 截屏 | Y | Y | Y |
+| PDF阅读器 | Y | N | N |
+| 跨设备同步设置 | Y | N | Y |
+| 标签组 | Y | Y | N |
+| 代理设置 | Y | N | N |
+| Markdown预览 | Y | Y | N |
+| 从本地文件加载设置 | 需要native host | 需要native host | 仅macOS |
 
 ### 目录
 
@@ -48,7 +71,8 @@ Surfingkeys尽量让用户使用键盘进行网页浏览，但有些限制是Goo
 * [截屏](#截屏)
 * [PDF阅读器](#pdf阅读器)
 * [配置参考](#配置参考)
-* [编译](#编译)
+* [从本地文件加载设置](#从本地文件加载设置)
+* [大语言模型对话](#大语言模型对话)
 * [License](#license)
 
 ## 功能特性
@@ -146,6 +170,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `ch` 复制该大块元素的HTML
 * `d` 删除该大块元素
 * `l` 与大语言模型讨论选中文本
+* `p` 选择目标元素的父元素
 
 [Demo on YouTube](https://www.youtube.com/watch?v=pFPOzAZDO38)
 
@@ -163,6 +188,7 @@ Surfingkeys有三种模式：normal，visual和insert。
 * `Alt-f` 移动光标到前一个词。
 * `Alt-w` 往后删除一个词。
 * `Alt-d` 往前删除一个词。
+* `Ctrl-g` 用大语言模型矫正当前输入框的语法。
 
 `imap` 和 `iunmap`：
 
@@ -408,7 +434,7 @@ SwitchySharp是个很好的代理管理插件，但我的用法很简单，
         setProxy 192.168.1.100:8080
         setProxy 127.0.0.1:1080 SOCKS5
 
-* setProxyMode, 设置代理模式，有五种模式：direct, byhost, bypass, always, system 和 clear。
+* setProxyMode, 设置代理模式，有六种模式：direct, byhost, bypass, always, system 和 clear。
 
         direct      Chrome不使用代理访问任何网站。
         byhost      Chrome只在访问你添加过的网站时使用代理。你可以添加多条映射，让不同的网站使用不同的代理。
@@ -538,6 +564,7 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.omnibarMaxResults | 10 | 搜索栏下面每页显示多少条结果。 |
 | settings.omnibarHistoryCacheSize | 100 | 从浏览历史记录中返回查询结果的最大条数. |
 | settings.omnibarPosition | "middle" | 定义搜索框位置。 ["middle", "bottom"] |
+| settings.omnibarSuggestion | false | 是否显示搜索建议URL。 |
 | settings.omnibarSuggestionTimeout | 200 | 设置触发搜索引擎提示的超时，当按键过去设定毫秒后才发起搜索引擎提示的请求，这样避免每次按键就触发请求。|
 | settings.focusFirstCandidate | false | 是否在搜索栏下面自动选择第一个匹配的结果。 |
 | settings.tabsThreshold | 100 | 当打开标签页的数量超过设定值时，使用搜索栏来查找标签页。 |
@@ -549,20 +576,23 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
 | settings.modeAfterYank | "" | 在可视模式下，在复制文本之后，回到哪种模式，["", "Caret", "Normal"]，默认是""，指保持当前模式。 |
 | settings.scrollStepSize | 70 | `j`/`k`滚动时每一步的大小。 |
 | settings.scrollFriction | 0 | 在滚动一步之后，开始连续滚动所需要的力。数字大，表示需要更大的力来启动连续滚动，这样在开始连续滚动时会有一个抖动，但也能保证第一步的滚动幅度是精确的。 |
+| settings.scrollFallback | false | 当前聚焦的元素无法向请求方向滚动时，是否回退到整个文档级别的滚动。 |
 | settings.nextLinkRegex | /((>>&#124;next)+)/i | 匹配下一页链接的正则表达式。 |
 | settings.prevLinkRegex | /((<<&#124;prev(ious)?)+)/i| 匹配上一页链接的正则表达式。 |
 | settings.hintAlign | "center" | 拨号键与它对应的目标如何对齐。["left", "center", "right"] |
+| settings.hintExplicit | false | 当只有一个拨号可用时，是否仍然等待用户显式按下该键。 |
+| settings.hintShiftNonActive | false | 按住shift输入拨号后，新打开的标签页是否处于激活状态。 |
 | settings.defaultSearchEngine | "g" | 搜索栏里的默认搜索引擎。 |
 | settings.blocklistPattern | undefined | 如果当前访问的网站匹配设定的正则表达式，则禁用Surfingkeys。 |
-| settings.focusAfterClosed | "right" | 关掉当前标签页后，切换到哪一侧的标签页。["left", "right"] |
+| settings.focusAfterClosed | "right" | 关掉当前标签页后，切换到哪一侧的标签页。["left", "right", "last"] |
 | settings.repeatThreshold | 9 | 操作可重复最多次数。 |
 | settings.tabsMRUOrder | true | 查找打开标签页时，是否按最近访问顺序列出所有标签页。 |
 | settings.historyMUOrder | true | 查找访问记录时，是否按最常访问顺序列出所有访问记录。 |
-| settings.newTabPosition | 'default' | 在哪个位置创建新标签页。["left", "right", "first", "default"] |
+| settings.newTabPosition | 'default' | 在哪个位置创建新标签页。["left", "right", "first", "last", "default"] |
 | settings.interceptedErrors | [] | 指明Surfingkeys为哪些错误显示错误页，这样在这些错误页你依然可以使用Surfingkeys。例如，["*"]为所有错误显示错误页，["net::ERR_NAME_NOT_RESOLVED"]只为ERR_NAME_NOT_RESOLVED显示错误页。更多错误请参考[net_error_list.h](https://github.com/adobe/chromium/blob/master/net/base/net_error_list.h)。  |
 | settings.enableEmojiInsertion | false | 是否打开插入模式下的表情下拉选项 |
 | settings.startToShowEmoji | 2 | 在冒号后输入多少个字符才显示表情下拉选项。 |
-| settings.language | undefined | 帮助中使用何种语言，目前只支持中英文，设为"zh-CN"显示中文帮助。 |
+| settings.language | undefined | 帮助信息使用的语言，目前只添加了"zh-CN"和"ru-RU"，欢迎PR添加其他语言，参考[l10n.json](https://github.com/brookhong/Surfingkeys/blob/master/src/pages/l10n.json)。 |
 | settings.stealFocusOnLoad | true | 是否阻止光标定位到输入框，默认为true，这样我们可以在页面加载结束之后直接使用Surfingkeys提供的各类按键，否则需要按Esc退出输入框。 |
 | settings.enableAutoFocus | true | 是否允许光标自动定位到动态显示的输入框里。这个设置和`stealFocusOnLoad`不同，那个只是在页面加载完成后跳出输入框。比如，有一个页面上有个隐藏的输入框，它只在用户点击某个链接后显示出来。如果你不想这个刚显示出来的输入框自动获得焦点，就可以把这个设置设为false。 |
 | settings.theme | undefined | 修改Surfingkeys界面风格。 |
@@ -588,85 +618,35 @@ Surfingkeys默认使用[这个markdown分析器](https://github.com/chjj/marked)
         }
     }`;
 
+## 从本地文件加载设置
+
+在设置页面把**加载设置来源**改为`<native>`，就可以把你的脚本保存在`~/.surfingkeys.js`里，而不是设置框中。每次打开页面都会重新读取这个文件，所以你可以用自己喜欢的编辑器修改它，然后刷新页面即可生效。
+
+在macOS上，Safari通过Surfingkeys这个App来读取该文件。iOS上没有home目录可读，所以`<native>`在iOS上会报告这一点。Chrome和Firefox自身无法读取你home目录下的文件，需要安装[native messaging host](src/nvim/server/Readme.md)。
+
+如果文件读取失败，上一次成功读取的内容会继续生效，设置页面会提示具体的错误原因。
+
+同一个字段也可以填`http`/`https`的URL，或者像`/home/you/.surfingkeys.js`这样的路径（前提是你已经给了这个扩展**访问文件网址**的权限）。
+
 ## 大语言模型对话
-目前集成了比较常用的几个大语言模型，可用`A`调出对话窗口，
 
-* Ollama
-* Bedrock
-* 自定义模型(例如：SiliconFlow、OpenRouter、DeepSeek 和 Gemini, 其他和OpenAI API兼容的服务应该也可以)
+按`A`可以调出对话窗口，与大语言模型讨论你正在浏览的页面。只要在`settings.llm`里配置好密钥，就可以使用Ollama、Bedrock，以及任何兼容OpenAI API的服务（SiliconFlow、OpenRouter、DeepSeek、Gemini等）。对话还可以通过浏览器工具读取你的标签页、历史记录、书签等内容，每一次这样的调用都会先让你确认。`A`在Visual mode下以及Regional Hints mode（`L`然后`l`）下也能使用，只针对你选中的文本进行对话；在Insert mode下按`Ctrl-g`可以矫正当前输入框的语法。
 
-使用之前，必须设置相应的密钥或者API key，比如
+详细的服务商配置、完整的浏览器工具列表、确认提示和权限的工作方式、自定义系统提示词，以及Ollama故障排查，请参考[docs/LLM.md](docs/LLM.md)（英文文档）。
 
-    settings.defaultLLMProvider = "bedrock";
-    settings.llm = {
-        bedrock: {
-            accessKeyId: '********************',
-            secretAccessKey: '****************************************',
-            // model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-            model: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-        },
-        ollama: {
-            model: 'qwen2.5-coder:32b',
-        },
-        custom: {
-            siliconflow: {
-                serviceUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-                apiKey: '***********************************',
-                model: 'deepseek-ai/DeepSeek-V3.1',
-            },
-            openrouter: {
-                serviceUrl: 'https://openrouter.ai/api/v1/chat/completions',
-                apiKey: '***********************************',
-                model: 'meta-llama/llama-3.1-70b-instruct:free',
-            },
-            deepseek: {
-                serviceUrl: 'https://api.deepseek.com/chat/completions',
-                apiKey: '***********************************',
-                model: 'deepseek-chat',
-            },
-            gemini: {
-                serviceUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-                apiKey: '***********************************',
-                model: 'gemini-2.0-flash',
-            },
-        }
-    };
+可以在[这里](https://youtu.be/bJo2P7QhIY0)看一个简短的演示视频。
 
-你也可以在Visual mode下使用大语言模型对话。按`v`或`V`进入Visual mode，再按`v`选中你关注的文本，最后`A`按调出对话窗口，开始和AI就选中文本进行探讨。
-另一个方式是使用Regional Hints mode选择需要与AI进行探讨的内容。按`L`选择一个区域，再按`l`调出对话窗口。
+## API文档
 
-### 指定系统提示词
+> API文档还在完善中。
 
-比如，你可以这样限定你的AI只做中英文互译
+* [Markdown](docs/API.md)
+* [HTML](http://brookhong.github.io/Surfingkeys)
 
-    api.mapkey('A', '#8Open llm chat', function() {
-        api.Front.openOmnibar({type: "LLMChat", extra: {
-            system: "You're a translator, whenever you got a message in Chinese, please just translate it into English, and if you got a message in English, please translate it to Chinese. You don't need to answer any question, just TRANSLATE."
-        }});
-    });
+## 其它
 
-### 403 Forbidden with Ollama
-
-在Chrome扩展中使用Ollama，你需要在启动ollama时指定`OLLAMA_ORIGINS`
-
-Windows下
-
-    OLLAMA_ORIGINS=chrome-extension://* ollama serve
-
-Mac下
-
-    launchctl setenv OLLAMA_ORIGINS chrome-extension://gfbliohnnapiefjpjlpjnehglfpaknnc
-
-Mac下同时允许在Chrome和Firefox里使用
-
-    launchctl setenv OLLAMA_ORIGINS "chrome-extension://gfbliohnnapiefjpjlpjnehglfpaknnc,moz-extension://*"
-
-## 编译
-
-    npm install
-    npm run build
-
-    npm run build firefox # build webextension for firefox
+* [Anki记忆卡组](https://ankiweb.net/shared/info/1195173768)，帮助你记住各种按键映射。
+* 更多信息请查看[FAQ](https://github.com/brookhong/Surfingkeys/wiki/FAQ)，也欢迎为[Surfingkeys Wiki](https://github.com/brookhong/Surfingkeys/wiki/)上用户共建的文档做贡献。
 
 ## Credits
 

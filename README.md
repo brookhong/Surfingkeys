@@ -641,6 +641,7 @@ grammar of the current input.
 See [docs/LLM.md](docs/LLM.md) for provider setup, the full list of browser tools, how the
 confirmation prompts and permissions work, custom system prompts, and Ollama troubleshooting.
 
+See a short demo [here](https://youtu.be/bJo2P7QhIY0).
 ## API Documentation
 
 > The API documentation is currently a work in progress.

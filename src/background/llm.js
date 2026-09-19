@@ -7,12 +7,10 @@ class EventStreamParser {
     }
 
     /**
-     * Parse an EventStream message from a Uint8Array or Buffer
-     * @param {Uint8Array|Buffer} chunk - Raw binary data chunk
-     * @returns {Array} Array of parsed messages
+     * @param {Uint8Array|Buffer} chunk
+     * @returns {Array} messages parsed so far; a partial trailing message stays buffered
      */
     parse(chunk) {
-        // Append new chunk to existing buffer
         const newBuffer = new Uint8Array(this.buffer.length + chunk.length);
         newBuffer.set(this.buffer);
         newBuffer.set(chunk, this.buffer.length);
@@ -20,46 +18,32 @@ class EventStreamParser {
 
         const messages = [];
 
-        while (this.buffer.length >= 16) { // Minimum message size is 16 bytes
-            // Read total length (4 bytes)
+        while (this.buffer.length >= 16) { // minimum message size
             const totalLength = this.readInt32(0);
 
             if (this.buffer.length < totalLength) {
                 console.log(this.buffer.length, totalLength);
-                break; // Wait for more data
+                break; // wait for more data
             }
 
-            // Read headers length (4 bytes)
             const headersLength = this.readInt32(4);
-
-            // Parse headers
             const headers = this.parseHeaders(12, headersLength);
 
-            // Calculate payload start and length
             const payloadStart = 12 + headersLength;
-            const payloadLength = totalLength - headersLength - 16; // 16 = prelude (8) + checksum (4) + message checksum (4)
-
-            // Extract payload
+            const payloadLength = totalLength - headersLength - 16; // prelude(8) + checksum(4) + message checksum(4)
             const payload = this.buffer.slice(payloadStart, payloadStart + payloadLength);
 
-            // Create message object
-            const message = {
+            messages.push({
                 headers,
                 payload: this.decodePayload(payload, headers)
-            };
+            });
 
-            messages.push(message);
-
-            // Remove processed message from buffer
             this.buffer = this.buffer.slice(totalLength);
         }
 
         return messages;
     }
 
-    /**
-     * Read a 32-bit integer from the buffer
-     */
     readInt32(offset) {
         return (this.buffer[offset] << 24) |
             (this.buffer[offset + 1] << 16) |
@@ -67,32 +51,22 @@ class EventStreamParser {
             this.buffer[offset + 3];
     }
 
-    /**
-     * Parse headers from the buffer
-     */
     parseHeaders(start, length) {
         const headers = {};
         let position = start;
         const end = start + length;
 
         while (position < end) {
-            // Read header name length (1 byte)
             const nameLength = this.buffer[position++];
-
-            // Read header name
             const name = new TextDecoder().decode(
                 this.buffer.slice(position, position + nameLength)
             );
             position += nameLength;
 
-            // Read header value type (1 byte)
             const type = this.buffer[position++];
-
-            // Read header value length (2 bytes)
             const valueLength = (this.buffer[position] << 8) | this.buffer[position + 1];
             position += 2;
 
-            // Read header value
             const value = this.parseHeaderValue(
                 type,
                 this.buffer.slice(position, position + valueLength)
@@ -105,9 +79,6 @@ class EventStreamParser {
         return headers;
     }
 
-    /**
-     * Parse header value based on type
-     */
     parseHeaderValue(type, data) {
         switch (type) {
             case 0: // boolean false
@@ -120,8 +91,7 @@ class EventStreamParser {
                 return (data[0] << 8) | data[1];
             case 4: // integer
                 return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-            case 5: // long
-                // Note: JavaScript doesn't handle 64-bit integers well
+            case 5: // long -- JS can't represent a full 64-bit int without loss
                 return Number(new BigInt64Array(data.buffer)[0]);
             case 6: // byte array
                 return data;
@@ -134,9 +104,6 @@ class EventStreamParser {
         }
     }
 
-    /**
-     * Decode payload based on content-type header
-     */
     decodePayload(payload, headers) {
         const contentType = headers[':content-type'];
 
@@ -157,33 +124,17 @@ class EventStreamParser {
 }
 
 /*
- * Every provider RETURNS a function that cancels the request it just started, for
- * the user who stops a chat mid-answer (llmchat.js `stopTurn`). Cancelling has to
- * reach the fetch itself and not merely stop reading its body: the model keeps
- * generating -- and the user keeps paying for it -- for as long as the connection
- * is open.
- *
- * A cancelled request still reports through `fail`, in every provider, so that
- * whoever aborted is released even if they hold a booking they have not let go of.
- * The report says the request was aborted, which is why the caller that DID mean to
- * abort has to drop it rather than show it (see `llmRequest` in start.js); the log
- * is the one thing an abort is spared, being a decision rather than a fault. The
- * function comes back even from the paths that never got as far as fetching, so
- * that whoever holds it never has to ask which kind of failure it was.
+ * Every provider returns a cancel function: aborting the fetch, not just the read,
+ * matters because the model (and its cost) keeps running while the connection is
+ * open. A cancelled request still reports through `fail`, so the caller's booking
+ * is always released, even if the request never got as far as fetching.
  */
 
 /*
- * Guard a provider's callbacks so the caller is completed exactly once, whatever
- * route the request ends by: a normal stop, an error frame mid-stream, a malformed
- * chunk, a connection dropped without a terminator, an error body that is not a
- * stream at all, a fetch that never connected, or a fetch cancelled from the
- * outside.
- *
- * The caller books the shared `llmResponse` handler for the duration of a request,
- * and nothing but a completion releases it -- so a request that ends without one
- * holds that booking forever, which silently disables every LLM feature in that
- * frame until a reload. Every provider below therefore reports through `fail`
- * rather than calling `opts.onComplete` itself.
+ * Ensures a provider completes its caller exactly once, however the request ends.
+ * The caller holds the shared `llmResponse` booking until completion, so a request
+ * that never completes disables every LLM feature in that frame until reload --
+ * every provider reports through `fail` rather than calling `opts.onComplete` directly.
  */
 function completeOnce(opts) {
     let completed = false;
@@ -196,14 +147,38 @@ function completeOnce(opts) {
     };
     return {
         complete,
+        /*
+         * Guarded the same as `complete`: a connect-timeout's `fail` triggers an abort,
+         * whose own rejection calls `fail` again for the same request -- this stops
+         * that second call from appending an "aborted" chunk after the real error.
+         */
         fail: (msg) => {
+            if (completed) {
+                return;
+            }
+            completed = true;
             opts.onChunk(msg);
-            complete({});
+            opts.onComplete({});
         },
-        // whether the caller has been released, for a read loop deciding whether
-        // there is anything left to wait for
+        // lets a read loop know whether it still needs to keep reading
         isDone: () => completed,
     };
+}
+
+/*
+ * Bounds how long a provider waits to connect: on Safari a fetch to a dead
+ * endpoint can hang forever instead of rejecting, leaving the caller stuck on its
+ * last UI state and holding the `llmResponse` booking. Only the connect phase is
+ * bounded -- callers clear the timer as soon as the fetch settles, so a
+ * slow-but-live stream is never cut off.
+ */
+const CONNECT_TIMEOUT_MS = 20000;
+function withConnectTimeout(abortCtrl, fail, providerLabel) {
+    const timer = setTimeout(() => {
+        abortCtrl.abort();
+        fail(`Error: could not connect to ${providerLabel} (timed out after ${CONNECT_TIMEOUT_MS / 1000}s). Is it running and reachable?`);
+    }, CONNECT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
 }
 
 let awsClient = null;
@@ -213,11 +188,9 @@ function bedrock(req, opts) {
 
     if (!awsClient) {
         /*
-         * Names the three fields because `_registerLlmProviders` needs ALL of them
-         * and says nothing when one is missing -- a config with the model line
-         * commented out registers no client at all -- and mentions reloading because
-         * the credentials come from snippets that run in a page: a background that
-         * has never seen one since it started has nothing to build a client from.
+         * Names all three fields since a config missing any one registers no client
+         * at all; mentions reloading since credentials come from page snippets that
+         * must run again for this background to see them.
          */
         fail("Bedrock is not set up in this browser: settings.llm.bedrock needs accessKeyId, secretAccessKey and model, all three of them. If you have set them, reload the page so your snippets run again.");
         return () => abortCtrl.abort();
@@ -235,6 +208,8 @@ function bedrock(req, opts) {
 
     const parser = new EventStreamParser();
 
+    const clearConnectTimeout = withConnectTimeout(abortCtrl, fail, 'Bedrock');
+
     awsClient.fetch(`https://bedrock-runtime.us-west-2.amazonaws.com/model/${awsClient.bedrockModel}/invoke-with-response-stream`, {
         method: 'POST',
         headers: {
@@ -250,30 +225,22 @@ function bedrock(req, opts) {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 4096,
             "tools": req.tools,
-            // `{type: "none"}` makes the model answer with what it has instead of
-            // calling another tool. The declarations have to stay in the request
-            // either way: the conversation carries tool_use/tool_result blocks by
-            // then, and those are rejected when `tools` is absent.
-            //
-            // `none` is a recent addition to the anthropic API, so a model that
-            // predates it answers such a round with an error instead. Only a caller
-            // that has decided the tool calling is over ever sends it.
+            // `tool_choice: "none"` ends tool calling for this turn, but `tools` must
+            // stay declared -- the conversation already carries tool_use/tool_result
+            // blocks, which are rejected without it.
             "tool_choice": req.tool_choice,
             "system": req.messages[0].content,
             "messages": transformMessages(req.messages.slice(1))
         })
     }).then(response => {
+        clearConnectTimeout();
         const reader = response.body.getReader();
 
         let content_block = {};
         let message = {};
 
-        /*
-         * A tool call with no arguments is streamed as a tool_use block with NO
-         * input_json_delta events at all, so the accumulator is still "" here --
-         * JSON.parse("") would throw "Unexpected end of JSON input" and, being
-         * inside the reader promise, take the whole stream down with it.
-         */
+        // A tool call with no arguments streams no input_json_delta at all, leaving
+        // this "" -- JSON.parse("") throws, which would otherwise kill the stream.
         function parseToolInput(raw) {
             if (!raw || !raw.trim()) {
                 return {};
@@ -293,10 +260,8 @@ function bedrock(req, opts) {
                     message = { "role": e.message.role, "content": [] };
                     break;
                 case "content_block_start":
-                    // Keep every block type, not just text and tool_use: leaving a
-                    // stale block here would make content_block_stop push the
-                    // previous one a second time, and re-parse an input it already
-                    // consumed.
+                    // every block type is kept, not just text/tool_use, so
+                    // content_block_stop never re-pushes a stale previous block
                     content_block = e.content_block || {};
                     if (content_block.type === "text") {
                         opts.onChunk(content_block.text);
@@ -334,8 +299,7 @@ function bedrock(req, opts) {
         function readStream() {
             reader.read().then(({done, value}) => {
                 if (done) {
-                    // the stream ended without message_stop, e.g. the connection
-                    // dropped: the caller still has to be released
+                    // stream ended without message_stop (e.g. connection dropped) -- still release the caller
                     if (!isDone()) {
                         fail("\n\n**Warning:** the response ended unexpectedly.");
                     }
@@ -353,11 +317,9 @@ function bedrock(req, opts) {
                 if (isDone()) {
                     return;
                 }
-                // Continue reading
                 readStream();
             }).catch(error => {
-                // a malformed event would otherwise reject unobserved: this chain
-                // is not returned to the outer promise, so its .catch never sees it
+                // unobserved otherwise: this chain isn't returned to the outer promise
                 fail(`Error: ${error.message}`);
             });
         }
@@ -365,13 +327,13 @@ function bedrock(req, opts) {
         if (response.status == 200) {
             readStream();
         } else {
-            // an error body is not an event stream, so it is read as text -- and a
-            // read that rejects still has to release the caller
+            // error body isn't an event stream -- read as text; release caller even if this read rejects
             reader.read().then(({done, value}) => {
                 fail(value ? new TextDecoder().decode(value) : `Error ${response.status}: no response body`);
             }).catch(error => fail(`Error ${response.status}: ${error.message}`));
         }
     }).catch(error => {
+        clearConnectTimeout();
         fail(`Error: ${error.message}`);
     });
 
@@ -393,20 +355,21 @@ function ollama(req, opts) {
     const abortCtrl = new AbortController();
     const { complete, fail, isDone } = completeOnce(opts);
 
+    const clearConnectTimeout = withConnectTimeout(abortCtrl, fail, 'Ollama');
+
     fetch('http://localhost:11434/api/chat', {
         method: 'POST',
         signal: abortCtrl.signal,
         body: JSON.stringify({
             "model": ollama.model || 'qwen2.5-coder:32b',
             "tools": req.tools,
-            // "answer with what you have, call nothing else", from a caller that has
-            // decided the tool calling is over. Ollama's own /api/chat does not
-            // document `tool_choice` -- it is forwarded in case the server honours
-            // it, and ignored otherwise, so nothing may depend on it being obeyed.
+            // forwarded on a best-effort basis -- Ollama's /api/chat doesn't document
+            // `tool_choice`, so nothing may depend on it being honoured.
             "tool_choice": req.tool_choice,
             "messages": req.messages
         })
     }).then(response => {
+        clearConnectTimeout();
         const reader = response.body.getReader();
 
         let toolCalls = [];
@@ -414,15 +377,13 @@ function ollama(req, opts) {
         function readStream() {
             reader.read().then(({done, value}) => {
                 if (done) {
-                    // the stream ended without a `done` line, e.g. ollama was shut
-                    // down mid-answer: the caller still has to be released
+                    // stream ended without a done line (e.g. ollama restarted) -- still release the caller
                     if (!isDone()) {
                         fail("\n\n**Warning:** the response ended unexpectedly.");
                     }
                     return;
                 }
 
-                // Convert the chunk to text
                 try {
                     const chunk = decoder.decode(value).trim();
                     for (const c of chunk.split("\n")) {
@@ -439,8 +400,7 @@ function ollama(req, opts) {
                             toolCalls.push(...o.message.tool_calls);
                         }
                         if (o.done) {
-                            // `content` already holds every delta of this final
-                            // message too, so it is the whole answer on its own
+                            // `content` already includes this final delta, so it's the whole answer
                             complete(Object.assign({ role: "assistant" }, o.message, {
                                 content,
                                 tool_calls: toolCalls,
@@ -452,11 +412,9 @@ function ollama(req, opts) {
                     console.error('Error in onChunk:', e, value);
                 }
 
-                // Continue reading
                 readStream();
             }).catch(error => {
-                // a malformed chunk would otherwise reject unobserved: this chain
-                // is not returned to the outer promise, so its .catch never sees it
+                // unobserved otherwise: this chain isn't returned to the outer promise
                 fail(`Error: ${error.message}`);
             });
         }
@@ -469,6 +427,7 @@ function ollama(req, opts) {
             readStream();
         }
     }).catch(error => {
+        clearConnectTimeout();
         fail(`Error: ${error.message}`);
     });
 
@@ -499,18 +458,13 @@ function openAICompatible(req, opts, client) {
         return () => abortCtrl.abort();
     }
 
+    const clearConnectTimeout = withConnectTimeout(abortCtrl, fail, client.name || 'the provider');
+
     /*
-     * Content is a plain string in this shape, while the frontend may hold it as the
-     * block array the anthropic shape uses. EVERY text block is joined, not just the
-     * first: a conversation carried over from another provider has its turns folded
-     * together, so one turn can hold what the model said before and after a tool
-     * call, and keeping only block 0 would drop the answer while still showing it on
-     * screen. Non-text blocks are the other provider's tool bookkeeping and have no
-     * meaning here.
-     *
-     * `tool_calls` and `tool_call_id` have to survive too: a conversation that has
-     * called a tool is replayed on every following request, and a provider rejects
-     * one where a tool message does not name the call it answers.
+     * Joins EVERY text block, not just the first: a turn carried over from another
+     * provider can hold text both before and after a tool call, and keeping only
+     * block 0 would silently drop part of the answer. `tool_calls`/`tool_call_id`
+     * are kept too, since a replayed tool conversation is rejected without them.
      */
     const textOf = content => (content || [])
         .filter(c => c && c.type === 'text' && c.text)
@@ -540,15 +494,15 @@ function openAICompatible(req, opts, client) {
             model: client.model,
             stream: true,
             tools: req.tools,
-            // "none" makes the model answer with what it has instead of calling
-            // another tool, while leaving the declarations the earlier turns of this
-            // conversation refer to in place
+            // "none" ends tool calling for this turn while leaving `tools` declared,
+            // since earlier turns of this conversation still refer to it
             tool_choice: req.tool_choice,
             messages: transformMessages(req.messages),
         }),
         signal: abortCtrl.signal,
     })
         .then(resp => {
+            clearConnectTimeout();
             const reader = resp.body.getReader();
             let contentBlock = { type: 'text', text: '' };
             let fullContent = '';
@@ -556,8 +510,7 @@ function openAICompatible(req, opts, client) {
             let afterThink = false;
 
             if (resp.status !== 200) {
-                // an error body is not an SSE stream, so the loop below would find no
-                // `data:` line and end with nobody released
+                // error body isn't SSE -- the loop below would find no `data:` line and never release the caller
                 reader.read().then(({ value }) => {
                     fail(`Error ${resp.status}: ${value ? decoder.decode(value) : 'no response body'}`);
                 }).catch(err => fail(`Error ${resp.status}: ${err.message}`));
@@ -595,11 +548,7 @@ function openAICompatible(req, opts, client) {
                 }
             };
 
-            /*
-             * A tool call is streamed in fragments, keyed by `index`: the id and the
-             * name may arrive in one delta and the arguments over many, so each slot
-             * is accumulated rather than replaced.
-             */
+            // tool calls stream in fragments keyed by `index` -- accumulate each slot rather than replace it
             const toolCalls = [];
             const addToolCallDeltas = (deltas) => {
                 deltas.forEach((d, n) => {
@@ -624,8 +573,7 @@ function openAICompatible(req, opts, client) {
                 const message = { role: 'assistant', content: [contentBlock] };
                 const calls = toolCalls.filter(Boolean);
                 if (calls.length > 0) {
-                    // the tool result is keyed by this id, so a provider that streamed
-                    // none is given one rather than a conversation it cannot answer
+                    // tool results are keyed by id -- give one to a provider that streamed none
                     message.tool_calls = calls.map((c, n) => (
                         c.id ? c : Object.assign({}, c, { id: `call_${n}` })
                     ));
@@ -670,9 +618,8 @@ function openAICompatible(req, opts, client) {
                         readStream();
                     })
                     .catch(err => {
-                        // an abort is reported too, so the caller is released
-                        // whatever ends the request; only the log is spared, since
-                        // a cancellation is not a fault to investigate
+                        // abort is reported too so the caller is always released; only the
+                        // log is skipped, since a cancellation isn't a fault
                         if (err.name !== 'AbortError') {
                             console.error('Stream error:', err);
                         }
@@ -683,6 +630,7 @@ function openAICompatible(req, opts, client) {
             readStream();
         })
         .catch(err => {
+            clearConnectTimeout();
             if (err.name !== 'AbortError') {
                 console.error('Fetch error:', err);
             }
