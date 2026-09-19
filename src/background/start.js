@@ -2234,8 +2234,30 @@ function start(browser) {
         return {requestHeaders: details.requestHeaders};
     }
 
+    // Safari writes through the native app, which sets the system pasteboard
+    // directly, rather than through navigator.clipboard.writeText here: that call
+    // runs in the background page, which by the time this message arrives has none
+    // of the user activation the original keypress had, and WebKit enforces that
+    // requirement strictly enough that the write fails unpredictably. Firefox's
+    // background page is not held to that, so it keeps the direct call.
+    //
+    // Native contract: {command: "Clipboard.write", text}, answered with {} on
+    // success or {error} on failure
     self.writeClipboard = function (message, sender, sendResponse) {
-        navigator.clipboard.writeText(message.text)
+        if (browser.name === "Safari") {
+            chrome.runtime.sendNativeMessage(NATIVE_HOST_NAME, {command: "Clipboard.write", text: message.text}, function(response) {
+                if (chrome.runtime.lastError) {
+                    _response(message, sendResponse, {error: chrome.runtime.lastError.message});
+                    return;
+                }
+                _response(message, sendResponse, response);
+            });
+        } else {
+            navigator.clipboard.writeText(message.text).then(
+                () => _response(message, sendResponse, {}),
+                (err) => _response(message, sendResponse, {error: err && err.message ? err.message : String(err)})
+            );
+        }
     };
     self.readClipboard = function (message, sender, sendResponse) {
         // only for Safari

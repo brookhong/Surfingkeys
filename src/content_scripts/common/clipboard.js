@@ -98,9 +98,17 @@ function createClipboard() {
             });
             cb();
         } else {
-            // works for Firefox and Safari now.
-            RUNTIME("writeClipboard", { text });
-            cb();
+            // works for Firefox and Safari now. The write is asynchronous and can
+            // fail -- on Safari it goes through the native app, which can be
+            // unreachable or refuse the write -- so wait for its answer rather than
+            // claiming success before we know it happened.
+            RUNTIME("writeClipboard", { text }, function(response) {
+                if (response && response.error) {
+                    showBanner("Failed to copy: " + response.error, 3000);
+                } else {
+                    cb();
+                }
+            });
         }
     };
 

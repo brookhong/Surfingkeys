@@ -2315,12 +2315,25 @@ describe('start', () => {
     });
 
     describe('clipboard', () => {
-        it('writes text through the async clipboard API', () => {
-            const writeText = jest.fn();
+        it('writes text through the async clipboard API on Firefox/Chrome and reports success', async () => {
+            const writeText = jest.fn().mockResolvedValue();
             Object.defineProperty(global.navigator, 'clipboard', {value: {writeText}, configurable: true});
             const {dispatch} = bootstrap();
-            dispatch({action: 'writeClipboard', text: 'copied'}, senderFor(12));
+            const {sendResponse} = dispatch(
+                {action: 'writeClipboard', needResponse: true, text: 'copied'}, senderFor(12));
+            await flushPromises();
             expect(writeText).toHaveBeenCalledWith('copied');
+            expect(sendResponse).toHaveBeenCalledWith({});
+        });
+
+        it('reports the reason navigator.clipboard.writeText rejected', async () => {
+            const writeText = jest.fn().mockRejectedValue(new Error('document is not focused'));
+            Object.defineProperty(global.navigator, 'clipboard', {value: {writeText}, configurable: true});
+            const {dispatch} = bootstrap();
+            const {sendResponse} = dispatch(
+                {action: 'writeClipboard', needResponse: true, text: 'copied'}, senderFor(12));
+            await flushPromises();
+            expect(sendResponse).toHaveBeenCalledWith({error: 'document is not focused'});
         });
 
         it('reads through the native host on Safari', () => {
@@ -2329,6 +2342,30 @@ describe('start', () => {
             expect(chrome.runtime.sendNativeMessage).toHaveBeenCalledWith(
                 'surfingkeys', {command: 'Clipboard.read'}, expect.any(Function));
             expect(sendResponse).toHaveBeenCalledWith({nativeReply: 'Clipboard.read'});
+        });
+
+        it('writes through the native host on Safari instead of navigator.clipboard', () => {
+            const writeText = jest.fn();
+            Object.defineProperty(global.navigator, 'clipboard', {value: {writeText}, configurable: true});
+            const {chrome, dispatch} = bootstrap({browser: {name: 'Safari'}});
+            const {sendResponse} = dispatch(
+                {action: 'writeClipboard', needResponse: true, text: 'copied'}, senderFor(12));
+            expect(chrome.runtime.sendNativeMessage).toHaveBeenCalledWith(
+                'surfingkeys', {command: 'Clipboard.write', text: 'copied'}, expect.any(Function));
+            expect(writeText).not.toHaveBeenCalled();
+            expect(sendResponse).toHaveBeenCalledWith({nativeReply: 'Clipboard.write'});
+        });
+
+        it('reports a Safari native app that cannot be reached', () => {
+            const {chrome, dispatch} = bootstrap({browser: {name: 'Safari'}});
+            chrome.runtime.sendNativeMessage = jest.fn((id, msg, cb) => {
+                chrome.runtime.lastError = {message: 'native host not found'};
+                cb(undefined);
+                chrome.runtime.lastError = undefined;
+            });
+            const {sendResponse} = dispatch(
+                {action: 'writeClipboard', needResponse: true, text: 'copied'}, senderFor(12));
+            expect(sendResponse).toHaveBeenCalledWith({error: 'native host not found'});
         });
     });
 

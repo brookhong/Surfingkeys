@@ -82,6 +82,12 @@ export default function(
         document.querySelector("#localPathHelpForFile").remove();
         document.querySelector("#proxySettings").style.display = "none";
         document.querySelector("#donationDiv").style.display = "none";
+        if (getBrowserName() === "Safari-iOS") {
+            // <native> reads ~/.surfingkeys.js through the app, and an iOS app has no
+            // accessible home directory to point that at. Advertising it here just
+            // sends the user chasing a read that can never succeed.
+            document.querySelector("#localPathHelpForNative").remove();
+        }
     }
     var proxyModeSelect = document.querySelector("#proxyMode>select");
     var proxyGroup = document.getElementById("proxyMode").parentElement;
