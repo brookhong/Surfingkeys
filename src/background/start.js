@@ -277,6 +277,49 @@ function start(browser) {
         tabURLs = {},
         tabIconStatus = {};
 
+    /*
+     * Hand a Chrome MV3 user script the scope naming its document's DOM-event
+     * channels (see skEventName in runtime.js). The user script runs in that same
+     * document but in a JS world of its own, so it cannot see the scope the content
+     * script drew there, and page script cannot send an extension message at all --
+     * this is the one path the scope travels.
+     *
+     * Asked of the content script in the sender's own frame rather than served from a
+     * table here: this background is a service worker Chrome kills whenever it
+     * pleases, and nothing here can re-derive a scope it has forgotten, so a
+     * remembered one would leave the user script in an already-loaded frame unable to
+     * ever learn the name and its snippets quiet until the page was reloaded.
+     */
+    self.getChannelScope = function(message, sender, sendResponse) {
+        // terminal: asking again cannot conjure a frame the sender never named, and
+        // the caller would otherwise spend its whole retry budget on it.
+        if (!sender.tab || typeof sender.frameId !== "number") {
+            return { error: "no frame to ask", terminal: true };
+        }
+        // documentId when Chrome gives one: a frame reuses its frameId across
+        // navigations, so mid-navigation the frameId can name the document that
+        // replaced the sender's, whose scope names channels nobody listens on.
+        const target = sender.documentId
+            ? { documentId: sender.documentId }
+            : { frameId: sender.frameId };
+        try {
+            chrome.tabs.sendMessage(sender.tab.id, { subject: "getChannelScope" }, target, function(res) {
+                if (chrome.runtime.lastError) {
+                    // The document did not answer. Its content script registers this
+                    // handler at document_start, so a failure here is worth another
+                    // ask; the caller decides when to stop.
+                    _response(message, sendResponse, { error: chrome.runtime.lastError.message });
+                } else if (!res || typeof res.scope !== "string") {
+                    _response(message, sendResponse, { error: "the frame did not answer" });
+                } else {
+                    _response(message, sendResponse, { scope: res.scope });
+                }
+            });
+        } catch (e) {
+            return { error: e.message };
+        }
+    };
+
     var newTabUrl = browser._setNewTabUrl();
 
     var conf = {
@@ -611,7 +654,10 @@ function start(browser) {
     if (isMV3) {
         chrome.runtime.onUserScriptMessage.addListener((m, s, r) => {
             m.fromUserScript = true;
-            handleMessage(m, s, r);
+            // Returned, so that an action answering later (getChannelScope asks the
+            // sender's frame, request waits on the network) still has an open
+            // channel to answer on.
+            return handleMessage(m, s, r);
         });
         chrome.runtime.onInstalled.addListener((e) => {
             chrome.userScripts.configureWorld({

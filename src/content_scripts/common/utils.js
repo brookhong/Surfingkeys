@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import KeyboardUtils from './keyboardUtils';
-import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import { RUNTIME, dispatchSKEvent, runtime, skEventName } from './runtime.js';
 
 const colors = [
     '#4169E1', // Royal Blue
@@ -310,7 +310,7 @@ function initSKFunctionListener(name, interfaces, capture) {
     const callbacks = {};
 
     const opts = capture ? {capture: true} : {};
-    document.addEventListener(`surfingkeys:${name}`, function(evt) {
+    document.addEventListener(skEventName(name), function(evt) {
         let args = evt.detail;
         const fk = args.shift();
         if (capture) {

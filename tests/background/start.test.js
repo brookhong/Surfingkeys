@@ -2765,6 +2765,104 @@ describe('start', () => {
         });
     });
 
+    describe('channel scope', () => {
+        // The scope naming a document's DOM-event channels. A user script shares the
+        // document with the content script but not its JS world, so the background is
+        // the only way across -- and the only one, since page script cannot send an
+        // extension message and must never learn the scope.
+        const inDocument = (tabId, documentId, frameId = 0) => ({
+            ...senderFor(tabId), documentId, frameId,
+        });
+
+        // The content script in the frame being asked, answering (or not) the way
+        // chrome.tabs.sendMessage reports it.
+        const frameAnswers = (chrome, answer) => {
+            chrome.tabs.sendMessage.mockImplementation((tabId, message, options, cb) => {
+                const res = answer({tabId, message, options});
+                chrome.runtime.lastError = res && res.lastError;
+                cb(res && res.reply);
+                delete chrome.runtime.lastError;
+            });
+        };
+
+        const ask = (chrome, sender) => {
+            const sendResponse = jest.fn();
+            const kept = chrome.runtime.onUserScriptMessage.fire(
+                runtimeMessage('getChannelScope', {}, true), sender, sendResponse);
+            return {sendResponse, kept};
+        };
+
+        it('hands a user script the scope its own frame is using', () => {
+            const {chrome} = bootstrap();
+            frameAnswers(chrome, () => ({reply: {scope: 'abc123'}}));
+
+            const {sendResponse, kept} = ask(chrome, inDocument(12, 'd1'));
+            // The answer arrives from another frame, so the message channel has to
+            // stay open for it.
+            expect(kept).toEqual([true]);
+            expect(sendResponse).toHaveBeenCalledWith({scope: 'abc123'});
+        });
+
+        it('asks the sender document rather than its frame', () => {
+            const {chrome} = bootstrap();
+            const seen = [];
+            frameAnswers(chrome, ({tabId, message, options}) => {
+                seen.push({tabId, subject: message.subject, options});
+                return {reply: {scope: 'abc123'}};
+            });
+
+            ask(chrome, inDocument(12, 'd1', 3));
+            // A frame reuses its frameId across navigations, so mid-navigation the
+            // frameId can name the document that replaced the sender's.
+            expect(seen).toEqual([
+                {tabId: 12, subject: 'getChannelScope', options: {documentId: 'd1'}},
+            ]);
+        });
+
+        it('falls back to the frame when there is no document id', () => {
+            const {chrome} = bootstrap();
+            const seen = [];
+            frameAnswers(chrome, ({options}) => {
+                seen.push(options);
+                return {reply: {scope: 'abc123'}};
+            });
+
+            ask(chrome, {...senderFor(12), frameId: 3});
+            expect(seen).toEqual([{frameId: 3}]);
+        });
+
+        it('reports that nothing answered instead of inventing a scope', () => {
+            const {chrome} = bootstrap();
+            // Any scope but that document's own names channels nobody listens on, and
+            // a guessable one would open them to the page. The content script
+            // registers this handler at document_start, so a miss here is worth
+            // another ask and the caller retries.
+            frameAnswers(chrome, () => ({lastError: {message: 'no receiving end'}}));
+
+            const {sendResponse} = ask(chrome, inDocument(12, 'd1'));
+            expect(sendResponse).toHaveBeenCalledWith({error: 'no receiving end'});
+        });
+
+        it('reports an answer that carries no scope', () => {
+            const {chrome} = bootstrap();
+            frameAnswers(chrome, () => ({reply: {}}));
+
+            const {sendResponse} = ask(chrome, inDocument(12, 'd1'));
+            expect(sendResponse).toHaveBeenCalledWith({error: 'the frame did not answer'});
+        });
+
+        it('refuses a sender with no frame to ask, and says not to ask again', () => {
+            const {chrome} = bootstrap();
+            frameAnswers(chrome, () => ({reply: {scope: 'abc123'}}));
+
+            const {sendResponse} = ask(chrome, {});
+            // Marked terminal: no number of retries names a frame the sender never
+            // had, so the caller should spend its budget elsewhere.
+            expect(sendResponse).toHaveBeenCalledWith({error: 'no frame to ask', terminal: true});
+            expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+        });
+    });
+
     describe('llm provider configuration', () => {
         it('picks up the ollama model from snippets', () => {
             const {dispatch} = bootstrap();

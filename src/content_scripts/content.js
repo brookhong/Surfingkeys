@@ -1,4 +1,4 @@
-import { RUNTIME, dispatchSKEvent, runtime } from './common/runtime.js';
+import { RUNTIME, dispatchSKEvent, runtime, skChannelScope, skEventName } from './common/runtime.js';
 import Mode from './common/mode.js';
 import createNormal from './common/normal.js';
 import startScrollNodeObserver from './common/observer.js';
@@ -101,7 +101,7 @@ function applyRuntimeConf(normal) {
 }
 
 const userConfPromise = new Promise(function (resolve, reject) {
-    document.addEventListener("surfingkeys:settingsFromSnippetsLoaded", () => {
+    document.addEventListener(skEventName("settingsFromSnippetsLoaded"), () => {
         resolve(runtime.conf);
     }, {once: true});
 });
@@ -135,7 +135,7 @@ function applySettings(api, normal, rs) {
     }
 
     applyRuntimeConf(normal);
-    document.addEventListener("surfingkeys:settingsFromSnippetsLoaded", () => {
+    document.addEventListener(skEventName("settingsFromSnippetsLoaded"), () => {
         applyRuntimeConf(normal);
     }, {once: true});
 }
@@ -164,6 +164,8 @@ function _initModules() {
         const getUsage = front.getUsage;
         const frontCommand = front.command;
         dispatchSKEvent('userSettingsLoaded', {settings: rs, disabledSearchAliases, getUsage, frontCommand});
+        settingsApplied = true;
+        maybeStartUserScript();
     });
     return {
         normal,
@@ -195,14 +197,43 @@ window.getFrameId = function () {
             && window.frameElement.offsetWidth > 16 && window.frameElement.offsetWidth > 16))
     ) {
         _initContent(_initModules());
-
-        // Only used to load user script for iframes in MV3
-        setTimeout(() => {
-            dispatchSKEvent('user', ["runUserScript"]);
-        }, 100);
     }
     return window.frameId;
 };
+
+/*
+ * Starting the user script holding a Chrome MV3 user's snippets. It runs in this
+ * same document but in a JS world of its own, reaching this one only over the
+ * DOM-event channels, and only once it has the scope those are named after.
+ *
+ * So each side waits for the other, in whichever order they happen: announcing
+ * readiness rather than starting the snippets on a timer is what keeps a slow scope
+ * round trip from dropping them silently, and waiting for the settings keeps this
+ * frame's stored values from landing on top of what the snippets just set.
+ */
+let userScriptListening = false, settingsApplied = false, userScriptStarted = false;
+function maybeStartUserScript() {
+    if (userScriptListening && settingsApplied && !userScriptStarted) {
+        userScriptStarted = true;
+        dispatchSKEvent('user', ["runUserScript"]);
+    }
+}
+document.addEventListener(skEventName("userScriptListening"), () => {
+    userScriptListening = true;
+    maybeStartUserScript();
+});
+// Answered from whichever frame the user script asked in, so it is registered here
+// at load rather than with the modes: a frame's modes only boot on first focus or
+// keystroke, and the scope is the same either way. Registering it makes this frame a
+// receiving end for background messages, hence only where a user script exists to
+// ask -- the chromium build, the only one that registers one.
+if (chrome.runtime.getManifest().manifest_version === 3) {
+    runtime.on('getChannelScope', function(msg, sender, response) {
+        // Synchronous: runtime.js's listener does not hold the channel open.
+        response({scope: skChannelScope()});
+    });
+}
+
 Mode.init(window === top ? undefined : ()=> {
     window.addEventListener("focus", () => {
         getFrameId();
@@ -260,7 +291,7 @@ function start(browser) {
             runtime.on('showBanner', function(msg, sender, response) {
                 showBanner(msg.message, 3000);
             });
-            document.addEventListener("surfingkeys:ensureFrontEnd", function(evt) {
+            document.addEventListener(skEventName("ensureFrontEnd"), function(evt) {
                 modes.front.attach();
             });
 
@@ -303,7 +334,7 @@ function start(browser) {
 
         });
     } else {
-        document.addEventListener("surfingkeys:iframeBoot", () => {
+        document.addEventListener(skEventName("iframeBoot"), () => {
             _initContent(_initModules());
         }, {once: true});
     }

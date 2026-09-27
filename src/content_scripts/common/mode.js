@@ -4,7 +4,7 @@ import {
     reportIssue,
     isElementDrawn,
 } from './utils.js';
-import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import { RUNTIME, dispatchSKEvent, runtime, skEventName } from './runtime.js';
 import KeyboardUtils from './keyboardUtils';
 
 var mode_stack = [];
@@ -144,7 +144,7 @@ var suppressScrollEvent = 0, _listenedEvents = {
         if (mode_stack.length === 0 && window !== top) {
             // automatically boots iframe on demand
             dispatchSKEvent('iframeBoot');
-            document.addEventListener("surfingkeys:userSettingsLoaded", () => {
+            document.addEventListener(skEventName("userSettingsLoaded"), () => {
                 // proceed to handle the key event after userSettingsLoaded.
                 handleStack("keydown", event);
             }, {once: true});

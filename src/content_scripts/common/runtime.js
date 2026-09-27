@@ -1,8 +1,62 @@
+const SK_EVENT_PREFIX = "surfingkeys:";
+
+/*
+ * Every channel between SurfingKeys' own pieces is a DOM event on the document the
+ * visited page also owns, so a fixed event name would be an open bus: page script
+ * could dispatch clipboard:read or feedkeys, and could listen for the api object
+ * handed out with defaultSettingsLoaded. The name therefore carries a scope drawn
+ * at random per document, which page script has no way to learn.
+ *
+ * The DOM-event channels only. Page script can still drive the frontend iframe (the
+ * omnibar, the editor) by window message: the relay in uiframe.js has to accept
+ * messages from child frames, and a frame's content script and its page script are
+ * the same window, so no check on origin or source can tell them apart.
+ *
+ * An extension document keeps the bare name, since several bundles share one --
+ * options.html, markdown.html and neovim.html each load content.js next to their
+ * own script -- and no page script can run there to abuse it.
+ */
+function initialChannelScope() {
+    try {
+        if (document.location.href.startsWith(chrome.runtime.getURL("/"))) {
+            return "";
+        }
+    } catch (e) {
+        // No extension APIs reachable from this world, so this is not one of the
+        // extension's own pages: draw a scope.
+    }
+    const bytes = new Uint8Array(16);
+    // Not randomUUID: it requires a secure context, and these channels run on
+    // plain http pages too.
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+let channelScope = initialChannelScope();
+
+function skEventName(type) {
+    return channelScope === "" ? `${SK_EVENT_PREFIX}${type}` : `${SK_EVENT_PREFIX}${channelScope}:${type}`;
+}
+
+function skChannelScope() {
+    return channelScope;
+}
+
+/*
+ * Adopt a scope drawn elsewhere. Only the user-script world holding a Chrome MV3
+ * user's snippets does this: it shares the document with the content script but not
+ * this module's state, so it fetches that scope through the background (see
+ * getChannelScope). Nothing in that world may dispatch or listen before it lands.
+ */
+function setChannelScope(scope) {
+    channelScope = scope;
+}
+
 function dispatchSKEvent(type, args, target) {
     if (target === undefined) {
         target = document;
     }
-    target.dispatchEvent(new CustomEvent(`surfingkeys:${type}`, { 'detail': args }));
+    target.dispatchEvent(new CustomEvent(skEventName(type), { 'detail': args }));
 }
 
 /**
@@ -31,6 +85,8 @@ function RUNTIME(action, args, callback) {
         args.needResponse = callback !== undefined;
         chrome.runtime.sendMessage(args, callback);
         if (action === 'read') {
+            // Registers a handler, so this call makes the calling world a receiving
+            // end for background messages from here on (see _listen).
             runtime.on('onTtsEvent', callback);
         }
     } catch (e) {
@@ -124,6 +180,7 @@ const runtime = (function() {
             useLocalMarkdownAPI: true
         },
     }, _handlers = {};
+    let _listening = false;
 
     const getTopURLPromise = new Promise(function(resolve, reject) {
         if (window === top) {
@@ -137,12 +194,14 @@ const runtime = (function() {
 
     self.on = function(message, cb) {
         _handlers[message] = cb;
+        _listen();
     };
     self.bookMessage = function(message, cb) {
         if (_handlers[message]) {
             return false;
         } else {
             _handlers[message] = cb;
+            _listen();
             return true;
         }
     };
@@ -150,11 +209,31 @@ const runtime = (function() {
         delete _handlers[message];
     };
 
-    chrome.runtime.onMessage.addListener(function(msg, sender, response) {
-        if (_handlers[msg.subject]) {
-            _handlers[msg.subject](msg, sender, response);
+    /*
+     * Register the listener with the first handler, never before. A listener with no
+     * handler is still a receiving end, and every world of a document is dispatched
+     * the same message, so a world that returns without calling response closes the
+     * reply port for the world that would have answered. The user-script world
+     * carrying a Chrome MV3 user's snippets registers no handler at all, yet asks for
+     * the channel scope the content script beside it answers -- listening there too
+     * loses that answer whenever Chrome dispatches this world first, and without the
+     * scope the snippets can reach nothing.
+     *
+     * Listening is one-way: releaseMessage drops a handler but never the listener.
+     * That is only safe because nothing goes back to zero handlers -- the content
+     * script keeps getChannelScope for the life of the document.
+     */
+    function _listen() {
+        if (_listening) {
+            return;
         }
-    });
+        _listening = true;
+        chrome.runtime.onMessage.addListener(function(msg, sender, response) {
+            if (_handlers[msg.subject]) {
+                _handlers[msg.subject](msg, sender, response);
+            }
+        });
+    }
 
     self.getTopURL = function(cb) {
         getTopURLPromise.then(function(url) {
@@ -185,5 +264,8 @@ const runtime = (function() {
 export {
     RUNTIME,
     dispatchSKEvent,
-    runtime
+    runtime,
+    setChannelScope,
+    skChannelScope,
+    skEventName
 };
