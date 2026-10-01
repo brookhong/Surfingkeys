@@ -263,9 +263,7 @@ function createNormal(insert) {
         _inFocusHandler = false;
     });
     self.addEventListener('keyup', function(event) {
-        setTimeout(function() {
-            keyHeld = 0;
-        }, 0);
+        keyHeld = 0;
     });
     self.addEventListener('mousedown', function(event) {
         // The isTrusted read-only property of the Event interface is a boolean
@@ -373,6 +371,8 @@ function createNormal(insert) {
         document.documentElement.appendChild(scrollPane);
     }
 
+    var smoothScrolling;
+
     var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
@@ -423,8 +423,17 @@ function createNormal(insert) {
                     previousTimestamp = 0,
                     originValue = elm[prop],
                     stepCompleted = false;
+                const previous = smoothScrolling;
+                if (previous && previous.elm === elm && previous.prop === prop && previous.target !== undefined) {
+                    // when the last step hasn't finished yet, start from its end point, so two quick presses scroll twice as far
+                    originValue = previous.target;
+                }
+                const scrolling = smoothScrolling = { elm, prop, target: originValue + distance };
                 keyHeld = 1;
                 function step(t) {
+                    if (smoothScrolling !== scrolling) {
+                        return;
+                    }
                     if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
                         previousTimestamp = t;
@@ -433,8 +442,9 @@ function createNormal(insert) {
                     }
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
                     let boundaryHit = false;
-                    if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
+                    if ((old + delta - originValue) * Math.sign(distance) >= Math.abs(distance)) {
                         stepCompleted = true;
+                        scrolling.target = undefined;
                         if (keyHeld > runtime.conf.scrollFriction) {
                             boundaryHit = elm.safeScroll_(prop, old + delta, distance > 0);
                             originValue = elm[prop];
@@ -451,6 +461,7 @@ function createNormal(insert) {
                     if (!keyHeld && (boundaryHit
                         || stepCompleted )// distance completed
                     ) {
+                        smoothScrolling = undefined;
                         coverPage(false);
                         dispatchSKEvent("hints", ['scrollDone']);
                     } else {
