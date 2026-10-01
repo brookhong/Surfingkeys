@@ -8,6 +8,11 @@ div.surfingkeys_hints_host {
     overflow: hidden;
     pointer-events: none;
 }
+div.surfingkeys_scroll_pane {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+}
 div.surfingkeys_match_mark {
     background-color: #ff0;
     color: #000;
