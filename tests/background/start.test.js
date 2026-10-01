@@ -1890,6 +1890,114 @@ describe('start', () => {
         });
 
         /*
+         * Opening a link BESIDE the page it was hinted in. A split holds exactly two
+         * tabs, and every outcome has to reach the user as a banner: nothing in the
+         * page waits on this action, so doing nothing quietly is indistinguishable
+         * from a mapping that is not there.
+         */
+        describe('split view', () => {
+            // The browser feature behind both tabs.createSplit and create's
+            // splitWithTabId. Absent from the mock, so a plain bootstrap() is a
+            // browser without split view.
+            const withSplitView = (opts = {}) => bootstrap({
+                ...opts,
+                beforeStart: (chrome) => {
+                    chrome.tabs.createSplit = jest.fn((tabIds, cb) => cb && cb(5));
+                },
+            });
+
+            const bannered = (chrome) => chrome.tabs.sendMessage.mock.calls
+                .filter((c) => c[1] && c[1].subject === 'showBanner')
+                .map((c) => c[1].message);
+
+            it('opens the url split with the sender, focusing the new half', () => {
+                const {chrome, dispatch} = withSplitView();
+                dispatch({action: 'openSplitView', url: 'https://dest/', active: true}, senderFor(12));
+                expect(chrome.tabs.create).toHaveBeenCalledWith({
+                    url: 'https://dest/',
+                    active: true,
+                    openerTabId: 12,
+                    splitWithTabId: 12,
+                }, expect.any(Function));
+            });
+
+            it('leaves where the tab lands to the browser', () => {
+                const {chrome, dispatch} = withSplitView();
+                dispatch({action: 'updateSettings', scope: 'snippets', settings: {newTabPosition: 'first'}}, {});
+                dispatch({action: 'openSplitView', url: 'https://dest/', active: true}, senderFor(12));
+                // The halves of a split are adjacent by definition, so newTabPosition
+                // has nothing to say about it.
+                expect(chrome.tabs.create.mock.calls[0][0].index).toBeUndefined();
+            });
+
+            it('prefixes a bare host with http:// like any other opened link', () => {
+                const {chrome, dispatch} = withSplitView();
+                dispatch({action: 'openSplitView', url: 'example.com'}, senderFor(12));
+                expect(chrome.tabs.create.mock.calls[0][0].url).toBe('http://example.com');
+            });
+
+            it('refuses a javascript: url and warns the page', () => {
+                const {chrome, dispatch} = withSplitView();
+                dispatch({action: 'openSplitView', url: 'javascript:alert(1)'}, senderFor(12));
+                expect(chrome.tabs.create).not.toHaveBeenCalled();
+                expect(bannered(chrome)).toEqual([expect.stringContaining('JavaScript URLs')]);
+            });
+
+            it('says so on a browser that cannot split tabs', () => {
+                const {chrome, dispatch} = bootstrap();
+                dispatch({action: 'openSplitView', url: 'https://dest/'}, senderFor(12));
+                expect(chrome.tabs.create).not.toHaveBeenCalled();
+                expect(bannered(chrome)).toEqual([expect.stringContaining('not supported')]);
+            });
+
+            it('reports a refusal from the browser rather than swallowing it', () => {
+                // What a tab that is already half of a split may come back with: the
+                // rule is the browser's, so the answer is passed on as it stands.
+                const {chrome, dispatch} = withSplitView();
+                chrome.tabs.create.mockImplementation((props, cb) => {
+                    chrome.runtime.lastError = {message: 'Tab is already in a split view.'};
+                    cb();
+                    delete chrome.runtime.lastError;
+                });
+                dispatch({action: 'openSplitView', url: 'https://dest/'}, senderFor(12));
+                expect(bannered(chrome)).toEqual([expect.stringContaining('already in a split view')]);
+            });
+
+            it('reports a createProperties field the browser rejects outright', () => {
+                // An unknown createProperties key throws instead of being ignored, so
+                // splitWithTabId can fail without ever reaching the callback.
+                const {chrome, dispatch} = withSplitView();
+                chrome.tabs.create.mockImplementation(() => {
+                    throw new Error("Unexpected property: 'splitWithTabId'.");
+                });
+                dispatch({action: 'openSplitView', url: 'https://dest/'}, senderFor(12));
+                expect(bannered(chrome)).toEqual([expect.stringContaining('splitWithTabId')]);
+            });
+
+            it('does nothing for a sender with no tab to split with', () => {
+                const {chrome, dispatch} = withSplitView();
+                // Nothing to split against, and no page to put a banner in either.
+                dispatch({action: 'openSplitView', url: 'https://dest/'}, {});
+                expect(chrome.tabs.create).not.toHaveBeenCalled();
+                expect(bannered(chrome)).toEqual([]);
+            });
+
+            it('reports support with a full settings request', () => {
+                const {dispatch} = withSplitView();
+                const {sendResponse} = dispatch({action: 'getSettings', needResponse: true}, senderFor(12));
+                expect(sendResponse.mock.calls[0][0].settings.isSplitViewAvailable).toBe(true);
+            });
+
+            it('reports the absence of support the same way', () => {
+                // A content script cannot see chrome.tabs, so this is the only way a
+                // page learns whether the `sf` mapping should exist at all.
+                const {dispatch} = bootstrap();
+                const {sendResponse} = dispatch({action: 'getSettings', needResponse: true}, senderFor(12));
+                expect(sendResponse.mock.calls[0][0].settings.isSplitViewAvailable).toBe(false);
+            });
+        });
+
+        /*
          * Navigating a tab the caller is NOT in: only the background can address one
          * by id, which is what lets the LLM chat's `open_url` reuse a tab it opened
          * instead of leaving one behind per URL. The focus is left alone -- the chat

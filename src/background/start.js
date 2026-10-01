@@ -1501,6 +1501,59 @@ function start(browser) {
         }
     };
     /*
+     * Open a URL in a new tab SPLIT with the sender's, so the two sit side by side.
+     *
+     * A split holds exactly two tabs, and what a request from a tab that is ALREADY
+     * half of one should do is left to the browser: the create goes through as it
+     * stands and whatever comes back -- another split, a refusal -- is what the user
+     * gets, rather than a rule enforced here that the browser is free to change.
+     *
+     * Which means every outcome has to be reported, and as a banner in the page the
+     * hint was pressed in: this action answers nothing, because nothing in the page
+     * waits on it, so an operation that quietly did nothing would be indistinguishable
+     * from a mapping that is not there.
+     *
+     * No `index` is sent. The two halves of a split are adjacent by definition, so
+     * where the new tab lands is the browser's to decide, unlike openLink's
+     * newTabPosition.
+     */
+    self.openSplitView = function(message, sender, sendResponse) {
+        // Without a tab there is neither anything to split with nor anywhere to say so.
+        if (!sender.tab) {
+            return;
+        }
+        const complain = (text) => sendTabMessage(sender.tab.id, 0, {
+            subject: "showBanner",
+            message: text
+        });
+        if (!isSplitViewAvailable()) {
+            complain("Split view is not supported by this browser.");
+            return;
+        }
+        const url = normalizeURL(message.url || "");
+        if (url.startsWith("javascript:")) {
+            complain("JavaScript URLs are not allowed in such operation.");
+            return;
+        }
+        try {
+            chrome.tabs.create({
+                url: url,
+                active: message.active,
+                openerTabId: sender.tab.id,
+                splitWithTabId: sender.tab.id
+            }, function() {
+                if (chrome.runtime.lastError) {
+                    complain(`Could not open a split view: ${chrome.runtime.lastError.message}`);
+                }
+            });
+        } catch (e) {
+            // A createProperties field the browser does not know THROWS rather than
+            // being ignored, so a browser with tabs.createSplit but no splitWithTabId
+            // arrives here instead of in the callback.
+            complain(`Could not open a split view: ${e.message}`);
+        }
+    };
+    /*
      * Point ONE named tab at a URL, leaving the focus where it is.
      *
      * `openLink` navigates the tab the caller sits in, or opens a new one; only the
@@ -1616,6 +1669,10 @@ function start(browser) {
         // object.
         data.useNeovim = !!(browser.nvimServer && browser.nvimServer.ready);
         data.isUserScriptsAvailable = isUserScriptsAvailable();
+        // Sent so a page can decide whether the split-view mapping exists at all,
+        // which only the background can answer: a content script cannot see
+        // chrome.tabs.
+        data.isSplitViewAvailable = isSplitViewAvailable();
         if (isMV3) {
             data.showAdvanced = data.isUserScriptsAvailable && data.showAdvanced;
         }
@@ -1653,6 +1710,17 @@ function start(browser) {
             return false;
         }
         return false;
+    }
+    /*
+     * Whether this browser can put two tabs side by side.
+     *
+     * Probed through `tabs.createSplit` even though openSplitView opens its tab with
+     * `tabs.create`'s `splitWithTabId`: the same browser feature carries both, and an
+     * optional createProperties field cannot be probed at all -- passing one the
+     * browser does not know is itself what throws.
+     */
+    function isSplitViewAvailable() {
+        return typeof chrome.tabs.createSplit === "function";
     }
     self.updateSettings = function(message, sender, sendResponse) {
         let error = "";

@@ -1,9 +1,10 @@
-import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
+import { RUNTIME, dispatchSKEvent, runtime, skEventName } from './runtime.js';
 import KeyboardUtils from './keyboardUtils';
 import { selectionToMarkdown } from './pageMarkdown.js';
 import {
     actionWithSelectionPreserved,
     createElementWithContent,
+    flashPressedLink,
     getBrowserName,
     getCssSelectorsOfEditable,
     getLargeElements,
@@ -473,6 +474,27 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         hints.create("", hints.dispatchMouseClick, {multipleHits: true});
     });
     map('C', 'gf');
+    /*
+     * Split view is new and not in every build, so whether `sf` is a mapping at all is
+     * answered by the background -- the only side that can see chrome.tabs -- and that
+     * answer arrives with the settings, after the rest of this keymap is already in
+     * place. Registered before the user's snippets run, so `unmap('sf')` still works.
+     */
+    document.addEventListener(skEventName("userSettingsLoaded"), (evt) => {
+        if (!evt.detail.settings.isSplitViewAvailable) {
+            return;
+        }
+        // '*[href]' rather than the clickables `f` hints: a split view is opened from a
+        // URL, so hinting only what has one means every hint shown can do the thing,
+        // instead of a hint on a script-driven button that can only fail.
+        mapkey('sf', '#1Open a link in a split view beside this tab', function() {
+            hints.create('*[href]', function(element) {
+                flashPressedLink(element, () => {
+                    RUNTIME('openSplitView', {url: element.href, active: true});
+                });
+            }, {statusLine: "Open a link in a split view"});
+        });
+    }, {once: true});
     mapkey('<Ctrl-h>', '#1Mouse over elements.', function() {
         hints.create("", (element, event) => {
             if (chrome.surfingkeys) {
