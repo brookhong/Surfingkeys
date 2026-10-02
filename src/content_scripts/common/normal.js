@@ -3,6 +3,7 @@ import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
+    getBrowserName,
     getRealEdit,
     isEditable,
     isElementClickable,
@@ -263,9 +264,7 @@ function createNormal(insert) {
         _inFocusHandler = false;
     });
     self.addEventListener('keyup', function(event) {
-        setTimeout(function() {
-            keyHeld = 0;
-        }, 0);
+        keyHeld = 0;
     });
     self.addEventListener('mousedown', function(event) {
         // The isTrusted read-only property of the Event interface is a boolean
@@ -357,6 +356,28 @@ function createNormal(insert) {
         return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
     }
 
+    // when scrolling, Chrome re-checks which element is under the mouse after every step,
+    // which is slow on big pages; covering the page makes that check instant
+    var scrollPane;
+    function coverPage(covered) {
+        if (!covered) {
+            scrollPane && scrollPane.remove();
+            return;
+        }
+        if (getBrowserName() !== "Chrome") {
+            return;
+        }
+        if (!scrollPane) {
+            scrollPane = document.createElement("div");
+            scrollPane.fromSurfingKeys = true;
+            scrollPane.className = "surfingkeys_scroll_pane";
+            scrollPane.addEventListener("pointerdown", () => scrollPane.remove());
+        }
+        document.documentElement.appendChild(scrollPane);
+    }
+
+    var smoothScrolling;
+
     var _nodesHasSKScroll = [];
     function initScroll(elm) {
         elm.skScrollBy = function(x, y) {
@@ -392,13 +413,13 @@ function createNormal(insert) {
             const clientWidth = elm === document.scrollingElement ? window.innerWidth : elm.clientWidth;
             const range = prop === "scrollTop" ? [0, elm.scrollHeight - clientHeight] : [0, elm.scrollWidth - clientWidth];
             const boundary = increasing ? range[1] : range[0];
-            if (value >= range[0] && value <= range[1]) {
-                elm[prop] = value;
-                return false;
-            } else {
-                elm[prop] = boundary;
-                return true;
-            }
+            const inRange = value >= range[0] && value <= range[1];
+            // "instant" overrides the page's scroll-behavior: smooth (#837) without restyling the page
+            elm.scrollTo({
+                [prop === "scrollTop" ? "top" : "left"]: inRange ? value : boundary,
+                behavior: "instant",
+            });
+            return !inRange;
         };
         elm.smoothScrollBy = function(x, y, d) {
             if (!keyHeld) {
@@ -407,8 +428,17 @@ function createNormal(insert) {
                     previousTimestamp = 0,
                     originValue = elm[prop],
                     stepCompleted = false;
+                const previous = smoothScrolling;
+                if (previous && previous.elm === elm && previous.prop === prop && previous.target !== undefined) {
+                    // when the last step hasn't finished yet, start from its end point, so two quick presses scroll twice as far
+                    originValue = previous.target;
+                }
+                const scrolling = smoothScrolling = { elm, prop, target: originValue + distance };
                 keyHeld = 1;
                 function step(t) {
+                    if (smoothScrolling !== scrolling) {
+                        return;
+                    }
                     if (previousTimestamp === 0) {
                         // init previousTimestamp in first step
                         previousTimestamp = t;
@@ -417,8 +447,9 @@ function createNormal(insert) {
                     }
                     var old = elm[prop], delta = (t - previousTimestamp) * distance / duration;
                     let boundaryHit = false;
-                    if (Math.abs(old + delta - originValue) >= Math.abs(distance)) {
+                    if ((old + delta - originValue) * Math.sign(distance) >= Math.abs(distance)) {
                         stepCompleted = true;
+                        scrolling.target = undefined;
                         if (keyHeld > runtime.conf.scrollFriction) {
                             boundaryHit = elm.safeScroll_(prop, old + delta, distance > 0);
                             originValue = elm[prop];
@@ -435,13 +466,14 @@ function createNormal(insert) {
                     if (!keyHeld && (boundaryHit
                         || stepCompleted )// distance completed
                     ) {
-                        elm.style.scrollBehavior = '';
+                        smoothScrolling = undefined;
+                        coverPage(false);
                         dispatchSKEvent("hints", ['scrollDone']);
                     } else {
                         window.requestAnimationFrame(step);
                     }
                 }
-                elm.style.scrollBehavior = 'auto';
+                coverPage(true);
                 window.requestAnimationFrame(step);
             }
         };
@@ -1047,6 +1079,7 @@ function createNormal(insert) {
 
     self.onExit = function() {
         dispatchSKEvent("observer", ['turnOff']);
+        coverPage(false);
         _nodesHasSKScroll.forEach(function(n) {
             delete n.skScrollBy;
             delete n.smoothScrollBy;
