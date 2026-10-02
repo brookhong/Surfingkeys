@@ -371,6 +371,7 @@ function createNormal(insert) {
             scrollPane = document.createElement("div");
             scrollPane.fromSurfingKeys = true;
             scrollPane.className = "surfingkeys_scroll_pane";
+            scrollPane.addEventListener("pointerdown", () => scrollPane.remove());
         }
         document.documentElement.appendChild(scrollPane);
     }
