@@ -217,6 +217,9 @@ function createNormal(insert) {
 
                 }
             }
+        } else if (isEditable(realTarget)) {
+            // Script-generated keydown aimed at an input (e.g. a password manager
+            // simulating typing during autofill). It's text, not a command.
         } else if (Mode.isSpecialKeyOf("<Alt-s>", event.sk_keyName)) {
             self.toggleBlocklist();
             Mode.finish(self);
