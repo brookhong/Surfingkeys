@@ -112,6 +112,12 @@ const runtime = (function() {
             defaultLLMProvider: "ollama",
             defaultSearchEngine: "g",
             defaultVoice: "Daniel",
+            // Named system prompts for the LLM chat, switched to with `/agents` or
+            // opened straight into with `extra: {agent: "translator"}`. A definition
+            // is the prompt itself or an object carrying it under `systemPrompt`:
+            // `{translator: "You're a translator…"}`. The name "default" is reserved
+            // for the built-in prompt, so an agent defined under it is never used.
+            llmAgents: {},
             // These three only ever read the page the user opened the chat on and
             // take no destination, so they have nowhere to send anything and asking
             // about them would be friction on the common case. `search_page` and

@@ -46,6 +46,18 @@ div.surfingkeys_cursor:empty {
     background: #3174e2;
     color: white;
 }
+/*
+ * A candidate that carries what it does beside its name. Both parts are prose, so
+ * neither takes the glyph size the bare-span rule gives an emoji, and the
+ * explanation is dimmed to keep the names the column the eye runs down.
+ */
+.sk_cursor_prompt>div.explained>span {
+    font-size: inherit;
+}
+.sk_cursor_prompt>div.explained>span+span {
+    padding-right: 0;
+    opacity: 0.65;
+}
 #sk_clipboard {
     position: fixed;
     z-index: -999;

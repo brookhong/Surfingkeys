@@ -7,7 +7,7 @@
 * [Correct grammar of the input with LLM](#correct-grammar-of-the-input-with-llm)
 * [Browser tools available to the LLM](#browser-tools-available-to-the-llm)
   * [Every tool call asks first](#every-tool-call-asks-first)
-* [To use LLM chat with a specified system prompt](#to-use-llm-chat-with-a-specified-system-prompt)
+* [Agents: chat with your own system prompt](#agents-chat-with-your-own-system-prompt)
 * [403 Forbidden with Ollama](#403-forbidden-with-ollama)
 
 Press `A` to open a chat popup and talk to an AI provider. The current page is not sent unless the model asks for it with the `read_page` tool. Supported providers:
@@ -59,7 +59,11 @@ Other ways to start a chat:
 
 A conversation is kept per site and resumes when you return or reload. `/clear` starts a fresh one and revokes any tool permissions granted on that site. Switching provider mid-conversation keeps the Q&A but drops prior tool results.
 
+Type `/` in the chat to see every command with what it does beside it; typing narrows the list by name, and Tab completes the one selected.
+
 `/copy` copies the conversation as Markdown, including a line for every tool call made (even denied ones).
+
+`/agents` switches the chat to one of your own system prompts — see [Agents](#agents-chat-with-your-own-system-prompt).
 
 ## Correct grammar of the input with LLM
 
@@ -145,17 +149,40 @@ Tools that **change** something (`open_url`, `group_tabs`) are always confirmed 
        title: work
        y allow once · s allow any call on https://github.com · n deny
 
-## To use LLM chat with a specified system prompt
+## Agents: chat with your own system prompt
 
-For example, to make your AI a translator:
+An agent is a named system prompt. Define as many as you like:
 
-    api.mapkey('A', '#8Open llm chat', function() {
-        api.Front.openOmnibar({type: "LLMChat", extra: {
-            system: "You're a translator, whenever you got a message in Chinese, please just translate it into English, and if you got a message in English, please translate it to Chinese. You don't need to answer any question, just TRANSLATE."
-        }});
+    settings.llmAgents = {
+        translator: "You're a translator, whenever you got a message in Chinese, please just translate it into English, and if you got a message in English, please translate it to Chinese. You don't need to answer any question, just TRANSLATE.",
+        reviewer: {
+            systemPrompt: "You review diffs. Point at what breaks, skip the praise.",
+        },
+    };
+
+A definition is either the prompt itself or an object carrying it under `systemPrompt`.
+
+In the chat:
+
+* `/agents` — list the agents, with `→` on the one answering now
+* `/agents translator` — switch to it (Tab completes the names)
+* `/agents default` — back to the built-in prompt
+
+The line above the conversation shows `provider · agent`, so you can see who is answering.
+
+Switching **keeps the conversation**: only the instructions for the next question change, so you can hand a thread to another agent. The new agent reads what the previous one wrote — `/clear` first if that is not what you want.
+
+The choice is remembered **per site**, alongside the conversation: return to that site and the same agent answers, other sites stay on the default, and `/clear` keeps it.
+
+A mapping can open the chat straight into an agent, which switches that site to it exactly as `/agents` would:
+
+    api.mapkey('<Space>t', '#8Chat with the translator', function() {
+        api.Front.openOmnibar({type: "LLMChat", extra: {agent: "translator"}});
     });
 
-`extra.system` replaces the built-in system prompt entirely, including the note that pages are untrusted data — add your own if the chat should still read pages safely. Tool behavior itself is unaffected.
+A name `settings.llmAgents` does not define is not remembered: the chat says so and stays on whatever that site was, so a typo in a mapping costs one notice rather than following you back to the site.
+
+An agent's prompt replaces the built-in one entirely, including the note that pages are untrusted data — add your own if the agent reads pages. Tool behavior itself is unaffected. The name `default` is reserved for the built-in prompt, and a *stored* choice whose definition has since gone falls back to it, keeping the name, with a line in the chat saying so — `/agents default` clears it. `extra.system`, which used to pass a prompt inline, is gone: define an agent and name it with `extra.agent`, and a mapping still passing `extra.system` says so when the chat opens.
 
 ## 403 Forbidden with Ollama
 

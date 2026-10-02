@@ -160,6 +160,19 @@ body {
 #sk_omnibarSearchResult.llmChat>ul>li.role-confirm {
     border-left: 3px solid #d98c00;
 }
+/*
+ * An entry of a list a notice prints -- an agent, a site -- set in from the lines
+ * that describe the list. The marker on the entry in use hangs in that indent, so
+ * the entries themselves all begin at one column.
+ */
+#sk_omnibarSearchResult.llmChat .noticeItem {
+    position: relative;
+    padding-left: 2.4em;
+}
+#sk_omnibarSearchResult.llmChat .noticeMark {
+    position: absolute;
+    left: 0;
+}
 #sk_omnibarSearchResult.llmChat .confirmArgs {
     margin: 4px 0;
     white-space: pre-wrap;

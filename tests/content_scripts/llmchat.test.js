@@ -1,5 +1,6 @@
 import LLMChat from '../../src/content_scripts/ui/llmchat.js';
 import { runtime } from '../../src/content_scripts/common/runtime.js';
+import CursorPrompt from '../../src/content_scripts/common/cursorPrompt';
 
 const mockRUNTIME = jest.fn();
 // the `llmResponse` handler the chat books, so a test can play the provider
@@ -15,8 +16,14 @@ jest.mock('../../src/content_scripts/common/runtime.js', () => ({
     },
 }));
 
+// what the chat offers to complete, which is all this suite needs of the prompt: the
+// arrow is evaluated per call, so the factory may reference this before it is declared
+const mockCompletions = jest.fn();
 jest.mock('../../src/content_scripts/common/cursorPrompt', () => (
-    jest.fn().mockImplementation(() => ({ activate: jest.fn(), close: jest.fn() }))
+    jest.fn().mockImplementation(() => ({
+        activate: (...args) => mockCompletions(...args),
+        close: jest.fn(),
+    }))
 ));
 
 // marked ships as ESM and is not what these tests exercise
@@ -32,6 +39,9 @@ jest.mock('../../src/content_scripts/common/utils.js', () => ({
         return el;
     },
     setSanitizedContent: (el, str) => { el.innerHTML = str; },
+    // the real one round-trips through innerText, which jsdom does not implement
+    htmlEncode: (str) => String(str)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
     rotateInput: () => ["", 0],
 }));
 
@@ -69,11 +79,11 @@ describe('llmchat conversation restore', () => {
     // mimic what omnibar.js does around the handler: the frontend flips
     // #sk_omnibar's display BEFORE onHide/onShow, and ui.onHide wipes resultsDiv
     // before calling onClose
-    async function open(url, system = "", provider) {
+    async function open(url, extra) {
         container.style.display = "";
         omnibar.resultsDiv.innerHTML = "";
         omnibar.resultsDiv.className = "";
-        chat.onOpen({ url, system, provider });
+        chat.onOpen(Object.assign({ url }, extra));
         await Promise.resolve();
         await Promise.resolve();
     }
@@ -213,7 +223,7 @@ describe('llmchat conversation restore', () => {
     test('a corrupt stored conversation does not break the open', async () => {
         localStorage.setItem(keyFor('https://a.com'), '{"truncated": ');
 
-        await open('https://a.com', 'the page text');
+        await open('https://a.com');
 
         // onOpen ran to completion instead of rejecting half way
         expect(omnibar.resultsDiv.className).toBe('llmChat');
@@ -231,7 +241,7 @@ describe('llmchat conversation restore', () => {
     ])('ignores a stored value that is %s', async (_label, raw) => {
         localStorage.setItem(keyFor('https://a.com'), raw);
 
-        await open('https://a.com', 'the page text');
+        await open('https://a.com');
 
         expect(omnibar.resultsDiv.className).toBe('llmChat');
         expect(rendered()).toEqual([]);
@@ -240,17 +250,24 @@ describe('llmchat conversation restore', () => {
         expect(rendered()).toEqual(['role-user:hi']);
     });
 
+    /*
+     * The system slot is rebuilt on every open -- from the site's agent, or from the
+     * built-in prompt -- and the stored conversation's own system message is never
+     * what the next request is built with: it names the page as it was then.
+     */
     test('the system prompt of the current open wins over the stored one', async () => {
         store('https://a.com', [
             { role: 'system', content: 'text of the page as it was yesterday' },
             { role: 'user', content: 'earlier question' },
         ]);
 
-        await open('https://a.com', 'text of the page right now');
+        await open('https://a.com');
         send('follow up');
 
         const sent = mockRUNTIME.mock.calls.find((c) => c[0] === 'llmRequest')[1];
-        expect(sent.messages[0]).toEqual({ role: 'system', content: 'text of the page right now' });
+        expect(sent.messages[0].role).toBe('system');
+        expect(sent.messages[0].content).not.toContain('yesterday');
+        expect(sent.messages[0].content).toContain('https://a.com');
         expect(sent.messages.map((m) => m.content)).toContain('earlier question');
     });
 
@@ -330,7 +347,7 @@ describe('llmchat conversation restore', () => {
             ]);
             // the same provider, so the tool turns are kept
             chat = LLMChat(omnibar, { addDestroyListener: jest.fn() });
-            await open('https://a.com', '', 'bedrock');
+            await open('https://a.com', { provider: 'bedrock' });
 
             const bubble = rendered()[1];
             expect(bubble).toContain('*⚙ read_page()*');
@@ -481,7 +498,7 @@ describe('llmchat tool-use confirmation', () => {
     async function openAndSend() {
         container.style.display = "";
         omnibar.resultsDiv.innerHTML = "";
-        chat.onOpen({ url: 'https://page.com', system: 'page text' });
+        chat.onOpen({ url: 'https://page.com' });
         await flush();
         omnibar.input.value = 'a question';
         chat.onEnter();
@@ -496,7 +513,7 @@ describe('llmchat tool-use confirmation', () => {
         const next = LLMChat(omnibar, frontMock());
         container.style.display = "";
         omnibar.resultsDiv.innerHTML = "";
-        next.onOpen({ url, system: 'page text' });
+        next.onOpen({ url });
         await flush();
         omnibar.input.value = 'another question';
         next.onEnter();
@@ -876,6 +893,26 @@ describe('llmchat tool-use confirmation', () => {
             expect(notice()).toContain('https://elsewhere.com');
         });
 
+        /*
+         * A chat row is a flex row -- the role icon beside the message -- so lines
+         * added to the row itself become its columns and a list of sites arrives on one
+         * line. They belong inside one child of it, as the confirmation prompt's do.
+         */
+        test('one line per site, stacked rather than laid out as a row', async () => {
+            localStorage.setItem(keyFor('https://one.com'), JSON.stringify(['open_url']));
+            localStorage.setItem(keyFor('https://two.com'), JSON.stringify(['fetch_url']));
+
+            run('/permissions');
+
+            const li = omnibar.resultsDiv.querySelector('li.role-surfingkeys');
+            expect(li.children.length).toBe(1);
+            expect(Array.from(li.firstElementChild.children).map((d) => d.textContent))
+                .toEqual(expect.arrayContaining([
+                    'https://one.com — open_url',
+                    'https://two.com — fetch_url',
+                ]));
+        });
+
         test('clear withdraws every site, not just this one', async () => {
             localStorage.setItem(keyFor('https://elsewhere.com'), JSON.stringify(['open_url']));
             await modelAsksFor('list_tabs', {});
@@ -1026,7 +1063,7 @@ describe('llmchat tool-use confirmation', () => {
         await flush();
 
         container.style.display = "";
-        chat.onOpen({ url: 'https://page.com', system: 'page text' });
+        chat.onOpen({ url: 'https://page.com' });
         await flush();
         omnibar.input.value = 'another question';
         chat.onEnter();
@@ -1940,8 +1977,8 @@ describe('llmchat copying the conversation', () => {
     });
 
     /*
-     * The system prompt is not a bubble on screen, and `/system` may hold
-     * instructions the user did not mean to paste anywhere.
+     * The system prompt is not a bubble on screen, and an agent's is the user's own
+     * text, written to instruct a model rather than to be pasted anywhere.
      */
     test('leaves the system prompt out', async () => {
         await open();
@@ -2145,6 +2182,7 @@ describe('llmchat page text', () => {
         // the shipped default: read_page has no destination argument, so there is
         // nothing to approve
         runtime.conf.llmAllowedTools = ['read_page'];
+        runtime.conf.llmAgents = {};
         mockRUNTIME.mockReset();
         // the chat cannot read the page itself, the content script of the frame
         // that opened the omnibar answers `getPageMarkdown`
@@ -2381,9 +2419,11 @@ describe('llmchat page text', () => {
         expect(toolResult()).toContain('could not be read');
     });
 
-    test('a user script system prompt is still the system prompt', async () => {
-        // the documented `extra.system`, which is the user speaking, not the page
-        await openAndSend({ system: "You're a translator." });
+    test('an agent named by a mapping is the system prompt', async () => {
+        // `extra.agent`, the keystroke-per-agent route: the user speaking, not the page
+        runtime.conf.llmAgents = { translator: "You're a translator." };
+
+        await openAndSend({ agent: 'translator' });
 
         expect(systemPrompt()).toBe("You're a translator.");
     });
@@ -2490,10 +2530,10 @@ describe('llmchat persistence', () => {
         return LLMChat(omnibar, { addDestroyListener: (task) => destroyTasks.push(task) });
     }
 
-    async function open(url, system = "") {
+    async function open(url) {
         container.style.display = "";
         omnibar.resultsDiv.innerHTML = "";
-        chat.onOpen({ url, system });
+        chat.onOpen({ url });
         await flush();
     }
     function send(prompt) {
@@ -2530,7 +2570,7 @@ describe('llmchat persistence', () => {
     });
 
     test('a completed exchange survives a page reload', async () => {
-        await open('https://p.com', 'page text');
+        await open('https://p.com');
         send('my question');
         await answer('my answer');
 
@@ -2539,7 +2579,7 @@ describe('llmchat persistence', () => {
 
         // the reload: a brand new iframe, and the destroy listeners never fire
         chat = newChat();
-        await open('https://p.com', 'page text');
+        await open('https://p.com');
 
         expect(destroyTasks.some((t) => t.called)).toBe(false);
         expect(rendered()).toEqual([
@@ -2567,7 +2607,7 @@ describe('llmchat persistence', () => {
     });
 
     test('does not store a conversation that has not started', async () => {
-        await open('https://p.com', 'page text');
+        await open('https://p.com');
         chat.onClose();
 
         expect(storedFor('https://p.com')).toBeNull();
@@ -2795,6 +2835,50 @@ describe('llmchat persistence', () => {
 
             setItem.mockRestore();
         });
+
+        /*
+         * An entry holding no conversation carries that site's agent and little else,
+         * so evicting it frees nothing and costs the user a choice they made. It goes
+         * last however old it is -- but it does stay in the list, the alternative being
+         * to fail to save the conversation in front of the user.
+         */
+        test('evicts a conversation before an entry that only holds an agent', async () => {
+            const agentOnly = JSON.stringify({
+                provider: 'ollama',
+                agent: 'translator',
+                at: 1,
+                messages: [{ role: 'system', content: '' }],
+            });
+            localStorage.setItem(keyOf('switched.com'), agentOnly);
+            localStorage.setItem(keyOf('newer.com'), conversation(500, 'newer'));
+            const setItem = fullUntilEvicted(keyOf('newer.com'));
+
+            await open('https://p.com');
+            send('my question');
+            // nothing below needs the quota full, and a spy left over a failing
+            // assertion decides the next test
+            setItem.mockRestore();
+
+            expect(localStorage.getItem(keyOf('newer.com'))).toBeNull();
+            expect(localStorage.getItem(keyOf('switched.com'))).toBe(agentOnly);
+        });
+
+        // the oldest format stored the message list itself, which names no timestamp
+        test('evicts an entry with no timestamp before a timestamped one', async () => {
+            localStorage.setItem(keyOf('old.com'), conversation(1, 'from a site long left'));
+            localStorage.setItem(keyOf('legacy.com'), JSON.stringify([
+                { role: 'system', content: '' },
+                { role: 'user', content: 'stored by an older build' },
+            ]));
+            const setItem = fullUntilEvicted(keyOf('legacy.com'));
+
+            await open('https://p.com');
+            send('my question');
+            setItem.mockRestore();
+
+            expect(localStorage.getItem(keyOf('legacy.com'))).toBeNull();
+            expect(localStorage.getItem(keyOf('old.com'))).not.toBeNull();
+        });
     });
 
     test('trims the oldest turns of a conversation that outgrows its share', async () => {
@@ -2816,5 +2900,397 @@ describe('llmchat persistence', () => {
         expect(saved[1].role).toBe('user');
         expect(saved[1].content).not.toBe('first question');
         expect(JSON.stringify(saved)).toContain('third question');
+    });
+});
+
+/*
+ * An agent is a named system prompt out of `settings.llmAgents`. Switching keeps the
+ * conversation -- a prompt is only the slot the NEXT request is built with -- and the
+ * choice belongs to the site, so a site you asked a translator about answers as the
+ * translator when you come back to it.
+ */
+describe('llmchat agents', () => {
+    let chat;
+    let omnibar;
+    let container;
+
+    const flush = async () => {
+        for (let i = 0; i < 30; i++) {
+            await Promise.resolve();
+        }
+    };
+    const rendered = () => Array.from(omnibar.resultsDiv.querySelectorAll('ul>li'))
+        .map((li) => `${li.getAttribute('class')}:${li.textContent.trim()}`);
+    // the system slot as the provider gets it, which is only observable in a request
+    const sentSystem = () => mockRUNTIME.mock.calls
+        .filter((c) => c[0] === 'llmRequest').pop()[1].messages[0].content;
+    const sentMessages = () => mockRUNTIME.mock.calls
+        .filter((c) => c[0] === 'llmRequest').pop()[1].messages.map((m) => m.content);
+    const notices = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-surfingkeys'))
+        .map((li) => li.textContent).join("\n");
+    // the lines a notice prints as entries of a list, which are indented by this class
+    const entries = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-surfingkeys .noticeItem'))
+        .map((div) => div.textContent);
+    const markedEntries = () => Array.from(omnibar.resultsDiv.querySelectorAll('li.role-surfingkeys .noticeMark'))
+        .map((span) => span.parentElement.textContent);
+    const header = () => omnibar.resultsDiv.querySelector('h4').textContent;
+    const storedFor = (url) => localStorage.getItem(`surfingkeys.llmChat.${new URL(url).origin}`);
+
+    // the frontend iframe is rebuilt with every document, so a reload or another tab
+    // is a new handler reading the same storage
+    function newChat() {
+        document.body.innerHTML = '<div id="bar" style="display: none;"><div id="results"></div><input id="input"></div>';
+        container = document.querySelector('#bar');
+        omnibar = {
+            resultsDiv: document.querySelector('#results'),
+            input: document.querySelector('#input'),
+            isVisible: () => container.style.display !== "none",
+        };
+        return LLMChat(omnibar, { addDestroyListener: jest.fn() });
+    }
+    async function open(url, extra) {
+        container.style.display = "";
+        omnibar.resultsDiv.innerHTML = "";
+        omnibar.resultsDiv.className = "";
+        chat.onOpen(Object.assign({ url }, extra));
+        await flush();
+    }
+    function send(prompt) {
+        omnibar.input.value = prompt;
+        chat.onEnter();
+    }
+    async function answer(text) {
+        await mockBooked.handler({ done: true, message: { role: 'assistant', content: text } });
+        await flush();
+    }
+
+    beforeEach(() => {
+        jest.useFakeTimers();
+        Element.prototype.scrollIntoView = jest.fn();
+        localStorage.clear();
+        mockBooked.handler = null;
+        mockRUNTIME.mockReset();
+        // `/provider` only takes a name the background answered with
+        mockRUNTIME.mockImplementation((action, args, cb) => {
+            if (action === 'getAllLlmProviders') { cb({ providers: ['ollama', 'bedrock'] }); }
+        });
+        runtime.conf.llmAllowedTools = [];
+        runtime.conf.llmAgents = {
+            translator: "You're a translator, translate and nothing else.",
+            reviewer: { systemPrompt: "You review diffs." },
+        };
+        chat = newChat();
+    });
+
+    afterEach(() => {
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        runtime.conf.llmAgents = {};
+    });
+
+    test('switching agent replaces the prompt and keeps the conversation', async () => {
+        await open('https://p.com');
+        send('first question');
+        await answer('first answer');
+
+        send('/agents translator');
+        send('second question');
+
+        expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+        expect(sentMessages()).toContain('first question');
+        expect(sentMessages()).toContain('first answer');
+        expect(rendered()).toContain('role-user:first question');
+        // and who is answering is on screen, not only in the conversation
+        expect(header()).toBe('ollama · translator');
+    });
+
+    test('a definition may be the prompt itself or carry it under systemPrompt', async () => {
+        await open('https://p.com');
+
+        send('/agents reviewer');
+        send('a question');
+
+        expect(sentSystem()).toBe('You review diffs.');
+    });
+
+    test('/agents default goes back to the built-in prompt', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+
+        send('/agents default');
+        send('a question');
+
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+        expect(header()).toBe('ollama');
+    });
+
+    test('the agent is remembered for the site, through a reload', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+
+        // a new document on the same site: nothing of the previous iframe survives
+        chat = newChat();
+        await open('https://p.com/another');
+        send('a question');
+
+        expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+        expect(header()).toBe('ollama · translator');
+    });
+
+    test('another site is not switched with it', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+
+        await open('https://elsewhere.com');
+        send('a question');
+
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+        expect(header()).toBe('ollama');
+    });
+
+    // the choice is stored even with nothing asked yet: a site switched and then left
+    // has made a decision, and the next open has nowhere else to read it from
+    test('a site switched before any question still remembers it', async () => {
+        await open('https://p.com');
+
+        send('/agents translator');
+
+        expect(storedFor('https://p.com')).toContain('translator');
+    });
+
+    /*
+     * `/clear` empties the thread and withdraws the site's tool grants, but the agent
+     * stays: wiping a long conversation is how you ask the same agent something else.
+     */
+    test('/clear keeps the agent', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+        send('a question');
+        await answer('an answer');
+
+        send('/clear');
+        send('a fresh question');
+
+        expect(sentMessages()).not.toContain('a question');
+        expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+        expect(storedFor('https://p.com')).toContain('translator');
+    });
+
+    test('a mapping can open the chat in an agent, and the site stays in it', async () => {
+        await open('https://p.com', { agent: 'translator' });
+        send('a question');
+
+        expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+
+        // opened plainly afterwards, as `A` does
+        chat = newChat();
+        await open('https://p.com');
+        send('another question');
+
+        expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+    });
+
+    /*
+     * A mapping naming an agent the settings do not define is a typo in the mapping,
+     * and it is checked on the spot -- unlike a name read back from storage, which the
+     * settings may yet define again. Remembering it would cost the user the notice on
+     * every later open of the site until they typed `/agents default`.
+     */
+    describe('a mapping naming an agent that is not defined', () => {
+        test('says so and is not remembered', async () => {
+            await open('https://p.com', { agent: 'translater' });
+
+            expect(notices()).toContain('defines no "translater"');
+            expect(header()).toBe('ollama');
+            // nothing is written, so there is no choice to come back to
+            expect(storedFor('https://p.com')).toBeNull();
+
+            send('a question');
+            expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+            expect(JSON.parse(storedFor('https://p.com')).agent).toBe("");
+
+            // so the next open is a plain chat, with nothing left to clear
+            chat = newChat();
+            await open('https://p.com');
+
+            expect(notices()).toBe("");
+            expect(header()).toBe('ollama');
+        });
+
+        test('leaves the agent the site was already switched to', async () => {
+            await open('https://p.com');
+            send('/agents translator');
+
+            await open('https://p.com', { agent: 'translater' });
+            send('a question');
+
+            // not switched to the typo, and not dropped to the default either
+            expect(sentSystem()).toBe("You're a translator, translate and nothing else.");
+            expect(header()).toBe('ollama · translator');
+            expect(notices()).toContain('was not switched to it');
+        });
+    });
+
+    // `extra.system` used to carry a prompt inline; a script still passing one would
+    // otherwise just get the default assistant, with nothing saying why
+    test('a mapping still passing extra.system is told it is not read', async () => {
+        await open('https://p.com', { system: "You're a translator." });
+        send('a question');
+
+        expect(notices()).toContain('extra.system is no longer read');
+        expect(notices()).toContain('settings.llmAgents');
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+    });
+
+    /*
+     * `/provider` empties the conversation, which writes the site's entry back out when
+     * an agent is set. The provider stored there decides whether a restored
+     * conversation's tool turns can be replayed, so it has to be the new one.
+     */
+    test('switching provider keeps the agent and stores the new provider', async () => {
+        runtime.conf.llmAgents = { translator: 'translate' };
+        await open('https://p.com');
+        send('/agents translator');
+
+        send('/provider bedrock');
+
+        expect(header()).toBe('bedrock · translator');
+        expect(JSON.parse(storedFor('https://p.com')).provider).toBe('bedrock');
+    });
+
+    test('lists the agents and marks the one answering', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+
+        send('/agents');
+
+        expect(entries()).toEqual([
+            'default — the built-in assistant prompt',
+            'reviewer — You review diffs.',
+            "→translator — You're a translator, translate and nothing else.",
+        ]);
+        expect(markedEntries()).toEqual(["→translator — You're a translator, translate and nothing else."]);
+        expect(notices()).toContain('settings.llmAgents');
+    });
+
+    // the lines around the names say what to type and what to fix, so they are not
+    // offered as a name to type
+    test('only the names are listed as entries', async () => {
+        await open('https://p.com');
+
+        send('/agents');
+
+        expect(entries().join("\n")).not.toContain('switches this site');
+    });
+
+    test('an unknown name changes nothing and says which names there are', async () => {
+        await open('https://p.com');
+
+        send('/agents nope');
+        send('a question');
+
+        expect(notices()).toContain('no agent named "nope"');
+        expect(notices()).toContain('translator');
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+    });
+
+    /*
+     * The name is kept rather than dropped when the settings no longer define it --
+     * settings that failed to load are a reason to fix them, not to forget what the
+     * user chose -- so the chat has to say that it is answering as somebody else.
+     */
+    test('an agent missing from the settings falls back to the built-in prompt, and says so', async () => {
+        await open('https://p.com');
+        send('/agents translator');
+
+        runtime.conf.llmAgents = {};
+        chat = newChat();
+        await open('https://p.com');
+        send('a question');
+
+        expect(notices()).toContain('defines no "translator"');
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+        // and it is still the site's choice, waiting for the definition to come back
+        send('/agents');
+        expect(notices()).toContain('not defined in settings.llmAgents');
+    });
+
+    /*
+     * The completion is a menu the user reads, so every entry of it has to be reachable
+     * and in an order that does not depend on where the code defines them.
+     */
+    describe('the slash completion', () => {
+        const offered = () => mockCompletions.mock.calls.pop()[1];
+        // an entry is the name and, for a command, what it does after a tab
+        const names = () => offered().map((c) => c.split("\t")[0]);
+        const type = (value) => {
+            omnibar.input.value = value;
+            chat.onInput();
+        };
+
+        test('offers every command, in alphabetical order', async () => {
+            await open('https://p.com');
+
+            type('/');
+
+            expect(names()).toEqual([
+                'agents', 'clear', 'clearPromptHistory', 'copy', 'permissions', 'provider',
+            ]);
+        });
+
+        // the menu is where a command is found, so a name with nothing beside it is a
+        // command the user has to already know
+        test('says what every command does', async () => {
+            await open('https://p.com');
+
+            type('/');
+
+            const candidates = offered();
+            candidates.forEach((candidate) => {
+                const [, help] = candidate.split("\t");
+                expect(help).toBeTruthy();
+            });
+            expect(candidates).toContain('copy\tput this conversation in the clipboard as Markdown');
+        });
+
+        test('offers the agents with default among them, in alphabetical order', async () => {
+            runtime.conf.llmAgents = { translator: 'a', reviewer: 'b', archivist: 'c' };
+            await open('https://p.com');
+
+            type('/agents ');
+
+            expect(offered()).toEqual(['archivist', 'default', 'reviewer', 'translator']);
+        });
+
+        /*
+         * The renderer hands markup to the prompt, which sanitizes it before inserting
+         * it -- and sanitizing drops anything shaped like a tag. Both parts of an entry
+         * can hold one: the `<name>` an argument is described by, and an agent named
+         * whatever the user typed into the settings.
+         */
+        test('shows an argument placeholder and a name that looks like markup', () => {
+            newChat();
+            const renderer = CursorPrompt.mock.calls.pop()[0];
+            const shown = (candidate) => {
+                const div = document.createElement('div');
+                div.innerHTML = renderer(candidate);
+                return div.textContent;
+            };
+
+            expect(shown('provider\t<name> — answer with that provider')).toContain('<name>');
+            expect(shown('<b>loud</b>')).toBe('<b>loud</b>');
+        });
+    });
+
+    test('an agent named default is never used, and the listing says why', async () => {
+        runtime.conf.llmAgents = { default: 'nobody can reach me' };
+        await open('https://p.com');
+
+        send('/agents default');
+        send('a question');
+
+        expect(sentSystem()).toContain('You are the assistant of Surfingkeys');
+        send('/agents');
+        expect(notices()).toContain('names the built-in prompt');
     });
 });

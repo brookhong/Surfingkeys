@@ -636,10 +636,12 @@ are supported once you put your credentials in `settings.llm`. The chat can also
 tabs, history, bookmarks and other pages through browser tools, and every one of those calls
 is confirmed by you before it runs. `A` works in visual mode and from Regional Hints mode
 (`L` then `l`) to chat about just the text you picked, and `Ctrl-g` in insert mode corrects the
-grammar of the current input.
+grammar of the current input. `/agents` in the chat switches it to one of your own system
+prompts, defined in `settings.llmAgents`.
 
 See [docs/LLM.md](docs/LLM.md) for provider setup, the full list of browser tools, how the
-confirmation prompts and permissions work, custom system prompts, and Ollama troubleshooting.
+confirmation prompts and permissions work, agents with your own system prompt, and Ollama
+troubleshooting.
 
 See a short demo [here](https://youtu.be/bJo2P7QhIY0).
 ## API Documentation

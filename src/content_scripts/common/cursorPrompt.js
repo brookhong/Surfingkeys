@@ -11,11 +11,26 @@ import Trie from '../common/trie';
 class CursorPrompt {
     #suppressKeyup = false;
 
-    constructor(renderer, picker, fetcher) {
+    /*
+     * `maxItems` bounds how many candidates are offered at once, since the list is
+     * drawn at the cursor and nothing clamps its height. The default suits a prompt
+     * that filters a large set -- five matches out of thousands of emoji are already a
+     * choice -- while a prompt whose whole point is a short fixed menu passes a limit
+     * that fits it, so no entry is unreachable.
+     *
+     * `keyOf` picks the part of a candidate the typed text is matched against, for a
+     * candidate carrying more than what is being completed: a command shown with what
+     * it does is still found by its name alone. It defaults to the whole candidate,
+     * which is what a prompt wants when the text beside the completion IS searchable --
+     * an emoji is found by its name.
+     */
+    constructor(renderer, picker, fetcher, { maxItems = 5, keyOf = (c) => c } = {}) {
         this.element = createElementWithContent('div', '', {class: "sk_cursor_prompt", style: "display: block; opacity: 1;"});
         this.renderer = renderer;
         this.picker = picker;
         this.fetcher = fetcher;
+        this.maxItems = maxItems;
+        this.keyOf = keyOf;
         this.initMode();
     }
 
@@ -146,9 +161,9 @@ class CursorPrompt {
         if (query.length < this.threshold || query[0] === " ") {
             this.element.remove();
         } else {
-            const choices = this.data.filter(function(c) {
-                return c.indexOf(query) !== -1;
-            }).slice(0, 5).map(this.renderer).join("");
+            const choices = this.data.filter((c) => {
+                return this.keyOf(c).indexOf(query) !== -1;
+            }).slice(0, this.maxItems).map(this.renderer).join("");
 
             if (choices === "") {
                 this.element.remove();
