@@ -3,6 +3,7 @@ import { RUNTIME, dispatchSKEvent, runtime } from './runtime.js';
 import Mode from './mode';
 import KeyboardUtils from './keyboardUtils';
 import {
+    getBrowserName,
     getRealEdit,
     isEditable,
     isElementClickable,
@@ -355,12 +356,15 @@ function createNormal(insert) {
         return (t === d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
     }
 
-    // when scrolling, the browser re-checks which element is under the mouse after every step,
+    // when scrolling, Chrome re-checks which element is under the mouse after every step,
     // which is slow on big pages; covering the page makes that check instant
     var scrollPane;
     function coverPage(covered) {
         if (!covered) {
             scrollPane && scrollPane.remove();
+            return;
+        }
+        if (getBrowserName() !== "Chrome") {
             return;
         }
         if (!scrollPane) {
