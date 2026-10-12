@@ -54,7 +54,7 @@ export default function (omnibar, front) {
     let inputs = [];
     let curInputIdx = 0;
 
-    const llmTools = LLMTools({ pageMarkdown, highlight });
+    const llmTools = LLMTools({ pageMarkdown, highlight, searchAliases });
 
     /*
      * What the user pointed at, when the chat was opened from visual mode or from
@@ -142,6 +142,19 @@ export default function (omnibar, front) {
                 resolve({ count: data ? data.count : 0 });
             });
         });
+    }
+
+    /**
+     * The search engines the user has configured, for `search_web`.
+     *
+     * Read at each call rather than once: `addSearchAlias` registers an engine with
+     * the omnibar whenever the settings are applied, so an engine the user adds while
+     * a chat is open is one the chat can search with.
+     *
+     * @returns {object} alias -> {prompt, url, suggestionURL}.
+     */
+    function searchAliases() {
+        return omnibar.searchAliases();
     }
 
     /*

@@ -86,6 +86,21 @@ function createOmnibar(front, clipboard) {
     }
 
     const searchEngine = SearchEngine(self, front);
+
+    /*
+     * The search engines the user has configured, alias -> {prompt, url,
+     * suggestionURL}, live and read-only.
+     *
+     * `addSearchAlias` registers them with this frame and nowhere else, so this is
+     * the only place anything in the UI frame can learn which engines exist -- the
+     * LLM chat's `search_web` tool searches with them (llmtools.js). A live
+     * reference rather than a copy: an alias may be added or removed while a chat
+     * is open.
+     */
+    self.searchAliases = function() {
+        return searchEngine.aliases;
+    };
+
     self.mappings.add(KeyboardUtils.encodeKeystroke("<Ctrl-i>"), {
         annotation: "Edit selected URL with vim editor, then open",
         feature_group: 8,

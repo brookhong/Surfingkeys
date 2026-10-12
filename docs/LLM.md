@@ -96,8 +96,16 @@ Tools that change something (always confirmed — see below):
 | Tool | What it does |
 | --- | --- |
 | `highlight_on_page` | highlight and scroll to a passage |
+| `search_web` | search with one of your search engines and read the results |
 | `open_url` | open a URL in a background tab |
 | `group_tabs` | group open tabs under a name |
+
+`search_web` is what the model uses instead of guessing — for a fact newer than its training, or a name it does not recognise. It searches with **your own search engines**, the ones behind your `sg`/`og` mappings: `settings.defaultSearchEngine` unless the model picks another by its alias, so nothing goes to an engine you did not configure.
+
+    settings.defaultSearchEngine = "d";
+    addSearchAlias('k', 'kagi', 'https://kagi.com/search?q=');
+
+It opens the results in a background tab, waits for the page and hands it back as a list of links and snippets; following one of them is a separate `fetch_url` or `open_url` + `read_tab` call, which you are asked about on its own. A long results page arrives a chunk at a time, and the model reads on with `read_tab` — occasionally it gets no results in the first reply at all and is pointed at the tab instead, which happens when recycling a tab took most of that reply to explain.
 
 Tabs the chat opens are collected into one tab group named **LLM** per window, and a tab is reused once the model is done reading its page — so comparing several pages doesn't pile up tabs. `settings.llmMaxTabs` caps how many tabs the chat holds at once (default 5); past that, its oldest tab is recycled.
 
@@ -142,11 +150,12 @@ To stop being asked about tools you trust:
 
 Default is `["read_page", "search_page", "list_page_links"]`. Think twice before adding `read_tab` (can expose a tab you're not looking at) or `fetch_url` (sends a model-chosen URL).
 
-Tools that **change** something (`open_url`, `group_tabs`) are always confirmed — `llmAllowedTools` and `a` don't apply to them. Their only standing grant is `s`, which reads "allow any call on `<origin>`" since the arguments (which URL, which tabs) are the decision each time:
+Tools that **change** something (`search_web`, `open_url`, `group_tabs`) are always confirmed — `llmAllowedTools` and `a` don't apply to them. Their only standing grant is `s`, which reads "allow any call on `<origin>`" since the arguments (which words, which URL, which tabs) are the decision each time:
 
-    🔐 group_tabs wants to put 3 tabs: "Inbox", "Pull requests", "CI — build #4821" into a tab group named "work".
-       tabIds: [7,12,19]
-       title: work
+    🔐 search_web wants to search for rust async with google, by opening
+       https://www.google.com/search?q=rust%20async in a new background tab, and send
+       that results page to the LLM provider.
+       query: rust async
        y allow once · s allow any call on https://github.com · n deny
 
 ## Agents: chat with your own system prompt
