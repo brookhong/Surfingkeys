@@ -565,15 +565,43 @@ function filterAncestors(elements) {
     return result;
 }
 
+/**
+ * Merge the fragment rects of an inline element into lines, and return the widest one.
+ *
+ * A fragment is not a line: text broken up by comment nodes puts several fragments on
+ * one line, any of which may be a single character too small to be hintable. Only the
+ * rects sharing a top belong to the same line, which holds here because every fragment
+ * is text in one computed style.
+ *
+ * The widest line is the full-measure line of a wrapped element rather than a short tail
+ * at either end. The element's bounding box cannot stand in for it: when the element
+ * wraps, that box also covers content the element does not, so its center point hits
+ * something else.
+ */
+function widestLineRect(rects) {
+    var lines = [];
+    Array.from(rects).forEach(function(r) {
+        var line = lines.find(function(l) { return Math.abs(l.top - r.top) < 1; });
+        if (line) {
+            line.left = Math.min(line.left, r.left);
+            line.right = Math.max(line.right, r.right);
+            line.bottom = Math.max(line.bottom, r.bottom);
+        } else {
+            lines.push({top: r.top, bottom: r.bottom, left: r.left, right: r.right});
+        }
+    });
+
+    var widest = lines.reduce(function(a, b) {
+        return b.right - b.left > a.right - a.left ? b : a;
+    });
+    return new DOMRect(widest.left, widest.top, widest.right - widest.left, widest.bottom - widest.top);
+}
+
 function getRealRect(elm) {
     if (elm.childElementCount === 0) {
         var r = elm.getClientRects();
-        if (r.length === 3) {
-            // for a clipped A tag
-            return r[1];
-        } else if (r.length === 2) {
-            // for a wrapped A tag
-            return r[0];
+        if (r.length > 1) {
+            return widestLineRect(r);
         } else {
             return elm.getBoundingClientRect();
         }
