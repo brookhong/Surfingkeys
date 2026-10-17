@@ -1633,7 +1633,8 @@ function start(browser) {
                         allFrames: true,
                         id: userScriptId,
                         matches: ['*://*/*', 'file:///*'],
-                        js: [{code}]
+                        js: [{code}],
+                        runAt: "document_start"
                     }], invokeCallback);
                 };
                 if (r.length > 0) {
