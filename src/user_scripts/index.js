@@ -78,9 +78,13 @@ let onEditorWriteFn;
 let userScriptTask = () => {};
 let hintsCreationResolve;
 let _pendingOnEnter = null;
+let runtimeRepeats = 1;
 // Registered from the default export, once the channel scope is known: the name
 // to listen on does not exist before that.
 const userChannel = {
+    runtimeRepeats: (repeats) => {
+        runtimeRepeats = repeats;
+    },
     callUserFunction: (keys, para) => {
         if (userDefinedFunctions.hasOwnProperty(keys)) {
             userDefinedFunctions[keys](para);
@@ -383,6 +387,22 @@ export default (extensionRootUrl, uf) => {
     withChannelScope((scope) => {
         setChannelScope(scope);
         initSKFunctionListener("user", userChannel, true);
+        /**
+         * The content script owns the repeat count. DOM dispatch is synchronous,
+         * so consuming it here reaches the mapping loop before its next iteration;
+         * a separate count would lose the first command and duplicate prefixed ones.
+         */
+        Object.defineProperty(RUNTIME, 'repeats', {
+            configurable: true,
+            enumerable: true,
+            get: () => {
+                dispatchSKEvent('api', ['runtime:getRepeats']);
+                return runtimeRepeats;
+            },
+            set: (repeats) => {
+                dispatchSKEvent('api', ['runtime:setRepeats', repeats]);
+            },
+        });
         dispatchSKEvent("userScriptListening");
     });
 };

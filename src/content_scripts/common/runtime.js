@@ -93,6 +93,7 @@ function RUNTIME(action, args, callback) {
         dispatchSKEvent("front", ['showPopup', '[runtime exception] ' + e]);
     }
 }
+RUNTIME.repeats = 1;
 
 const runtime = (function() {
     const self = {
