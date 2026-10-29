@@ -126,6 +126,8 @@ function createUiHost(browser, onload) {
         lastStateOfPointerEvents = response.pointerEvents;
     };
 
+    uiHost.handleMessage = _onWindowMessage;
+
     uiHost.tryDetach = function() {
         ifr.contentWindow.postMessage({surfingkeys_frontend_data: {
             action: 'destroyFrontend',
