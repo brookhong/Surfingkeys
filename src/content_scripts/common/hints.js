@@ -767,10 +767,10 @@ div.hint-scrollable {
             var link = createElementWithContent('div', hintLabels[i]);
             if (elm.dataset.hint_scrollable) { link.classList.add('hint-scrollable'); }
             let lTop = Math.max(r.top + window.pageYOffset - bof.top, 0);
-            if (lTop === lastTop && Math.abs(left - lastLeft) < 20) {
-                left += 20 - Math.abs(left - lastLeft);
-            } else if (left === lastLeft && Math.abs(lTop - lastTop) < 20) {
-                lTop += 20 - Math.abs(lTop - lastTop);
+            if (lTop === lastTop && Math.abs(left - lastLeft) < 10) {
+                left += 10 - Math.abs(left - lastLeft);
+            } else if (left === lastLeft && Math.abs(lTop - lastTop) < 10) {
+                lTop += 10 - Math.abs(lTop - lastTop);
             }
             link.style.top = lTop + "px";
             link.style.left = left + "px";
