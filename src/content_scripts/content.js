@@ -268,6 +268,13 @@ function start(browser) {
             }
         }).then((modes) => {
             _initContent(modes);
+            if (window === top) {
+                window.addEventListener('message', function(event) {
+                    if (event.data && event.data.surfingkeys_uihost_data) {
+                        modes.front.handleFrameCommand(event);
+                    }
+                }, true);
+            }
             runtime.on('titleChanged', function() {
                 Mode.checkEventListener(() => {
                     modes.front.detach();

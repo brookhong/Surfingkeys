@@ -31,15 +31,32 @@ function createFront(insert, normal, hints, visual, browser) {
         }
     }
 
-    var frontendPromise;
+    var frontendPromise, frontendReady;
 
     function newFrontEnd() {
+        frontendReady = false;
         frontendPromise = new Promise(function (resolve, reject) {
             createUiHost(browser, (res) => {
+                frontendReady = true;
                 resolve(res);
                 applyUserSettings();
             });
         });
+    }
+
+    // The frontend iframe is created only when a command has something to show,
+    // never just to clear the status line or hide a keystroke. While a page holds
+    // the iframe of another extension, Chrome refuses to let extensions debug it
+    // through chrome.debugger, so creating it on every page or tab activation
+    // breaks those extensions there.
+    function needsFrontend(args) {
+        if (args.action === "hideKeystroke" || (args.action === "toggleStatus" && !args.visible)) {
+            return false;
+        }
+        if (args.action === "showStatus") {
+            return [].concat(args.contents).some((c) => c);
+        }
+        return true;
     }
 
     var _callbacks = {};
@@ -55,9 +72,8 @@ function createFront(insert, normal, hints, visual, browser) {
             runtime.postTopMessage({surfingkeys_uihost_data: args});
         } else {
             if (!frontendPromise) {
-                // no need to create frontend iframe if the action is to hide key stroke
-                // and frontend UI must be created after document.body is ready(#2132)
-                if (args.action === "hideKeystroke" || document.body === null) {
+                // frontend UI must be created after document.body is ready(#2132)
+                if (!needsFrontend(args) || document.body === null) {
                     return;
                 }
                 newFrontEnd();
@@ -66,6 +82,29 @@ function createFront(insert, normal, hints, visual, browser) {
                 runtime.postTopMessage({surfingkeys_uihost_data: args});
             });
         }
+    };
+
+    // Commands from child frames are delivered by the uiHost's own message
+    // listener, which exists only once the frontend has loaded. Until then the
+    // top frame must create the frontend and hand those commands over itself, or
+    // they are dropped.
+    self.handleFrameCommand = function(event) {
+        var args = event.data.surfingkeys_uihost_data;
+        if (!args.toFrontend) {
+            return;
+        }
+        if (!frontendPromise) {
+            if (!needsFrontend(args) || document.body === null) {
+                return;
+            }
+            newFrontEnd();
+        } else if (frontendReady) {
+            return;
+        }
+        event.stopImmediatePropagation();
+        frontendPromise.then(function(uiHost) {
+            uiHost.handleMessage(event);
+        });
     };
 
     function applyUICommand(cmd) {
@@ -865,9 +904,6 @@ function createFront(insert, normal, hints, visual, browser) {
         if (uiHostDetaching) {
             clearTimeout(uiHostDetaching);
             uiHostDetaching = undefined;
-        }
-        if (!frontendPromise) {
-            newFrontEnd();
         }
         Mode.showStatus();
     };
