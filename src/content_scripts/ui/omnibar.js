@@ -1378,6 +1378,7 @@ function SearchEngine(omnibar, front) {
         self.prompt = undefined;
         self.url = undefined;
         self.suggestionURL = undefined;
+        self.headers = undefined;
     };
     self.onTabKey = function() {
         var fi = omnibar.resultsDiv.querySelector('li.focused');
@@ -1428,7 +1429,8 @@ function SearchEngine(omnibar, front) {
             const requestUrl = constructSearchURL(self.suggestionURL, encodeURIComponent(omnibar.input.value));
             RUNTIME('request', {
                 method: 'get',
-                url: requestUrl
+                url: requestUrl,
+                headers: self.headers || undefined
             }, function (resp) {
                 front.contentCommand({
                     action: 'getSearchSuggestions',
@@ -1451,7 +1453,8 @@ function SearchEngine(omnibar, front) {
         self.aliases[message.alias] = {
             prompt: '' + message.prompt + separatorHtml,
             url: message.url,
-            suggestionURL: message.suggestionURL
+            suggestionURL: message.suggestionURL,
+            headers: message.options?.headers
         };
         const searchEngineIconStorageKey = `surfingkeys.searchEngineIcon.${message.prompt}`;
         const searchEngineIcon = localStorage.getItem(searchEngineIconStorageKey);
