@@ -124,9 +124,9 @@ const userChannel = {
     onEditorWrite: (data) => {
         onEditorWriteFn(data);
     },
-    onHintClicked: (element, shiftKey) => {
+    onHintClicked: (element, shiftKey, altKey) => {
         if (typeof(hintsFunction) === 'function') {
-            hintsFunction(element, shiftKey);
+            hintsFunction(element, shiftKey, altKey);
         }
     },
     onHintCreated: (found) => {

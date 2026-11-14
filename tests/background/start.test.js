@@ -1995,6 +1995,112 @@ describe('start', () => {
                 const {sendResponse} = dispatch({action: 'getSettings', needResponse: true}, senderFor(12));
                 expect(sendResponse.mock.calls[0][0].settings.isSplitViewAvailable).toBe(false);
             });
+
+            /*
+             * Alt-Enter on a tab result: an OPEN tab joins the sender's in a split.
+             * tabs.createSplit only takes adjacent tabs in one window with the same
+             * pinned state and group, neither already split, so the tab is brought
+             * there first.
+             */
+            describe('with an open tab', () => {
+                const tab = (id, props) => ({id, index: 0, windowId: 1, pinned: false, groupId: -1, splitViewId: -1, ...props});
+                // The sender's tab is 12; `others` are the tabs it may be split with.
+                const withTabs = (base, ...others) => {
+                    const ctx = withSplitView();
+                    const tabs = [base, ...others];
+                    ctx.chrome.tabs.get = jest.fn((id, cb) => cb(tabs.find((t) => t.id === id)));
+                    ctx.chrome.tabs.unsplit = jest.fn((id, cb) => cb && cb());
+                    return ctx;
+                };
+                const split = async (dispatch, tabId, active = true) => {
+                    dispatch({action: 'splitWithTab', tabId, active}, senderFor(12));
+                    await flushPromises();
+                };
+
+                it('splits a neighbouring tab without moving it, then focuses it', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 2}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.move).not.toHaveBeenCalled();
+                    expect(chrome.tabs.createSplit).toHaveBeenCalledWith([12, 13], expect.any(Function));
+                    expect(chrome.tabs.update).toHaveBeenCalledWith(13, {active: true}, expect.any(Function));
+                });
+
+                it('leaves the focus on the current tab when not active', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 2}));
+                    await split(dispatch, 13, false);
+                    expect(chrome.tabs.createSplit).toHaveBeenCalled();
+                    expect(chrome.tabs.update).not.toHaveBeenCalled();
+                });
+
+                it('moves a tab from further left to just right of the current one', async () => {
+                    // Moved tabs end up AT the index given, so the current tab's own.
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 3}), tab(13, {index: 0}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.move).toHaveBeenCalledWith(13, {windowId: 1, index: 3}, expect.any(Function));
+                });
+
+                it('moves a tab from further right to just right of the current one', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 5}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.move).toHaveBeenCalledWith(13, {windowId: 1, index: 2}, expect.any(Function));
+                });
+
+                it('brings a tab over from another window', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(21, {index: 2, windowId: 2}));
+                    await split(dispatch, 21);
+                    expect(chrome.tabs.move).toHaveBeenCalledWith(21, {windowId: 1, index: 2}, expect.any(Function));
+                });
+
+                it('takes a tab out of its own split first', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 2, splitViewId: 4}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.unsplit).toHaveBeenCalledWith(4, expect.any(Function));
+                    expect(chrome.tabs.createSplit).toHaveBeenCalled();
+                });
+
+                it('pins or unpins the tab like the current one', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 2, pinned: true}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.update).toHaveBeenCalledWith(13, {pinned: false}, expect.any(Function));
+                });
+
+                it("puts the tab in the current one's group", async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1, groupId: 8}), tab(13, {index: 2}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.group).toHaveBeenCalledWith({groupId: 8, tabIds: 13}, expect.any(Function));
+                });
+
+                it('takes the tab out of a group the current one is not in', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}), tab(13, {index: 2, groupId: 8}));
+                    await split(dispatch, 13);
+                    expect(chrome.tabs.ungroup).toHaveBeenCalledWith(13, expect.any(Function));
+                });
+
+                it('reports a refusal from the browser', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1, splitViewId: 3}), tab(13, {index: 2}));
+                    chrome.tabs.createSplit.mockImplementation((ids, cb) => {
+                        chrome.runtime.lastError = {message: 'Tab is already in a split view.'};
+                        cb();
+                        chrome.runtime.lastError = undefined;
+                    });
+                    await split(dispatch, 13);
+                    expect(bannered(chrome)).toEqual([expect.stringContaining('already in a split view')]);
+                });
+
+                it('says so for the current tab itself', async () => {
+                    const {chrome, dispatch} = withTabs(tab(12, {index: 1}));
+                    await split(dispatch, 12);
+                    expect(chrome.tabs.createSplit).not.toHaveBeenCalled();
+                    expect(bannered(chrome)).toEqual([expect.stringContaining('already the current tab')]);
+                });
+
+                it('says so on a browser that cannot split tabs', async () => {
+                    const {chrome, dispatch} = bootstrap();
+                    dispatch({action: 'splitWithTab', tabId: 13, active: true}, senderFor(12));
+                    await flushPromises();
+                    expect(bannered(chrome)).toEqual([expect.stringContaining('not supported')]);
+                });
+            });
         });
 
         /*

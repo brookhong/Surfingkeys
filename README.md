@@ -252,6 +252,7 @@ The omnibar provides various functions that need user input, for example,
 * `Enter` to open selected item and close omnibar.
 * `Ctrl-Enter` to open selected item, but keep omnibar open for more items to be opened.
 * `Shift-Enter` to open selected item in current tab and close omnibar. If you'd like to open in current tab by default, please use `go`.
+* `Alt-Enter` to open selected URL in a split view beside the current tab, like `sf` does for a link on the page. On an open tab, it moves that tab next to the current one and splits the two.
 * `Tab` to forward cycle through the candidates.
 * `Shift-Tab` to backward cycle through the candidates.
 * `Ctrl-.` to show results of next page

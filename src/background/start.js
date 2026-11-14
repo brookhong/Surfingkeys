@@ -1554,6 +1554,88 @@ function start(browser) {
         }
     };
     /*
+     * Put an OPEN tab in a split view beside the sender's: Alt-Enter on a tab result
+     * in the omnibar.
+     *
+     * tabs.createSplit pairs two existing tabs, but only adjacent ones in the same
+     * window with the same pinned state and group, neither of them already split. So
+     * the tab is brought into that state first: out of its own split, pinned like the
+     * sender's, moved next to it and into its group. Whether the SENDER may be split
+     * again is the browser's to say, as in openSplitView, and every failure is a
+     * banner for the same reason.
+     */
+    self.splitWithTab = function(message, sender, sendResponse) {
+        if (!sender.tab) {
+            return;
+        }
+        const complain = (text) => sendTabMessage(sender.tab.id, 0, {
+            subject: "showBanner",
+            message: text
+        });
+        if (typeof message.tabId !== "number") {
+            return;
+        }
+        if (message.tabId === sender.tab.id) {
+            complain("This is already the current tab.");
+            return;
+        }
+        if (!isSplitViewAvailable()) {
+            complain("Split view is not supported by this browser.");
+            return;
+        }
+        splitWithExistingTab(sender.tab.id, message.tabId, !!message.active).catch((e) => {
+            complain(`Could not open a split view: ${e.message}`);
+        });
+    };
+    // A chrome.* call made through its callback, as a promise that rejects on lastError.
+    function chromeCall(fn) {
+        return new Promise((resolve, reject) => {
+            fn((result) => {
+                const err = chrome.runtime.lastError;
+                err ? reject(new Error(err.message)) : resolve(result);
+            });
+        });
+    }
+    async function splitWithExistingTab(baseId, tabId, active) {
+        const getTab = (id) => chromeCall((cb) => chrome.tabs.get(id, cb));
+        // -1 is both tabs.SPLIT_VIEW_ID_NONE and tabGroups.TAB_GROUP_ID_NONE.
+        const none = (id) => id === undefined || id === -1;
+        let base = await getTab(baseId);
+        let target = await getTab(tabId);
+        if (!none(target.splitViewId)) {
+            await chromeCall((cb) => chrome.tabs.unsplit(target.splitViewId, cb));
+        }
+        if (target.pinned !== base.pinned) {
+            await chromeCall((cb) => chrome.tabs.update(tabId, {pinned: base.pinned}, cb));
+        }
+        // Unsplitting and pinning can move tabs, so positions are read afresh.
+        base = await getTab(baseId);
+        target = await getTab(tabId);
+        const sameWindow = target.windowId === base.windowId;
+        if (!sameWindow || Math.abs(target.index - base.index) !== 1) {
+            // A moved tab ends up AT the index given, so one left of the sender's
+            // lands right of it at the sender's own index.
+            const leftOfBase = sameWindow && target.index < base.index;
+            await chromeCall((cb) => chrome.tabs.move(tabId, {
+                windowId: base.windowId,
+                index: leftOfBase ? base.index : base.index + 1
+            }, cb));
+            base = await getTab(baseId);
+            target = await getTab(tabId);
+        }
+        if (target.groupId !== base.groupId) {
+            if (none(base.groupId)) {
+                await chromeCall((cb) => chrome.tabs.ungroup(tabId, cb));
+            } else {
+                await chromeCall((cb) => chrome.tabs.group({groupId: base.groupId, tabIds: tabId}, cb));
+            }
+        }
+        await chromeCall((cb) => chrome.tabs.createSplit([baseId, tabId], cb));
+        if (active) {
+            await chromeCall((cb) => chrome.tabs.update(tabId, {active: true}, cb));
+        }
+    }
+    /*
      * Point ONE named tab at a URL, leaving the focus where it is.
      *
      * `openLink` navigates the tab the caller sits in, or opens a new one; only the

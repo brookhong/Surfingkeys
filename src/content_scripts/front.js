@@ -379,6 +379,8 @@ function createFront(insert, normal, hints, visual, browser) {
         if (_userURLsHasCustomOnEnter) {
             _userURLsHasCustomOnEnter = false;
             dispatchSKEvent('user', ['userURLs_onEnter', message.item, message.ctrlKey, message.shiftKey]);
+        } else if (message.splitView) {
+            RUNTIME('openSplitView', { url: message.item.url, active: !message.ctrlKey });
         } else {
             RUNTIME('openLink', {
                 tab: { tabbed: message.tabbed, active: !message.ctrlKey },

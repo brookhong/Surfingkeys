@@ -311,6 +311,15 @@ div.hint-scrollable {
                 }
             } else {
                 var key = event.sk_keyName;
+                if (event.altKey) {
+                    // Alt turns the key name into the encoded keystroke <Alt-f>, which matches
+                    // no hint character; match on the bare letter and remember Alt like Shift
+                    const bare = KeyboardUtils.decodeKeystroke(key).match(/^<Alt-(.)>$/);
+                    if (bare) {
+                        key = bare[1];
+                        altKey = true;
+                    }
+                }
                 if (isCapital(key)) {
                     shiftKey = true;
                 }
@@ -442,6 +451,7 @@ div.hint-scrollable {
         },
         holder = createElementWithContent('section', '', {style: "display: block; opacity: 1;"}),
         shiftKey = false,
+        altKey = false,
         _containerCookieStoreId = null;
     var _lastCreateAttrs = {},
         _onHintKey = self.dispatchMouseClick,
@@ -479,14 +489,14 @@ div.hint-scrollable {
                     _onHintKey(elm);
                 }
             } else {
-                // dispatch (element, shiftKey); the node can't cross scopes, so it rides as
+                // dispatch (element, shiftKey, altKey); the node can't cross scopes, so it rides as
                 // the event target via the "__EVENT_TARGET__" placeholder
                 if (elm.constructor.name === "Array") {
                     const target = elm[0];
                     elm[0] = "__EVENT_TARGET__";
-                    dispatchSKEvent('user', ["onHintClicked", elm, shiftKey], target);
+                    dispatchSKEvent('user', ["onHintClicked", elm, shiftKey, altKey], target);
                 } else {
-                    dispatchSKEvent('user', ["onHintClicked", "__EVENT_TARGET__", shiftKey], elm);
+                    dispatchSKEvent('user', ["onHintClicked", "__EVENT_TARGET__", shiftKey, altKey], elm);
                 }
             }
             if (behaviours.multipleHits) {
@@ -543,6 +553,7 @@ div.hint-scrollable {
         prefix = "";
         textFilter = "";
         shiftKey = false;
+        altKey = false;
         self.exit();
     }
 
@@ -1009,7 +1020,7 @@ div.hint-scrollable {
      * Create hints for elements to click.
      *
      * @param cssSelector `string or array of HTMLElement`, if `links` is a string, it will be used as css selector.
-     * @param {function} onHintKey a callback function on hint keys pressed.
+     * @param {function} onHintKey a callback function on hint keys pressed, called with `(element, shiftKey, altKey)`: `shiftKey` is true if any hint key was typed with Shift, `altKey` if any was typed with Alt. The default click ignores `altKey`.
      * @param {object} [attrs=null] `active`: whether to activate the new tab when a link is opened, `tabbed`: whether to open a link in a new tab, `multipleHits`: whether to stay in hints mode after one hint is triggered, `statusLine`: the text to show on the status bar while the hints are open.
      * @name Hints.create
      * @returns {Promise} which will be resolved how many hints are created.
