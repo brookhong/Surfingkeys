@@ -413,6 +413,12 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
     }
 
     initSKFunctionListener("api", {
+        "runtime:getRepeats": () => {
+            dispatchSKEvent('user', ['runtimeRepeats', RUNTIME.repeats]);
+        },
+        "runtime:setRepeats": (repeats) => {
+            RUNTIME.repeats = repeats;
+        },
         addSearchAlias,
         imap,
         map,
