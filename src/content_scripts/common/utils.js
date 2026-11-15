@@ -696,19 +696,27 @@ function getTextNodes(root, pattern, flag) {
     return nodes;
 }
 
+var _textPosRange = null;
 function getTextNodePos(node, offset, length) {
-    var selection = document.getSelection();
-    selection.setBaseAndExtent(node, offset, node, length ? (offset + length) : node.data.length);
-    var br = selection.rangeCount > 0 ? selection.getRangeAt(0).getClientRects()[0] : null;
     var pos = {
         left: -1,
         top: -1
     };
-    if (br && br.height > 0 && br.width > 0) {
-        pos.left = br.left;
-        pos.top = br.top;
-        pos.width = br.width;
-        pos.height = br.height;
+    try {
+        if (!_textPosRange) {
+            _textPosRange = document.createRange();
+        }
+        _textPosRange.setStart(node, offset);
+        _textPosRange.setEnd(node, length ? (offset + length) : (node.data ? node.data.length : offset));
+        var br = _textPosRange.getClientRects()[0];
+        if (br && br.height > 0 && br.width > 0) {
+            pos.left = br.left;
+            pos.top = br.top;
+            pos.width = br.width;
+            pos.height = br.height;
+        }
+    } catch (e) {
+        return pos;
     }
     return pos;
 }
