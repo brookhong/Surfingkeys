@@ -176,7 +176,7 @@ const runtime = (function() {
             tabIndicesSeparator: "|",
             tabsThreshold: 100,
             verticalTabs: true,
-            textAnchorPat: /(?:^[\s\r\n]*|(?<=[.!?]\s+|[\r\n]\s*))(?:[-*•]|\d+\.)?\s*\S+/g,
+            textAnchorPat: /(?:^[\s\r\n]*|(?<=(?<!\b\d+)[.!?]\s+|[\r\n]\s*))(?:[-*•]|\d+\.)?\s*\S+/g,
             wordAnchorPat: /\b\S{3,}/g,
             ignoredFrameHosts: ["https://tpc.googlesyndication.com"],
             scrollFriction: 0,

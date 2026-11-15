@@ -17,10 +17,12 @@ div.surfingkeys_selection_mark {
     background-color: #b4d7fe;
     color: #000;
     opacity: 0.7;
+    pointer-events: none;
 }
 div.surfingkeys_cursor {
     background-color: #0642CE;
     color: #f0f8ff;
+    pointer-events: none;
 }
 div.surfingkeys_cursor:empty {
     padding: 0px 2px;

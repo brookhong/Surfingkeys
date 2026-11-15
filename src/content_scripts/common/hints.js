@@ -890,13 +890,13 @@ div.hint-scrollable {
         function isSentenceStart(node, offset) {
             if (offset > 0) {
                 var prefix = node.data.slice(0, offset);
-                return /(?:^[\s\r\n]*|[.!?:]\s+|[\r\n]\s*)$/.test(prefix);
+                return /(?:^[\s\r\n]*|(?<!\b\d+)[.!?:]\s+|[\r\n]\s*)(?:[-*•]|\d+\.)?\s*$/.test(prefix);
             }
             var prev = node.previousSibling;
             while (prev) {
                 var text = prev.textContent.trim();
                 if (text.length > 0) {
-                    return /[.!?:]$/.test(text);
+                    return /(?:(?<!\b\d+)[.!?:]|[\r\n])$/.test(text);
                 }
                 prev = prev.previousSibling;
             }
@@ -906,7 +906,7 @@ div.hint-scrollable {
                 while (sibling) {
                     var stext = sibling.textContent.trim();
                     if (stext.length > 0) {
-                        return /[.!?:]$/.test(stext);
+                        return /(?:(?<!\b\d+)[.!?:]|[\r\n])$/.test(stext);
                     }
                     sibling = sibling.previousSibling;
                 }
@@ -925,8 +925,11 @@ div.hint-scrollable {
             for (var i = 0, length = elements.length; i < length; i++) {
                 var e = elements[i], match;
                 while ((match = rxp.exec(e.data)) != null) {
-                    if (isSentenceStart(e, match.index)) {
-                        positions.push([e, match.index, match[0]]);
+                    var wordStartOffset = match[0].search(/\S/);
+                    var actualIndex = match.index + (wordStartOffset === -1 ? 0 : wordStartOffset);
+                    var matchedText = wordStartOffset === -1 ? match[0] : match[0].slice(wordStartOffset);
+                    if (isSentenceStart(e, actualIndex)) {
+                        positions.push([e, actualIndex, matchedText]);
                     }
                 }
             }

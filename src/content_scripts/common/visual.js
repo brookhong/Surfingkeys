@@ -63,12 +63,17 @@ function createVisual(clipboard, hints) {
         }
     });
     self.addEventListener('scroll', function(event) {
+        if (state > 0) {
+            self.showCursor();
+        }
         matches.forEach(function(m) {
             const r = getTextRect(m[0], m[1])[0];
-            m[2].forEach((mi) => {
-                mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
-                mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
-            });
+            if (r) {
+                m[2].forEach((mi) => {
+                    mi.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
+                    mi.style.top = document.scrollingElement.scrollTop + r.top + 'px';
+                });
+            }
         });
     });
 
@@ -110,11 +115,14 @@ function createVisual(clipboard, hints) {
             selectionMark_.forEach((m) => {
                 m.remove();
             });
+            selectionMark_ = null;
         }
     };
     self.addEventListener('selectionchange', function(event) {
         clearSelectionMark();
-        selectionMark_ = createSelectionMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
+        if (state === 2 && selection.anchorNode && selection.focusNode) {
+            selectionMark_ = createSelectionMark(selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset);
+        }
     });
 
     self.mappings = new Trie();
@@ -472,18 +480,16 @@ function createVisual(clipboard, hints) {
     };
 
     self.showCursor = function () {
-        if (selection.focusNode && (selection.focusNode.offsetHeight > 0 || selection.focusNode.parentNode.offsetHeight > 0)) {
-            // https://developer.mozilla.org/en-US/docs/Web/API/Selection
-            // If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
-            let r = locateFocusNode(selection)
+        if (selection.focusNode) {
+            let r = locateFocusNode(selection);
             if (r) {
                 cursor.style.position = "fixed";
                 cursor.style.left = r.left + 'px';
                 cursor.style.top = r.top + 'px';
-                cursor.style.height = r.height + 'px';
+                cursor.style.height = (r.height > 0 ? r.height : 18) + 'px';
+                cursor.style.pointerEvents = "none";
+                document.body.appendChild(cursor);
             }
-
-            document.body.appendChild(cursor);
         }
     };
     self.getCursorPixelPos = function () {
@@ -514,11 +520,15 @@ function createVisual(clipboard, hints) {
     }
 
     const markHolder_ = document.createElement("div");
+    markHolder_.style.position = "absolute";
+    markHolder_.style.top = "0px";
+    markHolder_.style.left = "0px";
+    markHolder_.style.pointerEvents = "none";
+    markHolder_.style.zIndex = 2147483299;
     function createMark(className, node1, offset1, node2, offset2) {
         let rects = getTextRect(node1, offset1, node2, offset2);
-        if (rects.length > 100) {
-            // avoid hangs due to huge amounts of selection
-            return []
+        if (rects.length > 300) {
+            rects = Array.prototype.slice.call(rects, 0, 300);
         }
         const marks = Array.from(rects).map((r) => {
             if (r.width > 0 && r.height > 0) {
@@ -526,6 +536,7 @@ function createVisual(clipboard, hints) {
                 mark.className = className;
                 mark.style.position = "absolute";
                 mark.style.zIndex = 2147483299;
+                mark.style.pointerEvents = "none";
                 mark.style.left = document.scrollingElement.scrollLeft + r.left + 'px';
                 mark.style.top = document.scrollingElement.scrollTop + r.top + 'px';
                 mark.style.width = r.width + 'px';
@@ -635,14 +646,10 @@ function createVisual(clipboard, hints) {
                         selection.setPosition(element[0], element[1]);
                         self.enter();
                         if (ex === "z") {
-                            if (element[1] === 0) {
-                                selection.extend(element[0], element[0].textContent.length);
-                            } else {
-                                var rest = element[0].data.slice(element[1]);
-                                var sentenceEnd = rest.search(/[.!?](?:\s|$)/);
-                                var endPos = sentenceEnd !== -1 ? element[1] + sentenceEnd + 1 : element[0].textContent.length;
-                                selection.extend(element[0], endPos);
-                            }
+                            var rest = element[0].data.slice(element[1]);
+                            var sentenceEnd = rest.search(/(?<!\b\d+)[.!?](?:\s|$)/);
+                            var endPos = sentenceEnd !== -1 ? element[1] + sentenceEnd + 1 : element[0].textContent.length;
+                            selection.extend(element[0], endPos);
                             _incState();
                         }
                         self.showCursor();

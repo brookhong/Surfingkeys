@@ -133,11 +133,8 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         visual.toggle("z");
     });
     function getTargetText(element) {
-        if (element[1] === 0) {
-            return element[0].data.trim();
-        }
         var rest = element[0].data.slice(element[1]).trim();
-        var sentenceEnd = rest.search(/[.!?](?:\s|$)/);
+        var sentenceEnd = rest.search(/(?<!\b\d+)[.!?](?:\s|$)/);
         return sentenceEnd !== -1 ? rest.slice(0, sentenceEnd + 1).trim() : rest;
     }
 
