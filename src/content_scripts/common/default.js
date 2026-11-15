@@ -132,15 +132,24 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     mapkey('zv', '#9Enter visual mode, and select whole element', function() {
         visual.toggle("z");
     });
+    function getTargetText(element) {
+        if (element[1] === 0) {
+            return element[0].data.trim();
+        }
+        var rest = element[0].data.slice(element[1]).trim();
+        var sentenceEnd = rest.search(/[.!?](?:\s|$)/);
+        return sentenceEnd !== -1 ? rest.slice(0, sentenceEnd + 1).trim() : rest;
+    }
+
     mapkey('yv', '#7Yank text of an element', function() {
         hints.create(runtime.conf.textAnchorPat, function (element) {
-            clipboard.write(element[1] === 0 ? element[0].data.trim() : element[2].trim());
+            clipboard.write(getTargetText(element));
         });
     });
     mapkey('ymv', '#7Yank text of multiple elements', function() {
         var textToYank = [];
         hints.create(runtime.conf.textAnchorPat, function (element) {
-            textToYank.push(element[1] === 0 ? element[0].data.trim() : element[2].trim());
+            textToYank.push(getTargetText(element));
             clipboard.write(textToYank.join('\n'));
         }, { multipleHits: true });
     });
@@ -418,7 +427,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     }
 
     mapkey("cq", '#7Query word with Hints', function() {
-        hints.create(runtime.conf.textAnchorPat, function (element) {
+        hints.create(runtime.conf.wordAnchorPat || /\b\S{3,}/g, function (element) {
             var word = element[2].trim().replace(/[^A-z].*$/, "");
             var b = getTextNodePos(element[0], element[1], element[2].length);
             front.performInlineQuery(word, {

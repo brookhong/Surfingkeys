@@ -638,7 +638,10 @@ function createVisual(clipboard, hints) {
                             if (element[1] === 0) {
                                 selection.extend(element[0], element[0].textContent.length);
                             } else {
-                                selection.extend(element[0], element[1] + element[2].length);
+                                var rest = element[0].data.slice(element[1]);
+                                var sentenceEnd = rest.search(/[.!?](?:\s|$)/);
+                                var endPos = sentenceEnd !== -1 ? element[1] + sentenceEnd + 1 : element[0].textContent.length;
+                                selection.extend(element[0], endPos);
                             }
                             _incState();
                         }

@@ -65,6 +65,7 @@ function applyRuntimeConf(normal) {
     ensureRegex("nextLinkRegex");
     ensureRegex("clickablePat");
     ensureRegex("textAnchorPat");
+    ensureRegex("wordAnchorPat");
     RUNTIME('getState', {
         blocklistPattern: runtime.conf.blocklistPattern ? runtime.conf.blocklistPattern : undefined,
         lurkingPattern: runtime.conf.lurkingPattern ? runtime.conf.lurkingPattern : undefined

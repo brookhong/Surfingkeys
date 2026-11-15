@@ -887,6 +887,34 @@ div.hint-scrollable {
             return bb;
         });
 
+        function isSentenceStart(node, offset) {
+            if (offset > 0) {
+                var prefix = node.data.slice(0, offset);
+                return /(?:^[\s\r\n]*|[.!?:]\s+|[\r\n]\s*)$/.test(prefix);
+            }
+            var prev = node.previousSibling;
+            while (prev) {
+                var text = prev.textContent.trim();
+                if (text.length > 0) {
+                    return /[.!?:]$/.test(text);
+                }
+                prev = prev.previousSibling;
+            }
+            var p = node.parentElement;
+            while (p && window.getComputedStyle(p).display.startsWith("inline")) {
+                var sibling = p.previousSibling;
+                while (sibling) {
+                    var stext = sibling.textContent.trim();
+                    if (stext.length > 0) {
+                        return /[.!?:]$/.test(stext);
+                    }
+                    sibling = sibling.previousSibling;
+                }
+                p = p.parentElement;
+            }
+            return true;
+        }
+
         var positions;
         if (rxp.flags.indexOf('g') === -1) {
             positions = elements.map(function(e) {
@@ -897,7 +925,9 @@ div.hint-scrollable {
             for (var i = 0, length = elements.length; i < length; i++) {
                 var e = elements[i], match;
                 while ((match = rxp.exec(e.data)) != null) {
-                    positions.push([e, match.index, match[0]]);
+                    if (isSentenceStart(e, match.index)) {
+                        positions.push([e, match.index, match[0]]);
+                    }
                 }
             }
         }
@@ -905,6 +935,9 @@ div.hint-scrollable {
         function isClippedByAncestors(node, top, left) {
             var p = node.parentElement;
             while (p && p !== document.body && p !== document.documentElement) {
+                if (p.tagName === 'DETAILS' && !p.open && !(node.parentElement && node.parentElement.closest('summary'))) {
+                    return true;
+                }
                 var style = window.getComputedStyle(p);
                 var oy = style.overflowY, ox = style.overflowX;
                 if (oy === 'hidden' || oy === 'auto' || oy === 'scroll' ||
@@ -943,13 +976,13 @@ div.hint-scrollable {
                 continue;
             }
             var lineKey = Math.round(pos.top / 18);
-            if ((lineCounts[lineKey] || 0) >= 2) {
+            if ((lineCounts[lineKey] || 0) >= 3) {
                 continue;
             }
             var collides = false;
             for (var j = 0; j < occupied.length; j++) {
                 var o = occupied[j];
-                if (Math.abs(pos.top - o.top) < 14 && Math.abs(pos.left - o.left) < 100) {
+                if (Math.abs(pos.top - o.top) < 14 && Math.abs(pos.left - o.left) < 32) {
                     collides = true;
                     break;
                 }
