@@ -696,19 +696,27 @@ function getTextNodes(root, pattern, flag) {
     return nodes;
 }
 
+var _textPosRange = null;
 function getTextNodePos(node, offset, length) {
-    var selection = document.getSelection();
-    selection.setBaseAndExtent(node, offset, node, length ? (offset + length) : node.data.length);
-    var br = selection.rangeCount > 0 ? selection.getRangeAt(0).getClientRects()[0] : null;
     var pos = {
         left: -1,
         top: -1
     };
-    if (br && br.height > 0 && br.width > 0) {
-        pos.left = br.left;
-        pos.top = br.top;
-        pos.width = br.width;
-        pos.height = br.height;
+    try {
+        if (!_textPosRange) {
+            _textPosRange = document.createRange();
+        }
+        _textPosRange.setStart(node, offset);
+        _textPosRange.setEnd(node, length ? (offset + length) : (node.data ? node.data.length : offset));
+        var br = _textPosRange.getClientRects()[0];
+        if (br && br.height > 0 && br.width > 0) {
+            pos.left = br.left;
+            pos.top = br.top;
+            pos.width = br.width;
+            pos.height = br.height;
+        }
+    } catch (e) {
+        return pos;
     }
     return pos;
 }
@@ -717,31 +725,84 @@ var _focusedRange = document.createRange();
 function getTextRect() {
     let rects = [];
     try {
-        let start = arguments[1];
-        while (rects.length === 0 && start >= 0) {
-            _focusedRange.setStart(arguments[0], start);
-            if (arguments.length > 3) {
-                _focusedRange.setEnd(arguments[2], arguments[3]);
-            } else if (arguments.length > 2) {
-                _focusedRange.setEnd(arguments[0], arguments[2]);
-            } else {
-                _focusedRange.setEnd(arguments[0], arguments[1]);
+        if (arguments.length > 3) {
+            let node1 = arguments[0], offset1 = arguments[1];
+            let node2 = arguments[2], offset2 = arguments[3];
+            if (!node1 || !node2 || (node1 === node2 && offset1 === offset2)) {
+                return [];
             }
-            rects = _focusedRange.getClientRects();
-            start --;
+            let startNode = node1, startOffset = offset1;
+            let endNode = node2, endOffset = offset2;
+            if (node1 === node2) {
+                if (offset1 > offset2) {
+                    startOffset = offset2;
+                    endOffset = offset1;
+                }
+            } else {
+                let pos = node1.compareDocumentPosition(node2);
+                if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
+                    startNode = node2;
+                    startOffset = offset2;
+                    endNode = node1;
+                    endOffset = offset1;
+                }
+            }
+            let maxStart = startNode.nodeType === Node.TEXT_NODE ? startNode.data.length : startNode.childNodes.length;
+            let maxEnd = endNode.nodeType === Node.TEXT_NODE ? endNode.data.length : endNode.childNodes.length;
+            startOffset = Math.max(0, Math.min(startOffset, maxStart));
+            endOffset = Math.max(0, Math.min(endOffset, maxEnd));
+
+            _focusedRange.setStart(startNode, startOffset);
+            _focusedRange.setEnd(endNode, endOffset);
+            return _focusedRange.getClientRects();
+        } else if (arguments.length > 2) {
+            let node = arguments[0];
+            if (!node) return [];
+            let maxLen = node.nodeType === Node.TEXT_NODE ? node.data.length : node.childNodes.length;
+            let start = Math.max(0, Math.min(arguments[1], maxLen));
+            let end = Math.max(0, Math.min(arguments[2], maxLen));
+            if (start > end) {
+                let tmp = start; start = end; end = tmp;
+            }
+            _focusedRange.setStart(node, start);
+            _focusedRange.setEnd(node, end);
+            return _focusedRange.getClientRects();
+        } else {
+            let node = arguments[0];
+            if (!node) return [];
+            let offset = arguments[1] || 0;
+            let maxLen = node.nodeType === Node.TEXT_NODE ? node.data.length : node.childNodes.length;
+            offset = Math.max(0, Math.min(offset, maxLen));
+            let start = offset;
+            while (rects.length === 0 && start >= 0) {
+                _focusedRange.setStart(node, start);
+                _focusedRange.setEnd(node, offset);
+                rects = _focusedRange.getClientRects();
+                start--;
+            }
+            if (rects.length === 0 && node.nodeType === Node.TEXT_NODE && node.data && offset < node.data.length) {
+                _focusedRange.setStart(node, offset);
+                _focusedRange.setEnd(node, offset + 1);
+                rects = _focusedRange.getClientRects();
+            }
+            return rects;
         }
     } catch (e) {
         return [];
     }
-    return rects;
 }
 
 function locateFocusNode(selection) {
-    let se = selection.focusNode.parentElement
-    scrollIntoViewIfNeeded(se, true);
+    if (!selection || !selection.focusNode) return null;
+    let se = selection.focusNode.nodeType === Node.ELEMENT_NODE
+        ? selection.focusNode
+        : selection.focusNode.parentElement;
+    if (se) {
+        scrollIntoViewIfNeeded(se, true);
+    }
     var r = getTextRect(selection.focusNode, selection.focusOffset)[0];
-    if (!r) {
-        r = selection.focusNode.getBoundingClientRect();
+    if (!r && se) {
+        r = se.getBoundingClientRect();
     }
     if (r) {
         r = {
@@ -750,13 +811,15 @@ function locateFocusNode(selection) {
             width: r.width,
             height: r.height
         };
-        if (r.left < 0 || r.left >= window.innerWidth) {
-            se.scrollLeft += r.left - window.innerWidth / 2;
-            r.left = window.innerWidth / 2;
-        }
-        if (r.top < 0 || r.top >= window.innerHeight) {
-            se.scrollTop += r.top - window.innerHeight / 2;
-            r.top = window.innerHeight / 2;
+        if (se) {
+            if (r.left < 0 || r.left >= window.innerWidth) {
+                se.scrollLeft += r.left - window.innerWidth / 2;
+                r.left = window.innerWidth / 2;
+            }
+            if (r.top < 0 || r.top >= window.innerHeight) {
+                se.scrollTop += r.top - window.innerHeight / 2;
+                r.top = window.innerHeight / 2;
+            }
         }
         return r;
     }

@@ -887,6 +887,34 @@ div.hint-scrollable {
             return bb;
         });
 
+        function isSentenceStart(node, offset) {
+            if (offset > 0) {
+                var prefix = node.data.slice(0, offset);
+                return /(?:^[\s\r\n]*|(?<!\b\d+)[.!?:]\s+|[\r\n]\s*)(?:[-*•]|\d+\.)?\s*$/.test(prefix);
+            }
+            var prev = node.previousSibling;
+            while (prev) {
+                var text = prev.textContent.trim();
+                if (text.length > 0) {
+                    return /(?:(?<!\b\d+)[.!?:]|[\r\n])$/.test(text);
+                }
+                prev = prev.previousSibling;
+            }
+            var p = node.parentElement;
+            while (p && window.getComputedStyle(p).display.startsWith("inline")) {
+                var sibling = p.previousSibling;
+                while (sibling) {
+                    var stext = sibling.textContent.trim();
+                    if (stext.length > 0) {
+                        return /(?:(?<!\b\d+)[.!?:]|[\r\n])$/.test(stext);
+                    }
+                    sibling = sibling.previousSibling;
+                }
+                p = p.parentElement;
+            }
+            return true;
+        }
+
         var positions;
         if (rxp.flags.indexOf('g') === -1) {
             positions = elements.map(function(e) {
@@ -897,40 +925,91 @@ div.hint-scrollable {
             for (var i = 0, length = elements.length; i < length; i++) {
                 var e = elements[i], match;
                 while ((match = rxp.exec(e.data)) != null) {
-                    positions.push([e, match.index, match[0]]);
+                    var wordStartOffset = match[0].search(/\S/);
+                    var actualIndex = match.index + (wordStartOffset === -1 ? 0 : wordStartOffset);
+                    var matchedText = wordStartOffset === -1 ? match[0] : match[0].slice(wordStartOffset);
+                    if (isSentenceStart(e, actualIndex)) {
+                        positions.push([e, actualIndex, matchedText]);
+                    }
                 }
             }
         }
 
-        elements = positions.map(function(e) {
-            var pos = getTextNodePos(e[0], e[1]);
-            var caretViewport = [0, 0, window.innerHeight, window.innerWidth];
-            if (runtime.conf.caretViewport && runtime.conf.caretViewport.length === 4) {
-                caretViewport = runtime.conf.caretViewport;
+        function isClippedByAncestors(node, top, left) {
+            var p = node.parentElement;
+            while (p && p !== document.body && p !== document.documentElement) {
+                if (p.tagName === 'DETAILS' && !p.open && !(node.parentElement && node.parentElement.closest('summary'))) {
+                    return true;
+                }
+                var style = window.getComputedStyle(p);
+                var oy = style.overflowY, ox = style.overflowX;
+                if (oy === 'hidden' || oy === 'auto' || oy === 'scroll' ||
+                    ox === 'hidden' || ox === 'auto' || ox === 'scroll') {
+                    var rect = p.getBoundingClientRect();
+                    if (top < rect.top - 1 || top > rect.bottom - 4 || left < rect.left - 1 || left > rect.right - 4) {
+                        return true;
+                    }
+                }
+                p = p.parentElement;
             }
-            if (e[0].data.trim().length === 0
-                || pos.top < caretViewport[0]
+            return false;
+        }
+
+        var caretViewport = [0, 0, window.innerHeight, window.innerWidth];
+        if (runtime.conf.caretViewport && runtime.conf.caretViewport.length === 4) {
+            caretViewport = runtime.conf.caretViewport;
+        }
+
+        var occupied = [];
+        var hintElements = [];
+        var lineCounts = {};
+        for (var i = 0, length = positions.length; i < length; i++) {
+            var e = positions[i];
+            if (e[0].data.trim().length === 0) {
+                continue;
+            }
+            var pos = getTextNodePos(e[0], e[1], e[2].length);
+            if (pos.top < caretViewport[0]
                 || pos.left < caretViewport[1]
                 || pos.top > caretViewport[2]
                 || pos.left > caretViewport[3]) {
-                return null;
-            } else {
-                var z = getZIndex(e[0].parentNode);
-                var link = document.createElement('div');
-                if (e[1] === 0) {
-                    link.className = "begin";
-                }
-                link.style.position = "fixed";
-                link.style.top = pos.top + "px";
-                link.style.left = pos.left + "px";
-                link.style.zIndex = z + 9999;
-                link.zIndex = link.style.zIndex;
-                link.link = e;
-                return link;
+                continue;
             }
-        }).filter(function(e) {
-            return e !== null;
-        });
+            if (isClippedByAncestors(e[0], pos.top, pos.left)) {
+                continue;
+            }
+            var lineKey = Math.round(pos.top / 18);
+            if ((lineCounts[lineKey] || 0) >= 3) {
+                continue;
+            }
+            var collides = false;
+            for (var j = 0; j < occupied.length; j++) {
+                var o = occupied[j];
+                if (Math.abs(pos.top - o.top) < 14 && Math.abs(pos.left - o.left) < 32) {
+                    collides = true;
+                    break;
+                }
+            }
+            if (collides) {
+                continue;
+            }
+            occupied.push(pos);
+            lineCounts[lineKey] = (lineCounts[lineKey] || 0) + 1;
+
+            var z = getZIndex(e[0].parentNode);
+            var link = document.createElement('div');
+            if (e[1] === 0) {
+                link.className = "begin";
+            }
+            link.style.position = "fixed";
+            link.style.top = pos.top + "px";
+            link.style.left = pos.left + "px";
+            link.style.zIndex = z + 9999;
+            link.zIndex = link.style.zIndex;
+            link.link = e;
+            hintElements.push(link);
+        }
+        elements = hintElements;
         if (document.getSelection().anchorNode) {
             document.getSelection().collapseToStart();
         }
