@@ -195,6 +195,24 @@ describe('bedrock streaming', () => {
         expect(content[1].type).toBe("thinking");
     });
 
+    it('keeps the thinking and signature that stream as deltas', async () => {
+        await run([
+            { type: "message_start", message: { role: "assistant" } },
+            { type: "content_block_start", content_block: { type: "thinking", thinking: "" } },
+            { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "Let me " } },
+            { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "search." } },
+            { type: "content_block_delta", delta: { type: "signature_delta", signature: "sig" } },
+            { type: "content_block_stop" },
+            { type: "message_stop" },
+        ]);
+
+        expect(onComplete.mock.calls[0][0].content[0]).toEqual({
+            type: "thinking", thinking: "Let me search.", signature: "sig",
+        });
+        // thinking is kept for the next request, never shown
+        expect(chunkText()).not.toContain("search");
+    });
+
     it('releases the caller when the stream ends without message_stop', async () => {
         await run([
             { type: "message_start", message: { role: "assistant" } },
@@ -242,6 +260,32 @@ describe('bedrock streaming', () => {
         const body = JSON.parse(AwsClient.prototype.fetch.mock.calls[0][1].body);
         expect(body.tools).toEqual([{ name: 'read_page' }]);
         expect(body.tool_choice).toEqual({ type: 'none' });
+    });
+
+    it('drops empty thinking blocks a stored conversation still carries', async () => {
+        AwsClient.prototype.fetch = jest.fn(() => Promise.resolve(streamOf([eventFrame({ type: "message_stop" })])));
+        const signed = { type: "thinking", thinking: "", signature: "sig" };
+        llmClients.bedrock({
+            messages: [
+                { role: 'system', content: 'sys' },
+                { role: 'user', content: 'q1' },
+                // as a build that ignored thinking deltas stored it
+                { role: 'assistant', content: [{ type: "thinking", thinking: "" }, { type: "text", text: "a1" }] },
+                { role: 'user', content: 'q2' },
+                { role: 'assistant', content: [{ type: "thinking", thinking: "" }] },
+                { role: 'user', content: 'q3' },
+                { role: 'assistant', content: [signed, { type: "text", text: "a3" }] },
+                { role: 'user', content: 'q4' },
+            ],
+        }, opts);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const body = JSON.parse(AwsClient.prototype.fetch.mock.calls[0][1].body);
+        expect(body.messages[1].content).toEqual([{ type: "text", text: "a1" }]);
+        // a turn that was nothing but such a block is gone, not sent empty
+        expect(body.messages.map((m) => m.role)).toEqual(['user', 'assistant', 'user', 'user', 'assistant', 'user']);
+        // a signed block may be one whose text the model chose to omit: kept
+        expect(body.messages[4].content[0]).toEqual(signed);
     });
 
     /*

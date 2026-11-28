@@ -196,14 +196,25 @@ function bedrock(req, opts) {
         return () => abortCtrl.abort();
     }
 
+    /*
+     * A thinking block with neither text nor signature is dropped before it is
+     * sent: Bedrock refuses the whole request over one ("each thinking block must
+     * contain thinking"), and it carries nothing a model could use. Builds that
+     * ignored the thinking deltas stored exactly such blocks, and a stored
+     * conversation is reloaded and re-sent with every new question, so cleaning
+     * them where they are made is not enough.
+     */
+    const isEmptyThinking = (c) => c && c.type === "thinking" && !c.thinking && !c.signature;
     function transformMessages(messages) {
         return messages.map((m) => {
             if (typeof(m.content) === "string") {
                 return {"role": m.role, "content": [ {"type": "text", "text": m.content} ]};
+            } else if (Array.isArray(m.content) && m.content.some(isEmptyThinking)) {
+                return Object.assign({}, m, {"content": m.content.filter((c) => !isEmptyThinking(c))});
             } else {
                 return m;
             }
-        });
+        }).filter((m) => !Array.isArray(m.content) || m.content.length > 0);
     }
 
     const parser = new EventStreamParser();
@@ -277,6 +288,17 @@ function bedrock(req, opts) {
                             break;
                         case "input_json_delta":
                             content_block.input_json = (content_block.input_json || "") + e.delta.partial_json;
+                            break;
+                        // A thinking block goes back verbatim in the next request of a
+                        // tool loop, and Bedrock refuses one without its text and
+                        // signature ("each thinking block must contain thinking"): both
+                        // arrive only as deltas, so neither may be dropped even though
+                        // nothing here shows the thinking.
+                        case "thinking_delta":
+                            content_block.thinking = (content_block.thinking || "") + e.delta.thinking;
+                            break;
+                        case "signature_delta":
+                            content_block.signature = (content_block.signature || "") + e.delta.signature;
                             break;
                     }
                     break;
