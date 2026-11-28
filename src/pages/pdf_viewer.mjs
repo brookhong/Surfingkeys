@@ -178,6 +178,46 @@ function parseQueryString(query) {
   }
   return params;
 }
+// customized for Surfingkeys: a header of the stream Chrome hands the viewer (see
+// openMimeHandlerStream). Header names are case-insensitive, and nothing says in
+// which case Chrome reports them.
+function responseHeader(info, name) {
+  const headers = info?.responseHeaders || {};
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === name) {
+      return headers[key];
+    }
+  }
+  return null;
+}
+// customized for Surfingkeys: the file name a Content-Disposition header gives,
+// kept only when it names a PDF -- the same rule PDF.js applies to the header when
+// it fetches by URL itself.
+function filenameFromContentDisposition(header) {
+  if (!header) {
+    return null;
+  }
+  let name = null;
+  const extended = /filename\*\s*=\s*[^']*'[^']*'([^;]+)/i.exec(header);
+  if (extended) {
+    try {
+      name = decodeURIComponent(extended[1].trim().replace(/^"|"$/g, ""));
+    } catch {}
+  }
+  if (!name) {
+    const plain = /(?:^|;)\s*filename\s*=\s*(?:"((?:\\.|[^"\\])*)"|([^;]*))/i.exec(header);
+    if (plain) {
+      name = (plain[1] !== undefined ? plain[1].replace(/\\(.)/g, "$1") : plain[2]).trim();
+      if (name.includes("%")) {
+        try {
+          name = decodeURIComponent(name);
+        } catch {}
+      }
+    }
+  }
+  name = name && name.split(/[\\/]/).pop();
+  return name && isPdfFile(name) ? name : null;
+}
 const InvisibleCharsRegExp = /[\x00-\x1F]/g;
 function removeNullCharacters(str, replaceInvisible = false) {
   if (!InvisibleCharsRegExp.test(str)) {
@@ -13482,13 +13522,95 @@ const PDFViewerApplication = {
     if (this.supportsIntegratedFind) {
       appConfig.findBar?.toggleButton?.classList.add("hidden");
     }
-    if (file) {
+    if (!params.has("file") && globalThis.chrome?.mimeHandler) {
+      // customized for Surfingkeys
+      this.openMimeHandlerStream();
+    } else if (file) {
       this.open({
         url: file
       });
     } else {
       this._hideViewBookmark();
     }
+  },
+  /*
+   * customized for Surfingkeys: Chrome 151+ opens this page for PDFs itself
+   * (mime_types_handler, config/webpack.config.js) and hands it the response it
+   * already received. The stream URL can be fetched exactly once, so the PDF is
+   * read whole and opened as data -- never by URL, which would make PDF.js fetch it
+   * again and refetch it for ranges -- and the original address is used only for
+   * the title and downloads, since a POST or single-use URL cannot be repeated.
+   */
+  async openMimeHandlerStream() {
+    let info, data;
+    try {
+      info = await chrome.mimeHandler.getStreamInfo();
+      data = await this.readMimeHandlerStream(info);
+    } catch (reason) {
+      // Not opened for a document (e.g. this page loaded directly), or the stream
+      // failed: nothing to show.
+      this._documentError("pdfjs-loading-error", {
+        message: reason?.message
+      });
+      return;
+    }
+    this.setTitleUsingUrl(info.originalUrl, info.originalUrl);
+    // Opened as data, PDF.js never sees the response headers it would take the
+    // server's file name from, so a PDF behind /download?id=123 would be titled
+    // and saved by that path instead.
+    this._contentDispositionFilename = filenameFromContentDisposition(responseHeader(info, "content-disposition"));
+    try {
+      await this.open({
+        data
+      });
+    } catch (reason) {
+      // A password the user declined is their answer, not a file PDF.js cannot
+      // read: Chrome's viewer would only ask for it again. (PasswordException is
+      // not exported from pdf.min.mjs, hence the name.)
+      if (reason?.name === "PasswordException") {
+        return;
+      }
+      // Chrome's own viewer may manage a file PDF.js cannot. The stream has been
+      // read whole, so Chrome serves it from its buffer rather than refetching.
+      chrome.mimeHandler.abortAndFallbackToNativeHandler();
+    }
+  },
+  /*
+   * customized for Surfingkeys: the PDF is read whole before PDF.js sees any of
+   * it (see openMimeHandlerStream), so the loading bar is driven from here --
+   * otherwise a large file shows an empty viewer until the last byte arrives.
+   */
+  async readMimeHandlerStream(info) {
+    const response = await fetch(info.streamUrl);
+    if (!response.ok) {
+      throw new Error(`the PDF stream answered ${response.status}`);
+    }
+    const total = Number(responseHeader(info, "content-length")) || 0;
+    if (!response.body || !total) {
+      return new Uint8Array(await response.arrayBuffer());
+    }
+    const reader = response.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+    for (;;) {
+      const {
+        done,
+        value
+      } = await reader.read();
+      if (done) {
+        break;
+      }
+      chunks.push(value);
+      loaded += value.length;
+      this.progress(Math.min(loaded / total, 1));
+    }
+    const data = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+      data.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return data;
   },
   get externalServices() {
     return shadow(this, "externalServices", new ExternalServices());

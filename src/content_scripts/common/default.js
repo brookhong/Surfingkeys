@@ -21,6 +21,17 @@ import {
     toggleQuote,
 } from './utils.js';
 
+/*
+ * The PDF the viewer page shows. Chrome 151+ hands it over as a stream, so the
+ * address is in the viewer (PDFViewerApplication.url, the stream's originalUrl)
+ * and nowhere in this page's own location; below that the redirect put it in
+ * ?file=, which is also what the viewer holds before its first load.
+ */
+function pdfViewerFileUrl() {
+    const app = window.PDFViewerApplication;
+    return (app && app.url) || new URLSearchParams(window.location.search).get("file") || window.location.href;
+}
+
 export default function(api, clipboard, insert, normal, hints, visual, front, browser) {
     const {
         addSearchAlias,
@@ -70,41 +81,48 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
     }
     if (browserName === "Chrome") {
         mapkey(';s', 'Toggle PDF viewer from SurfingKeys', function() {
-            var pdfUrl = window.location.href;
-            if (pdfUrl.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                const filePos = window.location.search.indexOf("=") + 1;
-                pdfUrl = window.location.search.substr(filePos);
-                RUNTIME('updateSettings', {
-                    settings: {
-                        "noPdfViewer": 1
+            if (window.location.href.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
+                RUNTIME('setPdfViewer', {enabled: false}, (resp) => {
+                    if (resp.error) {
+                        showBanner("Could not turn the PDF viewer off: " + resp.error);
+                        return;
                     }
-                }, (resp) => {
-                    window.location.replace(pdfUrl);
+                    // Load the PDF itself in the tab: from a frame Chrome put the viewer
+                    // in, that has to be the top document, or the PDF renders inside it.
+                    const reopen = () => window.top.location.replace(pdfViewerFileUrl());
+                    // Only a viewer Chrome opened for a stream has one to hand back; one
+                    // opened with ?file= (a bookmark from before Chrome 151) does not,
+                    // even where chrome.mimeHandler exists.
+                    if (chrome.mimeHandler && !new URLSearchParams(window.location.search).has("file")) {
+                        // Chrome still holds the response the viewer read, so its
+                        // own viewer takes over without fetching the PDF again.
+                        Promise.resolve()
+                            .then(() => chrome.mimeHandler.abortAndFallbackToNativeHandler())
+                            .catch(reopen);
+                    } else {
+                        reopen();
+                    }
                 });
-            } else {
-                if (document.querySelector("EMBED") && document.querySelector("EMBED").getAttribute("type") === "application/pdf") {
-                    RUNTIME('updateSettings', {
-                        settings: {
-                            "noPdfViewer": 0
-                        }
-                    }, (resp) => {
-                        window.location.replace(pdfUrl);
-                    });
-                } else {
-                    RUNTIME('getSettings', {
-                        key: 'noPdfViewer'
-                    }, function(resp) {
-                        const info = resp.settings.noPdfViewer ? "PDF viewer enabled." : "PDF viewer disabled.";
-                        RUNTIME('updateSettings', {
-                            settings: {
-                                "noPdfViewer": !resp.settings.noPdfViewer
-                            }
-                        }, (r) => {
-                            showBanner(info);
-                        });
-                    });
-                }
+                return;
             }
+            // A PDF by its content type, however Chrome renders it: Chrome's viewer
+            // lives in a frame of its own, so the page's DOM holds no trace of it.
+            const onPdf = document.contentType === "application/pdf";
+            RUNTIME('getPdfViewer', null, (state) => {
+                if (state.error) {
+                    showBanner("Could not read the PDF viewer setting: " + state.error);
+                    return;
+                }
+                RUNTIME('setPdfViewer', {enabled: !state.enabled}, (resp) => {
+                    if (resp.error) {
+                        showBanner("Could not toggle the PDF viewer: " + resp.error);
+                    } else if (onPdf) {
+                        window.location.replace(window.location.href);
+                    } else {
+                        showBanner(resp.enabled ? "PDF viewer enabled." : "PDF viewer disabled.");
+                    }
+                });
+            });
         });
     }
 
@@ -695,8 +713,7 @@ export default function(api, clipboard, insert, normal, hints, visual, front, br
         } else {
             var url = window.location.href;
             if (url.indexOf(chrome.runtime.getURL("/pages/pdf_viewer.html")) === 0) {
-                const filePos = window.location.search.indexOf("=") + 1;
-                url = window.location.search.substr(filePos);
+                url = pdfViewerFileUrl();
             }
             clipboard.write(url);
         }

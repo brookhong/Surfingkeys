@@ -776,13 +776,47 @@ function start(browser) {
         loadSettings(['blocklist', 'noPdfViewer', 'proxyMode', 'proxy'], function(data) {
             if (sender.tab) {
                 _response(message, sendResponse, {
-                    noPdfViewer: data.noPdfViewer,
+                    // Where chrome.mimeHandler exists Chrome routes PDFs to the
+                    // viewer itself, so a PDF a content script sees is one the user
+                    // turned the viewer off for: redirecting it would undo ;s.
+                    noPdfViewer: chrome.mimeHandler ? true : data.noPdfViewer,
                     proxyMode: data.proxyMode,
                     proxy: data.proxy,
                     state: _getState(data, new URL(getSenderUrl(sender)), message.blocklistPattern, message.lurkingPattern)
                 });
             }
         });
+    };
+    /*
+     * Whether PDFs open in pages/pdf_viewer.html. On Chrome 151+ that is Chrome's
+     * own per-type handler option, since Chrome does the routing and nothing else
+     * can be right about it; below that it is the noPdfViewer setting that
+     * content.js redirects by.
+     */
+    self.getPdfViewer = function(message, sender, sendResponse) {
+        if (chrome.mimeHandler) {
+            chrome.mimeHandler.getMimeHandlerOptions("application/pdf").then(
+                (options) => _response(message, sendResponse, {enabled: options.enabled !== false}),
+                (err) => _response(message, sendResponse, {error: err && err.message ? err.message : String(err)})
+            );
+        } else {
+            loadSettings('noPdfViewer', function(data) {
+                _response(message, sendResponse, {enabled: !data.noPdfViewer});
+            });
+        }
+    };
+    self.setPdfViewer = function(message, sender, sendResponse) {
+        const enabled = !!message.enabled;
+        if (chrome.mimeHandler) {
+            chrome.mimeHandler.setMimeHandlerOptions("application/pdf", {enabled}).then(
+                () => _response(message, sendResponse, {enabled}),
+                (err) => _response(message, sendResponse, {error: err && err.message ? err.message : String(err)})
+            );
+        } else {
+            _updateAndPostSettings({noPdfViewer: !enabled}, () => {
+                _response(message, sendResponse, {enabled});
+            });
+        }
     };
 
     self.addVIMark = function(message, sender, sendResponse) {
