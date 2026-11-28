@@ -385,6 +385,34 @@ describe('openAI-compatible streaming', () => {
         expect(message()).toEqual({ role: 'assistant', content: [{ type: 'text', text: 'Hello world' }] });
     });
 
+    it('joins an event that is split over two reads', async () => {
+        const [first, second] = sse([delta({ content: 'Hello' }), delta({ content: ' wörld' })]);
+        // one cut in the middle of the JSON, one in the middle of the "ö"
+        const at = second.indexOf(0xc3) + 1;
+        await drive([first.slice(0, 20), first.slice(20), second.slice(0, at), second.slice(at)]);
+
+        expect(chunkText()).toBe('Hello wörld');
+        expect(message().content).toEqual([{ type: 'text', text: 'Hello wörld' }]);
+    });
+
+    it('joins a tool call that is split over two reads', async () => {
+        const [call, end] = sse([
+            delta({ tool_calls: [{ index: 0, id: 'a', function: { name: 'read_page', arguments: '{}' } }] }),
+            '[DONE]',
+        ]);
+        await drive([call.slice(0, 30), call.slice(30), end]);
+
+        expect(message().tool_calls).toEqual([
+            { id: 'a', type: 'function', function: { name: 'read_page', arguments: '{}' } },
+        ]);
+    });
+
+    it('reads a last event that has no newline after it', async () => {
+        await drive([enc.encode(`data: ${JSON.stringify(delta({ content: 'Hello' }))}`)]);
+
+        expect(chunkText()).toBe('Hello');
+    });
+
     it('assembles a tool call whose arguments arrive in fragments', async () => {
         await drive(sse([
             delta({ tool_calls: [{ index: 0, id: 'call_1', function: { name: 'search_bo' } }] }),
@@ -571,6 +599,21 @@ describe('ollama streaming', () => {
         expect(chunkText()).toBe('Hello world');
         expect(onComplete).toHaveBeenCalledTimes(1);
         expect(message().content).toBe('Hello world');
+    });
+
+    it('joins a line that is split over two reads', async () => {
+        const [first, second, last] = ndjson([part('Hello'), part(' wörld'), end()]);
+        const at = second.indexOf(0xc3) + 1;
+        await drive([first.slice(0, 20), first.slice(20), second.slice(0, at), second.slice(at), last]);
+
+        expect(chunkText()).toBe('Hello wörld');
+        expect(message().content).toBe('Hello wörld');
+    });
+
+    it('reads a done line that has no newline after it', async () => {
+        await drive([enc.encode(JSON.stringify(end({ role: 'assistant', content: 'Hello' })))]);
+
+        expect(message().content).toBe('Hello');
     });
 
     it('does not count the final message content twice', async () => {

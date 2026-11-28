@@ -372,8 +372,24 @@ bedrock.init = function(opts) {
     awsClient.bedrockModel = opts.model;
 }
 
-function ollama(req, opts) {
+/*
+ * Splits a byte stream into lines. A read may end anywhere, even inside a character,
+ * so an unfinished line is kept for the next read. Call it without a value at the end
+ * of the stream to get the last line.
+ */
+function lineSplitter() {
     const decoder = new TextDecoder();
+    let rest = '';
+    return (value) => {
+        rest += value ? decoder.decode(value, { stream: true }) : decoder.decode();
+        const lines = rest.split('\n');
+        rest = value ? lines.pop() : '';
+        return lines.map((l) => l.trim()).filter(Boolean);
+    };
+}
+
+function ollama(req, opts) {
+    const nextLines = lineSplitter();
     const abortCtrl = new AbortController();
     const { complete, fail, isDone } = completeOnce(opts);
 
@@ -398,40 +414,41 @@ function ollama(req, opts) {
         let content = "";
         function readStream() {
             reader.read().then(({done, value}) => {
+                for (const line of nextLines(done ? undefined : value)) {
+                    let o;
+                    try {
+                        o = JSON.parse(line);
+                    } catch (e) {
+                        console.error('Error parsing line:', e, line);
+                        continue;
+                    }
+                    if (o.error) {
+                        fail(o.error);
+                        return;
+                    }
+                    if (o.message?.content) {
+                        content += o.message.content;
+                        opts.onChunk(o.message.content);
+                    }
+                    if (o.message?.tool_calls) {
+                        toolCalls.push(...o.message.tool_calls);
+                    }
+                    if (o.done) {
+                        // `content` already includes this final delta, so it's the whole answer
+                        complete(Object.assign({ role: "assistant" }, o.message, {
+                            content,
+                            tool_calls: toolCalls,
+                        }));
+                        return;
+                    }
+                }
+
                 if (done) {
                     // stream ended without a done line (e.g. ollama restarted) -- still release the caller
                     if (!isDone()) {
                         fail("\n\n**Warning:** the response ended unexpectedly.");
                     }
                     return;
-                }
-
-                try {
-                    const chunk = decoder.decode(value).trim();
-                    for (const c of chunk.split("\n")) {
-                        const o = JSON.parse(c);
-                        if (o.error) {
-                            fail(o.error);
-                            return;
-                        }
-                        if (o.message?.content) {
-                            content += o.message.content;
-                            opts.onChunk(o.message.content);
-                        }
-                        if (o.message?.tool_calls) {
-                            toolCalls.push(...o.message.tool_calls);
-                        }
-                        if (o.done) {
-                            // `content` already includes this final delta, so it's the whole answer
-                            complete(Object.assign({ role: "assistant" }, o.message, {
-                                content,
-                                tool_calls: toolCalls,
-                            }));
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error in onChunk:', e, value);
                 }
 
                 readStream();
@@ -459,7 +476,7 @@ function ollama(req, opts) {
 const customClients = {};
 
 function openAICompatible(req, opts, client) {
-    const decoder = new TextDecoder();
+    const nextLines = lineSplitter();
     const abortCtrl = new AbortController();
     const { complete, fail } = completeOnce(opts);
 
@@ -534,7 +551,7 @@ function openAICompatible(req, opts, client) {
             if (resp.status !== 200) {
                 // error body isn't SSE -- the loop below would find no `data:` line and never release the caller
                 reader.read().then(({ value }) => {
-                    fail(`Error ${resp.status}: ${value ? decoder.decode(value) : 'no response body'}`);
+                    fail(`Error ${resp.status}: ${value ? new TextDecoder().decode(value) : 'no response body'}`);
                 }).catch(err => fail(`Error ${resp.status}: ${err.message}`));
                 return;
             }
@@ -606,24 +623,17 @@ function openAICompatible(req, opts, client) {
             const readStream = () => {
                 reader.read()
                     .then(({ done, value }) => {
-                        if (done) {
-                            // not every provider sends `[DONE]` before closing
-                            finish();
-                            return;
-                        }
-                        const chunk = decoder.decode(value);
-                        try {
-                            const lines = chunk.trim().split('\n\n');
-                            const dataPat = /^data: /;
-                            for (const line of lines) {
-                                if (!dataPat.test(line)) {
-                                    continue;
-                                }
-                                const data = line.replace(dataPat, '');
-                                if (data === '[DONE]') {
-                                    finish();
-                                    return;
-                                }
+                        const dataPat = /^data: /;
+                        for (const line of nextLines(done ? undefined : value)) {
+                            if (!dataPat.test(line)) {
+                                continue;
+                            }
+                            const data = line.replace(dataPat, '');
+                            if (data === '[DONE]') {
+                                finish();
+                                return;
+                            }
+                            try {
                                 const o = JSON.parse(data);
                                 const delta = o.choices?.[0]?.delta;
                                 if (delta?.content) {
@@ -632,9 +642,15 @@ function openAICompatible(req, opts, client) {
                                 if (delta?.tool_calls) {
                                     addToolCallDeltas(delta.tool_calls);
                                 }
+                            } catch (e) {
+                                console.error('Error parsing chunk:', e);
                             }
-                        } catch (e) {
-                            console.error('Error parsing chunk:', e);
+                        }
+
+                        if (done) {
+                            // not every provider sends `[DONE]` before closing
+                            finish();
+                            return;
                         }
 
                         readStream();
